@@ -1,0 +1,11 @@
+ &DIAGNOSTICS_LIST
+ dumpAtLast=.FALSE.,
+ diag_mnc=.FALSE.,
+ fields(1:4,1)='THETA   ','UVEL    ','VVEL    ','PsiVEL  ',
+ fileName(1)='dynAdjust',
+ frequency(1)=2592000.,
+ timePhase(1)=0.,
+ fileFlags(1)='R       ',
+ &
+ &DIAG_STATIS_PARMS
+ &

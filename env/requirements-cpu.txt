@@ -1,0 +1,3 @@
+# Bootstrap/analysis environment. Exact resolved versions are captured by scripts/bootstrap_env.sh.
+-e .[dev]
+

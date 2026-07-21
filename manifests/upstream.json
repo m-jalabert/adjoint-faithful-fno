@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "MITgcm": {
+    "url": "https://github.com/MITgcm/MITgcm.git",
+    "ref": "checkpoint68j",
+    "commit": "f03a2f5e214bc57b8393f6201a6a1266dd1f53d6"
+  },
+  "oceanfourcast": {
+    "url": "https://github.com/suyashbire1/oceanfourcast.git",
+    "ref": "main",
+    "commit": "96b814af00e36665878ef295f94f766b2420b18a"
+  },
+  "neuraloperator": {
+    "distribution": "neuraloperator",
+    "version": "2.0.0"
+  },
+  "paper_pdf": {
+    "path": "docs/Bire_et_al. JAMES'25.pdf",
+    "sha256": "e7bdc7a5d16417856d8f70f4eefbb8feaeee13a3b4f3d8aea599f98b75bea3aa"
+  }
+}

@@ -1,0 +1,658 @@
+\documentclass[11pt]{article}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage[margin=0.82in]{geometry}
+\usepackage{microtype}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs,tabularx,longtable,array}
+\usepackage[dvipsnames]{xcolor}
+\usepackage{enumitem,tikz,fancybox}
+\usetikzlibrary{arrows.meta,positioning}
+\usepackage{hyperref,fancyhdr,titlesec}
+
+\definecolor{navy}{HTML}{17365D}
+\definecolor{blue}{HTML}{2F75B5}
+\definecolor{teal}{HTML}{218A8D}
+\definecolor{lightblue}{HTML}{EAF3F8}
+\definecolor{lightteal}{HTML}{EAF6F4}
+\definecolor{warm}{HTML}{F8F1E7}
+\definecolor{red}{HTML}{B13A3A}
+\definecolor{graytext}{HTML}{4A5560}
+\hypersetup{colorlinks=true,linkcolor=navy,citecolor=teal,urlcolor=blue,
+  pdftitle={Adjoint-Faithful FNO for a Baroclinic Double Gyre}}
+\pagestyle{fancy}\fancyhf{}
+\lhead{Adjoint-faithful FNO}\rhead{Minimum-data project plan}\cfoot{\thepage}
+\renewcommand{\headrulewidth}{0.3pt}
+\setlength{\headheight}{14pt}
+\titleformat{\section}{\Large\bfseries\color{navy}}{\thesection}{0.7em}{}
+\titleformat{\subsection}{\large\bfseries\color{blue}}{\thesubsection}{0.7em}{}
+\setlist[itemize]{leftmargin=1.35em,itemsep=2pt,topsep=4pt}
+\setlist[enumerate]{leftmargin=1.55em,itemsep=2pt,topsep=4pt}
+\setlength{\parindent}{0pt}\setlength{\parskip}{5pt}
+\renewcommand{\arraystretch}{1.18}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+\newcommand{\MITgcm}{\textsc{MITgcm}}
+\newcommand{\AF}{AF--FNO}
+\newsavebox{\decisionstore}
+\newsavebox{\contractstore}
+\newsavebox{\examplestore}
+\newenvironment{decisionbox}
+  {\begin{center}\begin{lrbox}{\decisionstore}\begin{minipage}{0.92\textwidth}}
+  {\end{minipage}\end{lrbox}\setlength{\fboxsep}{8pt}%
+   \fcolorbox{teal}{lightteal}{\usebox{\decisionstore}}\end{center}}
+\newenvironment{contractbox}
+  {\begin{center}\begin{lrbox}{\contractstore}\begin{minipage}{0.92\textwidth}}
+  {\end{minipage}\end{lrbox}\setlength{\fboxsep}{8pt}%
+   \fcolorbox{red}{warm}{\usebox{\contractstore}}\end{center}}
+\newenvironment{examplebox}[1]
+  {\begin{center}\begin{lrbox}{\examplestore}\begin{minipage}{0.92\textwidth}%
+   \textbf{#1}\par\smallskip}
+  {\end{minipage}\end{lrbox}\setlength{\fboxsep}{8pt}%
+   \fcolorbox{blue}{lightblue}{\usebox{\examplestore}}\end{center}}
+
+\begin{document}
+\pagenumbering{gobble}
+\begin{titlepage}
+\centering\vspace*{0.9in}
+{\sffamily\bfseries\color{navy}\fontsize{25}{30}\selectfont
+Adjoint-Faithful Fourier Neural Operator\\[0.18in]
+for a Baroclinic Double Gyre\par}
+\vspace{0.3in}{\Large A minimum-data summer internship project plan\par}
+\vspace{0.55in}
+\begin{decisionbox}
+\centering
+\textbf{Core idea:} first establish a frozen, adapted Bire-architecture baseline on the
+same \MITgcm{} trajectories used by \AF{}. Then improve the operator with modern
+forward losses and a small set of forward perturbation--response pairs. Generate true
+\MITgcm{} adjoints only after the emulators are frozen, and use them as a blind test.
+\end{decisionbox}
+\vfill
+{\large Revised technical proposal --- 21 July 2026\par}\vspace{0.45in}
+{\small Ten-week scope; official \MITgcm{} baroclinic-gyre tutorial;
+NeuralOperator 2.0 implementation\par}
+\end{titlepage}
+
+\pagenumbering{roman}
+\tableofcontents
+\clearpage
+\pagenumbering{arabic}
+
+\section{Recommendation in one page}
+\begin{decisionbox}
+\textbf{Recommended path.} Build an \textbf{adjoint-faithful FNO (\AF)} on the official
+\MITgcm{} baroclinic double-gyre tutorial at \(1^\circ\). Before changing the architecture
+or loss, train a frozen \textbf{A0 adapted Bire FNO} on exactly the same trajectories.
+This tests transfer of the paper's qualitative trends---useful short forecasts, stable
+rollouts, and sensitivity to wind amplitude---without claiming a bitwise reproduction
+of its undocumented \(0.25^\circ\) dataset. Then introduce the modern A--C ladder and
+forward-only response supervision. Do not put a single \MITgcm{} adjoint in training or
+model selection.
+\end{decisionbox}
+
+The minimum credible programme is:
+\begin{itemize}
+\item \textbf{Three long production regimes}: low, control, and high wind amplitude.
+\item \textbf{Two short held-out wind runs}: the intermediate amplitudes used by
+Bire et al.; inference-only and not 20 years long.
+\item \textbf{One frozen architecture-transfer baseline (A0)}: the recovered Bire FNO
+core, adapted only where the \(62\times62\), 46-state benchmark forces a change. It is
+trained and evaluated before the modern A--C models.
+\item \textbf{224 ten-day perturbed restarts}: 128 training, 32 validation, and 64
+inference. They provide local tangent information from forward \MITgcm{} only and total
+about \(6.1\) model-years.
+\item \textbf{Twelve true-adjoint runs}: three smooth objectives, two horizons, and
+two unseen initial states, opened only after the model and criteria are frozen.
+\end{itemize}
+
+This separates four questions: Does the Bire architecture transfer to the documented
+tutorial data? Does modernization improve the forward emulator? Did response supervision
+improve the local input--output map? Does automatic differentiation through it yield a
+useful adjoint? The defensible claim is deliberately limited: \emph{adjoint fidelity over
+specified horizons, objectives, states, and a tested control subspace}.
+
+\begin{contractbox}
+\textbf{No-adjoint-training contract.} \MITgcm{} adjoints are excluded from training,
+hyperparameter tuning, early stopping, loss selection, perturbation-amplitude selection,
+and architecture selection. The test is run only after checksums of the frozen model and
+evaluation script are recorded.
+\end{contractbox}
+
+\section{Research question and hypotheses}
+Let the \MITgcm{} time-\(\Delta t\) map be
+\[
+x_{n+1}=\mathcal{M}_{\Delta t}(x_n,u_n),
+\]
+where \(x\) is the state and \(u\) contains forcing and controls. The FNO
+\(\mathcal{F}_\theta\) approximates the same map. For a scalar objective \(J(x_N)\),
+\[
+\lambda_n^{\mathrm{FNO}}=
+\left(\frac{\partial\mathcal{F}_\theta}{\partial x_n}\right)^{T}
+\lambda_{n+1}^{\mathrm{FNO}},\qquad \lambda_N=\nabla_{x_N}J.
+\]
+
+\textbf{Primary question.} Can local derivative information obtained exclusively from
+short forward perturbation experiments make these gradients agree with \MITgcm{}
+adjoints more closely than a state-accurate forward FNO?
+
+\textbf{Hypotheses:} (1) the adapted A0 baseline reproduces the qualitative Bire forecast
+and wind-response trends on the coarser tutorial; (2) a modern FNO improves forward and
+boundary behavior relative to A0; (3) state accuracy alone does not ensure adjoint
+accuracy; and (4) a local response loss improves gradient direction without adjoint
+labels or loss of forward skill.
+
+\section{Why local perturbation--response information is the right approach}
+\subsection{A small state error can hide a wrong derivative}
+Suppose \(\mathcal{M}(x)=x\), but an emulator learns
+\[
+\mathcal{F}(x)=x+\delta\sin(kx),\qquad
+\mathcal{F}'(x)=1+\delta k\cos(kx).
+\]
+The state error never exceeds \(\delta\), yet the derivative error can be large when
+\(k\) is large. A value-only loss controls the height of a learned curve at sampled
+points; it does not adequately control its slope. An adjoint is built from those slopes.
+
+\begin{examplebox}{Intuitive ocean example}
+Two emulators predict sea-surface height ten days ahead to within one centimetre. In one,
+a small extra wind-stress patch strengthens the western boundary current; in the other,
+it weakens it. Their forecast scores can be almost identical, but a gradient-based
+optimization steps in opposite directions. One perturbed forward run reveals the
+physical response sign without computing an adjoint.
+\end{examplebox}
+
+\subsection{Forward responses teach Jacobian actions}
+At an anchor \(z=(x,u)\) and normalized direction \(v\), run the model from \(z\) and
+\(z+\varepsilon v\):
+\[
+r_M(z;v,\varepsilon)=
+\frac{\mathcal{M}_{\Delta t}(z+\varepsilon v)-\mathcal{M}_{\Delta t}(z)}
+{\varepsilon}\approx D\mathcal{M}_{\Delta t}(z)v .
+\]
+Match it with the emulator secant
+\[
+r_\theta(z;v,\varepsilon)=
+\frac{\mathcal{F}_{\theta}(z+\varepsilon v)-\mathcal{F}_{\theta}(z)}
+{\varepsilon}.
+\]
+This constrains a Jacobian--vector product (JVP) using only forward simulations and
+ordinary first-order training backpropagation. The link to adjoints is duality:
+\[
+\underbrace{v^TD\mathcal{M}(z)^Tq}_{\text{gradient projected on }v}
+=\underbrace{q^TD\mathcal{M}(z)v}_{\text{objective response along }v}.
+\]
+Thus, matching \(D\mathcal{M}v\) for relevant directions also matches projections of
+adjoints for many later objectives \(q\). The full Jacobian remains too large to identify;
+the claim must stay within the sampled smooth wind and state subspace.
+
+\section{Benchmark choice: trend, not hidden dataset}
+The public \texttt{oceanfourcast} repository is a conceptual starting point, not an exact
+reproduction package. Its training defaults differ from the paper, its README points to
+external data, and its loader predicts ten selected channels including diagnostic
+pressure and streamfunction. Reimplement the method in the maintained NeuralOperator
+library rather than preserve old dependencies \cite{OceanFourCast,NeuralOperator}.
+
+\begin{table}[htbp]\centering\small
+\caption{Published setup, official tutorial, and proposed benchmark.}
+\label{tab:benchmarks}
+\begin{tabularx}{\textwidth}{@{}p{0.19\textwidth}YYY@{}}
+\toprule
+& \textbf{Bire et al.} & \textbf{Official tutorial} & \textbf{Proposed} \\
+\midrule
+Grid & \(0.25^\circ\), \(248\times248\) & \(1^\circ\), \(60\times60\) ocean cells plus land border & Tutorial first; fine grid only as stretch \\
+Vertical & 15 levels, about \(2\,\mathrm{km}\) & 15 levels, \(1.8\,\mathrm{km}\) & Tutorial levels \\
+Time step & \(300\,\mathrm{s}\) & \(1200\,\mathrm{s}\) & Tutorial value \\
+\(\tau_0\) (\(\mathrm{N\,m^{-2}}\)) & 0.075, 0.0875, 0.100, 0.1125, 0.125 & Default 0.100 & Same five amplitudes \\
+Training winds & Low, control, high & Not applicable & Low, control, high \\
+Held-out winds & Two intermediates & Not applicable & Same two; short runs \\
+Goal & Forward emulation & Numerical tutorial & Forward and local-adjoint fidelity \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+This removes uncertainty about an unavailable initialization and pipeline, reduces the
+horizontal cell count by about 16, and retains the relevant baroclinic physics. The
+tutorial notes that the deep ocean is still adjusting after 100 years; stationarity must
+therefore be measured for the variables and horizons used \cite{MITgcmTutorial}.
+
+\subsection{A0: a time-boxed Bire-architecture transfer baseline}
+Do not make the incomplete public repository a prerequisite for the project. Audit the
+paper, repository, and recovered implementation once; record unresolved discrepancies;
+then freeze A0 and label it \emph{adapted} rather than exact. Implement it through the
+public NeuralOperator 2.0 \texttt{SpectralConv} interface while retaining the recovered
+paper structure: channel-diagonal Fourier multipliers, explicit pointwise channel
+mixing, three Fourier blocks, width 128, alternating sine/cosine position fields, and
+paper-style one-step state loss and optimizer schedule.
+
+All models must use the same S0--S2 source states, chronological splits, masks, and
+training-only normalization. Only adaptations forced by the documented benchmark are
+allowed in A0:
+
+\begin{table}[htbp]\centering\small
+\caption{Declared adaptations from the Bire configuration to A0.}
+\label{tab:a0-adaptations}
+\begin{tabularx}{\textwidth}{@{}p{0.23\textwidth}p{0.25\textwidth}Y@{}}
+\toprule
+\textbf{Element} & \textbf{Bire / recovered setting} & \textbf{A0 on the tutorial} \\
+\midrule
+Horizontal grid & \(248\times248\) at \(0.25^\circ\) & \(62\times62\) including the land rim \\
+Dynamic state & Ten selected prognostic/diagnostic outputs & All 46 Markov-state channels; wind is the additional input \\
+Fourier modes & \([64,64]\) & \([16,16]\), preserving the approximate mode-to-grid ratio \\
+Coarse pretraining & Stride 8, yielding \(31\times31\) & Stride 2, also yielding \(31\times31\) \\
+Forecast target & Normalized next state & Retain for A0; Models A--C predict a normalized residual \\
+Software & Historical \texttt{oceanfourcast} environment & Recovered architecture on pinned NeuralOperator 2.0 \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+Run a 20--100-sample overfit test, one ten-day development training, and the locked
+low/control/high evaluation. Do not tune A0 after opening held-out I1/I2 results. If the
+recovered baseline cannot learn the small sample after the declared learning-rate
+fallbacks, report that result and proceed; repairing historical code must not delay the
+\AF{} experiment. Separate five- and 30-day A0 models are optional follow-ups only when
+needed to compare a specific Bire lead-time panel.
+
+\section{Minimum MITgcm simulation programme}
+\subsection{Five trajectory jobs; three long production regimes}
+\begin{table}[htbp]\centering\small
+\caption{Minimum trajectories. Durations are planning budgets; diagnostics decide
+whether equilibration is adequate.}
+\label{tab:runs}
+\begin{tabularx}{\textwidth}{@{}p{0.07\textwidth}p{0.10\textwidth}p{0.17\textwidth}p{0.19\textwidth}Yp{0.12\textwidth}@{}}
+\toprule
+\textbf{ID} & \(\boldsymbol{\tau_0}\) & \textbf{Duration} & \textbf{Initialization} & \textbf{Use} & \textbf{Output} \\
+\midrule
+S0 & 0.100 & 100 y spin-up; final 10 y production & Tutorial initial state & Control data; branch checkpoint & Annual restart; daily production \\
+S1 & 0.075 & 5 y adjust + 10 y production & S0 checkpoint & Low-wind data & Daily production \\
+S2 & 0.125 & 5 y adjust + 10 y production & S0 checkpoint & High-wind data & Daily production \\
+I1 & 0.0875 & 1 y & Unseen S0-derived state & Interpolation inference only & Daily \\
+I2 & 0.1125 & 1 y & Different unseen state & Interpolation inference only & Daily \\
+\midrule
+\multicolumn{2}{@{}l}{\textbf{Total}} & \textbf{142 model-years} & \multicolumn{3}{l}{Three long production regimes; two short inference regimes} \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+After year 50, inspect five-year trends of heat content, surface kinetic energy,
+basin-integrated transport, and level-mean temperature. Stop at year 100 only if the
+upper-ocean quantities are statistically stationary; otherwise extend the run or narrow
+the first claim. The \(1^\circ\) grid and four-times-larger time step should be much
+cheaper per model-year than Bire's setup, but wall-clock/model-year must be benchmarked.
+
+\subsection{Chronological data splits}
+Use years 1--7 for training, year 8 for validation, and years 9--10 for inference within
+each ten-year S0--S2 production segment. Insert 90-day gaps at boundaries.
+
+\begin{table}[htbp]\centering\small
+\caption{Data roles. Pair counts are approximate for daily output and a ten-day target.}
+\label{tab:splits}
+\begin{tabularx}{\textwidth}{@{}p{0.20\textwidth}p{0.22\textwidth}p{0.16\textwidth}Y@{}}
+\toprule
+\textbf{Dataset} & \textbf{Source} & \textbf{Approx. size} & \textbf{Permitted use} \\
+\midrule
+Trajectory training & S0--S2 years 1--7 & 7,500 pairs & Fit weights \\
+Trajectory validation & S0--S2 year 8 & 1,000 pairs & Tune and early-stop \\
+Known-wind inference & S0--S2 years 9--10 & 2,100 pairs & Final scores only \\
+Unseen-wind inference & I1 and I2 & 700 pairs & Final interpolation only \\
+Response training & 16 anchors \(\times\) 8 directions & 128 endpoints & Fit response loss \\
+Response validation & 4 anchors \(\times\) 8 directions & 32 endpoints & Tune loss and \(\varepsilon\) \\
+Response inference & 4 anchors \(\times\) 8 directions \(\times\) 2 signs & 64 endpoints & Blind central differences \\
+True adjoints & 3 costs \(\times\) 2 horizons \(\times\) 2 states & 12 integrations & Blind comparison only \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+The 224 perturbed restarts add 2,240 model-days, about \(6.1\) model-years. Save only
+initial/final states, configuration hash, and perturbation definition. A 46-channel
+\(62\times62\) float32 snapshot is about \(0.7\,\mathrm{MB}\); 30 daily production years are of
+order \(8\,\mathrm{GB}\) before compression.
+
+\subsection{Eight directions per response anchor}
+\begin{table}[htbp]\centering\small
+\caption{Minimum smooth perturbation basis.}
+\label{tab:directions}
+\begin{tabularx}{\textwidth}{@{}p{0.12\textwidth}p{0.27\textwidth}Y@{}}
+\toprule
+\textbf{Count} & \textbf{Direction family} & \textbf{Purpose} \\
+\midrule
+1 & Prescribed cosine-wind amplitude & Directly tests the Bire control axis \\
+1 & Smooth meridional wind phase/shape mode & Separates amplitude from pattern learning \\
+2 & Smooth localized wind envelopes & Probe western/southern and northern/interior control \\
+4 & Balanced, low-wavenumber state directions & Training-only EOFs or filtered anomalies; rotate among anchors \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+Pilot standardized amplitudes \(10^{-3}\), \(3\times10^{-3}\), and \(10^{-2}\). Select
+the largest for which a central-difference linearity check is within 5--10\%, then freeze
+the rule by direction family. Use randomly signed one-sided perturbations for training
+and central differences for the blind response test.
+
+\section{State, forcing, and preprocessing}
+\subsection{Predict a Markov state, not independent diagnostics}
+Place the prognostic variables on a documented common tracer grid and stack vertical
+levels as channels:
+\[
+x=[U_{1:15},V_{1:15},\Theta_{1:15},\eta],
+\qquad C_{\mathrm{out}}=46.
+\]
+Vertical velocity, pressure, and streamfunction remain diagnostics computed by a fixed,
+differentiable postprocessor when needed. If salinity is active and nonconstant, add its
+15 levels rather than silently omitting it.
+
+Inputs comprise the 46 dynamic channels, wind stress, and normalized longitude, latitude,
+wet mask, and distance-to-wall fields. Record every C-grid interpolation operator.
+Compare gradients only after applying the exact transpose of those operators so the FNO
+and \MITgcm{} sensitivities share a native control basis.
+
+Compute channel means and scales from trajectory training only, mask land, and store the
+affine transform with the model. Gradient comparisons must undo normalization:
+\[
+\widetilde{x}_i=(x_i-\mu_i)/\sigma_i
+\quad\Longrightarrow\quad
+\frac{\partial J}{\partial x_i}
+=\frac{1}{\sigma_i}\frac{\partial J}{\partial\widetilde{x}_i}.
+\]
+Models A--C predict the normalized ten-day residual
+\(\Delta\widetilde{x}_n=\widetilde{x}_{n+1}-\widetilde{x}_n\). This gives the
+network an explicit identity path and focuses capacity on change. A0 alone retains the
+recovered paper-style normalized next-state target; this intentional difference belongs
+to the architecture-transfer baseline and must be stated in every A0 comparison.
+
+\section{Modern adjoint-faithful FNO}
+\subsection{Starting implementation}
+After freezing A0, use the maintained \texttt{neuraloperator} package and pin its release
+and commit. Begin the common A--C ladder with a modest dense FNO:
+
+\begin{table}[htbp]\centering\small
+\caption{Starting \AF{} configuration. Validation uses only trajectories and forward
+responses.}
+\label{tab:fno}
+\begin{tabularx}{\textwidth}{@{}p{0.27\textwidth}p{0.23\textwidth}Y@{}}
+\toprule
+\textbf{Choice} & \textbf{Starting value} & \textbf{Reason / limited search} \\
+\midrule
+Forecast interval & 10 days & Economical response runs; useful scale in Bire et al. \\
+Fourier modes & \([16,16]\) & Compare 12, 16, 24 after inspecting spectra; respect Nyquist \\
+Hidden channels & 32 & Increase to 64 only if a 20--100-sample overfit test fails \\
+FNO layers & 4 & Current library default; compact enough for ablation \\
+Local branch & \texttt{conv\_bias\_kernel=3} & Complements global mixing near boundaries \\
+Boundary treatment & 10\% domain padding & Reduces periodic FFT wrap in a closed basin \\
+Geometry & Grid embedding, mask, wall distance & Makes solid boundaries explicit \\
+Channel MLP & Enabled & Mixes the vertical state channels locally \\
+Precision & float32 & Avoid mixed precision in the initial derivative study \\
+Factorization & Dense FNO first & TFNO is a memory fallback, not an initial confounder \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+Select mode count from the resolved power spectrum: too few modes oversmooth the western
+boundary current; too many learn aliased fluctuations. Domain padding or Fourier
+continuation is relevant because the basin is not periodic. These choices follow the
+NeuralOperator 2.0 practical guide rather than the outdated oceanfourcast environment
+\cite{Duruisseaux2026}.
+
+\subsection{Baseline ladder and controlled losses}
+For a one-step pair and response direction, use
+\begin{align}
+\mathcal{L}={}&\mathcal{L}_{\mathrm{state}}
++\lambda_{\mathrm{roll}}\mathcal{L}_{\mathrm{roll}}
++\lambda_{\mathrm{resp}}\mathcal{L}_{\mathrm{resp}}
++\lambda_{\mathrm{spec}}\mathcal{L}_{\mathrm{spec}}
++\lambda_{\mathrm{bnd}}\mathcal{L}_{\mathrm{bnd}},\\
+\mathcal{L}_{\mathrm{resp}}={}&
+\frac{\lVert W_r(r_\theta-r_M)\rVert_2^2}
+{\lVert W_r r_M\rVert_2^2+\epsilon_0}.
+\end{align}
+\(\mathcal{L}_{\mathrm{state}}\) is masked relative \(L_2\);
+\(\mathcal{L}_{\mathrm{roll}}\) is a three-step (30-day) unrolled loss;
+\(\mathcal{L}_{\mathrm{spec}}\) compares binned spectra; and
+\(\mathcal{L}_{\mathrm{bnd}}\) upweights wet cells near the western wall. An
+\(H^1\)-style spatial loss may supplement the spectral term, but it is not a substitute
+for \(\mathcal{L}_{\mathrm{resp}}\): spatial output derivatives and derivatives of the
+input--output operator are different objects.
+
+\begin{table}[htbp]\centering\small
+\caption{Required architecture-transfer baseline and ablation models.}
+\label{tab:ablations}
+\begin{tabularx}{\textwidth}{@{}p{0.08\textwidth}p{0.25\textwidth}YY@{}}
+\toprule
+\textbf{Model} & \textbf{Training signal} & \textbf{Purpose} & \textbf{Expected result} \\
+\midrule
+A0 & Adapted Bire architecture and paper-style one-step loss & Test architecture transfer before modernization & Qualitative Bire trend on the common data \\
+A & Modern dense FNO + one-step residual state loss & Controlled modern baseline & Comparable state skill; derivatives may be poor \\
+B & Model A + rollout + spectral/boundary losses & Isolate modern forward losses from response data & Better rollout and boundary state skill \\
+C & Model B + local response loss & Test the \AF{} hypothesis & Similar state skill; better responses and adjoints \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+Freeze A0 before training A. Tune the A--C terms incrementally. Increase
+\(\lambda_{\mathrm{resp}}\) until validation response error improves without worsening
+ten-day state error by more than 5\%. Lock all weights before viewing any true adjoint.
+
+\begin{figure}[htbp]\centering
+\begin{tikzpicture}[
+node distance=7mm and 8mm,
+box/.style={draw,rounded corners=2pt,align=center,minimum height=10mm,
+  text width=30mm,fill=lightblue},
+dat/.style={draw,rounded corners=2pt,align=center,minimum height=10mm,
+  text width=31mm,fill=lightteal},
+test/.style={draw=red,rounded corners=2pt,align=center,minimum height=10mm,
+  text width=34mm,fill=warm},
+arr/.style={-{Latex[length=2mm]},thick,draw=graytext}]
+\node[box] (base) {Baseline forward\\\MITgcm{}};
+\node[box,below=of base] (pert) {Perturbed forward\\restarts};
+\node[dat,right=of base] (traj) {Trajectory\\pairs};
+\node[dat,right=of pert] (resp) {Local responses\\\(D\mathcal{M}v\)};
+\node[box,right=13mm of traj,yshift=-8mm] (fno) {Freeze A0; train\\A--C in order};
+\node[test,right=10mm of fno] (adj) {Frozen FNO vs.\\12 adjoints};
+\draw[arr] (base)--(traj);\draw[arr] (base)--(pert);
+\draw[arr] (pert)--(resp);\draw[arr] (traj)--(fno);
+\draw[arr] (resp)--(fno);\draw[arr] (fno)--node[above,font=\scriptsize]{freeze}(adj);
+\end{tikzpicture}
+\\[-1mm]{\small\color{red}The adjoint archive has no path into training or tuning.}
+\caption{The common trajectory pipeline feeds A0 and A--C; response data enter only C,
+and the adjoint evaluation remains sealed.}
+\label{fig:flow}
+\end{figure}
+
+\section{Ground-truth MITgcm adjoint suite}
+\subsection{Minimum: twelve integrations}
+One adjoint integration returns sensitivities to the full initial state and active
+controls for one scalar objective. It is therefore more efficient to vary objective,
+horizon, and state than to run an adjoint for every perturbation direction.
+
+\begin{table}[htbp]\centering\small
+\caption{Blind matrix: \(3\) objectives \(\times\) \(2\) horizons \(\times\)
+\(2\) initial states \(=12\) adjoint integrations.}
+\label{tab:adjoints}
+\begin{tabularx}{\textwidth}{@{}p{0.25\textwidth}Yp{0.17\textwidth}p{0.16\textwidth}@{}}
+\toprule
+\textbf{Smooth scalar objective} & \textbf{Reason} & \textbf{Horizons} & \textbf{States} \\
+\midrule
+Gaussian interior sea-surface-height average & Broad low-wavenumber response away from walls & 10, 30 days & Two unseen dates \\
+Smooth western-boundary sea-surface-height average & Energetic region where spectral/boundary errors matter & 10, 30 days & Same dates \\
+Area-weighted barotropic gyre-strength functional & Dynamical circulation measure; avoids nondifferentiable maxima & 10, 30 days & Same dates \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+Select dates and masks before opening any adjoint result; place dates at least 90 days
+from split boundaries and one another. If mandatory tests succeed, an optional six-run
+extension adds 90-day horizons. Before accepting a reference adjoint, run a Taylor
+remainder or central directional finite-difference check at one test state per objective
+family. This verifies \MITgcm{} but may not alter the emulator.
+
+\subsection{Metrics and an operational test}
+For gradients \(g_M\) and \(g_F\), report
+\[
+\mathrm{cosine}=\frac{g_F^Tg_M}{\lVert g_F\rVert_2\lVert g_M\rVert_2},
+\quad
+\mathrm{angle}=\cos^{-1}(\mathrm{cosine}),
+\quad
+\mathrm{relative\ error}=\frac{\lVert g_F-g_M\rVert_2}{\lVert g_M\rVert_2}.
+\]
+Convert both gradients to the same physical units and grid with explicit area/volume
+weights. Report full-state scores and projections onto the directions in
+Table~\ref{tab:directions}. Direction is primary: optimization can tolerate imperfect
+magnitude but not a gradient pointing uphill. Also show signed maps, vertical profiles,
+wavenumber spectra, and sign agreement in the largest-sensitivity region.
+
+Finally, use the emulator gradient to propose a small control update, choose the step from
+a predeclared short line search, and evaluate the objective with one forward \MITgcm{}
+run. This tests usefulness without turning adjoints into labels.
+
+\section{Evaluation and predeclared success criteria}
+Evaluate A0 beside persistence, climatology, and Models A--C on the forward tasks. Use
+one development seed throughout and three seeds, if affordable, for the final A versus C
+derivative comparison. A0 is frozen before I1/I2 are opened and is not tuned with response
+or adjoint data. Required plots are:
+\begin{itemize}
+\item A0/A--C RMSE and correlation versus lead against persistence and daily climatology;
+\item A0/A--C one-year rollout stability and spectra at low/control/high wind;
+\item A0/A--C skill and monotone physical response at the two unseen intermediate winds;
+\item response error and cosine by direction family and region;
+\item adjoint angle and relative error for all 12 tests, paired A versus C;
+\item one forward \MITgcm{} control-update test per objective family.
+\end{itemize}
+
+Predeclared targets, not promises, are:
+\begin{itemize}
+\item \textbf{A0 transfer:} learn the small-sample map, beat persistence or climatology
+at useful short leads, and reproduce the direction of the wind-amplitude trend. Exact
+Bire error values are neither expected nor claimed.
+\item \textbf{Modern forward trend:} A or B improves on A0, remains stable for one year,
+and varies monotonically with held-out wind amplitude.
+\item \textbf{Response:} C lowers blind response error by at least 25\% versus A while
+ten-day state error rises by no more than 5\%.
+\item \textbf{Adjoint:} C improves median projected-gradient cosine by at least 0.2.
+Useful targets are median cosine above 0.8 at ten days and 0.6 at 30 days.
+\item \textbf{Usefulness:} at least 80\% of predeclared emulator-gradient control steps
+lower the objective in forward \MITgcm{}.
+\end{itemize}
+
+Failure remains diagnostic. Better one-step JVPs but poor 30-day adjoints implicate
+Jacobian composition; no JVP improvement implicates perturbation scale or subspace;
+interior-only success implicates boundary representation.
+
+\section{Ten-week execution plan}
+\begin{longtable}{@{}p{0.09\textwidth}p{0.26\textwidth}p{0.38\textwidth}p{0.19\textwidth}@{}}
+\caption{Long \MITgcm{} runs begin immediately and continue alongside code
+development.}\label{tab:timeline}\\
+\toprule
+\textbf{Week} & \textbf{Activity} & \textbf{Output} & \textbf{Decision gate} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Week} & \textbf{Activity} & \textbf{Output} & \textbf{Decision gate} \\
+\midrule
+\endhead
+1 & Reproduce tutorial; benchmark; launch S0 & Versioned setup, restart test, wall-clock/model-year & Runs are reproducible \\
+2 & Complete S0--S2; preprocess state maps & Common data store, masks, transpose-checked operators & Training trajectories pass QC \\
+3 & Audit and freeze A0; train ten-day baseline & Architecture manifest, small-sample overfit, A0 checkpoint & Adapted Bire map learns signal \\
+4 & Train modern Model A; spectrum study & A0/A forward comparison and baselines & Qualitative Bire trend reproduced \\
+5 & Train B; run I1/I2 unseen winds & Rollout, spectrum, and interpolation plots & Modernization helps without leakage \\
+6 & Perturbation pilot and response data & Linearity plots; training/validation responses & Perturbations resolved and local \\
+7 & Train C; final forward/response seeds & A--C ablation; sealed checkpoints and scripts & Freeze models and criteria \\
+8 & Generate and verify 12 adjoints & Taylor checks; sealed adjoint archive & Open only after freeze \\
+9 & Gradient comparison and control updates & Tables, maps, true objective changes & Optional 90-day test decision \\
+10 & Robustness, report, and handoff & Reproducible repository and manifest & Complete minimum claim \\
+\bottomrule
+\end{longtable}
+
+\section{Risks and fallbacks}
+\begin{table}[htbp]\centering\small
+\caption{Safeguards preserve a useful ten-week result.}
+\label{tab:risks}
+\begin{tabularx}{\textwidth}{@{}p{0.25\textwidth}Yp{0.31\textwidth}@{}}
+\toprule
+\textbf{Risk} & \textbf{Early diagnostic} & \textbf{Fallback} \\
+\midrule
+Spin-up cost or deep drift & Trends after year 50; measured cost & Scope first claim to upper ocean or use a documented equilibrated restart \\
+Bire reconstruction ambiguity & Architecture audit exposes paper/repository conflicts & Freeze and label A0 as adapted; time-box historical repair \\
+46-channel memory pressure & 100-sample overfit and GPU profile & Reduce width, then TFNO, then vertical representation \\
+FFT wraps across walls & Seam and boundary-response errors & More padding; Fourier continuation; local convolution and wall distance \\
+Perturbation noise/nonlinearity & Central-difference pilot & Change \(\varepsilon\) by family before freezing it \\
+Good ten-day, poor 30-day gradient & Horizon-separated metrics & Strengthen three-step training; report validated horizon honestly \\
+Adjoint build delayed & Week-1 compilation smoke test & Deliver complete forward-response result; adjoint remains follow-on \\
+Sampled directions too narrow & Good projected but poor full-map score & Add directions from response residuals as a labeled extension \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+The \(0.25^\circ\) configuration is a stretch goal only after C passes at \(1^\circ\).
+A valuable extension is resolution transfer at \(0.5^\circ\) or \(0.25^\circ\), testing
+both values and local responses. It must not displace the mandatory adjoint comparison.
+
+\section{Deliverables and reproducibility}
+The internship should leave:
+\begin{enumerate}
+\item version-controlled \MITgcm{} configurations for S0--S2, I1--I2, perturbed
+restarts, and the 12 adjoint cases;
+\item a manifest with checksums, units, grids, masks, split dates, perturbation vectors,
+and configuration hashes;
+\item a frozen A0 architecture manifest and pinned NeuralOperator 2.0 pipelines for A0
+and Models A--C;
+\item separate sealed archives for forward training data and comparison-only adjoints;
+\item scripts for forward, response, adjoint, and control-update metrics;
+\item a report stating the validated state, subspace, horizons, objectives, and failures.
+\end{enumerate}
+
+Record seeds, package lockfile, model checksum, normalization statistics, optimizer state,
+splits, and timing. Unit tests should cover staggered-grid interpolation and its transpose,
+gradient denormalization, masking, response construction, and a toy autodiff/adjoint
+identity.
+
+\section{Final scope statement}
+This project is feasible because it makes both the architecture-transfer and adjoint
+questions small and testable. It does not rebuild every undocumented detail of Bire
+et al.; A0 preserves the recoverable architecture and labels every forced adaptation,
+then the A--C ladder tests modernization and derivative supervision on a documented
+\MITgcm{} case. The project spends new simulation budget on 224 short,
+information-rich perturbations instead of more long trajectories, then reserves 12
+expensive adjoints for a blind comparison.
+
+The contribution is an empirical test of a transferable principle: \emph{local forward
+responses can constrain a neural operator's derivatives enough to improve adjoints for
+unseen objectives, without adjoint supervision}. The baseline, ablations, sealed
+evaluation, and explicit subspace claim make the outcome useful whether the hypothesis
+succeeds or fails.
+
+\clearpage
+\begin{thebibliography}{9}
+\bibitem{Bire2025}
+S. Bire, B. L\"utjens, K. Azizzadenesheli, A. Anandkumar, and C. Hill,
+\emph{Ocean Emulation With Fourier Neural Operators: Double Gyre},
+\emph{Journal of Advances in Modeling Earth Systems}, 17, e2023MS004137, 2025.
+\href{https://doi.org/10.1029/2023MS004137}{doi:10.1029/2023MS004137}.
+
+\bibitem{Duruisseaux2026}
+V. Duruisseaux, J. Kossaifi, and A. Anandkumar,
+\emph{Fourier Neural Operators Explained: A Practical Perspective},
+arXiv:2512.01421v2, 2026.
+\href{https://arxiv.org/abs/2512.01421}{arXiv:2512.01421}.
+
+\bibitem{MITgcmTutorial}
+MITgcm contributors, \emph{Baroclinic Ocean Gyre}, \MITgcm{} documentation.
+\href{https://mitgcm.readthedocs.io/en/latest/examples/baroclinic_gyre/baroclinic_gyre.html}
+{mitgcm.readthedocs.io: baroclinic gyre}.
+
+\bibitem{OceanFourCast}
+S. Bire and contributors, \emph{oceanfourcast}, public source repository.
+\href{https://github.com/suyashbire1/oceanfourcast}
+{github.com/suyashbire1/oceanfourcast}.
+
+\bibitem{NeuralOperator}
+NeuralOperator contributors, \emph{NeuralOperator: Learning in infinite dimensions},
+development documentation and repository.
+\href{https://neuraloperator.github.io/dev/index.html}{neuraloperator.github.io/dev};
+\href{https://github.com/neuraloperator/neuraloperator}
+{github.com/neuraloperator/neuraloperator}.
+
+\bibitem{IMVI}
+NASA AMT Tiger Team,
+\emph{IMVIGORATE: Guided Operational Rigor for Assimilative Trusted Emulation},
+internal project proposal, 2026.
+\end{thebibliography}
+
+\end{document}

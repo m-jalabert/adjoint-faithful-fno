@@ -1,0 +1,354 @@
+\documentclass[11pt]{article}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage[margin=0.82in]{geometry}
+\usepackage{microtype}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs,tabularx,longtable,array}
+\usepackage[dvipsnames]{xcolor}
+\usepackage{enumitem}
+\usepackage{hyperref,fancyhdr,titlesec}
+
+\definecolor{navy}{HTML}{17365D}
+\definecolor{blue}{HTML}{2F75B5}
+\definecolor{teal}{HTML}{218A8D}
+\definecolor{green}{HTML}{2E7D32}
+\definecolor{amber}{HTML}{A86600}
+\definecolor{red}{HTML}{B13A3A}
+\definecolor{graytext}{HTML}{4A5560}
+\definecolor{lightblue}{HTML}{EAF3F8}
+\definecolor{lightteal}{HTML}{EAF6F4}
+\definecolor{lightamber}{HTML}{FFF5E2}
+\definecolor{lightgray}{HTML}{F4F6F8}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=navy,
+  urlcolor=blue,
+  pdftitle={AF--FNO Project Tracker},
+  pdfauthor={AF--FNO project}
+}
+\pagestyle{fancy}\fancyhf{}
+\lhead{AF--FNO project}\rhead{Milestone tracker}\cfoot{\thepage}
+\renewcommand{\headrulewidth}{0.3pt}
+\setlength{\headheight}{14pt}
+\titleformat{\section}{\Large\bfseries\color{navy}}{\thesection}{0.7em}{}
+\titleformat{\subsection}{\large\bfseries\color{blue}}{\thesubsection}{0.7em}{}
+\setlist[itemize]{leftmargin=1.35em,itemsep=2pt,topsep=4pt}
+\setlist[enumerate]{leftmargin=1.55em,itemsep=2pt,topsep=4pt}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{5pt}
+\renewcommand{\arraystretch}{1.18}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+\newcommand{\MITgcm}{\textsc{MITgcm}}
+\newcommand{\AF}{AF--FNO}
+\newcommand{\Done}{\textcolor{green}{\textbf{Complete}}}
+\newcommand{\Active}{\textcolor{blue}{\textbf{Active}}}
+\newcommand{\Next}{\textcolor{amber}{\textbf{Next}}}
+\newcommand{\Pending}{\textcolor{graytext}{\textbf{Pending}}}
+\newcommand{\projectbox}[3]{%
+  \begin{center}\setlength{\fboxsep}{8pt}%
+  \fcolorbox{#1}{#2}{\begin{minipage}{0.92\textwidth}#3\end{minipage}}%
+  \end{center}}
+
+\begin{document}
+
+\begin{center}
+  {\sffamily\bfseries\color{navy}\fontsize{24}{28}\selectfont
+  Adjoint-Faithful FNO Project Tracker\par}
+  \vspace{0.12in}
+  {\large \MITgcm{} baroclinic double-gyre benchmark\par}
+  \vspace{0.14in}
+  {\color{graytext}\textbf{Status date: 21 July 2026} \quad
+  Canonical plan: \texttt{AF\_FNO\_Project\_Plan.tex}}
+\end{center}
+
+\projectbox{teal}{lightteal}{%
+\textbf{Current position.}  The control, low-wind, and high-wind trajectory datasets
+(S0--S2) are complete.  S0 reproduces the expected qualitative tutorial circulation
+and has passed all seven numerical validation gates.  The immediate critical path is
+one shared preprocessing pass over S0--S2, followed by an adapted Bire-architecture
+baseline (A0).  The intermediate-wind simulations I1--I2 and the response/adjoint
+programme follow only after this baseline is established.  The local source tree has
+also been cleaned and prepared for its first remote Git commit.}
+
+\section{Status legend}
+
+\begin{tabularx}{\textwidth}{@{}p{0.14\textwidth}Y@{}}
+\toprule
+\textbf{Status} & \textbf{Meaning} \\
+\midrule
+\Done & Finished and checked against the stated acceptance evidence. \\
+\Active & Workstream is open and may contain completed substeps. \\
+\Next & Immediate executable step on the critical path. \\
+\Pending & Planned, but intentionally not started. \\
+\bottomrule
+\end{tabularx}
+
+\section{Milestone dashboard}
+
+\begin{longtable}{@{}p{0.12\textwidth}p{0.19\textwidth}p{0.12\textwidth}p{0.49\textwidth}@{}}
+\toprule
+\textbf{ID} & \textbf{Milestone} & \textbf{Status} & \textbf{Evidence / exit condition} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{ID} & \textbf{Milestone} & \textbf{Status} & \textbf{Evidence / exit condition} \\
+\midrule
+\endhead
+M0 & Reproducible \MITgcm{} build and segmented runner & \Done & S0 build job 283675; four-rank executable and immutable per-segment provenance. \\
+M1 & S0 control trajectory & \Done & 100-year spin-up plus 10-year daily production; jobs 283676--283686; final data inventory verified. \\
+M2 & Tutorial validation & \Done & Validation job 283958; seven of seven gates passed; four project-facing figures and machine-readable report. \\
+M3 & S1/S2 forcing regimes & \Done & Low- and high-wind adjustment/production jobs 283959--283962 complete; daily inventories verified. \\
+R0 & Git provenance baseline & \Next & Clean first commit pushed to the project remote; generated data, upstream clones, builds, environments, and scheduler logs excluded. \\
+M4 & Shared ML dataset & \Next & Convert, center C-grid variables, mask, split chronologically, and compute training-only normalizers for S0--S2. \\
+M5 & A0 adapted Bire baseline & \Next & Small-sample overfit test, then frozen paper-architecture baseline trained and evaluated on the shared dataset. \\
+M6 & A--C model ladder & \Pending & Modern state-only model A, forward model B, then response-supervised \AF{} model C. \\
+M7 & I1/I2 wind interpolation & \Pending & Two unseen intermediate-wind trajectories generated and opened for inference only. \\
+M8 & Forward-response campaign & \Pending & 224 ten-day perturbed restarts: 128 training, 32 validation, and 64 inference. \\
+M9 & Blind adjoint evaluation & \Pending & Frozen artifacts/checksums recorded before 12 true-adjoint tests are generated or inspected. \\
+M10 & Control-update verification & \Pending & Three forward checks demonstrate whether emulator-gradient controls improve each objective. \\
+\bottomrule
+\end{longtable}
+
+\section{Completed simulation record}
+
+\subsection{S0: control wind, \texorpdfstring{$\tau_0=0.100\ \mathrm{N\,m^{-2}}$}{tau0=0.100 N m-2}}
+
+\begin{tabularx}{\textwidth}{@{}p{0.24\textwidth}Y@{}}
+\toprule
+\textbf{Item} & \textbf{Recorded result} \\
+\midrule
+Execution & Build job 283675; spin-up jobs 283676--283685; production job 283686. \\
+Model duration & 100-year spin-up plus 10-year production: 110 model-years, using a 360-day year. \\
+Production inventory & 3,600 daily \texttt{dynState} records and 3,600 daily \texttt{surfState} records. \\
+Measured size & 4.6~GB in the raw \MITgcm{} archive. \\
+Validation & Job 283958; all seven tutorial gates passed. \\
+Surface heat flux & Mean $-1.9589\ \mathrm{W\,m^{-2}}$. \\
+Potential temperature & Final representative means: $17.6918^\circ$C at the surface, $8.3589^\circ$C at 305~m, and $2.4327^\circ$C in the abyss. \\
+Gyre transport & First production-year extrema: $+32.679$ and $-30.497$~Sv. \\
+Sea-surface height & First production-year range: $-0.987$ to $+0.762$~m. \\
+\bottomrule
+\end{tabularx}
+
+The temperature structure, double-gyre transport, sea-surface-height pattern, and
+late-spin-up trends are consistent with the intended official tutorial behaviour.  The
+deep ocean remains the slowest-adjusting component, as expected; this is recorded as a
+scientific caveat rather than a failed gate.
+
+\subsection{S1 and S2: off-control wind regimes}
+
+\begin{tabularx}{\textwidth}{@{}p{0.10\textwidth}p{0.16\textwidth}p{0.18\textwidth}p{0.19\textwidth}YY@{}}
+\toprule
+\textbf{Run} & \textbf{$\tau_0$} & \textbf{Jobs} & \textbf{Schedule} & \textbf{Daily output} & \textbf{Size} \\
+\midrule
+S1 & $0.075\ \mathrm{N\,m^{-2}}$ & 283959 / 283960 & 5-y adjust + 10-y production & 3,600 \texttt{dynState} + 3,600 \texttt{surfState} & 2.7~GB \\
+S2 & $0.125\ \mathrm{N\,m^{-2}}$ & 283961 / 283962 & 5-y adjust + 10-y production & 3,600 \texttt{dynState} + 3,600 \texttt{surfState} & 2.7~GB \\
+\bottomrule
+\end{tabularx}
+
+Both branches restart from the validated S0 year-100 state.  Their five-year adjustment
+periods are kept separate from the ten-year daily production records used by the ML
+pipeline.
+
+\subsection{Retired high-resolution Bire reconstruction}
+
+The earlier $0.25^\circ$ Bire-oriented spin-up, formerly Slurm job \textbf{283514},
+was cancelled by the project owner on 21 July 2026.  Its scratch tree, compiled build,
+MITgcm input deck, scheduler wrappers, conversion/training wrappers, and generated
+reports were subsequently deleted.  This campaign is closed and is not a prerequisite
+for A0 or \AF{}.  Only recovered source and documentation that provide architectural
+evidence for A0 are retained.
+
+\section{Data locations and provenance}
+
+\begin{tabularx}{\textwidth}{@{}p{0.23\textwidth}Y@{}}
+\toprule
+\textbf{Asset} & \textbf{Canonical location} \\
+\midrule
+S0 project entry point & \path{outputs/af_fno/S0/} \\
+S0 result catalog & \path{outputs/af_fno/S0/results_catalog.json} \\
+S0 validation & \path{outputs/af_fno/S0/tutorial_validation/} \\
+S0 provenance copies & \path{outputs/af_fno/S0/provenance/} \\
+S0 raw archive & \path{/bigscratch/mjalabert314/bire_james25_repro/af_fno/mitgcm/S0/} \\
+S1 raw archive & \path{/bigscratch/mjalabert314/bire_james25_repro/af_fno/mitgcm/S1/} \\
+S2 raw archive & \path{/bigscratch/mjalabert314/bire_james25_repro/af_fno/mitgcm/S2/} \\
+\bottomrule
+\end{tabularx}
+
+The S0 project directory contains a symbolic link named \texttt{raw\_mitgcm}; bulk
+output is not duplicated in \texttt{/home}.  The catalog records counts, final pickup,
+hashes, executable provenance, and canonical paths.  S1/S2 raw results currently reside
+under the corresponding scratch roots and should receive equivalent project-facing
+catalogs during preprocessing.
+
+\section{Frozen project decisions}
+
+\begin{itemize}
+\item The active scientific benchmark is the official $1^\circ$, $62\times62\times15$
+  baroclinic double gyre.  Exact recovery of the paper's hidden $0.25^\circ$ numbers is
+  outside the primary claim; qualitative trends are the reproduction target.
+\item Model calendars use 360 days per year.  The time step is 1,200~s, or 72 steps per
+  model day.
+\item Standard trajectory production uses four MPI ranks.  Long runs are split into
+  restart-safe jobs that fit the two-hour \texttt{short} partition.
+\item S0--S2 share physics, grid, preprocessing, state definition, splits, and metrics.
+  Only the prescribed forcing regime differs.
+\item True \MITgcm{} adjoints are sealed test data.  They are excluded from training,
+  early stopping, architecture selection, hyperparameter tuning, perturbation-scale
+  selection, and loss selection.
+\item All models must use the same immutable train/validation/test partition and
+  training-only normalization statistics so architecture and loss comparisons remain
+  interpretable.
+\item Git stores source, configuration, tests, small manifests, and project-facing
+  documentation.  Raw/reduced arrays, checkpoints, upstream clones, virtual
+  environments, compiled trees, and scheduler logs remain external to Git.
+\end{itemize}
+
+\section{New baseline decision: A0 before A--C}
+
+\projectbox{blue}{lightblue}{%
+\textbf{Decision added 21 July 2026.}  Establish an adapted Bire paper-architecture
+baseline, A0, before developing the modern NeuralOperator A--C sequence.  This tests
+whether the published architectural idea recovers the paper's qualitative wind and
+forecast trends on the available tutorial configuration.}
+
+A0 is a controlled adaptation, not a claim of exact historical reproduction.  It keeps
+the recognizable Bire choices---channel-diagonal/separable spectral convolution,
+explicit pointwise channel mixing, three Fourier blocks, hidden width 128, positional
+encoding, and one-step state loss.  Resolution-equivalent Fourier truncation uses 16
+modes on the $62\times62$ grid.  If coarse-to-fine pretraining is retained, the coarse
+grid uses stride 2 ($31\times31$), rather than the paper code's stride 8.
+
+Changes forced by this benchmark must be disclosed: 46 Markov-state channels
+(centered U, V, temperature, and SSH), the $62\times62$ grid, ten production years per
+regime, wind stress as an input, and a ten-day primary comparison horizon.  The obsolete
+public repository will be used as architectural evidence, not executed unchanged.
+
+The comparison ladder is therefore:
+\begin{center}\small
+\textbf{Persistence / climatology}
+$\longrightarrow$ \textbf{A0: adapted Bire}
+$\longrightarrow$ \textbf{A: modern state-only}\\[3pt]
+$\longrightarrow$ \textbf{B: forward losses}
+$\longrightarrow$ \textbf{C: \AF{} response supervision}.
+\end{center}
+Every transition changes a declared element, making gains attributable rather than
+confounding the dataset, architecture, and derivative-aware objective at once.
+
+\section{Immediate execution sequence}
+
+\projectbox{amber}{lightamber}{%
+\textbf{Current next step: shared S0--S2 preprocessing.}  No additional long \MITgcm{}
+simulation is required before the first A0 training job.}
+
+\begin{enumerate}
+\item Inventory and integrity-check every daily MDS record in the three production
+  regimes; write equivalent S1/S2 result catalogs.
+\item Center staggered U/V variables, apply wet masks, assemble the 46-channel state,
+  and add forcing/geometry features required by the declared input contract.
+\item Freeze chronological train/validation/test indices.  Compute normalization from
+  training indices only and record checksums for data, indices, and statistics.
+\item Verify physical units, one-step tendencies, spectra, NaNs, masks, and restart
+  continuity before exposing the dataset to a model.
+\item Run an A0 overfit test on 20--100 samples.  Require decreasing training loss and
+  exact save/reload inference before scheduling full training.
+\item Train and evaluate A0 against persistence and climatology; freeze its
+  configuration and report before implementing A--C.
+\item Generate I1/I2 and open them only for the predeclared unseen-wind interpolation
+  evaluation.
+\end{enumerate}
+
+\section{Remaining simulation and evaluation programme}
+
+\begin{tabularx}{\textwidth}{@{}p{0.21\textwidth}p{0.12\textwidth}Y@{}}
+\toprule
+\textbf{Work package} & \textbf{Count} & \textbf{Role} \\
+\midrule
+I1/I2 trajectories & 2 & Intermediate wind amplitudes; inference-only interpolation test. \\
+Perturbed forward responses & 224 & Ten-day local responses: 128 training, 32 validation, 64 inference. \\
+Mandatory true adjoints & 12 & Three smooth objectives $\times$ two horizons (10/30 days) $\times$ two unseen states. \\
+Forward control checks & 3 & Test one emulator-gradient control update for each objective. \\
+Optional true adjoints & 6 & Ninety-day extension only if mandatory criteria are met. \\
+\bottomrule
+\end{tabularx}
+
+The minimum programme contains 244 scientific integrations in total: five trajectory
+runs (S0, S1, S2, I1, I2), 224 perturbed forward responses, 12 mandatory adjoints, and
+three forward control checks.  S0--S2 account for three completed trajectory runs.
+
+The mandatory adjoints alone are the ground-truth gradient dataset.  They evaluate:
+an interior Gaussian SSH average, a smooth western-boundary SSH average, and an
+area-weighted barotropic gyre-strength objective.  The emulator, evaluation code, pass
+criteria, and cryptographic hashes must be frozen before these results are opened.
+
+\section{Risks, corrections, and controls}
+
+\begin{tabularx}{\textwidth}{@{}p{0.25\textwidth}Y@{}}
+\toprule
+\textbf{Risk / issue} & \textbf{Control or recorded correction} \\
+\midrule
+Scratch is not archival & Raw S0--S2 data live on \texttt{/bigscratch}.  Copy them to
+durable project storage before the cluster retention deadline; retain catalogs, hashes,
+manifests, and figures under the project tree. \\
+Trajectory-year arithmetic & The proposal's listed durations sum to \textbf{142}, not
+132, model-years: $110+15+15+1+1=142$.  Use 142 in compute/storage accounting. \\
+Historical-code incompleteness & Label A0 ``adapted paper architecture'' and record all
+forced changes; do not claim a bitwise or numerical reproduction of Bire et al. \\
+Data leakage & Freeze chronological indices and derive normalization only from training
+years.  Keep I1/I2 inference-only. \\
+Adjoint leakage & Enforce the sealed-adjoint contract and checksum frozen model and
+evaluation artifacts before generating or viewing adjoint results. \\
+Deep-ocean drift & Report depth-dependent trend diagnostics with forecast results;
+avoid implying full abyssal equilibrium from upper-ocean stationarity. \\
+Large job count & Pack short response integrations into auditable Slurm arrays or
+bundles while preserving one manifest/result record per scientific integration. \\
+Cross-HPC portability & UCSB absolute paths, modules, accounts, and partitions are not
+NASA-portable.  Introduce site profiles, rebuild dependencies and executables on the
+destination system, transfer data separately, and pass smoke/restart tests before
+production. \\
+\bottomrule
+\end{tabularx}
+
+\section{How to update this tracker}
+
+Update this document after a milestone changes state, a scientific decision changes,
+or a material dataset/model artifact is created.  For each update:
+
+\begin{enumerate}
+\item advance the status date and change only milestones supported by durable evidence;
+\item record Slurm job IDs, model-time duration, output counts, storage location, and
+  validation result for every completed simulation;
+\item add artifact paths and checksums where available; never treat a scratch pathname
+  alone as an archival record;
+\item record decision changes in both the relevant section and the change log;
+\item regenerate \texttt{Project\_tracking.pdf} and check the LaTeX log for undefined
+  references, overfull boxes, or missing files.
+\end{enumerate}
+
+Operational details and evolving status belong here.  Scientific definitions,
+acceptance criteria, and the intended experimental design belong in
+\texttt{AF\_FNO\_Project\_Plan.tex}; keep the two documents consistent without
+duplicating extensive derivations.
+
+\section{Change log}
+
+\begin{longtable}{@{}p{0.16\textwidth}p{0.17\textwidth}p{0.59\textwidth}@{}}
+\toprule
+\textbf{Date} & \textbf{Type} & \textbf{Change} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Date} & \textbf{Type} & \textbf{Change} \\
+\midrule
+\endhead
+2026-07-21 & Tracker created & Consolidated S0--S2 execution evidence, validation metrics, data locations, active decisions, remaining simulations, and risks. \\
+2026-07-21 & Method decision & Added A0, an adapted Bire paper-architecture baseline, before models A--C. \\
+2026-07-21 & Accounting correction & Corrected total trajectory duration from 132 to 142 model-years. \\
+2026-07-21 & Infrastructure & Prepared the source tree for Git: removed disposable Slurm/LaTeX/Python artifacts, strengthened ignore rules, replaced the paper-only README with the AF--FNO project overview, and documented NASA portability.  The first remote commit remains R0. \\
+2026-07-21 & Campaign retired & Recorded cancellation of job 283514 and removed the obsolete $0.25^\circ$ MITgcm scratch data, build, input deck, job wrappers, and reports.  Retained only Bire-derived code evidence required for A0. \\
+\bottomrule
+\end{longtable}
+
+\end{document}

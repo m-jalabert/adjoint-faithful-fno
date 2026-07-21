@@ -1,0 +1,65 @@
+# Python environments and caches (rebuild on each HPC system).
+.venv/
+.venv-*/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+coverage.xml
+htmlcov/
+wandb/
+build/
+dist/
+*.egg-info/
+
+# Reproducible products and scheduler logs; source manifests remain tracked.
+outputs/*
+!outputs/.gitkeep
+work/*
+!work/.gitkeep
+logs/
+slurm-*.out
+slurm-*.err
+*.out
+*.err
+
+# External upstream checkouts are pinned in manifests/upstream.json.
+external/*
+!external/.gitkeep
+
+# LaTeX intermediates. Keep the two project-facing PDFs below.
+*.aux
+*.bbl
+*.blg
+*.fdb_latexmk
+*.fls
+*.log
+*.nav
+*.snm
+*.synctex.gz
+*.toc
+docs/*.pdf
+!docs/AF_FNO_Project_Plan.pdf
+!docs/Project_tracking.pdf
+
+# Large scientific formats must live on scratch, not in Git.
+*.data
+*.meta
+*.zarr/
+*.nc
+*.npy
+*.npz
+*.h5
+*.hdf5
+*.bin
+*.pt
+*.ckpt
+
+# Editor, OS, and network-filesystem artifacts.
+.DS_Store
+.idea/
+.vscode/
+.nfs*
+*~

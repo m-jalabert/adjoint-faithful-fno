@@ -1,0 +1,182 @@
+schema_version = 1
+project_name = "bire_a0_reference"
+paper_doi = "10.1029/2023MS004137"
+model_year_days = 360
+seed = 1024
+
+[paths]
+project_root = "."
+scratch_root = "work/bire_a0_reference"
+mitgcm_source = "external/MITgcm"
+paper_code = "external/oceanfourcast"
+raw = "work/bire_a0_reference/raw"
+reduced = "work/bire_a0_reference/reduced"
+restarts = "work/bire_a0_reference/restarts"
+checkpoints = "work/bire_a0_reference/checkpoints"
+rollouts = "work/bire_a0_reference/rollouts"
+figures = "outputs/bire_a0_reference/figures"
+reports = "outputs/bire_a0_reference/reports"
+
+[upstream]
+mitgcm_ref = "checkpoint68j"
+mitgcm_sha = "f03a2f5e214bc57b8393f6201a6a1266dd1f53d6"
+paper_code_ref = "main"
+paper_code_sha = "96b814af00e36665878ef295f94f766b2420b18a"
+neuraloperator_version = "2.0.0"
+
+[grid]
+nx = 248
+ny = 248
+nr = 15
+dx_deg = 0.25
+dy_deg = 0.25
+lon0_deg = 0.0
+lat0_deg = 14.0
+del_r_m = [50.0, 60.0, 70.0, 80.0, 90.0, 100.0, 110.0, 120.0, 130.0, 140.0, 150.0, 160.0, 170.0, 180.0, 190.0]
+midlevel_index = 7
+midlevel_nominal_depth_m = 950.0
+boundary_land_cells = 4
+
+[mitgcm]
+delta_t_s = 300.0
+diagnostic_period_s = 86400.0
+production_days = 7200
+horizontal_viscosity_m2_s = 500.0
+horizontal_diffusivity_m2_s = 500.0
+vertical_viscosity_m2_s = 0.01
+vertical_diffusivity_m2_s = 0.00001
+sst_relaxation_days = 30.0
+sst_south_c = 30.0
+sst_north_c = 10.0
+rho_nil_kg_m3 = 999.8
+gravity_m_s2 = 9.81
+eos = "LINEAR"
+implicit_free_surface = true
+use_salt = false
+advection = "tutorial_baroclinic_gyre_checkpoint68j"
+
+[spinup]
+control_min_years = 100
+branch_min_years = 40
+block_years = 20
+control_cap_years = 400
+branch_cap_years = 200
+consecutive_passing_blocks = 2
+mean_relative_tolerance = 0.02
+trend_relative_per_decade = 0.01
+monitors = ["volume_mean_temperature", "total_kinetic_energy", "psi_positive_max", "psi_negative_min"]
+
+[[experiments]]
+id = 1
+slug = "low_wind"
+label = "Low Wind"
+tau0_n_m2 = 0.075
+role = "train_validation_inference"
+
+[[experiments]]
+id = 2
+slug = "intermediate_low_wind"
+label = "Intermediate low wind"
+tau0_n_m2 = 0.0875
+role = "inference"
+
+[[experiments]]
+id = 3
+slug = "control"
+label = "Control"
+tau0_n_m2 = 0.1
+role = "train_validation_inference"
+
+[[experiments]]
+id = 4
+slug = "intermediate_high_wind"
+label = "Intermediate high wind"
+tau0_n_m2 = 0.1125
+role = "inference"
+
+[[experiments]]
+id = 5
+slug = "high_wind"
+label = "High Wind"
+tau0_n_m2 = 0.125
+role = "train_validation_inference"
+
+[data]
+channels = ["U_surface", "U_mid", "V_surface", "V_mid", "T_surface", "T_mid", "PHIHYD_surface", "PHIHYD_mid", "PHIHYD_bottom", "barotropic_streamfunction", "wind_stress_x"]
+target_channels = ["U_surface", "U_mid", "V_surface", "V_mid", "T_surface", "T_mid", "PHIHYD_surface", "PHIHYD_mid", "PHIHYD_bottom", "barotropic_streamfunction"]
+training_experiments = [1, 3, 5]
+training_start = 0
+training_stop = 6000
+validation_start = 6000
+validation_stop = 7200
+inference_start = 6200
+inference_stop = 7200
+normalization_epsilon = 0.00001
+zarr_time_chunk = 8
+zarr_channel_chunk = 1
+zarr_y_chunk = 248
+zarr_x_chunk = 248
+raw_precision = 32
+
+[fno]
+input_channels = 11
+output_channels = 10
+positional_channels = 2
+lift_channels = 256
+latent_channels = 128
+hidden_channels = 512
+projection_channels = 256
+blocks = 3
+modes_y = 64
+modes_x = 64
+lags_days = [5, 10, 30]
+batch_size = 8
+learning_rate = 0.01
+fallback_learning_rates = [0.001, 0.0005]
+adam_beta1 = 0.9
+adam_beta2 = 0.95
+weight_decay = 0.0
+mae_weight = 0.01
+pretrain_epochs = 30
+pretrain_patience = 5
+finetune_epochs = 15
+finetune_patience = 3
+cosine_t_max = 3
+cosine_eta_min = 0.00001
+gradient_clip_norm = 0.0
+mixed_precision = false
+spatial_stride_low_resolution = 8
+
+[evaluation]
+initial_condition_indices = [387, 1860, 701, 1056, 1358, 1159, 49, 463, 676, 833, 1531, 189, 1972, 2030, 35]
+initial_index_semantics = "absolute_post_spinup_production_index"
+short_horizon_days = 200
+long_horizon_days = 2000
+figure2_index = 387
+figure5_index = 387
+figure7_index = 387
+figure9_early_start = 0
+figure9_early_stop = 500
+figure9_late_start = 1500
+figure9_late_stop = 2000
+east_of_lon_deg = 10.0
+figure11_day_start = 800
+figure11_day_stop = 1000
+figure11_lat_min_deg = 25.0
+figure11_lat_max_deg = 35.0
+area_weighted_metrics = true
+acc_climatology = "full_control_7200_days"
+theory_rho0_kg_m3 = 1000.0
+theory_beta0_m_inv_s = 0.00000000002
+
+[hpc]
+account = "pod-users"
+cpu_partition = "batch"
+short_partition = "short"
+gpu_partition = "gpu"
+cpu_nodes = 2
+mpi_ranks = 64
+mpi_ranks_per_node = 32
+gpu_count = 1
+cpus_per_gpu_task = 8
+memory_per_gpu = "64G"

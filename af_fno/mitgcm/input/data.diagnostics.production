@@ -1,0 +1,17 @@
+ &DIAGNOSTICS_LIST
+ dumpAtLast=.FALSE.,
+ diag_mnc=.FALSE.,
+ fields(1:3,1)='UVEL    ','VVEL    ','THETA   ',
+ fileName(1)='dynState',
+ frequency(1)=-86400.,
+ timePhase(1)=0.,
+ fileFlags(1)='R       ',
+ fields(1,2)='ETAN    ',
+ fileName(2)='surfState',
+ frequency(2)=-86400.,
+ timePhase(2)=0.,
+ fileFlags(2)='R       ',
+ &
+ &DIAG_STATIS_PARMS
+ &
+

@@ -1,0 +1,3 @@
+# Install PyTorch for CUDA 12.4 first (see bootstrap script), then the project.
+-e .[fno,dev]
+
