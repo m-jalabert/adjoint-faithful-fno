@@ -60,18 +60,20 @@
   \vspace{0.12in}
   {\large \MITgcm{} baroclinic double-gyre benchmark\par}
   \vspace{0.14in}
-  {\color{graytext}\textbf{Status date: 21 July 2026} \quad
+  {\color{graytext}\textbf{Status date: 22 July 2026} \quad
   Canonical plan: \texttt{AF\_FNO\_Project\_Plan.tex}}
 \end{center}
 
 \projectbox{teal}{lightteal}{%
 \textbf{Current position.}  The control, low-wind, and high-wind trajectory datasets
 (S0--S2) are complete.  S0 reproduces the expected qualitative tutorial circulation
-and has passed all seven numerical validation gates.  The immediate critical path is
-one shared preprocessing pass over S0--S2, followed by an adapted Bire-architecture
-baseline (A0).  The intermediate-wind simulations I1--I2 and the response/adjoint
-programme follow only after this baseline is established.  The local source tree has
-also been cleaned and prepared for its first remote Git commit.}
+and has passed all seven numerical validation gates.  Model A's overfit, sealed
+development, frozen final training, and project-facing evaluation stages are complete.
+The immediate critical path is Model B.  Its overfit and three matched development
+profiles passed; the frozen 12-epoch full-loss realization is job 284342.
+The intermediate-wind simulations I1--I2 and the response/adjoint programme follow only
+after the comparison ladder is established.  The local source tree has also been cleaned
+and prepared for its first remote Git commit.}
 
 \section{Status legend}
 
@@ -101,10 +103,10 @@ M0 & Reproducible \MITgcm{} build and segmented runner & \Done & S0 build job 28
 M1 & S0 control trajectory & \Done & 100-year spin-up plus 10-year daily production; jobs 283676--283686; final data inventory verified. \\
 M2 & Tutorial validation & \Done & Validation job 283958; seven of seven gates passed; four project-facing figures and machine-readable report. \\
 M3 & S1/S2 forcing regimes & \Done & Low- and high-wind adjustment/production jobs 283959--283962 complete; daily inventories verified. \\
-R0 & Git provenance baseline & \Next & Clean first commit pushed to the project remote; generated data, upstream clones, builds, environments, and scheduler logs excluded. \\
-M4 & Shared ML dataset & \Next & Convert, center C-grid variables, mask, split chronologically, and compute training-only normalizers for S0--S2. \\
-M5 & A0 adapted Bire baseline & \Next & Small-sample overfit test, then frozen paper-architecture baseline trained and evaluated on the shared dataset. \\
-M6 & A--C model ladder & \Pending & Modern state-only model A, forward model B, then response-supervised \AF{} model C. \\
+R0 & Git provenance baseline & \Done & Clean first commit pushed to the project remote; generated data, upstream clones, builds, environments, and scheduler logs excluded. \\
+M4 & Shared ML dataset & \Done & Jobs 284041/284042 built and independently validated the 5.3~GB S0--S2 Zarr store: $3\times3600\times46\times62\times62$, centered/masked state, split hashes, and training-only normalizers. \\
+M5 & A0 adapted Bire baseline & \Done & Jobs 284043/284050/284063/284065 completed the overfit, development, frozen model, and outputs.  A0 improves held U/V forecasts but persistence remains better for temperature and SSH; metrics and figures are saved. \\
+M6 & A--C model ladder & \Active & Model A is complete.  Model B overfit job 284302 and development jobs 284304--284306 passed; the full loss won every raw held component and was frozen at epoch 12.  Final job 284342 is queued. \\
 M7 & I1/I2 wind interpolation & \Pending & Two unseen intermediate-wind trajectories generated and opened for inference only. \\
 M8 & Forward-response campaign & \Pending & 224 ten-day perturbed restarts: 128 training, 32 validation, and 64 inference. \\
 M9 & Blind adjoint evaluation & \Pending & Frozen artifacts/checksums recorded before 12 true-adjoint tests are generated or inspected. \\
@@ -174,14 +176,30 @@ S0 provenance copies & \path{outputs/af_fno/S0/provenance/} \\
 S0 raw archive & \path{/bigscratch/mjalabert314/bire_james25_repro/af_fno/mitgcm/S0/} \\
 S1 raw archive & \path{/bigscratch/mjalabert314/bire_james25_repro/af_fno/mitgcm/S1/} \\
 S2 raw archive & \path{/bigscratch/mjalabert314/bire_james25_repro/af_fno/mitgcm/S2/} \\
+Shared ML dataset & \path{/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/trajectories_v1.zarr} \\
+Dataset manifest & \path{/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/trajectories_v1.manifest.json} \\
+Dataset quality report & \path{/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/trajectories_v1.quality.json} \\
+A0 overfit artifacts & \path{/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/A0/overfit_v1/} \\
+A0 development artifacts & \path{/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/A0/development_v1/} \\
+A0 frozen artifacts & \path{/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/A0/final_v1/} \\
+A0 figures / numerical outputs & \path{outputs/af_fno/A0/final_v1/} \\
+A0 paper-style output package (job 284150 complete) & \path{outputs/af_fno/A0/paper_style_v1/} \\
+Model A overfit artifacts & \path{/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/A/overfit_v1/} \\
+Model A development artifacts (job 284152) & \path{/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/A/development_v1/} \\
+Model A frozen artifacts (job 284153) & \path{/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/A/final_v1/} \\
+Model A figures / numerical outputs (job 284155 complete) & \path{outputs/af_fno/A/final_v1/} \\
+Model B overfit artifacts (job 284302 complete) & \path{/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/B/overfit_v1/} \\
+Model B development profiles (jobs 284304--284306 complete) & \path{/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/B/development_*_v1/} \\
+Model B frozen artifacts (job 284342) & \path{/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/B/final_v1/} \\
 \bottomrule
 \end{tabularx}
 
 The S0 project directory contains a symbolic link named \texttt{raw\_mitgcm}; bulk
 output is not duplicated in \texttt{/home}.  The catalog records counts, final pickup,
-hashes, executable provenance, and canonical paths.  S1/S2 raw results currently reside
-under the corresponding scratch roots and should receive equivalent project-facing
-catalogs during preprocessing.
+hashes, executable provenance, and canonical paths.  The shared-dataset manifest seals
+the three source archives, the fixed split, and normalizer hashes; its independent
+quality report records finite/mask/spectral checks, one-day increment ranges, and a
+fresh normalization recomputation.
 
 \section{Frozen project decisions}
 
@@ -240,24 +258,29 @@ confounding the dataset, architecture, and derivative-aware objective at once.
 \section{Immediate execution sequence}
 
 \projectbox{amber}{lightamber}{%
-\textbf{Current next step: shared S0--S2 preprocessing.}  No additional long \MITgcm{}
-simulation is required before the first A0 training job.}
+\textbf{Current next step: Model B acceptance and incremental development.}
+Model B keeps Model A's exact architecture, residual target, inputs, normalizers,
+optimizer, seed, and chronological protocol.  Its declared objective adds a 20/30-day
+autoregressive rollout term, a 12-bin radial anomaly-spectrum term, and a boundary term
+on the first four wet cells east of each row's western wall.  Starting weights are
+$\lambda_{\mathrm{roll}}=0.5$, $\lambda_{\mathrm{spec}}=0.05$, and
+$\lambda_{\mathrm{bnd}}=0.25$.  Complete rollouts are filtered so no target crosses a
+split boundary.  All 62 available tests passed (one intentional skip), as did style,
+shell, production-Zarr, and $62\times62$ forward/backward checks.  V100 job 284302
+passed the 96-sample gate: total loss fell from 1.52456 to 0.04213 and one-step state
+loss from 0.52075 to 0.01704, with every named component lower and bitwise-identical
+checkpoint reload.  Development jobs 284304--284306 then compared rollout only,
+rollout plus spectra, and the full loss.  Under the common full objective their best
+held values were 0.044899, 0.044081, and 0.043064; the full profile also had the lowest
+raw state, rollout, spectral, and boundary terms.  Its epoch-12 minimum is frozen and
+job 284342 is the single final realization.}
 
 \begin{enumerate}
-\item Inventory and integrity-check every daily MDS record in the three production
-  regimes; write equivalent S1/S2 result catalogs.
-\item Center staggered U/V variables, apply wet masks, assemble the 46-channel state,
-  and add forcing/geometry features required by the declared input contract.
-\item Freeze chronological train/validation/test indices.  Compute normalization from
-  training indices only and record checksums for data, indices, and statistics.
-\item Verify physical units, one-step tendencies, spectra, NaNs, masks, and restart
-  continuity before exposing the dataset to a model.
-\item Run an A0 overfit test on 20--100 samples.  Require decreasing training loss and
-  exact save/reload inference before scheduling full training.
-\item Train and evaluate A0 against persistence and climatology; freeze its
-  configuration and report before implementing A--C.
-\item Generate I1/I2 and open them only for the predeclared unseen-wind interpolation
-  evaluation.
+\item Complete frozen Model B job 284342 and require bitwise-identical checkpoint reload.
+\item Evaluate A0/A/B/persistence with identical one-step and 10--100-day starts, plus
+  the predeclared spectral and western-boundary diagnostics.
+\item Generate I1/I2 only after Model B is frozen, then open them for the predeclared
+  unseen-wind interpolation evaluation.
 \end{enumerate}
 
 \section{Remaining simulation and evaluation programme}
@@ -348,6 +371,24 @@ duplicating extensive derivations.
 2026-07-21 & Accounting correction & Corrected total trajectory duration from 132 to 142 model-years. \\
 2026-07-21 & Infrastructure & Prepared the source tree for Git: removed disposable Slurm/LaTeX/Python artifacts, strengthened ignore rules, replaced the paper-only README with the AF--FNO project overview, and documented NASA portability.  The first remote commit remains R0. \\
 2026-07-21 & Campaign retired & Recorded cancellation of job 283514 and removed the obsolete $0.25^\circ$ MITgcm scratch data, build, input deck, job wrappers, and reports.  Retained only Bire-derived code evidence required for A0. \\
+2026-07-21 & Dataset conversion & Added and locally tested the S0--S2 MDS-to-Zarr converter, including declared C-grid centering, wet-mask handling, chronological split codes, and training-only normalizers.  All 39 available tests passed (one optional ML test skipped); Slurm job 284041 was submitted to create and validate \texttt{trajectories\_v1.zarr}. \\
+2026-07-21 & M4 complete & Conversion job 284041 completed in 1m32s and produced the 5.3~GB $3\times3600\times46\times62\times62$ store.  Independent job 284042 completed in 48s; it verified finite values, masks, split contract, spectrum, daily continuity, and recomputed the training-only normalizers to $3.12\times10^{-7}$ mean and $1.56\times10^{-7}$ scale maximum absolute error. \\
+2026-07-21 & A0 gate started & Added and smoke-checked the adapted A0 loader/trainer: 46 normalized state inputs, one normalized wind input, 46 normalized next-state targets, the recovered three-block separable FNO with 16 modes, masked paper-style MSE+MAE loss, and bitwise save/reload acceptance.  Submitted the 96-sample GPU overfit gate as job 284043. \\
+2026-07-21 & A0 overfit passed & Job 284043 completed in 6m11s on one V100 GPU.  Its 96 regime-balanced, training-only ten-day pairs reduced the masked normalized loss from 1.04999 to 0.002128 at learning rate 0.01; no fallback was needed, and saved/reloaded inference was bitwise identical.  Checkpoint SHA-256: \texttt{30406885a1d4...295c83b0e9}. \\
+2026-07-21 & A0 development started & Added the sealed-split development runner with chunk-aware chronological batches and persistence comparison.  Submitted V100 job 284050 for 12 epochs over 7,530 training pairs and 780 validation pairs; this is a development gate, not the frozen final A0 model. \\
+2026-07-21 & A0 schedule frozen & Development job 284050 completed in 18m12s.  Its best validation loss was 0.001841 versus persistence 0.014453, with bitwise checkpoint reload; the minimum occurred at epoch 10.  Froze the final configuration (10 epochs, batch 8, learning rate 0.01, unchanged paper-style optimizer/loss/seed) and submitted its single final realization as V100 job 284063. \\
+2026-07-21 & A0 model frozen & Final job 284063 completed in 14m46s.  It preserved bitwise checkpoint reload and obtained losses 0.001841/0.002272 on held validation/inference versus persistence 0.014453/0.014357.  Checkpoint SHA-256: \texttt{b879b64b8cc7...3663be18f}.  Submitted job 284065 to save the numerical and figure outputs in the project-facing output tree. \\
+2026-07-21 & A0 baseline closed & Evaluation job 284065 completed in 1m09s and saved \texttt{a0\_metrics.json}, \texttt{a0\_metrics\_arrays.npz}, and three PNG figures under \path{outputs/af_fno/A0/final_v1/}.  Held one-step A0/persistence RMSE ratios are 0.395 (U), 0.912 (V), 4.771 (temperature), and 13.612 (SSH); 10--100-day rollout figures show the same mixed state-variable result.  M5 is complete without a claim that A0 beats persistence for every component. \\
+2026-07-21 & A0 paper-style evaluation complete & V100 job 284150 completed in 53s without retraining or changing A0 and saved a distinct output package.  Its 15-member-per-regime, 10--200-day diagnostics adapt the forms of Bire et al. Figures 3, 5, 6, 7, and 9 to the 1-degree tutorial: multi-lead snapshots, spatial RMSE, ACC with training-global anomaly reference, and low/control/high wind-regime skill.  This is explicitly a diagnostic-form comparison, not a numerical reproduction of the paper figures. \\
+2026-07-21 & Model A overfit submitted & After 48 passing project tests (one intentional dependency-path skip), style/diff checks, a 62-by-62 CPU forward/backward pass, and a production-Zarr sample read, submitted V100 job 284068.  It ran the declared 96 regime-balanced, training-only pairs for the residual-learning/reload acceptance gate. \\
+2026-07-21 & Model A overfit passed & Job 284068 trained for 5m49s but failed only at checkpoint reload because NeuralOperator 2.0 adds a non-parameter \texttt{\_metadata} entry that PyTorch rejects as a state-dict key.  Filtered that entry from portable checkpoints, added a reload unit test, set \texttt{CUBLAS\_WORKSPACE\_CONFIG} for CUDA determinism, and reran the unchanged gate as job 284151.  Job 284151 completed in 5m58s: the masked relative-$L_2$ loss fell from 0.52061 to 0.01589 (best), and save/reload was bitwise exact.  Checkpoint SHA-256: \texttt{1a8ae303b797...43c21aeaad5b2}. \\
+2026-07-21 & Model A development submitted & After 52 passing project tests (one intentional dependency-path skip), submitted V100 job 284152.  It trains only the 7,530 chronological train pairs and scores the 780 held validation pairs for 12 epochs, against persistence, to select a single final Model A training duration. \\
+2026-07-21 & Model A schedule frozen & Development job 284152 completed in 17m24s.  Its best held validation relative-$L_2$ loss was 0.018119 versus persistence 0.110743 at epoch 10; final epoch loss was 0.019212, and reload was bitwise exact.  Froze one final schedule (10 epochs, batch 8, learning rate 0.001, AdamW $\beta=(0.9,0.95)$, $10^{-5}$ weight decay, seed 20260721) and submitted V100 job 284153. \\
+2026-07-21 & Model A model frozen & Final job 284153 completed in 14m38s.  It preserved bitwise checkpoint reload and achieved held validation/inference relative-$L_2$ losses 0.018119/0.018400 versus persistence 0.110743/0.110719.  Submitted job 284155 to save Model A one-step, rollout, snapshot, and direct A0-versus-A figures plus numerical outputs in the project-facing output tree. \\
+2026-07-21 & Model A evaluation complete & Job 284155 completed in 1m38s and saved metrics/arrays plus four figures under \path{outputs/af_fno/A/final_v1/}.  Held 10-day Model A/persistence RMSE ratios are 0.169 (U), 0.467 (V), 2.052 (temperature), and 2.277 (SSH), compared with A0's 0.395, 0.912, 4.771, and 13.612.  At 100 days Model A still has temperature/SSH ratios 17.79/24.48; therefore A is a forward-state improvement over A0 but not a stable long-rollout solution. \\
+2026-07-22 & Model B gate submitted & Implemented the controlled Model B forward-loss pipeline without changing Model A's architecture, data, residual target, optimizer, or seed.  The loss contract adds 20/30-day autoregressive error, 12-bin radial anomaly spectra at 10/20/30 days, and the first four wet cells from the western wall at all three leads.  Added incremental development profiles, frozen-protocol A0/A/B/persistence evaluation, loss-contract hashing, checkpoint reload gates, tests, and Slurm wrappers.  All 62 available tests passed (one intentional skip), and a production-grid three-step CPU forward/backward check had finite gradients.  Submitted the 96-sample full-loss V100 acceptance run as job 284302. \\
+2026-07-22 & Model B overfit passed & Job 284302 completed in 13m12s.  On 96 balanced training-only rollouts it reduced complete loss from 1.52456 to 0.04213 and one-step state loss from 0.52075 to 0.01704; rollout, spectral, and western-boundary components all fell, learning rate 0.001 passed without fallback, and checkpoint reload was bitwise exact.  Checkpoint SHA-256: \texttt{512707d82bce...17871c159e28}.  Dependency-gated rollout-only, rollout-plus-spectral, and full-loss development jobs 284304--284306 started after acceptance. \\
+2026-07-22 & Model B schedule frozen & Development jobs 284304--284306 completed in 43--44 minutes with bitwise reload.  At each profile's held minimum, common full-objective values were 0.044899 (rollout only), 0.044081 (rollout plus spectra), and 0.043064 (full); the full profile also had the lowest state (0.017925), rollout (0.033599), spectral (0.009012), and boundary (0.031558) terms.  Its minimum was epoch 12 versus persistence 0.306148.  Froze epochs 12, batch 8, learning rate 0.001, unchanged optimizer/seed/loss weights, and submitted final job 284342.  Full-development checkpoint SHA-256: \texttt{e185477b126c...af23a7a8119d}. \\
 \bottomrule
 \end{longtable}
 
