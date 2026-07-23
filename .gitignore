@@ -43,6 +43,7 @@ external/*
 docs/*.pdf
 !docs/AF_FNO_Project_Plan.pdf
 !docs/Project_tracking.pdf
+!docs/Results_tracking.pdf
 
 # Large scientific formats must live on scratch, not in Git.
 *.data

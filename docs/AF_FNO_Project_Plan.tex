@@ -68,7 +68,7 @@ forward losses and a small set of forward perturbation--response pairs. Generate
 \MITgcm{} adjoints only after the emulators are frozen, and use them as a blind test.
 \end{decisionbox}
 \vfill
-{\large Revised technical proposal --- 21 July 2026\par}\vspace{0.45in}
+{\large Revised technical proposal --- 23 July 2026\par}\vspace{0.45in}
 {\small Ten-week scope; official \MITgcm{} baroclinic-gyre tutorial;
 NeuralOperator 2.0 implementation\par}
 \end{titlepage}
@@ -85,7 +85,8 @@ NeuralOperator 2.0 implementation\par}
 or loss, train a frozen \textbf{A0 adapted Bire FNO} on exactly the same trajectories.
 This tests transfer of the paper's qualitative trends---useful short forecasts, stable
 rollouts, and sensitivity to wind amplitude---without claiming a bitwise reproduction
-of its undocumented \(0.25^\circ\) dataset. Then introduce the modern A--C ladder and
+of its undocumented \(0.25^\circ\) dataset. Then introduce the modern A--D ladder:
+A and B are controlled baselines, C is selected for forward fidelity, and D adds
 forward-only response supervision. Do not put a single \MITgcm{} adjoint in training or
 model selection.
 \end{decisionbox}
@@ -97,7 +98,7 @@ The minimum credible programme is:
 Bire et al.; inference-only and not 20 years long.
 \item \textbf{One frozen architecture-transfer baseline (A0)}: the recovered Bire FNO
 core, adapted only where the \(62\times62\), 46-state benchmark forces a change. It is
-trained and evaluated before the modern A--C models.
+trained and evaluated before the modern A--D models.
 \item \textbf{224 ten-day perturbed restarts}: 128 training, 32 validation, and 64
 inference. They provide local tangent information from forward \MITgcm{} only and total
 about \(6.1\) model-years.
@@ -136,10 +137,11 @@ short forward perturbation experiments make these gradients agree with \MITgcm{}
 adjoints more closely than a state-accurate forward FNO?
 
 \textbf{Hypotheses:} (1) the adapted A0 baseline reproduces the qualitative Bire forecast
-and wind-response trends on the coarser tutorial; (2) a modern FNO improves forward and
-boundary behavior relative to A0; (3) state accuracy alone does not ensure adjoint
-accuracy; and (4) a local response loss improves gradient direction without adjoint
-labels or loss of forward skill.
+and wind-response trends on the coarser tutorial; (2) a forward-selected modern FNO
+improves forecast, rollout, boundary, and resolved-scale behavior relative to A0;
+(3) state accuracy alone does not ensure adjoint accuracy; and (4) adding a local
+response loss to a forward-credible model improves gradient direction without adjoint
+labels or material loss of forward skill.
 
 \section{Why local perturbation--response information is the right approach}
 \subsection{A small state error can hide a wrong derivative}
@@ -237,8 +239,8 @@ allowed in A0:
 Horizontal grid & \(248\times248\) at \(0.25^\circ\) & \(62\times62\) including the land rim \\
 Dynamic state & Ten selected prognostic/diagnostic outputs & All 46 Markov-state channels; wind is the additional input \\
 Fourier modes & \([64,64]\) & \([16,16]\), preserving the approximate mode-to-grid ratio \\
-Coarse pretraining & Stride 8, yielding \(31\times31\) & Stride 2, also yielding \(31\times31\) \\
-Forecast target & Normalized next state & Retain for A0; Models A--C predict a normalized residual \\
+Coarse pretraining & Stride 8, yielding \(31\times31\) & Not used in the frozen A0; this is a recorded departure, not an inferred reproduction \\
+Forecast target & Normalized next state & Retain for A0; Models A--D predict a normalized residual \\
 Software & Historical \texttt{oceanfourcast} environment & Recovered architecture on pinned NeuralOperator 2.0 \\
 \bottomrule
 \end{tabularx}
@@ -335,9 +337,30 @@ levels as channels:
 x=[U_{1:15},V_{1:15},\Theta_{1:15},\eta],
 \qquad C_{\mathrm{out}}=46.
 \]
-Vertical velocity, pressure, and streamfunction remain diagnostics computed by a fixed,
-differentiable postprocessor when needed. If salinity is active and nonconstant, add its
-15 levels rather than silently omitting it.
+Vertical velocity, pressure, and streamfunction are not independent prognostic channels.
+Streamfunction is diagnosed from all 15 U levels.  For the present z-coordinate,
+linear-EOS, constant-salinity configuration, pressure is reconstructed as the exact
+\MITgcm{} diagnostic \texttt{PHIHYD}, i.e.\ hydrostatic pressure anomaly divided by
+\(\rho_0\), in \(\mathrm{m^2\,s^{-2}}\):
+\[
+\frac{\rho_k'}{\rho_0}=-\alpha_T(\Theta_k-T_{\mathrm{ref},k}),\qquad
+\Phi_k'=g\eta+\mathcal{H}_k\!\left(\frac{\rho'}{\rho_0}\right).
+\]
+Here \(\mathcal{H}\) is the fixed finite-difference vertical integration implemented in
+\texttt{calc\_phi\_hyd.F}; the \(g\eta\) term matches \texttt{diags\_phi\_hyd.F}.
+Report \(\Phi'\) at Bire's zero-based surface, mid-depth, and bottom indices
+\(0,7,14\).  Physical pressure anomaly in Pa is \(\rho_0\Phi'\).  This map is linear,
+differentiable, and has a fixed transpose \(\mathcal{H}^T\) for later adjoint objectives.
+It therefore adds evaluation views but no new learned information or output channels.
+If salinity later becomes active and nonconstant, add its 15 levels and update the
+equation of state rather than silently omitting it.
+
+The implementation was checked against the archived S0 \MITgcm{} final-state
+\texttt{PH} dump at iteration 2,851,200 over all 15 levels and 3,600 wet cells.
+Maximum absolute error was \(3.89\times10^{-4}\ \mathrm{m^2\,s^{-2}}\) and RMSE was
+\(9.75\times10^{-6}\ \mathrm{m^2\,s^{-2}}\), passing the predeclared
+\(10^{-3}\) maximum-error tolerance.  The reproducible report is
+\path{outputs/af_fno/pressure_validation_v1/pressure_validation.json}.
 
 Inputs comprise the 46 dynamic channels, wind stress, and normalized longitude, latitude,
 wet mask, and distance-to-wall fields. Record every C-grid interpolation operator.
@@ -352,7 +375,7 @@ affine transform with the model. Gradient comparisons must undo normalization:
 \frac{\partial J}{\partial x_i}
 =\frac{1}{\sigma_i}\frac{\partial J}{\partial\widetilde{x}_i}.
 \]
-Models A--C predict the normalized ten-day residual
+Models A--D predict the normalized ten-day residual
 \(\Delta\widetilde{x}_n=\widetilde{x}_{n+1}-\widetilde{x}_n\). This gives the
 network an explicit identity path and focuses capacity on change. A0 alone retains the
 recovered paper-style normalized next-state target; this intentional difference belongs
@@ -361,7 +384,7 @@ to the architecture-transfer baseline and must be stated in every A0 comparison.
 \section{Modern adjoint-faithful FNO}
 \subsection{Starting implementation}
 After freezing A0, use the maintained \texttt{neuraloperator} package and pin its release
-and commit. Begin the common A--C ladder with a modest dense FNO:
+and commit. Begin the common A--D ladder with a modest dense FNO:
 
 \begin{table}[htbp]\centering\small
 \caption{Starting \AF{} configuration. Validation uses only trajectories and forward
@@ -412,23 +435,175 @@ for \(\mathcal{L}_{\mathrm{resp}}\): spatial output derivatives and derivatives 
 input--output operator are different objects.
 
 \begin{table}[htbp]\centering\small
-\caption{Required architecture-transfer baseline and ablation models.}
+\caption{Required architecture-transfer baseline and controlled model ladder.}
 \label{tab:ablations}
-\begin{tabularx}{\textwidth}{@{}p{0.08\textwidth}p{0.25\textwidth}YY@{}}
+\begin{tabularx}{\textwidth}{@{}p{0.07\textwidth}p{0.26\textwidth}YY@{}}
 \toprule
 \textbf{Model} & \textbf{Training signal} & \textbf{Purpose} & \textbf{Expected result} \\
 \midrule
 A0 & Adapted Bire architecture and paper-style one-step loss & Test architecture transfer before modernization & Qualitative Bire trend on the common data \\
 A & Modern dense FNO + one-step residual state loss & Controlled modern baseline & Comparable state skill; derivatives may be poor \\
 B & Model A + rollout + spectral/boundary losses & Isolate modern forward losses from response data & Better rollout and boundary state skill \\
-C & Model B + local response loss & Test the \AF{} hypothesis & Similar state skill; better responses and adjoints \\
+C & Forward-selected dense FNO + balanced state/increment, rollout, tapered spectral, and boundary losses & Establish a forward-credible emulator before derivative training & Pass the complete forward gate \\
+D & Frozen Model C design + local response loss & Test the \AF{} hypothesis without asking derivative data to repair the forward model & Preserve C's state skill; improve responses and adjoints \\
 \bottomrule
 \end{tabularx}
 \end{table}
 
-Freeze A0 before training A. Tune the A--C terms incrementally. Increase
-\(\lambda_{\mathrm{resp}}\) until validation response error improves without worsening
-ten-day state error by more than 5\%. Lock all weights before viewing any true adjoint.
+Models A and B remain frozen controls; B is not retroactively retuned.  Model C is the
+only forward-selection stage, and its search is limited and recorded below.  Model D
+copies C's selected architecture, preprocessing, and forward objective, then adds
+\(\mathcal{L}_{\mathrm{resp}}\).  Increase \(\lambda_{\mathrm{resp}}\) only on response
+validation data until response error improves without worsening C's validation state
+error by more than 5\%.  Lock all weights before viewing any true adjoint.
+
+\subsection{Model C: predeclared forward-selection protocol}
+
+The preliminary A/B results show that architecture plausibility is not enough:
+temperature and SSH can be worse than persistence even when the 46-channel aggregate
+loss improves.  Following the practical FNO workflow in Duruisseaux et al.
+\cite{Duruisseaux2026}, Model C therefore separates representation, optimization, and
+data adequacy rather than changing all three at once.
+
+\begin{decisionbox}
+\textbf{Model C implementation contract opened 23 July 2026.}  The first implementation
+retains the 51 declared raw inputs, NeuralOperator grid lifting, dense float32 spectral
+weights, Channel MLP, four-layer width-32 starting point, 10\% padding, and parallel
+\(3\times3\) local branch.  It replaces B's channel-aggregated objective with equal
+U/V/temperature/SSH group terms, scales increment error with training-only per-channel
+ten-day RMS, and compares spectra of increments on the exact \(60\times60\) wet
+rectangle after a Hann taper.  Initial forward/backward checks contain 630,262
+parameters at width 32 and 2,443,542 at width 64.  Width 64 is therefore a conditional
+capacity test, not the assumed default.  Training-only C1a calibration subsequently
+froze increment/rollout/spectral/boundary coefficients
+\(0.001/0.15/10^{-5}/0.065\); these scales precede all validation and architecture
+selection.
+\end{decisionbox}
+
+\begin{examplebox}{C0 training-only audit, 23 July 2026}
+The sealed audit verified the dataset metadata hash and read only 7,530 training pairs.
+The per-channel normalized ten-day increment RMS spans a factor of 147, so channelwise
+increment scaling is necessary.  At \((16,16)\), the global Fourier path contains
+8.8\%, 24.0\%, 67.8\%, and 85.6\% of tapered U, V, temperature, and SSH increment
+energy; full-state fractions all exceed 99.6\%.  The local branch is therefore essential,
+and more modes alone cannot represent most velocity-increment energy.  The
+\((24,16)\) candidate captures 12.5\%/32.9\% for U/V, compared with
+9.0\%/25.6\% for \((16,24)\); it was added before validation was opened.  Increment
+autocorrelation implies only about 278--398 effective samples across the three regimes,
+with S1 much more correlated than S0/S2.  This supports regime-balanced learning curves,
+but not immediate replacement of version-1 data.
+\end{examplebox}
+
+\begin{examplebox}{C1a loss-gradient calibration, 23 July 2026}
+Complex-safe CPU job 285116 completed in 4m39s using only the same 96 balanced training
+rollouts.  After its 20-epoch core warmup, state/increment/rollout/spectral/boundary
+gradient norms were 1.965/830.5/6.484/40,763/7.411.  The automatically clipped proposal
+was rejected: coefficients 0.01 would still make increment and spectral gradients
+dominate.  Unclipped targets were
+\(0.001183/0.1515/1.205\times10^{-5}/0.06629\); the rounded frozen coefficients above
+produce weighted gradient ratios 0.423/0.495/0.207/0.245 relative to state.  The very
+small spectral coefficient does not remove spectral supervision because its raw
+gradient is about 20,700 times the state gradient.  Pending GPU replica 284858 was
+cancelled with zero runtime.  No candidate checkpoint or validation metric was produced.
+\end{examplebox}
+
+\begin{examplebox}{C1b memorization result and C1c duration test, 23 July 2026}
+Training-only job 285192 completed both controlled 160-epoch attempts in 58m30s.
+At learning rate 0.001 it passed total, spectral, state-group, rollout, and boundary
+criteria, but temperature/SSH increment errors were 1.802/2.888 times persistence on
+the exact 96 records.  Learning rate 0.0005 improved these to 1.285/2.032; U/V were
+already 0.254/0.442 times persistence.  Therefore C1b is rejected specifically for
+slow-field increments despite a 97.7\% total reduction, 99.1\% spectral reduction,
+0.0304 maximum state-group error, 0.0312 rollout, and 0.0397 boundary error.
+
+The lower learning rate achieved its best total at the final epoch, so undertraining is
+tested before changing loss weights or capacity.  C1c fixes the same data, loss,
+architecture, seed, and batch order, uses only learning rate 0.0005, and extends 160 to
+320 epochs.  Its corrected gate compares every increment group with persistence
+measured on the exact sampled records rather than assuming that the full-training RMS
+makes every finite subset exactly one.  Rejection now preserves learning curves and a
+bitwise-reload-tested diagnostic checkpoint.  No validation data are opened.
+\end{examplebox}
+
+\begin{enumerate}
+\item \textbf{Training-only diagnostics.}  Compute tapered two-dimensional spectra of
+  normalized states and ten-day increments by variable group, verify padding and
+  mode indexing, run a stronger 96-sample memorization test, and log both raw and
+  weighted loss terms and their gradient norms.  Report U, V, temperature, and SSH
+  separately; the 15/15/15/1 channel multiplicity must not decide the fit.
+\item \textbf{Repair the objective before enlarging the network.}  Start from B's dense
+  four-layer, width-32 architecture.  Use an equal-weight mean of the four
+  group-normalized state errors, add a group-balanced normalized-increment error, retain
+  the three-step rollout, and compute spectral loss after wet-field extension and a
+  fixed taper so the land discontinuity is not mistaken for unresolved physics.
+  Normalize boundary and spectral terms by group and choose their weights from the
+  training diagnostics, then freeze the weights for candidate comparison.
+\item \textbf{Small representation search.}  Compare mode pairs
+  \((12,12),(16,16),(16,24),(24,16),(24,24)\) and widths 32 and 64 with four layers and
+  10\% padding.  Use successive halving on fixed training/validation blocks.  For only
+  the two best candidates, test padding 20\% and six layers if the failure diagnostic
+  specifically indicates wall leakage or insufficient capacity.  Dense float32
+  spectral weights, lifting, projection, Channel MLP, mask, wall distance, and the local
+  \(3\times3\) branch remain mandatory; factorization is a memory fallback.
+\item \textbf{Freeze by validation, then test once.}  Train the selected configuration
+  with three fixed seeds.  Candidate ranking is lexicographic: first require every
+  U/V/temperature/SSH ten-day validation RMSE ratio to beat persistence; next minimize
+  the worst group ratio; then minimize the predeclared mean of 30-, 90-, and 180-day
+  rollout, boundary, and resolved-spectrum scores.  Inference years, I1/I2, response
+  inference, and adjoints remain sealed until the configuration, seeds, code, and
+  normalizer hashes are recorded.  The complete 10--360-day package is run only after
+  that freeze.
+\end{enumerate}
+
+This search is deliberately not ``try until a test plot looks good.''  A candidate that
+reduces the aggregate validation loss but remains worse than persistence for any state
+group is not selected.  Conversely, increasing Fourier modes is not automatic: the
+62-point grid limits meaningful frequencies, and added modes are accepted only when
+training-only increment spectra and held validation metrics support them.
+For the real-valued NeuralOperator convolution, a declared
+\(\texttt{n\_modes}=(m_y,m_x)\) retains \(m_y\) centered Fourier rows but only
+\(m_x/2+1\) nonnegative real-FFT columns internally.  Every spectral audit and report
+uses that exact convention rather than interpreting \(16\times16\) as 256 independent
+complex coefficients.
+
+\textbf{Calibration backend rule.}  CUDA is an efficiency choice, not a scientific
+requirement for the C1a loss-gradient calibration.  Its 20 epochs on 96 training
+rollouts completed on eight CPU cores in 4m39s.
+The CPU and GPU replicas must use the same data, records, seed, architecture, and loss
+code but write separate artifacts.  If both complete, compare raw terms, gradient
+ordering, and proposed weighted contributions; modest floating-point differences are
+expected, whereas an order-of-magnitude disagreement blocks the loss freeze and requires
+diagnosis.  Global gradient norms are accumulated in float64 for real gradients and
+complex128 for complex spectral-weight gradients even though model arithmetic remains
+float32/complex64; this prevents diagnostic overflow without discarding the imaginary
+component.  Neither backend output is a candidate checkpoint or validation result.
+
+\subsection{Data-adequacy and expansion gate}
+
+The existing version-1 trajectories are sufficient to diagnose and select Model C:
+across S0--S2 they provide 7,530 overlapping ten-day training pairs, 780 validation
+pairs, and 1,860 sealed inference pairs.  They are not 7,530 independent realizations,
+because adjacent daily pairs overlap strongly.  More consecutive years would therefore
+increase the raw count much faster than the effective sample size.
+
+Before generating replacement data, run learning curves on chronological 25, 50, 75,
+and 100\% subsets, estimate integral autocorrelation times for the four state groups,
+compare training and validation error by group, and measure the three-seed spread.
+The evidence is considered \emph{data-limited} only when a candidate can fit the training
+blocks, validation skill improves consistently with more chronology, and between-seed
+or between-regime generalization remains the dominant error.  Poor training fit or
+insensitivity to added chronology points instead to optimization, capacity, or the
+objective and does not authorize more \MITgcm{} years.
+
+If this gate supports expansion, create a versioned \texttt{trajectories\_v2}; never
+overwrite version 1 or its results.  First target twice the \emph{effective} independent
+coverage using additional branches from separated equilibrated checkpoints in every
+wind regime, rather than merely appending adjacent years.  Consider three times the
+coverage only if the two-times learning curve remains materially positive.  Preserve a
+sealed test segment and 90-day buffers.  Any reported data-scale comparison retrains the
+relevant baselines on v2 or labels the changed-data comparison explicitly.  Intermediate
+winds I1/I2 and perturbation/adjoint truth are still generated only after the forward
+choice is frozen.
 
 \begin{figure}[htbp]\centering
 \begin{tikzpicture}[
@@ -444,14 +619,14 @@ arr/.style={-{Latex[length=2mm]},thick,draw=graytext}]
 \node[box,below=of base] (pert) {Perturbed forward\\restarts};
 \node[dat,right=of base] (traj) {Trajectory\\pairs};
 \node[dat,right=of pert] (resp) {Local responses\\\(D\mathcal{M}v\)};
-\node[box,right=13mm of traj,yshift=-8mm] (fno) {Freeze A0; train\\A--C in order};
+\node[box,right=13mm of traj,yshift=-8mm] (fno) {Freeze A0; train\\A--D in order};
 \node[test,right=10mm of fno] (adj) {Frozen FNO vs.\\12 adjoints};
 \draw[arr] (base)--(traj);\draw[arr] (base)--(pert);
 \draw[arr] (pert)--(resp);\draw[arr] (traj)--(fno);
 \draw[arr] (resp)--(fno);\draw[arr] (fno)--node[above,font=\scriptsize]{freeze}(adj);
 \end{tikzpicture}
 \\[-1mm]{\small\color{red}The adjoint archive has no path into training or tuning.}
-\caption{The common trajectory pipeline feeds A0 and A--C; response data enter only C,
+\caption{The common trajectory pipeline feeds A0 and A--D; response data enter only D,
 and the adjoint evaluation remains sealed.}
 \label{fig:flow}
 \end{figure}
@@ -503,29 +678,156 @@ a predeclared short line search, and evaluate the objective with one forward \MI
 run. This tests usefulness without turning adjoints into labels.
 
 \section{Evaluation and predeclared success criteria}
-Evaluate A0 beside persistence, climatology, and Models A--C on the forward tasks. Use
-one development seed throughout and three seeds, if affordable, for the final A versus C
-derivative comparison. A0 is frozen before I1/I2 are opened and is not tuned with response
-or adjoint data. Required plots are:
+\subsection{Bire et al. as a qualitative forward benchmark}
+
+The numerical errors in Bire et al. cannot be transferred to this experiment: their
+$0.25^\circ$, more turbulent double gyre has $248\times248$ points and different state
+variables, while the present tutorial has $62\times62$ points.  We instead predeclare
+the following \emph{trends} from their complete forward study as the benchmark
+\cite{Bire2025}:
+\begin{enumerate}
+\item Their ten-day map gave the best overall compromise among 5-, 10-, and 30-day
+  maps.  It beat persistence and pointwise time-mean climatology at useful short leads;
+  velocity lost deterministic skill first, near roughly three months, while pressure
+  and surface temperature retained useful skill longer.
+\item Spatial error grew first in the energetic western-boundary region.  At day 60
+  the ten-day map retained the most credible large-scale and boundary structure; after
+  deterministic phase information was lost, stable long integrations still retained
+  the characteristic anomaly length scales.
+\item The learned integrations remained bounded for thousands of model days.  The
+  five-day map developed excessive low-wind mesoscale variability, whereas the
+  30-day map aliased or missed propagating variability whose period was close to the
+  map interval.  This makes spectra and longitude--time diagrams necessary alongside
+  scalar RMSE.
+\item Long-run maximum streamfunction increased approximately linearly with wind-stress
+  amplitude, close to the expected Sverdrup trend for the ten-day map.  The low- and
+  high-intermediate wind cases were held out of training, so their ordering was a real
+  interpolation test rather than a fit diagnostic.
+\item Their emulator did \emph{not} reliably steer from an initial condition from one
+  regime after an abrupt change in imposed wind.  Initial-condition dynamics dominated
+  the new forcing.  We record this negative result explicitly: matching the equilibrium
+  wind ordering is necessary, but a response/adjoint model intended for control should
+  also improve the forcing-switch response.
+\end{enumerate}
+
+``Reproduce or improve Bire's trends'' below means recover this evidence pattern, not
+match their plotted values or claim an exact reproduction.  A model may decorrelate---a
+chaotic forecast should---but it must beat both simple baselines before decorrelation,
+remain bounded, preserve resolved spatial scales, and express the correct forcing
+ordering.  The complete adjoint campaign does not open until at least one modern
+forward model passes the gate below.
+
+\subsection{Frozen forward evaluation package}
+
+Evaluate A0 and Models A--D on identical chronological records and identical 15-member
+ensembles in each forcing regime.  A0 is frozen before I1/I2 are opened and no model is
+tuned after viewing response or adjoint tests.  Persistence and a regime-specific,
+training-only pointwise mean are the two primary baselines.  The current configuration
+has no imposed seasonal cycle, so calling the latter a daily climatology would be
+misleading; a day-of-year climatology will be added only if seasonal forcing is added.
+
+Every frozen model must produce the following versioned package.  Evaluation contract
+version 2 adds the deterministic pressure postprocessor; version-1 packages remain
+historical pre-pressure evidence and are never overwritten.  Machine-readable
+JSON stores definitions, scalar summaries, start indices, hashes, and gate outcomes;
+compressed NPZ stores the plotted arrays so a figure can be regenerated without rerunning
+the network.
+\begin{enumerate}
+\item \textbf{Deterministic skill:} physical-unit RMSE and pointwise-climatology ACC from
+  10 to 360 days for U, V, temperature, SSH, surface speed, SST, \texttt{PHIHYD} at
+  levels 0, 7, and 14, and barotropic streamfunction.  Curves show ensemble mean and 10--90\% range for the model,
+  persistence, and climatology.  Report the first lead at which each method loses ACC
+  or baseline skill; never infer stability from the ten-day score alone.
+\item \textbf{Spatial failures:} common-scale truth/forecast/error snapshots and spatial
+  RMSE maps at 10, 60, 180, and 360 days for all seven Bire-facing diagnostics:
+  surface speed, SST, SSH, the three pressure levels, and barotropic streamfunction.
+  Report the first four wet cells from the western wall separately,
+  plus full-domain vertical RMSE profiles, to expose boundary and deep-ocean drift.
+\item \textbf{Stability and scale retention:} one-year trajectories of a surface
+  kinetic-energy proxy, temperature, SSH, and maximum streamfunction; finite-value and land-mask
+  checks; normalized mean/variance drift by depth; radially binned spectra for all seven
+  Bire-facing diagnostics at 10, 90, 180, and 360 days; and a fixed-control-member SSH longitude--time diagram.  Spectra
+  are interpreted only over bins with non-negligible truth energy.
+\item \textbf{Forcing physics:} low/control/high curves of maximum streamfunction,
+  surface speed, SST, and SSH, with model and \MITgcm{} slopes computed on the same
+  ensemble.  Once generated, I1/I2 are added as inference-only interpolation points.
+  A separate forcing-switch experiment initializes every branch from the same control
+  states and changes only the prescribed wind; it is clearly labeled as a response
+  diagnostic until matching switched-wind \MITgcm{} trajectories exist.
+\item \textbf{Audit trail:} checkpoint and dataset hashes, software/device metadata,
+  exact ensemble starts, masks, normalizers, units, climatology definition, spectra,
+  snapshots, maps, and all per-member values needed to reproduce uncertainty bands.
+\end{enumerate}
+
+The forward gate is passed by a modern model only if all of the following hold:
 \begin{itemize}
-\item A0/A--C RMSE and correlation versus lead against persistence and daily climatology;
-\item A0/A--C one-year rollout stability and spectra at low/control/high wind;
-\item A0/A--C skill and monotone physical response at the two unseen intermediate winds;
-\item response error and cosine by direction family and region;
-\item adjoint angle and relative error for all 12 tests, paired A versus C;
-\item one forward \MITgcm{} control-update test per objective family.
+\item it improves on A0 and beats both persistence and training climatology at ten days
+  for all seven Bire-facing diagnostics (speed, SST, SSH, surface/mid/bottom
+  \texttt{PHIHYD}, and streamfunction),
+  with useful ACC persisting beyond a single map step;
+\item its 360-day rollout is finite, respects the land mask, has no wet-cell normalized
+  state magnitude above 20, and has no group-mean 360-day drift larger than two training
+  standard deviations relative to the matching \MITgcm{} ensemble;
+\item at 360 days its resolved-bin median spectral-energy ratio lies in $[0.25,4]$ for
+  each Bire-facing field; phase agreement is not required after decorrelation;
+\item the fitted low/control/high maximum-streamfunction slope has the same sign as
+  \MITgcm{} and magnitude within a factor of two.  The same requirement is later applied
+  with I1/I2 inserted, without refitting or retuning the emulator;
+\item the forcing-switch response has the physically expected sign by one year.  Until
+  switched-wind \MITgcm{} truth is generated, this last item is reported as provisional
+  and cannot by itself establish a pass.
 \end{itemize}
 
-Predeclared targets, not promises, are:
+Failure of a subcriterion is retained and plotted, not averaged away.  In particular,
+a lower aggregate normalized loss cannot compensate for temperature or SSH being worse
+than persistence, a blow-up, or reversed wind sensitivity.  If neither A nor B passes,
+the project proceeds only through the predeclared Model C forward-selection stage.
+The expensive perturbation/adjoint campaign remains closed unless C, or an explicitly
+versioned successor approved under the same validation-only rules, passes.
+
+The three pressure fields are correlated derived views of temperature and SSH, not three
+additional independent trials.  They are nevertheless required because Bire et al.
+reported them directly and because a model can have acceptable bulk temperature/SSH
+error while producing vertically accumulated hydrostatic errors that are unsuitable for
+pressure-based objectives.  Gate failures are therefore interpreted field by field;
+pressure does not alter training or inflate the learned state dimension.
+
+\subsection{Response and adjoint evaluation package}
+
+The derivative study uses the predeclared dates, 12 objective--horizon cases, direction
+families, regional masks, physical inner products, and perturbation amplitudes.  All
+models see the same states and perturbations.  Three final seeds are used for the paired
+A/B/C/D comparison if affordable; seed spread is shown rather than folded into the test
+count.  For each case save both physical-unit and normalized arrays, including state and
+control perturbations, masks, objective weights, JVPs, gradients, Taylor sequences, and
+line-search outcomes.  Required displays and tables are:
+\begin{enumerate}
+\item \textbf{Perturbation validity:} central-difference linearity versus perturbation
+  amplitude, plus/minus symmetry, numerical noise floor, and Taylor remainder slopes,
+  separated by variable, depth, direction family, boundary/interior region, and horizon.
+\item \textbf{Forward responses:} true, emulator, and difference response maps on common
+  symmetric colour scales; predicted-versus-true directional-response scatter; relative
+  response error, cosine, and gain ratio.  Show every case as well as bootstrap intervals
+  for the paired aggregate; do not hide sign failures behind the median.
+\item \textbf{Adjoint fields:} signed \MITgcm{}, emulator, and difference maps; depth
+  slices and vertical profiles; full physical-space and declared projected-subspace
+  relative error, cosine angle, magnitude ratio, sign agreement, and top-sensitivity
+  overlap.  Plot error versus wall distance and depth, and compare resolved gradient
+  spectra/coherence to distinguish phase, amplitude, and boundary errors.
+\item \textbf{Operator consistency:} verify the duality identity
+  $q^T(Jv)=v^T(J^Tq)$ for the emulator, compare automatic differentiation with finite
+  differences, and report how ten-day Jacobian errors compose at 30 days.
+\item \textbf{Control usefulness:} for each objective plot the predeclared line-search
+  step, emulator-predicted $\Delta J$, forward-\MITgcm{} $\Delta J$, and constraint
+  residual.  Store the full objective-versus-step curve, not only the chosen update.
+\end{enumerate}
+
+Predeclared derivative targets, not promises, are:
 \begin{itemize}
-\item \textbf{A0 transfer:} learn the small-sample map, beat persistence or climatology
-at useful short leads, and reproduce the direction of the wind-amplitude trend. Exact
-Bire error values are neither expected nor claimed.
-\item \textbf{Modern forward trend:} A or B improves on A0, remains stable for one year,
-and varies monotonically with held-out wind amplitude.
-\item \textbf{Response:} C lowers blind response error by at least 25\% versus A while
-ten-day state error rises by no more than 5\%.
-\item \textbf{Adjoint:} C improves median projected-gradient cosine by at least 0.2.
+\item \textbf{Response:} D lowers blind response error by at least 25\% versus its
+forward parent C while ten-day state error rises by no more than 5\%.
+\item \textbf{Adjoint:} D improves median projected-gradient cosine by at least 0.2
+versus C.
 Useful targets are median cosine above 0.8 at ten days and 0.6 at 30 days.
 \item \textbf{Usefulness:} at least 80\% of predeclared emulator-gradient control steps
 lower the objective in forward \MITgcm{}.
@@ -533,7 +835,8 @@ lower the objective in forward \MITgcm{}.
 
 Failure remains diagnostic. Better one-step JVPs but poor 30-day adjoints implicate
 Jacobian composition; no JVP improvement implicates perturbation scale or subspace;
-interior-only success implicates boundary representation.
+interior-only success implicates boundary representation; good angles but wrong gains
+implicate calibration rather than sensitivity direction.
 
 \section{Ten-week execution plan}
 \begin{longtable}{@{}p{0.09\textwidth}p{0.26\textwidth}p{0.38\textwidth}p{0.19\textwidth}@{}}
@@ -550,12 +853,12 @@ development.}\label{tab:timeline}\\
 1 & Reproduce tutorial; benchmark; launch S0 & Versioned setup, restart test, wall-clock/model-year & Runs are reproducible \\
 2 & Complete S0--S2; preprocess state maps & Common data store, masks, transpose-checked operators & Training trajectories pass QC \\
 3 & Audit and freeze A0; train ten-day baseline & Architecture manifest, small-sample overfit, A0 checkpoint & Adapted Bire map learns signal \\
-4 & Train modern Model A; spectrum study & A0/A forward comparison and baselines & Qualitative Bire trend reproduced \\
-5 & Train B; run I1/I2 unseen winds & Rollout, spectrum, and interpolation plots & Modernization helps without leakage \\
-6 & Perturbation pilot and response data & Linearity plots; training/validation responses & Perturbations resolved and local \\
-7 & Train C; final forward/response seeds & A--C ablation; sealed checkpoints and scripts & Freeze models and criteria \\
-8 & Generate and verify 12 adjoints & Taylor checks; sealed adjoint archive & Open only after freeze \\
-9 & Gradient comparison and control updates & Tables, maps, true objective changes & Optional 90-day test decision \\
+4 & Train modern Model A; spectrum study & A0/A forward comparison and baselines & Record controlled baseline \\
+5 & Train and freeze B & Rollout, spectrum, and boundary-loss ablation & Diagnose remaining forward failures \\
+6 & Select and freeze C & Learning curves, limited search, three seeds, complete forward package & Forward gate must pass \\
+7 & Run I1/I2; perturbation pilot and response data & Interpolation and linearity plots; training/validation responses & Perturbations resolved and local \\
+8 & Train D; freeze derivative comparison & C/D response ablation; sealed checkpoints and scripts & State skill preserved within 5\% \\
+9 & Generate/verify adjoints; gradient and control tests & Taylor checks, maps, angles, and true objective changes & Open only after all freezes \\
 10 & Robustness, report, and handoff & Reproducible repository and manifest & Complete minimum claim \\
 \bottomrule
 \end{longtable}
@@ -592,7 +895,7 @@ restarts, and the 12 adjoint cases;
 \item a manifest with checksums, units, grids, masks, split dates, perturbation vectors,
 and configuration hashes;
 \item a frozen A0 architecture manifest and pinned NeuralOperator 2.0 pipelines for A0
-and Models A--C;
+and Models A--D;
 \item separate sealed archives for forward training data and comparison-only adjoints;
 \item scripts for forward, response, adjoint, and control-update metrics;
 \item a report stating the validated state, subspace, horizons, objectives, and failures.
@@ -607,7 +910,8 @@ identity.
 This project is feasible because it makes both the architecture-transfer and adjoint
 questions small and testable. It does not rebuild every undocumented detail of Bire
 et al.; A0 preserves the recoverable architecture and labels every forced adaptation,
-then the A--C ladder tests modernization and derivative supervision on a documented
+then the A--D ladder separates controlled modernization, forward selection, and
+derivative supervision on a documented
 \MITgcm{} case. The project spends new simulation budget on 224 short,
 information-rich perturbations instead of more long trajectories, then reserves 12
 expensive adjoints for a blind comparison.

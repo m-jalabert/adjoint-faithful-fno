@@ -1,0 +1,37 @@
+{
+  "calibration_report": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/loss_calibration_cpu_v1/model_c_loss_calibration.json",
+  "calibration_report_sha256": "3406c9104dd63702f0c10c2d968ae0eb3f1dfc8d3b84db967e069b3df592e469",
+  "freeze_date": "2026-07-23",
+  "gradient_targets_relative_to_state": {
+    "boundary": 0.25,
+    "increment": 0.5,
+    "rollout": 0.5,
+    "spectral": 0.25
+  },
+  "post_warmup_gradient_norms": {
+    "boundary": 7.410518547404372,
+    "increment": 830.4776346534295,
+    "rollout": 6.4840221599775925,
+    "spectral": 40762.833041196674,
+    "state": 1.964855456041561
+  },
+  "rounded_weighted_gradient_ratio_to_state": {
+    "boundary": 0.24514968981570498,
+    "increment": 0.4226660195791334,
+    "rollout": 0.4949999354945253,
+    "spectral": 0.20745970354134008
+  },
+  "status": "frozen_training_only",
+  "unclipped_coefficients": {
+    "boundary": 0.0662860312497894,
+    "increment": 0.0011829671107648335,
+    "rollout": 0.1515151712597132,
+    "spectral": 1.205053298218866e-05
+  },
+  "weights": {
+    "boundary": 0.065,
+    "increment": 0.001,
+    "rollout": 0.15,
+    "spectral": 0.00001
+  }
+}

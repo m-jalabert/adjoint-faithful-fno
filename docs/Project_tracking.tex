@@ -60,20 +60,26 @@
   \vspace{0.12in}
   {\large \MITgcm{} baroclinic double-gyre benchmark\par}
   \vspace{0.14in}
-  {\color{graytext}\textbf{Status date: 22 July 2026} \quad
+  {\color{graytext}\textbf{Status date: 23 July 2026} \quad
   Canonical plan: \texttt{AF\_FNO\_Project\_Plan.tex}}
 \end{center}
 
 \projectbox{teal}{lightteal}{%
 \textbf{Current position.}  The control, low-wind, and high-wind trajectory datasets
 (S0--S2) are complete.  S0 reproduces the expected qualitative tutorial circulation
-and has passed all seven numerical validation gates.  Model A's overfit, sealed
-development, frozen final training, and project-facing evaluation stages are complete.
-The immediate critical path is Model B.  Its overfit and three matched development
-profiles passed; the frozen 12-epoch full-loss realization is job 284342.
-The intermediate-wind simulations I1--I2 and the response/adjoint programme follow only
-after the comparison ladder is established.  The local source tree has also been cleaned
-and prepared for its first remote Git commit.}
+and has passed all seven numerical validation gates.  A0, A, and B are frozen; B's
+12-epoch realization completed with bitwise-identical reload and its 100-day evaluation
+shows materially better rollout than A but temperature and SSH still lose to persistence.
+Queued complete A/B characterization jobs 284816/284817 were cancelled with zero
+runtime.  The immediate critical path is now forward-optimized Model C.  Training-only
+C0 data/mode jobs 284850/284857 and C1a calibration job 285116 are complete.  The
+clipped automatic weights were rejected, balanced coefficients were frozen from the
+unclipped gradient targets, pending GPU replica 284858 was cancelled, and training-only
+C1b job 285192 completed but was rejected because temperature/SSH increments remained
+1.285/2.032 times persistence at the better learning rate.  Training-only C1c duration
+job 285265 is running on the short CPU partition; no validation, inference, intermediate-wind, response, or
+adjoint data enter it.  Model D response supervision and
+the complete adjoint campaign remain blocked until C passes the forward gate.}
 
 \section{Status legend}
 
@@ -106,7 +112,7 @@ M3 & S1/S2 forcing regimes & \Done & Low- and high-wind adjustment/production jo
 R0 & Git provenance baseline & \Done & Clean first commit pushed to the project remote; generated data, upstream clones, builds, environments, and scheduler logs excluded. \\
 M4 & Shared ML dataset & \Done & Jobs 284041/284042 built and independently validated the 5.3~GB S0--S2 Zarr store: $3\times3600\times46\times62\times62$, centered/masked state, split hashes, and training-only normalizers. \\
 M5 & A0 adapted Bire baseline & \Done & Jobs 284043/284050/284063/284065 completed the overfit, development, frozen model, and outputs.  A0 improves held U/V forecasts but persistence remains better for temperature and SSH; metrics and figures are saved. \\
-M6 & A--C model ladder & \Active & Model A is complete.  Model B overfit job 284302 and development jobs 284304--284306 passed; the full loss won every raw held component and was frozen at epoch 12.  Final job 284342 is queued. \\
+M6 & A--D model ladder & \Active & A0/A/B are frozen.  Model B final job 284342 completed with exact reload, but mandatory temperature/SSH persistence criteria fail.  Model C C0/C1a are complete; C1b rejected slow-field increment skill only, and one-variable C1c duration job 285265 is running.  D is blocked until C passes the forward gate. \\
 M7 & I1/I2 wind interpolation & \Pending & Two unseen intermediate-wind trajectories generated and opened for inference only. \\
 M8 & Forward-response campaign & \Pending & 224 ten-day perturbed restarts: 128 training, 32 validation, and 64 inference. \\
 M9 & Blind adjoint evaluation & \Pending & Frozen artifacts/checksums recorded before 12 true-adjoint tests are generated or inspected. \\
@@ -165,10 +171,15 @@ evidence for A0 are retained.
 
 \section{Data locations and provenance}
 
-\begin{tabularx}{\textwidth}{@{}p{0.23\textwidth}Y@{}}
+\begin{longtable}{@{}p{0.23\textwidth}p{0.73\textwidth}@{}}
 \toprule
 \textbf{Asset} & \textbf{Canonical location} \\
 \midrule
+\endfirsthead
+\toprule
+\textbf{Asset} & \textbf{Canonical location} \\
+\midrule
+\endhead
 S0 project entry point & \path{outputs/af_fno/S0/} \\
 S0 result catalog & \path{outputs/af_fno/S0/results_catalog.json} \\
 S0 validation & \path{outputs/af_fno/S0/tutorial_validation/} \\
@@ -179,6 +190,7 @@ S2 raw archive & \path{/bigscratch/mjalabert314/bire_james25_repro/af_fno/mitgcm
 Shared ML dataset & \path{/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/trajectories_v1.zarr} \\
 Dataset manifest & \path{/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/trajectories_v1.manifest.json} \\
 Dataset quality report & \path{/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/trajectories_v1.quality.json} \\
+Pressure-postprocessor validation & \path{outputs/af_fno/pressure_validation_v1/pressure_validation.json} \\
 A0 overfit artifacts & \path{/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/A0/overfit_v1/} \\
 A0 development artifacts & \path{/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/A0/development_v1/} \\
 A0 frozen artifacts & \path{/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/A0/final_v1/} \\
@@ -190,9 +202,16 @@ Model A frozen artifacts (job 284153) & \path{/bigscratch/mjalabert314/bire_jame
 Model A figures / numerical outputs (job 284155 complete) & \path{outputs/af_fno/A/final_v1/} \\
 Model B overfit artifacts (job 284302 complete) & \path{/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/B/overfit_v1/} \\
 Model B development profiles (jobs 284304--284306 complete) & \path{/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/B/development_*_v1/} \\
-Model B frozen artifacts (job 284342) & \path{/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/B/final_v1/} \\
+Model B frozen artifacts (job 284342 complete) & \path{/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/B/final_v1/} \\
+Model B figures / numerical outputs & \path{outputs/af_fno/B/final_v1/} \\
+Model C training-only diagnostics (jobs 284850/284857) & \path{/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/training_diagnostics_v1/} and \path{/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/training_diagnostics_v2/} \\
+Model C GPU loss-gradient calibration (job 284858) & \path{/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/loss_calibration_v1/} \\
+Model C CPU loss-gradient replica (jobs 284860/284864/285116) & \path{/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/loss_calibration_cpu_v1/} \\
+Model C frozen loss manifest & \path{config/model_c_loss_v1.json} \\
+Model C memorization/reload gate (job 285192) & \path{/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/overfit_v1/} \\
+Model C controlled duration gate (job 285265) & \path{/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/overfit_duration_v2/} \\
 \bottomrule
-\end{tabularx}
+\end{longtable}
 
 The S0 project directory contains a symbolic link named \texttt{raw\_mitgcm}; bulk
 output is not duplicated in \texttt{/home}.  The catalog records counts, final pickup,
@@ -224,25 +243,31 @@ fresh normalization recomputation.
   environments, compiled trees, and scheduler logs remain external to Git.
 \end{itemize}
 
-\section{New baseline decision: A0 before A--C}
+\section{Baseline and forward-selection ladder}
 
 \projectbox{blue}{lightblue}{%
-\textbf{Decision added 21 July 2026.}  Establish an adapted Bire paper-architecture
-baseline, A0, before developing the modern NeuralOperator A--C sequence.  This tests
+\textbf{Decision added 21 July and revised 23 July 2026.}  Establish an adapted Bire
+paper-architecture baseline, A0, before developing the modern NeuralOperator A--D
+sequence.  This tests
 whether the published architectural idea recovers the paper's qualitative wind and
-forecast trends on the available tutorial configuration.}
+forecast trends on the available tutorial configuration.  Keep B frozen, select C only
+for forward fidelity, and add local-response supervision only in D.}
 
 A0 is a controlled adaptation, not a claim of exact historical reproduction.  It keeps
 the recognizable Bire choices---channel-diagonal/separable spectral convolution,
 explicit pointwise channel mixing, three Fourier blocks, hidden width 128, positional
 encoding, and one-step state loss.  Resolution-equivalent Fourier truncation uses 16
-modes on the $62\times62$ grid.  If coarse-to-fine pretraining is retained, the coarse
-grid uses stride 2 ($31\times31$), rather than the paper code's stride 8.
+modes on the $62\times62$ grid.  The frozen A0 did not use the paper code's stride-8
+coarse pretraining; this is a recorded adaptation, not an inferred reproduction.
 
 Changes forced by this benchmark must be disclosed: 46 Markov-state channels
 (centered U, V, temperature, and SSH), the $62\times62$ grid, ten production years per
 regime, wind stress as an input, and a ten-day primary comparison horizon.  The obsolete
 public repository will be used as architectural evidence, not executed unchanged.
+Pressure is not a forgotten channel: evaluation contract v2 reconstructs \MITgcm{}
+\texttt{PHIHYD} at levels 0, 7, and 14 from predicted temperature and SSH using the
+configured linear EOS and exact finite-difference hydrostatic operator.  Its archived
+S0 validation passes with \(3.89\times10^{-4}\ \mathrm{m^2\,s^{-2}}\) maximum error.
 
 The comparison ladder is therefore:
 \begin{center}\small
@@ -250,7 +275,8 @@ The comparison ladder is therefore:
 $\longrightarrow$ \textbf{A0: adapted Bire}
 $\longrightarrow$ \textbf{A: modern state-only}\\[3pt]
 $\longrightarrow$ \textbf{B: forward losses}
-$\longrightarrow$ \textbf{C: \AF{} response supervision}.
+$\longrightarrow$ \textbf{C: forward-selected}
+$\longrightarrow$ \textbf{D: \AF{} response supervision}.
 \end{center}
 Every transition changes a declared element, making gains attributable rather than
 confounding the dataset, architecture, and derivative-aware objective at once.
@@ -258,29 +284,36 @@ confounding the dataset, architecture, and derivative-aware objective at once.
 \section{Immediate execution sequence}
 
 \projectbox{amber}{lightamber}{%
-\textbf{Current next step: Model B acceptance and incremental development.}
-Model B keeps Model A's exact architecture, residual target, inputs, normalizers,
-optimizer, seed, and chronological protocol.  Its declared objective adds a 20/30-day
-autoregressive rollout term, a 12-bin radial anomaly-spectrum term, and a boundary term
-on the first four wet cells east of each row's western wall.  Starting weights are
-$\lambda_{\mathrm{roll}}=0.5$, $\lambda_{\mathrm{spec}}=0.05$, and
-$\lambda_{\mathrm{bnd}}=0.25$.  Complete rollouts are filtered so no target crosses a
-split boundary.  All 62 available tests passed (one intentional skip), as did style,
-shell, production-Zarr, and $62\times62$ forward/backward checks.  V100 job 284302
-passed the 96-sample gate: total loss fell from 1.52456 to 0.04213 and one-step state
-loss from 0.52075 to 0.01704, with every named component lower and bitwise-identical
-checkpoint reload.  Development jobs 284304--284306 then compared rollout only,
-rollout plus spectra, and the full loss.  Under the common full objective their best
-held values were 0.044899, 0.044081, and 0.043064; the full profile also had the lowest
-raw state, rollout, spectral, and boundary terms.  Its epoch-12 minimum is frozen and
-job 284342 is the single final realization.}
+\textbf{Current next step: Model C stage C1c.}
+The starting C architecture is B's dense four-layer, width-32 residual FNO, but its
+objective gives equal status to U, V, temperature, and SSH; adds training-only
+per-channel increment scaling; and compares tapered spectra of ten-day increments on
+the exact wet rectangle.  The bounded later search contains modes
+\((12,12),(16,16),(16,24),(24,16),(24,24)\), widths 32/64, and conditional padding/layer
+tests.  Width 32 has 630,262 parameters; width 64 has 2,443,542 and is not justified
+unless capacity diagnostics require it.  C0 jobs 284850/284857 found a 147-fold range
+in per-channel increment RMS, only 278--398 effective increment samples across regimes,
+and substantially more velocity-increment energy in meridional than zonal added modes.
+Complex-safe job 285116 completed in 4m39s.  Its unclipped gradient targets froze
+increment/rollout/spectral/boundary coefficients at
+\(0.001/0.15/10^{-5}/0.065\), producing weighted gradient ratios
+0.423/0.495/0.207/0.245 relative to state.  Pending redundant GPU job 284858 was
+cancelled.  C1b job 285192 passed every criterion except increment skill: at the better
+learning rate, U/V were 0.254/0.442 times persistence but temperature/SSH were
+1.285/2.032.  Because its best checkpoint occurred at the final epoch, job 285265
+changes only duration from 160 to 320 epochs at learning rate 0.0005.  It remains a
+training-only gate, not a validated model.}
 
 \begin{enumerate}
-\item Complete frozen Model B job 284342 and require bitwise-identical checkpoint reload.
-\item Evaluate A0/A/B/persistence with identical one-step and 10--100-day starts, plus
-  the predeclared spectral and western-boundary diagnostics.
-\item Generate I1/I2 only after Model B is frozen, then open them for the predeclared
-  unseen-wind interpolation evaluation.
+\item Complete and interpret C1c job 285265.  Require at least 90\% total and 50\%
+  spectral reduction, every state-group error below 0.08, every increment group below
+  persistence on the exact sampled records, rollout/boundary below 0.10/0.15, and
+  bitwise-exact three-step reload.
+\item Run bounded validation-only successive halving; do not open inference data until
+  the selected architecture, schedule, three seeds, code, dataset, and normalizer hashes
+  are frozen.
+\item Run the complete C forward package.  Generate I1/I2 and response data only after
+  C passes the forward gate; train D only from the selected C design.
 \end{enumerate}
 
 \section{Remaining simulation and evaluation programme}
@@ -389,6 +422,18 @@ duplicating extensive derivations.
 2026-07-22 & Model B gate submitted & Implemented the controlled Model B forward-loss pipeline without changing Model A's architecture, data, residual target, optimizer, or seed.  The loss contract adds 20/30-day autoregressive error, 12-bin radial anomaly spectra at 10/20/30 days, and the first four wet cells from the western wall at all three leads.  Added incremental development profiles, frozen-protocol A0/A/B/persistence evaluation, loss-contract hashing, checkpoint reload gates, tests, and Slurm wrappers.  All 62 available tests passed (one intentional skip), and a production-grid three-step CPU forward/backward check had finite gradients.  Submitted the 96-sample full-loss V100 acceptance run as job 284302. \\
 2026-07-22 & Model B overfit passed & Job 284302 completed in 13m12s.  On 96 balanced training-only rollouts it reduced complete loss from 1.52456 to 0.04213 and one-step state loss from 0.52075 to 0.01704; rollout, spectral, and western-boundary components all fell, learning rate 0.001 passed without fallback, and checkpoint reload was bitwise exact.  Checkpoint SHA-256: \texttt{512707d82bce...17871c159e28}.  Dependency-gated rollout-only, rollout-plus-spectral, and full-loss development jobs 284304--284306 started after acceptance. \\
 2026-07-22 & Model B schedule frozen & Development jobs 284304--284306 completed in 43--44 minutes with bitwise reload.  At each profile's held minimum, common full-objective values were 0.044899 (rollout only), 0.044081 (rollout plus spectra), and 0.043064 (full); the full profile also had the lowest state (0.017925), rollout (0.033599), spectral (0.009012), and boundary (0.031558) terms.  Its minimum was epoch 12 versus persistence 0.306148.  Froze epochs 12, batch 8, learning rate 0.001, unchanged optimizer/seed/loss weights, and submitted final job 284342.  Full-development checkpoint SHA-256: \texttt{e185477b126c...af23a7a8119d}. \\
+2026-07-23 & Model B closed & Final job 284342 completed in 36m19s on one V100, preserved bitwise reload, and saved the frozen checkpoint.  Evaluation job 284346 completed the common 10--100-day package.  B reduces A's 100-day U/V/temperature/SSH errors to 0.521/0.409/0.450/0.405 of A, but its own persistence ratios remain 0.449/0.997/8.009/9.925.  B is retained unchanged as a successful rollout-loss ablation, not accepted as the forward parent of the response model. \\
+2026-07-23 & Complete jobs cancelled & Complete one-year A/B characterization jobs 284816 and 284817 were pending with zero runtime and were cancelled.  Their frozen checkpoints and existing evidence remain; uniform final packages are deferred until C freezes so they are generated once for the final comparison. \\
+2026-07-23 & Model ladder revised & Inserted forward-selected Model C between B and the response-supervised model, now named D.  The Duruisseaux practical FNO workflow and Bire evidence pattern remain the references.  C uses a bounded dense-FNO search and must pass the complete forward gate before response or adjoint work opens. \\
+2026-07-23 & Model C C0 started & Added the bounded C architecture/loss contract and training-only diagnostics.  Equal U/V/temperature/SSH state and boundary terms, per-channel ten-day increment RMS, and Hann-tapered increment spectra directly address B's aggregate-loss and spectral weaknesses.  Eight Model C tests, style checks, shell validation, and a $62\times62$ three-step forward/backward pass succeeded; width-32/64 parameter counts are 630,262/2,443,542.  CPU job 284849 exposed an incorrect assertion that checked future pair-start codes rather than target snapshot codes and stopped before creating output.  Added a regression test and submitted corrected job 284850 with unchanged train-only scope. \\
+2026-07-23 & Model C C0 complete & Corrected job 284850 completed in 42s and verified the immutable dataset hash and train-only read contract.  Its 96-sample audit found a 147-fold increment-RMS range and only 278--398 effective increment samples.  Because extra meridional modes retained more velocity-increment energy than extra zonal modes, added \((24,16)\) before validation and reran job 284857 in 33s.  At \((16,16)\), U/V/temperature/SSH increment fractions are 8.8/24.0/67.8/85.6\%; at \((24,16)\), 12.5/32.9/70.2/89.0\%. \\
+2026-07-23 & Model C C1a submitted & Added a training-only loss-gradient calibration: 20-epoch core warmup on 96 balanced rollouts, followed by raw-term and parameter-gradient audits.  It proposes, but does not freeze, auxiliary weights and writes no candidate checkpoint.  Nine Model C tests, style, shell, and production-grid checks passed; submitted V100 job 284858. \\
+2026-07-23 & CPU C1a replica corrected & CUDA is not scientifically required for the 96-rollout calibration.  Job 284860 failed safely after 19s, before output, because its initial audit squared very large gradients in float32.  Moving the global norm to float64 prevented overflow, but live job 284864 then revealed that a direct cast discarded imaginary spectral-weight gradients; it was cancelled before output.  The final helper preserves real gradients in float64 and complex gradients in complex128 and is covered by a large real/complex regression test. \\
+2026-07-23 & Model C C1a complete & Complex-safe CPU job 285116 completed in 4m39s using 1.53~GB maximum RSS.  After warmup, state/increment/rollout/spectral/boundary gradient norms were 1.965/830.5/6.484/40,763/7.411.  Rejected the clipped 0.01 increment/spectral proposal and froze rounded unclipped coefficients \(0.001/0.15/10^{-5}/0.065\), whose weighted gradient ratios to state are 0.423/0.495/0.207/0.245.  Report SHA-256: \texttt{3406c9104dd6...592e469}.  Cancelled redundant pending GPU job 284858 with zero runtime. \\
+2026-07-23 & Model C C1b submitted & Added a 96-rollout, training-only memorization gate with fixed initialization/batch order across the bounded learning-rate fallback.  Acceptance is groupwise rather than aggregate: 90\% total reduction, 50\% spectral reduction, maximum state group 0.08, maximum increment group 1.0, rollout 0.10, boundary 0.15, and bitwise-exact three-step reload.  Eleven Model C tests and all style/diff/shell checks passed; submitted eight-core short-queue job 285192. \\
+2026-07-23 & Model C C1b rejected & Job 285192 completed both 160-epoch attempts in 58m30s and failed only the increment criterion.  At learning rate 0.0005, total/spectral reductions were 97.7/99.1\%, maximum state group was 0.0304, rollout/boundary were 0.0312/0.0397, and U/V increments were 0.254/0.442 times exact-subset persistence; temperature/SSH remained 1.285/2.032.  The absolute-1 threshold is replaced by the mathematically correct per-group ratio to persistence on the same sampled records, without relaxing the requirement. \\
+2026-07-23 & Model C C1c submitted & The lower learning rate reached its best total at epoch 160, so undertraining is tested before changing objective or capacity.  Added version-2 diagnostics that preserve full learning curves and a reload-tested best checkpoint on rejection.  Job 285265 fixes data, architecture, loss, seed, batch order, and learning rate 0.0005, changing only duration from 160 to 320 epochs. \\
+2026-07-23 & Pressure evaluation completed & Added a fixed \MITgcm{}-consistent \texttt{PHIHYD} postprocessor without changing any model input, output, weight, or split.  It integrates the configured linear-EOS density anomaly and adds the linear-free-surface \(g\eta\) term.  Against the archived S0 \texttt{PH} dump at iteration 2,851,200, all-depth wet-cell maximum error is \(3.89\times10^{-4}\) and RMSE is \(9.75\times10^{-6}\ \mathrm{m^2\,s^{-2}}\).  Evaluation contract v2 adds surface/mid/bottom pressure curves, maps, snapshots, spectra, boundary metrics, and gate comparisons.  Existing v1 packages remain immutable and pre-pressure; frozen inference will be replayed once for the uniform v2 comparison after C freezes. \\
 \bottomrule
 \end{longtable}
 

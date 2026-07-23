@@ -1,0 +1,516 @@
+\documentclass[11pt]{article}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage[margin=0.78in]{geometry}
+\usepackage{microtype}
+\usepackage{booktabs,tabularx,array,longtable}
+\usepackage[dvipsnames]{xcolor}
+\usepackage{graphicx}
+\usepackage{enumitem}
+\usepackage{hyperref,fancyhdr,titlesec}
+
+\definecolor{navy}{HTML}{17365D}
+\definecolor{blue}{HTML}{2F75B5}
+\definecolor{teal}{HTML}{218A8D}
+\definecolor{green}{HTML}{2E7D32}
+\definecolor{amber}{HTML}{A86600}
+\definecolor{red}{HTML}{B13A3A}
+\definecolor{graytext}{HTML}{4A5560}
+\definecolor{lightblue}{HTML}{EAF3F8}
+\definecolor{lightteal}{HTML}{EAF6F4}
+\definecolor{lightamber}{HTML}{FFF5E2}
+\definecolor{lightred}{HTML}{FBECEC}
+
+\hypersetup{colorlinks=true,linkcolor=navy,urlcolor=blue,
+  pdftitle={AF--FNO Results Tracker},pdfauthor={AF--FNO project}}
+\pagestyle{fancy}\fancyhf{}
+\lhead{AF--FNO project}\rhead{Results and decisions}\cfoot{\thepage}
+\renewcommand{\headrulewidth}{0.3pt}
+\setlength{\headheight}{14pt}
+\titleformat{\section}{\Large\bfseries\color{navy}}{\thesection}{0.7em}{}
+\titleformat{\subsection}{\large\bfseries\color{blue}}{\thesubsection}{0.7em}{}
+\setlist[itemize]{leftmargin=1.35em,itemsep=2pt,topsep=4pt}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{5pt}
+\renewcommand{\arraystretch}{1.16}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+\newcommand{\MITgcm}{\textsc{MITgcm}}
+\newcommand{\Pass}{\textcolor{green}{\textbf{Pass}}}
+\newcommand{\Fail}{\textcolor{red}{\textbf{Fail}}}
+\newcommand{\Pending}{\textcolor{amber}{\textbf{Pending}}}
+\newcommand{\resultbox}[3]{%
+  \begin{center}\setlength{\fboxsep}{8pt}%
+  \fcolorbox{#1}{#2}{\begin{minipage}{0.92\textwidth}#3\end{minipage}}%
+  \end{center}}
+\newcommand{\widefigure}[2]{%
+  \begin{center}
+  \IfFileExists{#1}{%
+    \includegraphics[width=0.96\textwidth]{#1}%
+  }{%
+    \fcolorbox{amber}{lightamber}{\parbox[c][1.0in][c]{0.90\textwidth}{%
+      \centering\textbf{Planned output; not generated}\par
+      \small\nolinkurl{#1}}}%
+  }\par
+  \small\color{graytext}#2
+  \end{center}}
+\newcommand{\pairedfigures}[4]{%
+  \begin{center}
+  \begin{minipage}[t]{0.485\textwidth}\centering
+    \IfFileExists{#1}{\includegraphics[width=\textwidth]{#1}}{%
+      \fcolorbox{amber}{lightamber}{\parbox[c][0.85in][c]{0.88\textwidth}{%
+        \centering\textbf{Planned output}\par\scriptsize\nolinkurl{#1}}}}\par
+    \small\color{graytext}#2
+  \end{minipage}\hfill
+  \begin{minipage}[t]{0.485\textwidth}\centering
+    \IfFileExists{#3}{\includegraphics[width=\textwidth]{#3}}{%
+      \fcolorbox{amber}{lightamber}{\parbox[c][0.85in][c]{0.88\textwidth}{%
+        \centering\textbf{Planned output}\par\scriptsize\nolinkurl{#3}}}}\par
+    \small\color{graytext}#4
+  \end{minipage}
+  \end{center}}
+
+\begin{document}
+
+\begin{center}
+  {\sffamily\bfseries\color{navy}\fontsize{24}{28}\selectfont
+  AF--FNO Results Tracker\par}
+  \vspace{0.10in}
+  {\large Frozen forward emulators, derivative tests, and scientific decisions\par}
+  \vspace{0.12in}
+  {\color{graytext}\textbf{Status date: 23 July 2026} \quad
+  Protocol: \texttt{AF\_FNO\_Project\_Plan.tex}}
+\end{center}
+
+\resultbox{amber}{lightamber}{%
+\textbf{Current scientific decision.}  Keep Models A and B frozen as controlled
+baselines.  A0 fails the complete forward gate, and the available 100-day evidence
+shows that B materially stabilizes A but still loses to persistence for temperature
+and SSH.  The queued one-year A/B evaluations were cancelled before execution: they
+would characterize already-known failures but would not improve either model.  Model C
+development is now open under the validation-only forward protocol; Model D will be the
+selected C design plus local-response supervision.  The adjoint campaign remains closed
+until C passes the forward gate.}
+
+\section{Purpose and reading guide}
+
+This document is the scientific ledger.  The output tree remains the canonical store
+for JSON, NPZ, and figures; this tracker selects the decision-relevant results and states
+their interpretation.  Operational job history remains in
+\texttt{Project\_tracking.tex}, which is intentionally not duplicated or modified here.
+
+\begin{tabularx}{\textwidth}{@{}p{0.23\textwidth}Y@{}}
+\toprule
+\textbf{Document} & \textbf{Role} \\
+\midrule
+\texttt{AF\_FNO\_Project\_Plan} & Scientific design, Bire-trend benchmark, frozen protocol, and predeclared gates. \\
+\texttt{Project\_tracking} & Jobs, configurations, paths, checksums, milestone status, and operational chronology. \\
+\texttt{Results\_tracking} & Major figures, numerical findings, failure analysis, and go/no-go decisions. \\
+\bottomrule
+\end{tabularx}
+
+\section{Reference trends from Bire et al.}
+
+Bire et al. use a finer and more turbulent configuration, so their numbers are not
+targets for this $1^\circ$ tutorial.  Their evidence pattern is the reference:
+
+\begin{tabularx}{\textwidth}{@{}p{0.20\textwidth}Yp{0.28\textwidth}@{}}
+\toprule
+\textbf{Evidence} & \textbf{Reported trend} & \textbf{AF--FNO test} \\
+\midrule
+Map interval & Ten days balanced short predictability and long stability better than five or 30 days. & One frozen ten-day map for A0--D; 10--360-day curves. \\
+Baselines & FNO beat persistence and pointwise climatology before decorrelation; velocity decorrelated first. & Physical-unit RMSE and ACC against both baselines. \\
+Spatial error & Errors concentrated first at the energetic western boundary. & Spatial RMSE, four-cell boundary band, and vertical profiles. \\
+Long dynamics & Exact phase was lost, but integrations stayed bounded and retained characteristic scales. & Stability scalars, spectra, snapshots, and SSH Hovm\"oller diagrams. \\
+Wind physics & Ten-day-map maximum streamfunction retained an approximately linear wind-amplitude trend. & S1/S0/S2 slope now; inference-only I1/I2 later. \\
+Known failure & A sudden wind change did not reliably steer a state drawn from another regime. & Same-state forcing branches, later checked against switched-wind \MITgcm{}. \\
+\bottomrule
+\end{tabularx}
+
+\section{Common evaluation protocol}
+
+All complete packages use the same 45 starts: 15 chronologically fixed starts in each of
+S0 control, S1 low wind, and S2 high wind.  Each frozen ten-day map is rolled for 36
+steps.  The climatology is a regime-specific pointwise mean computed only from training
+snapshots; the model has no seasonal forcing, so no unsupported day-of-year baseline is
+introduced.  The packages contain per-member arrays, not just plotted summaries.
+
+\begin{itemize}
+\item fields: U, V, temperature, SSH, surface speed, SST, \texttt{PHIHYD} at levels
+  0, 7, and 14, and barotropic streamfunction;
+\item maps: 10, 60, 180, and 360 days; spectra: 10, 90, 180, and 360 days;
+\item diagnostics: RMSE, ACC, western-boundary error, vertical drift, spectra, physical
+  regime response, forcing switch, finite/mask checks, and gate scorecard;
+\item uncertainty display: ensemble mean and 10--90\% member range;
+\item machine-readable evidence: \texttt{forward\_complete\_metrics.json} and
+  \texttt{forward\_complete\_arrays.npz} beside every figure set.
+\end{itemize}
+
+\subsection{Pressure postprocessing contract}
+
+Pressure is not a learned input or output.  Evaluation contract v2 deterministically
+reconstructs the same \MITgcm{} \texttt{PHIHYD} quantity used by Bire et al.:
+hydrostatic pressure anomaly divided by \(\rho_0\), in
+\(\mathrm{m^2\,s^{-2}}\).  It applies the configured linear EOS to all 15 predicted
+temperature levels, uses \MITgcm{}'s finite-difference vertical integration, and adds the
+linear-free-surface contribution \(g\eta\).  Bire's surface, mid-depth, and bottom
+indices are 0, 7, and 14.  Multiplication by
+\(\rho_0=999.8\ \mathrm{kg\,m^{-3}}\) converts the diagnostic to Pa.
+
+\begin{center}\small
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+\textbf{Comparison} & \textbf{Level} & \textbf{Max abs. error} & \textbf{RMSE} \\
+\midrule
+Surface & 0 & \(3.88\times10^{-4}\) & \(1.48\times10^{-5}\) \\
+Mid-depth & 7 & \(1.64\times10^{-4}\) & \(7.13\times10^{-6}\) \\
+Bottom & 14 & \(1.26\times10^{-4}\) & \(6.63\times10^{-6}\) \\
+All 15 levels & --- & \(3.89\times10^{-4}\) & \(9.75\times10^{-6}\) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+These errors compare the postprocessor with the archived S0 \MITgcm{} \texttt{PH}
+dump at iteration 2,851,200 over 3,600 wet cells and pass the \(10^{-3}\) tolerance.
+The report is
+\path{outputs/af_fno/pressure_validation_v1/pressure_validation.json}.  Pressure adds a
+Bire-facing physical consistency view, but it is correlated with temperature and SSH
+and is not presented as three independent prognostic successes.
+
+Existing \texttt{forward\_complete\_v1} outputs are retained as immutable pre-pressure
+evidence.  The saved v1 summaries do not contain every member's full 15-level forecast
+at every lead, so complete pressure curves cannot be recovered from them alone.  After C
+freezes, each frozen checkpoint will therefore receive one inference-only replay into a
+new \texttt{forward\_complete\_v2} directory.  This is postprocessing/evaluation, not
+retraining or model selection.
+
+\subsection{Current data and expansion decision}
+
+The version-1 chronological split contains 7,530 overlapping ten-day training pairs,
+780 validation pairs, and 1,860 inference pairs across S0--S2.  Daily starting times
+are strongly correlated, so these counts are not counts of independent ocean states.
+There is not yet evidence that raw data volume is the main limitation: B ended at its
+last scheduled epoch, its spectral term contributed only about 1\% of validation loss,
+and the aggregate 46-channel objective hid the temperature/SSH failures.
+
+\resultbox{blue}{lightblue}{\textbf{Data decision.}  Do not replace version 1 now.
+First run Model C learning curves at 25/50/75/100\% of training chronology, a stronger
+small-sample fit, groupwise train/validation errors, autocorrelation estimates, and
+three-seed spread.  Expand only if those diagnostics show a data-limited regime.  If
+approved, create a non-destructive \texttt{trajectories\_v2} with separated branches
+from equilibrated checkpoints and target two times the effective independent coverage
+before considering three times.}
+
+\section{Previously established ten-day comparison}
+
+These values come from the earlier all-inference-pair evaluation and remain useful as a
+cross-check.  Lower than one beats persistence.
+
+\begin{center}
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+\textbf{Grouped variable} & \textbf{A0 / persistence} &
+\textbf{A / persistence} & \textbf{B / persistence} \\
+\midrule
+U & 0.395 & 0.169 & 0.179 \\
+V & 0.912 & 0.467 & 0.465 \\
+Temperature & 4.771 & 2.052 & 1.814 \\
+SSH & 13.612 & 2.277 & 2.107 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Interpretation.}  A is unambiguously better than A0 on this held ten-day
+comparison, especially for velocity.  B preserves that short-lead gain and modestly
+improves temperature and SSH, but both remain worse than persistence.  At 100 days,
+B's model/persistence ratios are 0.449, 0.997, 8.009, and 9.925 for U, V, temperature,
+and SSH.  Relative to A at the same lead, B reduces those four errors to 0.521, 0.409,
+0.450, and 0.405.  Thus rollout training works, but the frozen B objective did not solve
+the slow-field failure.
+
+\section{A0: adapted Bire architecture}
+
+\resultbox{red}{lightred}{\textbf{Gate status:} \Fail.  The pre-pressure v1 45-member,
+10--360-day package is finished.  A0 remained finite, masked, and bounded
+(maximum normalized wet-state magnitude 18.63) and reproduced the sign and magnitude of
+the streamfunction--wind slope (model/truth slope 0.897).  It failed the ten-day
+surface-field, 20-day ACC, and one-year spectral gates.  Day-360 model/truth spectral
+energy ratios were 6.48 for surface speed, 96.16 for SST, 281.46 for SSH, and 21.49 for
+streamfunction.}
+
+The v1 failure already prevents A0 from passing; pressure-complete v2 will be generated
+for fair field-by-field comparison, not to reconsider or retrain A0.
+
+\pairedfigures
+{../outputs/af_fno/A0/forward_complete_v1/forward_rmse_vs_lead.png}
+{Physical RMSE against persistence and training climatology.}
+{../outputs/af_fno/A0/forward_complete_v1/forward_acc_vs_lead.png}
+{Pointwise-climatology anomaly correlation.}
+
+\widefigure
+{../outputs/af_fno/A0/forward_complete_v1/forward_spatial_rmse_maps.png}
+{A0 spatial RMSE for surface speed, SST, SSH, and streamfunction.  Emulator and persistence share a scale within each field.}
+
+\pairedfigures
+{../outputs/af_fno/A0/forward_complete_v1/forward_spectra.png}
+{Ensemble-mean resolved spectra.}
+{../outputs/af_fno/A0/forward_complete_v1/forward_western_boundary_rmse.png}
+{First four wet cells from the western wall.}
+
+\pairedfigures
+{../outputs/af_fno/A0/forward_complete_v1/forward_stability_by_regime.png}
+{One-year physical stability by wind regime.}
+{../outputs/af_fno/A0/forward_complete_v1/forward_wind_response.png}
+{Low/control/high response at fixed lead times.}
+
+\section{Model A: modern state-residual baseline}
+
+\resultbox{red}{lightred}{\textbf{Gate status:} \Fail{} on available mandatory
+evidence; complete one-year characterization not run.  A is frozen and reproducible,
+but its ten-day temperature and SSH errors are 2.052 and 2.277 times persistence, so it
+cannot pass the forward gate.  Its 100-day ratios rise to about 17.8 and 24.5.  The
+queued complete evaluation was cancelled with zero runtime because it could describe,
+but not reverse, this disqualifying result.  Missing panels below are retained as
+explicit planned-output placeholders rather than fabricated results.}
+
+\pairedfigures
+{../outputs/af_fno/A/forward_complete_v2/forward_rmse_vs_lead.png}
+{Physical RMSE against persistence and training climatology.}
+{../outputs/af_fno/A/forward_complete_v2/forward_acc_vs_lead.png}
+{Pointwise-climatology anomaly correlation.}
+
+\widefigure
+{../outputs/af_fno/A/forward_complete_v2/forward_spatial_rmse_maps.png}
+{Model A spatial RMSE for surface speed, SST, SSH, and streamfunction.}
+
+\pairedfigures
+{../outputs/af_fno/A/forward_complete_v2/forward_spectra.png}
+{Ensemble-mean resolved spectra.}
+{../outputs/af_fno/A/forward_complete_v2/forward_vertical_drift.png}
+{Day-360 mean and variance drift by depth.}
+
+\pairedfigures
+{../outputs/af_fno/A/forward_complete_v2/forward_stability_by_regime.png}
+{One-year physical stability by wind regime.}
+{../outputs/af_fno/A/forward_complete_v2/forward_forcing_switch_response.png}
+{Provisional same-state forcing-switch response.}
+
+\section{Model B: frozen rollout/spectral/boundary ablation}
+
+\resultbox{red}{lightred}{\textbf{Gate status:} \Fail{} on available mandatory
+evidence; retain as a controlled ablation.  B greatly reduces A's 100-day error but
+still has ten-day temperature and SSH errors 1.814 and 2.107 times persistence.
+Its frozen validation objective was also poorly balanced: state, rollout, spectral,
+and boundary terms contributed approximately 41.6\%, 39.0\%, 1.0\%, and 18.3\% of the
+total.  This is evidence to redesign C's objective, not permission to retune B.}
+
+\pairedfigures
+{../outputs/af_fno/B/final_v1/model_b_one_step_skill.png}
+{Ten-day Model B skill by grouped variable.}
+{../outputs/af_fno/B/final_v1/model_b_rollout_skill.png}
+{Ten-to-100-day rollout against persistence.}
+
+\pairedfigures
+{../outputs/af_fno/B/final_v1/model_b_western_boundary_skill.png}
+{Western-boundary skill reveals where the local and boundary losses help or fail.}
+{../outputs/af_fno/B/final_v1/a0_model_a_model_b_rollout.png}
+{Controlled A0/A/B rollout comparison.}
+
+\section{Models C and D: revised forward/response separation}
+
+\begin{tabularx}{\textwidth}{@{}p{0.11\textwidth}p{0.26\textwidth}Y@{}}
+\toprule
+\textbf{Model} & \textbf{Frozen role} & \textbf{Decision rule} \\
+\midrule
+C & Best forward emulator under the bounded search in the project plan & Select only on validation.  Every U/V/temperature/SSH ten-day ratio must beat persistence; then rank worst-group error and 30/90/180-day physics scores.  Run the complete one-year inference package only after freezing. \\
+D & Selected C design plus local perturbation--response loss & Preserve C's ten-day state error within 5\%, lower blind response error by at least 25\%, and improve projected-gradient angle without adjoint supervision. \\
+\bottomrule
+\end{tabularx}
+
+\subsection{Model C stage C0: architecture and data audit}
+
+\resultbox{blue}{lightblue}{\textbf{Status: C0/C1a complete; C1b rejected; C1c running.}  Corrected
+training-only job 284850 completed in 42 seconds; version-2 job 284857 added the
+data-justified \((24,16)\) candidate and completed in 33 seconds.  Both verified dataset
+metadata SHA-256 \texttt{cbcf2938f458...ca10847} and recorded that validation,
+inference, I1/I2, response, and adjoint data were not read.  Complex-safe CPU
+calibration job 285116 completed in 4m39s; its report froze the loss scale without
+opening validation.  Pending GPU replica 284858 was cancelled.  Job 285192 passed all
+memorization/reload criteria except temperature/SSH increment skill; job 285265 changes
+only the duration from 160 to 320 epochs and remains training-only.}
+
+\begin{tabularx}{\textwidth}{@{}p{0.25\textwidth}Y@{}}
+\toprule
+\textbf{Criticism of B / starting C} & \textbf{Implemented C0/C correction} \\
+\midrule
+Fifteen U, 15 V, 15 temperature, and one SSH channel were aggregated in one relative norm. & Equal mean of U, V, temperature, and SSH group losses; every group is reported separately. \\
+B's spectrum compares hard-masked full states, for which persistence is already strong and the land discontinuity leaks energy. & Compare ten-day increments, crop the exact $60\times60$ wet rectangle, remove the spatial mean, and apply a Hann taper before radial binning. \\
+Slow-field increments are small relative to normalized state magnitude. & Scale each channel's increment error with its RMS computed from training pairs only. \\
+The 16-mode choice had not been tested with NeuralOperator's exact real-FFT convention. & Audit \((12,12),(16,16),(16,24),(24,16),(24,24)\), interpreting the last declared count as \(m_x/2+1\) stored real-FFT columns. \\
+Width 64 could improve capacity but multiplies cost. & Start at 630,262 parameters (width 32); test 2,443,542 parameters (width 64) only if fit/capacity evidence warrants it. \\
+\bottomrule
+\end{tabularx}
+
+\begin{center}\small
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+\textbf{Modes} & \textbf{U increment} & \textbf{V increment} &
+\textbf{Temperature increment} & \textbf{SSH increment} \\
+\midrule
+\((16,16)\) & 8.8\% & 24.0\% & 67.8\% & 85.6\% \\
+\((16,24)\) & 9.0\% & 25.6\% & 68.1\% & 86.8\% \\
+\((24,16)\) & 12.5\% & 32.9\% & 70.2\% & 89.0\% \\
+\((24,24)\) & 13.5\% & 38.3\% & 71.7\% & 90.9\% \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{center}\small
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+\textbf{C1a term} & \textbf{Raw loss} & \textbf{Gradient norm} &
+\textbf{Frozen weight} & \textbf{Weighted grad./state} \\
+\midrule
+State & 0.03018 & 1.965 & 1 & 1.000 \\
+Increment & 1.89450 & 830.5 & 0.001 & 0.423 \\
+Rollout & 0.06463 & 6.484 & 0.15 & 0.495 \\
+Spectrum & 38.4904 & 40,763 & \(10^{-5}\) & 0.207 \\
+Boundary & 0.07825 & 7.411 & 0.065 & 0.245 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Interpretation.}  All \((16,16)\) full-state fractions exceed 99.6\%, so the
+slow-field failure is not evidence that full states need a larger global truncation.
+Velocity changes are predominantly higher frequency and must rely on the local branch;
+24 meridional modes help more than 24 zonal modes.  The normalized ten-day increment
+RMS varies by a factor of 147 across channels, confirming the need for training-only
+per-channel scaling.  Increment-RMS autocorrelation leaves about 290 effective U,
+392 V, 278 temperature, and 398 SSH samples across the three regimes; low-wind S1 is
+the most correlated.  Version 1 is adequate for the first bounded search, but raw pair
+counts substantially overstate independence.
+
+The C1a automatic proposal clipped increment and spectral coefficients at 0.01.  It was
+rejected because those values would still yield weighted gradient ratios about
+4.23 and 207 relative to state.  Rounded \emph{unclipped} coefficients instead meet the
+declared targets closely, as the table shows.  Thus \(10^{-5}\) spectral weight is not
+tantamount to removing spectra: the raw spectral gradient is about 20,700 times the
+state gradient.  No selected C or D result exists yet; C1b must show that this balanced
+objective can memorize every physical group and reload exactly.  Intermediate-wind,
+response-inference, and adjoint archives remain sealed.  If C's learning curves
+establish a data limitation, the expanded dataset will be versioned as v2; existing v1
+data and conclusions will not be replaced.
+
+\subsection{Model C stage C1b: rejected slow-field increment gate}
+
+\begin{center}\small
+\begin{tabular}{@{}lrrrrrr@{}}
+\toprule
+\textbf{LR} & \textbf{U/pers.} & \textbf{V/pers.} & \textbf{T/pers.} &
+\textbf{SSH/pers.} & \textbf{State max} & \textbf{Rollout} \\
+\midrule
+0.0010 & 0.226 & 0.404 & 1.802 & 2.888 & 0.0271 & 0.0314 \\
+0.0005 & 0.254 & 0.442 & 1.285 & 2.032 & 0.0304 & 0.0312 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Decision.}  Job 285192 completed in 58m30s and is scientifically rejected,
+not a runtime failure.  Both attempts reduced total loss by about 97.7\%, spectral loss
+by about 99.1\%, and passed state, rollout, and boundary thresholds.  Only temperature
+and SSH ten-day increments remained worse than persistence.  Persistence NRMSE on this
+exact subset is U/V/temperature/SSH 0.968/0.954/0.981/0.948; therefore the failure is
+not an artifact of assuming an exact baseline of one.
+
+The 0.0005 attempt reached its best total at epoch 160.  Stage C1c therefore changes
+only duration to 320 epochs before any loss or width change.  The revised runner records
+the exact subset persistence baseline, full learning curves, and a bitwise-reload-tested
+diagnostic checkpoint even on rejection.  Job 285265 remains training-only; validation
+and inference are sealed.
+
+\section{Forward gate and decision}
+
+\begin{tabularx}{\textwidth}{@{}p{0.10\textwidth}p{0.16\textwidth}Yp{0.19\textwidth}@{}}
+\toprule
+\textbf{Model} & \textbf{Status} & \textbf{Current evidence} & \textbf{Scientific role} \\
+\midrule
+A0 & \Fail & Complete gate: short-skill, ACC, and spectra fail; boundedness and wind slope pass. & Adapted transfer reference \\
+A & \Fail & Temperature/SSH lose to persistence at 10 days; unstable error growth through 100 days. & Modern one-step control \\
+B & \Fail & Rollout loss materially helps A, but temperature/SSH still lose at 10 and 100 days. & Frozen loss ablation \\
+C & \Pending & C0/C1a are complete; C1b rejected slow-field increment skill and controlled-duration C1c job 285265 is pending.  No candidate has been validated. & Must open forward gate \\
+D & \Pending & Blocked until C freezes and response data pass linearity checks. & Response/adjoint model \\
+\midrule
+\multicolumn{3}{@{}l}{\textbf{Complete adjoint campaign may open}} &
+\multicolumn{1}{l}{\textbf{No}} \\
+\bottomrule
+\end{tabularx}
+
+\section{Adjoint results layout (sealed until the forward gate)}
+
+When the forward gate passes, this tracker will add the following paired A/B/C/D
+evidence, with C versus D as the primary response-supervision comparison:
+
+\begin{tabularx}{\textwidth}{@{}p{0.22\textwidth}Y@{}}
+\toprule
+\textbf{Result family} & \textbf{Decision-relevant displays and data} \\
+\midrule
+Perturbation validity & Central-difference linearity, plus/minus symmetry, Taylor slopes, and noise floor by direction family and region. \\
+JVP response & True/model/difference maps, response scatter, relative error, cosine, gain, boundary distance, depth, and horizon. \\
+Adjoint fields & Signed maps, depth slices, vertical profiles, full/projected angle and error, magnitude, sign overlap, and spectra/coherence. \\
+Consistency & Emulator duality $q^T Jv=v^T J^Tq$, AD versus finite differences, and ten-to-30-day composition. \\
+Control utility & Full objective-versus-step curves, predicted and actual $\Delta J$, chosen step, and constraint residual. \\
+\bottomrule
+\end{tabularx}
+
+\section{Artifact index}
+
+\begin{tabularx}{\textwidth}{@{}p{0.20\textwidth}Y@{}}
+\toprule
+\textbf{Artifact} & \textbf{Canonical location} \\
+\midrule
+A0 earlier evaluation & \path{outputs/af_fno/A0/final_v1/} and \path{outputs/af_fno/A0/paper_style_v1/} \\
+A0 pre-pressure complete package & \path{outputs/af_fno/A0/forward_complete_v1/} \\
+A0 pressure-complete package & Planned \path{outputs/af_fno/A0/forward_complete_v2/} \\
+Pressure validation & \path{outputs/af_fno/pressure_validation_v1/pressure_validation.json} \\
+Model A earlier evaluation & \path{outputs/af_fno/A/final_v1/} \\
+Model A pressure-complete package & \path{outputs/af_fno/A/forward_complete_v2/}; deliberately not generated yet \\
+Model B existing package & \path{outputs/af_fno/B/final_v1/} \\
+Model B pressure-complete package & \path{outputs/af_fno/B/forward_complete_v2/}; deliberately not generated yet \\
+Model C C0/C1a evidence & \path{/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/training_diagnostics_v2/} and \path{/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/loss_calibration_cpu_v1/} \\
+Model C frozen loss manifest & \path{config/model_c_loss_v1.json} \\
+Model C C1b gate & \path{/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/overfit_v1/} \\
+Model C C1c duration gate & \path{/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/overfit_duration_v2/} \\
+Models C and D outputs & Planned versioned roots \path{outputs/af_fno/C/} and \path{outputs/af_fno/D/} \\
+Frozen criteria & \path{docs/AF_FNO_Project_Plan.tex} \\
+\bottomrule
+\end{tabularx}
+
+\section{Decision log}
+
+\begin{longtable}{@{}p{0.14\textwidth}p{0.18\textwidth}p{0.62\textwidth}@{}}
+\toprule
+\textbf{Date} & \textbf{Decision} & \textbf{Evidence and consequence} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Date} & \textbf{Decision} & \textbf{Evidence and consequence} \\
+\midrule
+\endhead
+2026-07-21 & Freeze A0 & Adapted architecture learned a ten-day signal but failed persistence for temperature and SSH; retain as transfer baseline. \\
+2026-07-21 & Freeze Model A & Better than A0 for all four grouped errors, but earlier 100-day temperature/SSH rollouts were poor; build B. \\
+2026-07-22 & Expand forward gate & Bire paper audit showed missing climatology, one-year, spectra, boundary, propagation, and forcing-response evidence; regenerate A0/A before adjoints. \\
+2026-07-22 & Separate ledgers & Keep operations in \texttt{Project\_tracking}; create this results-and-decisions document with output-tree links. \\
+2026-07-23 & Keep B; insert C & Duruisseaux-guided audit found that 16 modes are plausible, but loss balance, group aggregation, and incomplete optimization are stronger current failure explanations.  B stays frozen; C receives the bounded forward search; response supervision moves to D. \\
+2026-07-23 & Cancel queued evaluations & Jobs 284816 (A) and 284817 (B) were pending with zero runtime and were cancelled.  Existing checkpoints and 100-day evidence are preserved; final uniform packages are deferred until C is frozen. \\
+2026-07-23 & Retain data v1 & Raw pair count is ample for diagnosis but effective independence is unknown.  Require learning curves and autocorrelation/seed evidence before a non-destructive v2 expansion. \\
+2026-07-23 & Complete Model C C0 & Jobs 284850/284857 established a 147-fold increment-scale range, low effective sample counts, and meridionally anisotropic velocity-increment energy.  Added \((24,16)\), retained the local branch, and started training-only gradient calibration job 284858. \\
+2026-07-23 & Add CPU calibration replica & GPU job 284858 remained pending for resources.  Because C1a is not GPU-specific science, submitted eight-core job 284860.  It failed safely before output because float32 overflowed while accumulating a global gradient norm.  Float64 fixed overflow, but live job 284864 showed that casting complex gradients to real discarded their imaginary component; it was cancelled before output.  A regression test now covers large real and complex gradients using float64/complex128 only for diagnostic reduction. \\
+2026-07-23 & Freeze Model C loss scale & Complex-safe job 285116 completed in 4m39s.  Rejected the clipped automatic proposal: 0.01 increment/spectral weights would still dominate.  Froze rounded unclipped coefficients \(0.001/0.15/10^{-5}/0.065\), giving weighted gradient ratios 0.423/0.495/0.207/0.245 relative to state.  Cancelled pending GPU replica 284858 with zero runtime and recorded report hash \texttt{3406c9104dd6...592e469}. \\
+2026-07-23 & Start Model C C1b & Added groupwise memorization thresholds and exact three-step reload verification.  Fixed initialization and shuffled batch order across the bounded learning-rate fallback so only learning rate changes.  Eleven Model C tests and all checks passed; CPU job 285192 is running on the same sealed 96 training rollouts. \\
+2026-07-23 & Reject Model C C1b & Job 285192 passed total, spectral, state, rollout, and boundary gates but failed temperature/SSH increment skill.  At learning rate 0.0005 their exact persistence ratios were 1.285/2.032; U/V passed at 0.254/0.442.  This is a specific slow-field failure, not an aggregate or runtime failure. \\
+2026-07-23 & Start Model C C1c & Because the better attempt reached its best total at the final epoch, test undertraining before changing weights or width.  Job 285265 changes only 160 to 320 epochs at learning rate 0.0005.  Revised diagnostics preserve subset persistence, complete learning curves, and a reload-tested best checkpoint even if rejected. \\
+2026-07-23 & Add pressure evaluation & Implemented the exact linear-EOS, finite-difference \MITgcm{} \texttt{PHIHYD} postprocessor and validated it against the archived S0 \texttt{PH} dump: all-level wet-cell maximum error \(3.89\times10^{-4}\) and RMSE \(9.75\times10^{-6}\ \mathrm{m^2\,s^{-2}}\).  Pressure remains derived rather than learned.  Contract v2 adds Bire's levels 0/7/14 to RMSE, ACC, maps, snapshots, spectra, boundary diagnostics, and gates.  Preserve v1; replay frozen inference once after C freezes because v1 did not save full ensemble states at every lead. \\
+\bottomrule
+\end{longtable}
+
+\end{document}

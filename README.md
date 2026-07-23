@@ -17,6 +17,8 @@ on HPC scratch storage.
   ([TeX source](docs/AF_FNO_Project_Plan.tex))
 - [Milestone and decision tracker](docs/Project_tracking.pdf)
   ([TeX source](docs/Project_tracking.tex))
+- [Results and interpretation tracker](docs/Results_tracking.pdf)
+  ([TeX source](docs/Results_tracking.tex))
 - [Bire A0 reconstruction evidence](docs/bire_a0_reconstruction.md)
 - [Historical Bire data schema](docs/bire_a0_data_schema.md)
 
@@ -25,13 +27,35 @@ frozen decisions, and the next executable milestone.
 
 ## Current status
 
-Status date: **21 July 2026**.
+Status date: **23 July 2026**.
 
 - The 1-degree MITgcm control, low-wind, and high-wind trajectories (S0--S2)
   are complete.
 - S0 passed all seven numerical tutorial-validation gates.
-- The next critical-path tasks are shared preprocessing and the frozen A0
-  adapted-Bire baseline.
+- The shared preprocessing and frozen A0, Model A, and Model B baselines are
+  complete. Model B materially improves Model A's 100-day rollout but still
+  loses to persistence for temperature and SSH, so it remains a frozen
+  forward-loss ablation.
+- Forward-optimized Model C is active. Training-only jobs 284850/284857 found a
+  147-fold range in channel increment scales, only about 278--398 effective
+  increment samples, and stronger velocity-energy gains from extra meridional
+  modes. The bounded search now includes `(24,16)`. Complex-safe CPU job 285116
+  completed the training-only loss calibration in 4m39s. The frozen
+  increment/rollout/spectral/boundary weights are
+  `0.001/0.15/1e-5/0.065`. C1b job 285192 passed all gates except
+  temperature/SSH increment skill, which remained 1.285/2.032 times
+  persistence. Controlled-duration job 285265 changes only 160 to 320 epochs
+  at learning rate `0.0005`.
+- Model D will copy the selected Model C forward design and add local
+  perturbation-response supervision. Intermediate-wind, response-inference,
+  and adjoint data remain sealed until Model C passes the complete forward gate.
+- Pressure is deliberately derived rather than learned. The common evaluator now
+  reconstructs MITgcm `PHIHYD` at surface/mid/bottom levels 0/7/14 from all
+  predicted temperature levels and SSH using the configured linear EOS. Against
+  the archived S0 `PH` dump, the all-level maximum error is
+  `3.89e-4 m2 s-2` and RMSE is `9.75e-6 m2 s-2`. Pressure-complete evaluation
+  packages use non-overwriting contract `forward_complete_v2`; earlier v1
+  packages remain pre-pressure evidence.
 - The retired 0.25-degree MITgcm reconstruction campaign and its operational
   artifacts have been removed; only the recovered code evidence needed to
   define A0 is retained.
@@ -43,11 +67,49 @@ Status date: **21 July 2026**.
 | A0 | Adapted Bire architecture and training protocol; frozen historical baseline |
 | A | Modern dense state-residual FNO baseline |
 | B | Forward model with rollout, spectral, and boundary-aware losses |
-| C | AF-FNO with perturbation-response supervision |
+| C | Validation-selected forward emulator with group-balanced physics losses |
+| D | Selected Model C design plus perturbation-response supervision |
 
-Models A0--C use the same MITgcm trajectories and frozen evaluation protocol.
+Models A0--D use the same MITgcm trajectories and frozen evaluation protocol.
 MITgcm adjoints are generated only after the emulators and evaluation choices
 are frozen.
+
+## Active Model C workflow
+
+Model C follows a staged, evidence-gated workflow based on the practical FNO
+guidance of Duruisseaux et al. and the forward-evidence pattern of Bire et al.:
+
+1. audit training-only autocorrelation, ten-day increment scales, and retained
+   spectral energy for the declared 12/16/24-mode candidates;
+2. freeze group-balanced state, increment, rollout, tapered-spectral, and
+   boundary loss weights using training diagnostics;
+3. require a stronger 96-sample memorization and exact-reload gate;
+4. use bounded validation-only successive halving for modes, width, and only
+   diagnostically justified padding/layer changes;
+5. freeze three seeds and hashes before opening inference data or generating
+   intermediate-wind and response experiments.
+
+The C1a calibration is backend-independent science: CUDA is faster but not
+required.
+CPU job 284860 failed before output because a provisional gradient norm
+overflowed float32. Job 284864 exposed and was cancelled for discarding the
+imaginary part of complex spectral gradients. Diagnostic reductions now use
+float64/complex128 without changing model precision; the large real/complex
+regression test passes. Job 285116 completed successfully; its clipped
+automatic proposal was rejected and the rounded unclipped gradient-balanced
+weights are recorded in `config/model_c_loss_v1.json`. Pending GPU replica
+284858 was cancelled without runtime.
+
+C1b is retained as a scientific rejection: U/V increment errors beat
+persistence at 0.254/0.442, while temperature/SSH did not. Because the better
+attempt reached its best total at the final epoch, C1c tests undertraining
+before changing loss weights or architecture. Validation and inference remain
+sealed.
+
+The current 7,530 overlapping ten-day training pairs are not treated as 7,530
+independent samples. Dataset expansion requires learning-curve,
+autocorrelation, and seed-spread evidence and, if approved, creates a versioned
+`trajectories_v2` rather than overwriting version 1.
 
 ## Repository layout
 
@@ -63,6 +125,10 @@ are frozen.
 | `docs/` | Project plan, tracker, and data/reconstruction documentation |
 | `outputs/`, `work/` | Generated local products; ignored by Git |
 | `external/` | Recreated upstream checkouts; ignored by Git |
+
+The pressure reconstruction and validation entry point is
+`python -m bire_repro.af_pressure`; its durable validation report is
+`outputs/af_fno/pressure_validation_v1/pressure_validation.json`.
 
 ## UCSB setup
 
@@ -98,7 +164,7 @@ Git tracks:
 - source code and tests;
 - Slurm templates and submission helpers;
 - text configuration and small JSON manifests;
-- project documentation and the two project-facing PDFs.
+- project documentation and the three project-facing PDFs.
 
 Git does not track:
 
