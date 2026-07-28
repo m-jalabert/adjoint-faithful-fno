@@ -1,0 +1,109 @@
+{
+  "version": "model_c_rollout_diagnosis_v1",
+  "contract_status": "frozen_after_fresh_v2_rejection_before_training_rollout_metrics",
+  "freeze_date": "2026-07-27",
+  "purpose": "distinguish_training_objective_mismatch_from_validation_only_generalization_gap",
+  "scientific_motivation": {
+    "fresh_validation_status": "scientifically_rejected_fresh_v2_validation",
+    "observed_pattern": "good_day10_primary_skill_followed_by_20_to_90_day_slow_field_error_accumulation",
+    "architecture_decision": "do_not_change_width_modes_depth_or_channel_mixing_before_rollout_diagnosis",
+    "loss_decision": "do_not_change_loss_v1_before_rollout_diagnosis",
+    "inference_decision": "keep_every_split3_state_and_all_later_archives_sealed"
+  },
+  "source_artifacts": {
+    "dataset": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/trajectories_v2.zarr",
+    "dataset_metadata_sha256": "ae7be47c456962f411acb0d8e217dcb7fa6e24c59e5a8f3133f93032e378b8cc",
+    "successor_validation_contract": "/home/mjalabert314/bire_james25_repro/config/model_c_successor_validation_v2.json",
+    "successor_validation_contract_sha256": "56bb6ec597993b0689ab699a452ed189392f98806bf95b7add79062b070cf27b",
+    "fresh_validation_report": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/successor_validation_v1/fresh_validation/model_c_successor_validation_report.json",
+    "fresh_validation_report_sha256": "9853ea7aff210ae880b4463583f5aae34a1d11508d98b72eb9fab93f582663fb",
+    "fresh_validation_report_content_sha256": "5537401af56d922b7a74c7bb33ffb2c741678275c39f2c1d3ce5ae66fefe394d",
+    "fresh_validation_arrays_sha256": "fd84199b585e539dcadf05e41685c3a6845e8574dc7af596bfd487334e19dccc"
+  },
+  "records": {
+    "training_pair_code": 1,
+    "lead_days": [
+      10,
+      20,
+      30,
+      40,
+      50,
+      60,
+      70,
+      80,
+      90
+    ],
+    "selection": "evenly_spaced_complete_90_day_starts_per_training_block",
+    "expected_training_blocks": 2,
+    "complete_training_block_bounds": [
+      [
+        0,
+        2429
+      ],
+      [
+        3690,
+        6119
+      ]
+    ],
+    "starts_per_training_block": 90,
+    "selected_times_per_regime": 180,
+    "records_total": 540,
+    "training_times_sha256": "bb5aab82d7f97a86f89908f035a1b2845f77e1b39056b2454c70e9cdf9b6ab09",
+    "records_sha256": "f7f829281375aaeaab5a4dcbe7081babf2534a48e9c4100986e6b731df9ed944"
+  },
+  "evaluation": {
+    "batch_size": 16,
+    "checkpoints": [
+      20260723,
+      20260724,
+      20260725
+    ],
+    "baselines": [
+      "persistence",
+      "training_climatology"
+    ],
+    "reported_fields": [
+      "u",
+      "v",
+      "temperature",
+      "ssh",
+      "surface_speed",
+      "sst",
+      "phihyd_surface",
+      "phihyd_mid",
+      "phihyd_bottom",
+      "streamfunction"
+    ],
+    "slow_fields": [
+      "sst",
+      "phihyd_surface",
+      "ssh"
+    ],
+    "auc_definition": "trapezoidal_mean_over_discrete_10_to_90_day_leads",
+    "descriptive_only": true
+  },
+  "hypothesis_classification": {
+    "training_objective_or_checkpoint_gate_mismatch": "every seed has at least one slow field with day10 RMSE below persistence but RMSE-AUC and day90 RMSE above persistence on the fixed training rollouts",
+    "validation_generalization_gap_not_reproduced_on_training": "the preceding every-seed condition is false",
+    "consequence": "use the result to define a subsequent bounded objective audit; this job does not authorize a loss change by itself"
+  },
+  "read_contract": {
+    "training_pair_code": 1,
+    "training_state_read": true,
+    "validation_decision_metadata_read": true,
+    "validation_state_read": false,
+    "inference_read": false,
+    "intermediate_wind_read": false,
+    "response_read": false,
+    "adjoint_read": false
+  },
+  "source_hashes": {
+    "src/bire_repro/af_model_c_rollout_diagnosis.py": "c497cc3e1ea40c1e39ebd600f42d4b03f61d5a20671f1f3274cf8af883c9fb55",
+    "src/bire_repro/af_model_c_successor_validation.py": "ddf87aae293321b3710e3c5530c6ec6f5f603da6cfe466201ef2cade9737923a",
+    "src/bire_repro/af_model_c_successor.py": "62a5a3f91b21137bcaf4b8ed39a4bf3a4f35d1357cf7ab83947bd7dbbbe236e6",
+    "src/bire_repro/af_forward_complete.py": "18914b77058bfe1abeab3c98ec711ac8fb970deb76507b095ee376a0de447612",
+    "src/bire_repro/af_pressure.py": "1939645d807ec0281624d4146cadc51b3e9f382c540a56d7ed5afdca4b2c7c6c",
+    "src/bire_repro/af_data.py": "421a0e80feb8e2ae2ee588cc8debaf315927319d2bfb856056294397bf1f65a6",
+    "slurm/af_model_c_rollout_diagnosis.sbatch": "ddd04ebc4ef28f1f8607f9bddd80b82b884e5a790f6965be3df1588a31f88421"
+  }
+}

@@ -341,18 +341,23 @@ def write_build_manifest(project_root: Path, executable: Path) -> dict[str, Any]
 
 
 def simulation_inventory() -> dict[str, Any]:
-    """Return the literal minimum programme and its fixed evaluation additions."""
-    trajectories = 5
+    """Return the active programme after the evidence-authorized v2 expansion."""
+    original_trajectories = 5
+    trajectory_extensions = 3
+    trajectories = original_trajectories + trajectory_extensions
     response_forwards = 224
     adjoints = 12
     control_updates = 3
-    trajectory_years = 110 + 15 + 15 + 1 + 1
+    original_trajectory_years = 110 + 15 + 15 + 1 + 1
+    trajectory_years = original_trajectory_years + 3 * 10
     response_days = 224 * 10
     adjoint_days = 3 * 2 * (10 + 30)
     control_update_days = 3 * 30
     return {
         "scientific_integrations": {
             "trajectory_forward": trajectories,
+            "original_trajectory_forward": original_trajectories,
+            "trajectory_v2_extensions": trajectory_extensions,
             "perturbed_response_forward": response_forwards,
             "blind_true_adjoint": adjoints,
             "forward_control_update_checks": control_updates,
@@ -368,7 +373,10 @@ def simulation_inventory() -> dict[str, Any]:
             "total_model_years_upper_bound": trajectory_years
             + (response_days + adjoint_days + control_update_days) / MODEL_YEAR_DAYS,
         },
-        "note": "The plan table prints 132 trajectory years, but its listed durations sum to 142.",
+        "note": (
+            "The original listed durations sum to 142 model-years; the three "
+            "evidence-authorized ten-year extensions raise the active total to 172."
+        ),
     }
 
 

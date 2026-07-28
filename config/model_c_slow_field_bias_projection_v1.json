@@ -1,0 +1,188 @@
+{
+  "version": "model_c_slow_field_bias_projection_v1",
+  "contract_status": "frozen_after_truncated_unroll_rejection_before_bias_or_projection_metrics",
+  "freeze_date": "2026-07-28",
+  "purpose": "distinguish_static_teacher_forced_slow_field_bias_from_recursive_feedback_amplification_before_any_new_model_c_training",
+  "scientific_motivation": {
+    "evidence": "velocity_and_streamfunction_remain_accurate_while_sst_ssh_and_surface_pressure_start_skillful_then_cross_persistence",
+    "mechanism_hypothesis": "small_signed_large_scale_tendency_bias_accumulates_in_quasi_steady_slow_fields",
+    "completed_objective_evidence": {
+      "source_worst_primary_auc_ratio": 2.366,
+      "pushforward_objective_worst_primary_auc_ratio": 1.692,
+      "pushforward_duration_worst_primary_auc_ratio": 1.597,
+      "truncated_unroll_worst_primary_auc_ratio": 1.933
+    },
+    "training_decision": "no_retraining_until_signed_bias_and_frozen_projection_results_choose_the_next_branch",
+    "next_training_preference_if_correctable": "loss_v3_equals_loss_v1_plus_linear_conservation_projection_plus_slow_field_bias_penalty_plus_rollout_conditioned_one_state_supervision",
+    "bounded_secondary_arm": "samudra_style_two_state_two_output_ablation_with_identical_constraints_and_bias_penalty",
+    "superseded_next_step": "do_not_run_another_pure_weight_duration_capacity_or_unconstrained_temporal_ablation"
+  },
+  "architecture": {
+    "in_channels": 51,
+    "out_channels": 46,
+    "n_modes": [
+      24,
+      16
+    ],
+    "hidden_channels": 128,
+    "n_layers": 4,
+    "lifting_channel_ratio": 2,
+    "projection_channel_ratio": 2,
+    "channel_mlp_expansion": 4.0,
+    "domain_padding": 0.1,
+    "positional_embedding": "grid",
+    "use_channel_mlp": true,
+    "local_kernel_size": 3,
+    "fno_block_precision": "full",
+    "factorization": null
+  },
+  "source_artifacts": {
+    "dataset": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/trajectories_v2.zarr",
+    "dataset_metadata_sha256": "ae7be47c456962f411acb0d8e217dcb7fa6e24c59e5a8f3133f93032e378b8cc",
+    "reference_report": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/successor_training_v1/phase_2/v2_bireprop_w128_mlp4/model_c_successor_training_report.json",
+    "reference_report_sha256": "5946515ea81ab1cb32e4ccf9f75c9f57cadb3afc2d4d3854732f41457e68433c",
+    "reference_checkpoint": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/successor_training_v1/phase_2/v2_bireprop_w128_mlp4/model_c_successor_training_best.pt",
+    "reference_checkpoint_sha256": "2d10e48adc5e2e8c9f8478fd2d885fe7edc427248c97c4589bd510de0f360060",
+    "reference_seed": 20260723,
+    "rollout_diagnosis_contract": "/home/mjalabert314/bire_james25_repro/config/model_c_rollout_diagnosis_v1.json",
+    "rollout_diagnosis_contract_sha256": "d0ecee0db2b233409af2cbd55b34cbe133b647e28bd0c17381956040595ff7ba",
+    "rollout_diagnosis_report": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/rollout_diagnosis_v1/model_c_rollout_diagnosis_report.json",
+    "rollout_diagnosis_report_sha256": "7efdb07261254d18a941e38f9e6d2f8ce8ba2835943bd544f8fbaf836f171374",
+    "rollout_diagnosis_arrays_sha256": "c3c403ab81b2211b3d519a017ec3e0737da99b34611d884565d3304f3b85f255"
+  },
+  "teacher_forced_bias": {
+    "training_pairs": "all_5020_split1_pairs_per_regime",
+    "signed_error_definition": "predicted_physical_10_day_increment_minus_truth_physical_10_day_increment",
+    "reported_channels": "sst_ssh_and_all_15_temperature_levels",
+    "spatial_statistic": "mean_signed_error_per_wet_cell_and_regime",
+    "area_weighting": "cosine_latitude_regular_lon_lat_cell_area",
+    "linear_day90_prediction": "nine_times_the_static_regime_specific_bias_field",
+    "actual_day90_pattern": "reference_seed_mean_error_on_the_same_540_split1_rollouts_as_job_291102",
+    "pattern_metrics": [
+      "weighted_cosine",
+      "weighted_centered_correlation",
+      "fixed_amplitude_explained_energy_fraction",
+      "optimal_amplitude_explained_energy_fraction",
+      "basin_mean_energy_fraction"
+    ]
+  },
+  "rollout_records": {
+    "training_pair_code": 1,
+    "lead_days": [
+      10,
+      20,
+      30,
+      40,
+      50,
+      60,
+      70,
+      80,
+      90
+    ],
+    "selection": "same_evenly_spaced_complete_split1_starts_as_job_291102",
+    "expected_training_blocks": 2,
+    "starts_per_training_block": 90,
+    "records_total": 540,
+    "training_times_sha256": "bb5aab82d7f97a86f89908f035a1b2845f77e1b39056b2454c70e9cdf9b6ab09",
+    "records_sha256": "f7f829281375aaeaab5a4dcbe7081babf2534a48e9c4100986e6b731df9ed944"
+  },
+  "posthoc_projection": {
+    "variants": [
+      "raw",
+      "ssh_zero_mean",
+      "conservation_means",
+      "static_bias",
+      "static_bias_conservation"
+    ],
+    "ssh_target": "zero_cosine_latitude_weighted_wet_area_mean_increment",
+    "temperature_target": "per_regime_per_level_training_truth_mean_increment",
+    "static_bias_correction": "subtract_regime_specific_teacher_forced_mean_error_field_from_temperature_and_ssh_increment",
+    "application": "after_each_frozen_model_call_before_state_update",
+    "checkpoint_weights_changed": false,
+    "differentiability": "affine_linear_output_map_with_closed_form_transpose",
+    "score": "complete_10_to_90_day_rmse_acc_auc_and_every_lead_ratios_against_persistence_climatology_and_damped_persistence"
+  },
+  "eof_analysis": {
+    "fields": [
+      "sst",
+      "ssh"
+    ],
+    "source": "all_split1_truth_10_day_increment_fields_pooled_across_regimes",
+    "centering": "remove_the_per_cell_training_mean_truth_increment",
+    "weighting": "cosine_latitude_wet_area",
+    "basis": "basin_mean_plus_first_five_increment_eofs_orthonormalized_in_the_weighted_inner_product",
+    "modes": 5,
+    "oversampling": 5,
+    "seed": 20260728,
+    "chunk_size": 128,
+    "algorithm": "deterministic_two_pass_randomized_svd_without_power_iteration"
+  },
+  "predictability": {
+    "training_only": true,
+    "fit_lag_days": 10,
+    "damped_persistence": "regime_and_channel_scalar_ar1_anomaly_coefficient_fit_by_area_weighted_least_squares_toward_pointwise_training_climatology",
+    "alpha_bounds": [
+      0.0,
+      1.0
+    ],
+    "decorrelation_fields": [
+      "sst",
+      "ssh"
+    ],
+    "decorrelation_sampling": "nonoverlapping_10_day_samples_within_each_split1_block",
+    "maximum_decorrelation_lag_days": 720,
+    "reported_correlations": [
+      "pooled_spatial_anomaly",
+      "basin_mean_anomaly"
+    ],
+    "evaluation_records": "same_540_split1_rollouts",
+    "twenty_year_inference_inclusive_analysis": "deferred_to_preserve_the_existing_sealed_inference_contract"
+  },
+  "decision_rule": {
+    "fixed_bias_explained_energy_fraction_min": 0.5,
+    "material_worst_slow_auc_reduction_min": 0.2,
+    "bias_dominated": "both_pooled_sst_and_ssh_fixed_amplitude_linear_bias_predictions_explain_at_least_half_of_day90_error_energy",
+    "large_scale_correctable": "otherwise_conservation_or_combined_projection_reduces_worst_sst_surface_pressure_ssh_rmse_auc_ratio_to_persistence_by_at_least_20_percent",
+    "feedback_amplification": "neither_preceding_condition_holds",
+    "training_consequence": {
+      "bias_dominated_or_large_scale_correctable": "loss_v3_with_conservation_projection_bias_penalty_and_rollout_conditioned_one_state_supervision",
+      "feedback_amplification": "retain_constraints_but_prioritize_rollout_conditioned_supervision_over_static_bias_correction"
+    }
+  },
+  "evaluation": {
+    "batch_size": 16,
+    "reference_seed_only": true,
+    "descriptive_frozen_checkpoint_test": true,
+    "does_not_authorize_inference": true,
+    "does_not_freeze_a_new_model": true
+  },
+  "milestone_scope": {
+    "adjoint_readiness_forward_horizons_days": [
+      10,
+      30
+    ],
+    "adjoint_campaign_gate": "predeclare_a_separate_10_to_30_day_forward_gate_matched_to_mandatory_adjoint_horizons_after_this_diagnostic",
+    "long_rollout_track": "retain_90_day_drift_as_a_separate_versioned_stability_claim",
+    "adjoint_truth_remains_sealed": true
+  },
+  "read_contract": {
+    "training_pair_code": 1,
+    "training_state_read": true,
+    "prior_report_metadata_read": true,
+    "validation_state_read": false,
+    "inference_state_read": false,
+    "intermediate_wind_read": false,
+    "response_read": false,
+    "adjoint_read": false
+  },
+  "source_hashes": {
+    "src/bire_repro/af_model_c_slow_field_bias_projection.py": "37722dda6382a4e808b3e2b348ecdfe56153b35a106b053bb52b01ca0f92a3a2",
+    "src/bire_repro/af_model_c_successor_validation.py": "ddf87aae293321b3710e3c5530c6ec6f5f603da6cfe466201ef2cade9737923a",
+    "src/bire_repro/af_model_c_rollout_diagnosis.py": "c497cc3e1ea40c1e39ebd600f42d4b03f61d5a20671f1f3274cf8af883c9fb55",
+    "src/bire_repro/af_forward_complete.py": "18914b77058bfe1abeab3c98ec711ac8fb970deb76507b095ee376a0de447612",
+    "src/bire_repro/af_pressure.py": "1939645d807ec0281624d4146cadc51b3e9f382c540a56d7ed5afdca4b2c7c6c",
+    "src/bire_repro/af_data.py": "421a0e80feb8e2ae2ee588cc8debaf315927319d2bfb856056294397bf1f65a6",
+    "slurm/af_model_c_slow_field_bias_projection.sbatch": "b0f15238b3dbb54e28d74dc9f06492d4faae3a963a4b7f6d3f8d88df4f3c43e6",
+    "tests/test_af_model_c_slow_field_bias_projection.py": "bf493461db5af554dc1c8ad5dd06c9f17fac72a6101c75fefd5dff90385a4626"
+  }
+}

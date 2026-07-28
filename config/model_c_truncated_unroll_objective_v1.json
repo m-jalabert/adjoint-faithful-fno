@@ -1,0 +1,193 @@
+{
+  "version": "model_c_truncated_unroll_objective_v1",
+  "contract_status": "frozen_after_duration_gate_failure_before_truncated_unroll_metrics",
+  "freeze_date": "2026-07-28",
+  "purpose": "one_bounded_training_only_three_call_truncated_unroll_correction_after_terminal_only_duration_failure",
+  "scientific_motivation": {
+    "duration_result": "training_only_pushforward_gate_not_yet_passed",
+    "duration_replay": "pushforward_v1_step1920_reproduced_bitwise_exactly_before_extension",
+    "duration_selected_step": 5760,
+    "duration_evidence": {
+      "worst_primary_rmse_auc_ratio": 1.5965300708036083,
+      "worst_slow_field_lead_ratio": 3.608825047095342,
+      "ten_day_worst_regime_group_ratio": 0.5662765638018284,
+      "day90_sst_ratio_to_persistence": 2.4019410529018947,
+      "day90_sst_ratio_to_climatology": 3.608825047095342,
+      "day90_phihyd_surface_ratio_to_persistence": 2.9216518902889335,
+      "day90_phihyd_surface_ratio_to_climatology": 1.7274164480241887
+    },
+    "diagnosis": "the_one_step_map_remains_skilled_but_terminal_only_gradients_do_not_train_the_error_amplification_across_consecutive_recursive_calls",
+    "method_source": "docs/FNO_explained_Duruisseaux_et_al_arXiv26 .pdf",
+    "method_source_sha256": "a051548f114160712036ca6ee56f7c282cda041d1d9748611f12870fe2d8ccd4",
+    "method_source_pages": [
+      62,
+      63,
+      64,
+      70,
+      71
+    ],
+    "method_basis": "use_short_truncated_backpropagation_through_time_to_expose_the_operator_to_its_own_states_and_propagate_slow_field_error_gradients_across_consecutive_calls_while_retaining_climatology_scaled_multiobjective_balance",
+    "single_scientific_change": "replace_one_detached_terminal_endpoint_with_three_consecutive_differentiable_calls_supervised_at_every_endpoint",
+    "unchanged": "width128_architecture_modes_padding_channel_mlp_loss_v1_training_split_batch_order_slow_fields_climatology_scaling_correction_weight_and_frozen_gate",
+    "fresh_validation_authorized": false
+  },
+  "source_artifacts": {
+    "dataset": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/trajectories_v2.zarr",
+    "dataset_metadata_sha256": "ae7be47c456962f411acb0d8e217dcb7fa6e24c59e5a8f3133f93032e378b8cc",
+    "successor_training_contract": "/home/mjalabert314/bire_james25_repro/config/model_c_successor_training_v1.json",
+    "successor_training_contract_sha256": "3e0a300e73ec4044705e29190473d0aee7308fb6ea7d12485346d1fe14159285",
+    "checkpoint_replay_contract": "/home/mjalabert314/bire_james25_repro/config/model_c_checkpoint_replay_audit_v1.json",
+    "checkpoint_replay_contract_sha256": "494ce9de6688bd3333f1a1c97289eba1a717e6481275ea3a07364c9bbae06682",
+    "duration_contract": "/home/mjalabert314/bire_james25_repro/config/model_c_pushforward_duration_v1.json",
+    "duration_contract_sha256": "4867fa77d68e97593ae0d51d3a47919eb6cd418ecbe279cc192dacc15d578c79",
+    "duration_report": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/pushforward_duration_v1/model_c_pushforward_duration_report.json",
+    "duration_report_sha256": "86bf00b800d68f6741c36f5a144a5e81269c520ce388dda4e6a0e75b7544e9d7",
+    "duration_report_content_sha256": "cef1b7565120562d9b20a5b6935aca37bbce55892caf7749ab1214c13f9ada57",
+    "duration_arrays": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/pushforward_duration_v1/model_c_pushforward_duration_arrays.npz",
+    "duration_arrays_sha256": "46129f2653b78a4b2283bde440f5db3897d05c1232680b7b993f25369ec77bfc",
+    "duration_selected_checkpoint": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/pushforward_duration_v1/model_c_pushforward_duration_best.pt",
+    "duration_selected_checkpoint_sha256": "fe9b186d574cf1786cc67b93cd4b752d88d9080a75882eea60fb4896c16b4c64"
+  },
+  "objective": {
+    "base_loss_version": "v1",
+    "base_loss_contract_sha256": "19000a1426ea928db7799c82a73ce071a874911eb7e1df50bd276582ec30b5f9",
+    "base_loss_change": false,
+    "supervised_windows_days": [
+      [
+        40,
+        50,
+        60
+      ],
+      [
+        70,
+        80,
+        90
+      ]
+    ],
+    "window_schedule": "alternate_40_to_60_and_70_to_90_by_optimizer_step",
+    "differentiable_model_calls": 3,
+    "pre_window_state": "detached_no_grad_rollout_from_day30",
+    "endpoint_reduction": "equal_mean_over_three_endpoints_and_two_slow_fields",
+    "slow_fields": [
+      "sst",
+      "phihyd_surface"
+    ],
+    "surface_phihyd_formula": "g_times_eta_minus_25m_times_g_times_alpha_times_theta0_minus_Tref0",
+    "correction_weight": 0.0025,
+    "weight_change_from_pushforward_v1": false,
+    "climatology_rmse_scales": {
+      "40": {
+        "sst": 0.03962567076086998,
+        "phihyd_surface": 0.06071058288216591
+      },
+      "50": {
+        "sst": 0.03958198055624962,
+        "phihyd_surface": 0.060521505773067474
+      },
+      "60": {
+        "sst": 0.03954358026385307,
+        "phihyd_surface": 0.0603497214615345
+      },
+      "70": {
+        "sst": 0.039474714547395706,
+        "phihyd_surface": 0.06014971062541008
+      },
+      "80": {
+        "sst": 0.03943878412246704,
+        "phihyd_surface": 0.05997995659708977
+      },
+      "90": {
+        "sst": 0.039431508630514145,
+        "phihyd_surface": 0.05981823801994324
+      }
+    },
+    "climatology_scale_source": "root_mean_square_of_member_rmse_on_the_frozen_540_split1_audit_records",
+    "backpropagated_model_steps_per_batch": 6,
+    "maximum_executed_model_steps_per_batch": 9,
+    "architecture_change": false,
+    "normalization_change": false,
+    "mode_change": false,
+    "capacity_change": false
+  },
+  "fine_tune": {
+    "source_fine_tune_step": 5760,
+    "batch_order_seed": 20260728,
+    "batch_size": 4,
+    "effective_batch_size": 4,
+    "maximum_steps": 1920,
+    "checkpoint_steps": [
+      480,
+      960,
+      1440,
+      1920
+    ],
+    "learning_rate": 0.00002,
+    "learning_rate_schedule": "constant",
+    "adam_betas": [
+      0.9,
+      0.95
+    ],
+    "weight_decay": 0.00001,
+    "optimizer_state": "fresh_adamw_because_the_duration_checkpoint_contains_model_state_only",
+    "training_rollouts": "all_complete_nine_step_pair_split1_rollouts"
+  },
+  "evaluation": {
+    "records": "same_frozen_540_split1_rollouts_as_checkpoint_replay_pushforward_v1_and_duration",
+    "batch_size": 16,
+    "lead_days": [
+      10,
+      20,
+      30,
+      40,
+      50,
+      60,
+      70,
+      80,
+      90
+    ],
+    "baselines": [
+      "persistence",
+      "training_climatology"
+    ],
+    "gate": "identical_primary_auc_slow_field_all_leads_ten_day_finite_zero_land_and_reload_gate",
+    "selection_order": [
+      "minimum_worst_slow_field_all_lead_rmse_ratio",
+      "minimum_worst_primary_rmse_auc_ratio",
+      "minimum_old_ten_day_worst_regime_group_ratio",
+      "earliest_truncated_fine_tune_step"
+    ]
+  },
+  "next_decision": {
+    "gate_passed": "freeze_selected_truncated_step_and_replicate_the_identical_complete_training_path_for_seeds_20260724_and_20260725_before_fresh_validation",
+    "gate_failed": "stop_without_validation_and_use_the_lead_and_training_curves_to_reassess_loss_horizon_weight_and_operator_stability",
+    "no_automatic_follow_on_variant": true,
+    "fresh_validation_authorized": false
+  },
+  "read_contract": {
+    "training_pair_code": 1,
+    "training_state_read": true,
+    "prior_report_metadata_read": true,
+    "validation_state_read": false,
+    "inference_read": false,
+    "intermediate_wind_read": false,
+    "response_read": false,
+    "adjoint_read": false
+  },
+  "source_hashes": {
+    "src/bire_repro/af_model_c_truncated_unroll_objective.py": "794c5785bf064892cbf93a21613d3f8fac71003d71248eceacb8acc2a84bc0f3",
+    "src/bire_repro/af_model_c_pushforward_duration.py": "5bf01382e37518e79271561bddc916c14ba2c9ccf54d23b69a5c7473131ef401",
+    "src/bire_repro/af_model_c_pushforward_objective.py": "e29b23c70362fc582176a08c1cc6c4271b8be30413d9bcda7c49dd39b5230219",
+    "src/bire_repro/af_model_c_checkpoint_replay_audit.py": "399d9cbdad311c525c9946a3194961bc5f4f080fb174125ac06bc1ec65ede65d",
+    "src/bire_repro/af_model_c_successor.py": "62a5a3f91b21137bcaf4b8ed39a4bf3a4f35d1357cf7ab83947bd7dbbbe236e6",
+    "src/bire_repro/af_model_c_successor_validation.py": "ddf87aae293321b3710e3c5530c6ec6f5f603da6cfe466201ef2cade9737923a",
+    "src/bire_repro/af_model_c_rollout_diagnosis.py": "c497cc3e1ea40c1e39ebd600f42d4b03f61d5a20671f1f3274cf8af883c9fb55",
+    "src/bire_repro/af_model_a.py": "5b9ca3d096ee3f8409536a3cf034de65d5faf0f012bb704a57b2ae99179e680b",
+    "src/bire_repro/af_model_b.py": "9fdeb0f67e01e4bf2fbc0a51145452854c4ce038a3535391b2f1fadfa7b6e386",
+    "src/bire_repro/af_model_c.py": "ac81165ceb7e68eafc6cac237fe0e4cd2dafa2c67bf204db41b5dba86551493b",
+    "src/bire_repro/af_forward_complete.py": "18914b77058bfe1abeab3c98ec711ac8fb970deb76507b095ee376a0de447612",
+    "src/bire_repro/af_a0_evaluate.py": "47341bc7f8de8f9a5172911993a1358d82892d799d425f28dc4a6e8267cce4a1",
+    "src/bire_repro/af_pressure.py": "1939645d807ec0281624d4146cadc51b3e9f382c540a56d7ed5afdca4b2c7c6c",
+    "tests/test_af_model_c_truncated_unroll_objective.py": "7d373a489bfcc0cdc1feb98bb8af6b4a2ed98b82eac9aad501e63eb3997155de",
+    "slurm/af_model_c_truncated_unroll_objective.sbatch": "c21b861e60aab1c1b7aa02e1cb7feacd35d9e34511172f0c9edec70c123d3d26"
+  }
+}

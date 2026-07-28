@@ -1,0 +1,190 @@
+{
+  "version": "model_c_bire_figures_v1",
+  "contract_status": "frozen_before_bire_style_100_to_200_day_validation_metrics",
+  "freeze_date": "2026-07-27",
+  "purpose": "descriptive_reproduction_of_bire_figures_3_and_4_for_the_rejected_model_c_successor",
+  "paper_alignment": {
+    "reference": "Bire_et_al_JAMES_2025_figures_3_and_4",
+    "figure3": "truth_prediction_and_truth_minus_prediction_barotropic_streamfunction",
+    "figure4": "member_mean_rmse_with_10th_and_90th_percentile_limits",
+    "prediction_interval_days": 10,
+    "differences_from_paper": [
+      "native_1_degree_grid_only_without_a_coarse_resolution_row",
+      "fresh_validation_S2_instead_of_the_sealed_inference_archive",
+      "training_only_pointwise_climatology_to_prevent_evaluation_leakage",
+      "one_frozen_Model_C_seed_and_15_initial_condition_members"
+    ],
+    "descriptive_only": true,
+    "may_not_select_checkpoint_loss_architecture_or_data": true
+  },
+  "source_artifacts": {
+    "dataset": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/trajectories_v2.zarr",
+    "dataset_metadata_sha256": "ae7be47c456962f411acb0d8e217dcb7fa6e24c59e5a8f3133f93032e378b8cc",
+    "quality_report": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/trajectories_v2.quality.json",
+    "quality_report_sha256": "a6f7e5234acec1ba29a323d5bc570e8b9e1ece2bfdaa627753609f71f97cf752",
+    "successor_validation_contract": "/home/mjalabert314/bire_james25_repro/config/model_c_successor_validation_v2.json",
+    "successor_validation_contract_sha256": "56bb6ec597993b0689ab699a452ed189392f98806bf95b7add79062b070cf27b",
+    "fresh_validation_report": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/successor_validation_v1/fresh_validation/model_c_successor_validation_report.json",
+    "fresh_validation_report_sha256": "9853ea7aff210ae880b4463583f5aae34a1d11508d98b72eb9fab93f582663fb",
+    "fresh_validation_report_content_sha256": "5537401af56d922b7a74c7bb33ffb2c741678275c39f2c1d3ce5ae66fefe394d",
+    "checkpoint_seed": 20260723,
+    "checkpoint": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/successor_training_v1/phase_2/v2_bireprop_w128_mlp4/model_c_successor_training_best.pt",
+    "checkpoint_sha256": "2d10e48adc5e2e8c9f8478fd2d885fe7edc427248c97c4589bd510de0f360060"
+  },
+  "ensemble": {
+    "regime_index": 2,
+    "regime_label": "S2",
+    "validation_pair_code": 2,
+    "lead_days": [
+      0,
+      10,
+      20,
+      30,
+      40,
+      50,
+      60,
+      70,
+      80,
+      90,
+      100,
+      110,
+      120,
+      130,
+      140,
+      150,
+      160,
+      170,
+      180,
+      190,
+      200
+    ],
+    "candidate_count": 70,
+    "candidate_bounds": [
+      6300,
+      6369
+    ],
+    "candidate_times_sha256": "b80af512bd5e49dd82028ce71c8a9f5545e59751abda406d94f48542e1d89c6b",
+    "member_count": 15,
+    "selection": "numpy_default_rng_choice_without_replacement_in_draw_order",
+    "selection_seed": 20260727,
+    "start_draw_order": [
+      6335,
+      6353,
+      6330,
+      6361,
+      6358,
+      6308,
+      6313,
+      6346,
+      6324,
+      6323,
+      6319,
+      6325,
+      6355,
+      6366,
+      6351
+    ],
+    "start_draw_order_sha256": "cb7ba303adfa368ea59952e7a75e486a6ef5f2b546fe16f4cdeab59ffdd5b2e0",
+    "figure3_start": 6335,
+    "figure3_selection": "first_prospectively_drawn_member_without_state_inspection"
+  },
+  "baselines": {
+    "persistence": "repeat_each_member_initial_condition_for_every_future_lead",
+    "climatology": "regime_specific_pointwise_time_mean_of_MITgcm_truth_over_split1_training_snapshots",
+    "training_snapshots": 5040,
+    "derived_field_rule": "derive_each_training_snapshot_then_average_pointwise",
+    "paper_formula_matched": true,
+    "evaluation_period_excluded_from_climatology": true
+  },
+  "figure3": {
+    "field": "barotropic_streamfunction",
+    "units": "Sv",
+    "native_resolution_degrees": 1.0,
+    "lead_days": [
+      0,
+      10,
+      20,
+      30,
+      40
+    ],
+    "rows": [
+      "MITgcm_ground_truth",
+      "Model_C_prediction",
+      "ground_truth_minus_prediction"
+    ],
+    "coarse_resolution_row": false,
+    "shared_truth_prediction_symmetric_color_scale": true
+  },
+  "figure4": {
+    "fields": [
+      "surface_speed",
+      "sst",
+      "phihyd_surface"
+    ],
+    "field_display_order": [
+      "surface_speed",
+      "sst",
+      "P_over_rho_surface"
+    ],
+    "summary": "mean_p10_p90_over_15_members",
+    "line_colors": {
+      "prediction": "red",
+      "climatology": "black",
+      "persistence": "blue"
+    },
+    "time_axis_days": [
+      0,
+      200
+    ],
+    "axis_limits": {
+      "surface_speed": [
+        0.0,
+        0.12
+      ],
+      "sst": [
+        0.0,
+        0.3
+      ],
+      "phihyd_surface": [
+        0.0,
+        1.0
+      ]
+    },
+    "scientific_axis_multiplier": {
+      "surface_speed": -1,
+      "sst": -1,
+      "phihyd_surface": 0
+    },
+    "record_axis_exceedances_in_report": true
+  },
+  "read_contract": {
+    "training_state_for_climatology": true,
+    "fresh_validation_state": true,
+    "inference_state": false,
+    "intermediate_wind_state": false,
+    "response_state": false,
+    "adjoint_state": false
+  },
+  "decision_contract": {
+    "descriptive_only": true,
+    "tuning_authorized": false,
+    "inference_authorized": false,
+    "model_freeze_authorized": false,
+    "may_compare_visually_with_Bire": true,
+    "must_disclose_grid_data_split_and_climatology_differences": true
+  },
+  "output_contract": {
+    "scratch_output": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/bire_figures_v1",
+    "project_output": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/bire_figures_v1",
+    "immutable_non_overwriting": true
+  },
+  "source_hashes": {
+    "src/bire_repro/af_model_c_bire_figures.py": "728c26158b064ee9706411043453a13f6bdc6f34b11d21a928f8e4d24d4b00d4",
+    "src/bire_repro/af_model_c_successor_validation.py": "ddf87aae293321b3710e3c5530c6ec6f5f603da6cfe466201ef2cade9737923a",
+    "src/bire_repro/af_model_c_successor.py": "62a5a3f91b21137bcaf4b8ed39a4bf3a4f35d1357cf7ab83947bd7dbbbe236e6",
+    "src/bire_repro/af_forward_complete.py": "18914b77058bfe1abeab3c98ec711ac8fb970deb76507b095ee376a0de447612",
+    "src/bire_repro/af_pressure.py": "1939645d807ec0281624d4146cadc51b3e9f382c540a56d7ed5afdca4b2c7c6c",
+    "src/bire_repro/af_data.py": "421a0e80feb8e2ae2ee588cc8debaf315927319d2bfb856056294397bf1f65a6",
+    "slurm/af_model_c_bire_figures.sbatch": "176c99ccc8c2498c4de9a07bb27b10056362a508fa627f3906baedfc9fe77fc8"
+  }
+}

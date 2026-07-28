@@ -1,0 +1,210 @@
+{
+  "version": "model_c_rollout_conditioned_loss_v3",
+  "contract_status": "frozen_after_job_292064_before_loss_v3_training_metrics",
+  "freeze_date": "2026-07-28",
+  "purpose": "primary_one_state_rollout_conditioned_model_c_correction_after_static_bias_explanation_was_rejected",
+  "scientific_motivation": {
+    "audit_job_id": 292064,
+    "audit_classification": "feedback_amplification_not_explained_by_static_bias",
+    "fixed_amplitude_linear_bias_explained_energy_fraction": {
+      "sst": 0.33425002583936214,
+      "ssh": 0.27210926189479956
+    },
+    "basin_mean_plus_five_increment_eofs_day90_error_energy_fraction": {
+      "sst": 0.045665742668339435,
+      "ssh": 0.017303333660166405
+    },
+    "raw_worst_slow_field_rmse_auc_ratio_to_persistence": 1.985510555145606,
+    "static_bias_plus_constraints_worst_slow_field_rmse_auc_ratio_to_persistence": 1.6032131863693344,
+    "relative_reduction": 0.19254360939332105,
+    "predeclared_large_scale_correctable_threshold": 0.2,
+    "conservation_only_relative_reduction": -0.005163346406160896,
+    "interpretation": "static_bias_is_material_but_does_not_meet_the_predeclared_dominant_or_large_scale_correctable_branch_so_the_primary_new_signal_is_forecast_age_conditioning",
+    "retained_physics": "linear_ssh_volume_and_temperature_level_mean_output_projections_are_retained_for_exactness_and_adjoint_compatibility",
+    "retained_bias_signal": "a_modest_spatial_batch_mean_signed_increment_penalty_is_retained_because_static_bias_removed_19p25_percent_of_the_worst_auc_even_though_it_missed_the_branch_threshold",
+    "temporal_interface_decision": "retain_one_ocean_state_and_demote_two_state_two_output_to_a_bounded_secondary_arm",
+    "fresh_validation_authorized": false
+  },
+  "source_artifacts": {
+    "dataset": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/trajectories_v2.zarr",
+    "dataset_metadata_sha256": "ae7be47c456962f411acb0d8e217dcb7fa6e24c59e5a8f3133f93032e378b8cc",
+    "successor_training_contract": "/home/mjalabert314/bire_james25_repro/config/model_c_successor_training_v1.json",
+    "successor_training_contract_sha256": "3e0a300e73ec4044705e29190473d0aee7308fb6ea7d12485346d1fe14159285",
+    "checkpoint_replay_contract": "/home/mjalabert314/bire_james25_repro/config/model_c_checkpoint_replay_audit_v1.json",
+    "checkpoint_replay_contract_sha256": "494ce9de6688bd3333f1a1c97289eba1a717e6481275ea3a07364c9bbae06682",
+    "duration_contract": "/home/mjalabert314/bire_james25_repro/config/model_c_pushforward_duration_v1.json",
+    "duration_contract_sha256": "4867fa77d68e97593ae0d51d3a47919eb6cd418ecbe279cc192dacc15d578c79",
+    "duration_report": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/pushforward_duration_v1/model_c_pushforward_duration_report.json",
+    "duration_report_sha256": "86bf00b800d68f6741c36f5a144a5e81269c520ce388dda4e6a0e75b7544e9d7",
+    "duration_report_content_sha256": "cef1b7565120562d9b20a5b6935aca37bbce55892caf7749ab1214c13f9ada57",
+    "duration_arrays": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/pushforward_duration_v1/model_c_pushforward_duration_arrays.npz",
+    "duration_arrays_sha256": "46129f2653b78a4b2283bde440f5db3897d05c1232680b7b993f25369ec77bfc",
+    "duration_selected_checkpoint": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/pushforward_duration_v1/model_c_pushforward_duration_best.pt",
+    "duration_selected_checkpoint_sha256": "fe9b186d574cf1786cc67b93cd4b752d88d9080a75882eea60fb4896c16b4c64",
+    "bias_projection_contract": "/home/mjalabert314/bire_james25_repro/config/model_c_slow_field_bias_projection_v1.json",
+    "bias_projection_contract_sha256": "fd7d39f5c6a4babdf5fa830cc3e0b89234138d5f805d73b523b1fb1fef405428",
+    "bias_projection_report": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/slow_field_bias_projection_v1/model_c_slow_field_bias_projection_report.json",
+    "bias_projection_report_sha256": "e66b263c826c3e8251c8e0efab8c5e535b22003120564821ad555c8deabe0f90",
+    "bias_projection_report_content_sha256": "b5626cba2c53dfa496986307c8423fc4242a9ee9b031b458225c3cdcfb8bd2d6"
+  },
+  "objective": {
+    "loss_version": "v3",
+    "base_loss_version": "v1",
+    "base_loss_contract_sha256": "19000a1426ea928db7799c82a73ce071a874911eb7e1df50bd276582ec30b5f9",
+    "base_loss_semantics_changed": false,
+    "projection_application": "every_training_and_evaluation_model_call",
+    "ssh_projection": "subtract_cosine_latitude_weighted_wet_area_mean_normalized_increment",
+    "ssh_target": "exact_zero_wet_area_mean_increment",
+    "temperature_projection": "replace_each_level_wet_area_mean_increment_with_the_regime_specific_split1_truth_mean_tendency",
+    "temperature_target_source": "job_292064_all_split1_teacher_forced_pairs",
+    "projection_linearity_in_ocean_state": true,
+    "forecast_target_days": [
+      10,
+      20,
+      30,
+      40,
+      50,
+      60,
+      70,
+      80,
+      90
+    ],
+    "target_schedule": "cycle_10_to_90_days_by_optimizer_step",
+    "forecast_age_state": "detach_all_preceding_projected_calls",
+    "differentiable_conditioned_calls": 1,
+    "rollout_conditioned_fields": [
+      "sst",
+      "phihyd_surface"
+    ],
+    "rollout_conditioned_reduction": "equal_mean_of_masked_member_rmse_normalized_by_fixed_training_climatology_rmse",
+    "rollout_conditioned_weight": 0.0025,
+    "slow_bias_penalty": "squared_wet_cell_mean_of_batch_mean_signed_increment_error_after_per_channel_training_increment_rms_scaling_for_temperature_levels_and_ssh",
+    "slow_bias_penalty_weight": 0.01,
+    "bias_weight_basis": "the_reference_global_signed_bias_penalty_is_0p1473_so_weight_0p01_contributes_about_0p00147_and_is_visible_without_dominating_the_rollout_conditioned_term",
+    "climatology_rmse_scales": {
+      "10": {
+        "sst": 0.03977297246456146,
+        "phihyd_surface": 0.06129062548279762
+      },
+      "20": {
+        "sst": 0.039716966450214386,
+        "phihyd_surface": 0.061078958213329315
+      },
+      "30": {
+        "sst": 0.03967265412211418,
+        "phihyd_surface": 0.06090136244893074
+      },
+      "40": {
+        "sst": 0.03962566703557968,
+        "phihyd_surface": 0.06071058288216591
+      },
+      "50": {
+        "sst": 0.039581991732120514,
+        "phihyd_surface": 0.060521502047777176
+      },
+      "60": {
+        "sst": 0.039543576538562775,
+        "phihyd_surface": 0.0603497177362442
+      },
+      "70": {
+        "sst": 0.039474718272686005,
+        "phihyd_surface": 0.06014971435070038
+      },
+      "80": {
+        "sst": 0.039438776671886444,
+        "phihyd_surface": 0.059979960322380066
+      },
+      "90": {
+        "sst": 0.039431504905223846,
+        "phihyd_surface": 0.05981823801994324
+      }
+    },
+    "climatology_scale_source": "root_mean_square_of_member_climatology_rmse_on_the_frozen_540_split1_records",
+    "base_differentiable_calls_per_batch": 3,
+    "total_differentiable_calls_per_batch": 4,
+    "maximum_executed_calls_per_batch": 12,
+    "architecture_change": false,
+    "state_interface_change": false,
+    "normalization_change": false
+  },
+  "fine_tune": {
+    "source_fine_tune_step": 5760,
+    "source_seed": 20260723,
+    "batch_order_seed": 20260728,
+    "batch_size": 4,
+    "effective_batch_size": 4,
+    "maximum_steps": 2880,
+    "checkpoint_steps": [
+      480,
+      960,
+      1440,
+      1920,
+      2400,
+      2880
+    ],
+    "learning_rate": 0.00002,
+    "learning_rate_schedule": "constant",
+    "adam_betas": [
+      0.9,
+      0.95
+    ],
+    "weight_decay": 0.00001,
+    "optimizer_state": "fresh_adamw_because_the_duration_checkpoint_contains_model_state_only",
+    "training_rollouts": "all_complete_nine_step_pair_split1_rollouts"
+  },
+  "evaluation": {
+    "records": "same_frozen_540_split1_rollouts_as_jobs_291102_and_292064",
+    "batch_size": 16,
+    "lead_days": [
+      10,
+      20,
+      30,
+      40,
+      50,
+      60,
+      70,
+      80,
+      90
+    ],
+    "baselines": [
+      "persistence",
+      "training_climatology"
+    ],
+    "gate": "identical_primary_auc_slow_field_all_leads_ten_day_finite_zero_land_and_reload_gate",
+    "adjoint_readiness_scope_to_report_separately": [
+      10,
+      20,
+      30
+    ],
+    "selection_order": [
+      "passing_checkpoint_if_any",
+      "minimum_worst_slow_field_all_lead_rmse_ratio",
+      "minimum_worst_primary_rmse_auc_ratio",
+      "minimum_old_ten_day_worst_regime_group_ratio",
+      "earliest_fine_tune_step"
+    ]
+  },
+  "next_decision": {
+    "gate_passed": "freeze_selected_step_and_replicate_the_identical_loss_v3_path_for_seeds_20260724_and_20260725_before_fresh_validation",
+    "gate_failed_but_improved": "stop_without_validation_and_contract_the_two_state_two_output_secondary_arm_with_the_same_projections_and_bias_penalty",
+    "gate_failed_without_improvement": "stop_without_validation_and_prioritize_input_noise_or_group_specific_projection_heads",
+    "no_automatic_follow_on_variant": true,
+    "fresh_validation_authorized": false
+  },
+  "read_contract": {
+    "training_pair_code": 1,
+    "training_state_read": true,
+    "prior_report_metadata_read": true,
+    "validation_state_read": false,
+    "inference_state_read": false,
+    "intermediate_wind_read": false,
+    "response_read": false,
+    "adjoint_read": false
+  },
+  "source_hashes": {
+    "src/bire_repro/af_model_c_rollout_conditioned_loss_v3.py": "f1e1b9c40cbabc2387507a18d89e3c1312747aa68dc4901f61b879515c8526da",
+    "src/bire_repro/af_model_c_truncated_unroll_objective.py": "c57fa2a6b7a202737b9b9385e279ed1dabf5c21578d4c1b08450dac9fb087e08",
+    "tests/test_af_model_c_rollout_conditioned_loss_v3.py": "0ec447de2283a1a5b8dc2d5f05678528eaa87400eea0f096cfc9a87f748a9686",
+    "slurm/af_model_c_rollout_conditioned_loss_v3.sbatch": "8ef1734a3063e544bd705cb8b8fe6e17c39f9a0718d570f77e3c3d1d3df65bbf"
+  }
+}

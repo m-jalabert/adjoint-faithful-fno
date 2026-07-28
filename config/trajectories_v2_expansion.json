@@ -1,0 +1,114 @@
+{
+  "contract_status": "frozen_after_data_adequacy_authorization_and_before_v2_simulation",
+  "data_adequacy_decision": {
+    "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/data_adequacy_v1/model_c_data_adequacy_report.json",
+    "sha256": "be672face8c4deb5e15b72c2a09d0781a9d9830bd0984c0b5c05ca88f4e307ee",
+    "status": "authorize_trajectories_v2_effective_coverage_expansion"
+  },
+  "dataset_v2_design": {
+    "horizon_days": 10,
+    "pair_counts_per_regime": {
+      "inference": 1150,
+      "training": 5020,
+      "validation": 260
+    },
+    "raw_records_per_regime": 7200,
+    "snapshot_blocks": {
+      "excluded": [
+        [
+          2520,
+          2970
+        ],
+        [
+          3600,
+          3690
+        ],
+        [
+          6210,
+          6300
+        ],
+        [
+          6570,
+          6660
+        ]
+      ],
+      "inference": [
+        [
+          2970,
+          3600
+        ],
+        [
+          6660,
+          7200
+        ]
+      ],
+      "training": [
+        [
+          0,
+          2520
+        ],
+        [
+          3690,
+          6210
+        ]
+      ],
+      "validation": [
+        [
+          6300,
+          6570
+        ]
+      ]
+    },
+    "split_policy": "old_open_validation_excluded_original_inference_preserved_new_validation_and_inference_fresh",
+    "training_pairs_total": 15060
+  },
+  "effective_coverage": {
+    "raw_record_multiplier": 2.0,
+    "target_effective_independent_coverage_multiplier": 2.0,
+    "verification_required_after_dataset_conversion": true
+  },
+  "experiments": {
+    "S0": {
+      "absolute_end_year": 120,
+      "absolute_start_year": 110,
+      "local_end_year": 120,
+      "local_start_year": 110,
+      "parent_result": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/mitgcm/S0/production/years_100_110/segment_result.json",
+      "parent_result_sha256": "efeb940d62c48f54aa075e93d7f6fee6026d3c6b56883a4c7c519ca0bedea73e",
+      "tau0_n_m2": 0.1,
+      "years": 10
+    },
+    "S1": {
+      "absolute_end_year": 125,
+      "absolute_start_year": 115,
+      "local_end_year": 25,
+      "local_start_year": 15,
+      "parent_result": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/mitgcm/S1/production/years_005_015/segment_result.json",
+      "parent_result_sha256": "0a7b760cf0dc7b80e541db4e8852790fdbe28478887f97369926e8605e0bc47a",
+      "tau0_n_m2": 0.075,
+      "years": 10
+    },
+    "S2": {
+      "absolute_end_year": 125,
+      "absolute_start_year": 115,
+      "local_end_year": 25,
+      "local_start_year": 15,
+      "parent_result": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/mitgcm/S2/production/years_005_015/segment_result.json",
+      "parent_result_sha256": "f973311a468e1077d5ce4564b1d42ec7820e28fa4e5afee50fd8b8c39b873820",
+      "tau0_n_m2": 0.125,
+      "years": 10
+    }
+  },
+  "simulation_design": {
+    "daily_diagnostics": true,
+    "extension_root": "mitgcm_v2",
+    "method": "exact_continuous_extension_from_each_immutable_year_10_production_pickup",
+    "reason": "match_the_reference_record_length_without_introducing_an_unbalanced_restart_perturbation",
+    "training_wind_regimes": [
+      "S0",
+      "S1",
+      "S2"
+    ]
+  },
+  "version": "trajectories_v2_expansion_v1"
+}

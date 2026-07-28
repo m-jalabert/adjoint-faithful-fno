@@ -1,0 +1,145 @@
+{
+  "version": "model_c_checkpoint_replay_audit_v1",
+  "contract_status": "frozen_after_training_rollout_drift_before_late_checkpoint_replay",
+  "freeze_date": "2026-07-27",
+  "purpose": "distinguish_checkpoint_selection_mismatch_from_training_objective_mismatch_without_opening_new_data",
+  "scientific_motivation": {
+    "observed_training_pattern": "all_three_width128_seeds_have_good_day10_skill_but_10_to_90_day_sst_and_pressure_drift_on_training_chronology",
+    "architecture_decision": "freeze_width128_modes24x16_four_layers_padding10pct_channel_mlp4",
+    "first_action": "replay_the_reference_seed_and_score_every_predeclared_late_checkpoint_before_changing_the_loss",
+    "success_definition": "one_exactly_replayed_checkpoint_retains_old_ten_day_skill_and_beats_persistence_and_training_climatology_under_the_frozen_long_horizon_rmse_gate",
+    "sealed_data_decision": "do_not_read_validation_inference_intermediate_wind_response_or_adjoint_states"
+  },
+  "source_artifacts": {
+    "dataset": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/trajectories_v2.zarr",
+    "dataset_metadata_sha256": "ae7be47c456962f411acb0d8e217dcb7fa6e24c59e5a8f3133f93032e378b8cc",
+    "successor_training_contract": "/home/mjalabert314/bire_james25_repro/config/model_c_successor_training_v1.json",
+    "successor_training_contract_sha256": "3e0a300e73ec4044705e29190473d0aee7308fb6ea7d12485346d1fe14159285",
+    "reference_training_report": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/successor_training_v1/phase_2/v2_bireprop_w128_mlp4/model_c_successor_training_report.json",
+    "reference_training_report_sha256": "5946515ea81ab1cb32e4ccf9f75c9f57cadb3afc2d4d3854732f41457e68433c",
+    "reference_selected_checkpoint": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/successor_training_v1/phase_2/v2_bireprop_w128_mlp4/model_c_successor_training_best.pt",
+    "reference_selected_checkpoint_sha256": "2d10e48adc5e2e8c9f8478fd2d885fe7edc427248c97c4589bd510de0f360060",
+    "training_rollout_contract": "/home/mjalabert314/bire_james25_repro/config/model_c_rollout_diagnosis_v1.json",
+    "training_rollout_contract_sha256": "d0ecee0db2b233409af2cbd55b34cbe133b647e28bd0c17381956040595ff7ba",
+    "training_rollout_report": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/rollout_diagnosis_v1/model_c_rollout_diagnosis_report.json",
+    "training_rollout_report_sha256": "7efdb07261254d18a941e38f9e6d2f8ce8ba2835943bd544f8fbaf836f171374",
+    "training_rollout_report_content_sha256": "2ea8a888e58568c4c67fc7dfe7ac991bf591c08df9ea307d5b1e688715e611ad"
+  },
+  "replay": {
+    "candidate_id": "v2_bireprop_w128_mlp4",
+    "seed": 20260723,
+    "checkpoint_steps": [
+      11520,
+      13440,
+      14400,
+      14880,
+      15120,
+      15360
+    ],
+    "reference_selected_step": 14880,
+    "exactness_test": "bitwise_state_dict_equality_at_step14880_and_zero_numeric_difference_in_the_six_checkpoint_history_records",
+    "architecture_change": false,
+    "loss_change": false,
+    "optimizer_change": false,
+    "batch_order_change": false,
+    "training_length_change": false
+  },
+  "records": {
+    "training_pair_code": 1,
+    "lead_days": [
+      10,
+      20,
+      30,
+      40,
+      50,
+      60,
+      70,
+      80,
+      90
+    ],
+    "selection": "evenly_spaced_complete_90_day_starts_per_training_block",
+    "expected_training_blocks": 2,
+    "complete_training_block_bounds": [
+      [
+        0,
+        2429
+      ],
+      [
+        3690,
+        6119
+      ]
+    ],
+    "starts_per_training_block": 90,
+    "selected_times_per_regime": 180,
+    "records_total": 540,
+    "training_times_sha256": "bb5aab82d7f97a86f89908f035a1b2845f77e1b39056b2454c70e9cdf9b6ab09",
+    "records_sha256": "f7f829281375aaeaab5a4dcbe7081babf2534a48e9c4100986e6b731df9ed944"
+  },
+  "evaluation": {
+    "batch_size": 16,
+    "auc_definition": "trapezoidal_mean_over_discrete_10_to_90_day_leads",
+    "baselines": [
+      "persistence",
+      "training_climatology"
+    ],
+    "descriptive_dataset": "fixed_split1_training_rollouts_only"
+  },
+  "checkpoint_gate": {
+    "strict_rmse_ratio_threshold": 1.0,
+    "primary_fields": [
+      "surface_speed",
+      "sst",
+      "phihyd_surface"
+    ],
+    "slow_primary_fields": [
+      "sst",
+      "phihyd_surface"
+    ],
+    "baselines": [
+      "persistence",
+      "climatology"
+    ],
+    "require_primary_rmse_auc_below_both_baselines": true,
+    "require_slow_field_rmse_below_both_at_every_lead": true,
+    "require_old_ten_day_regime_group_gate": true,
+    "require_finite_rollout": true,
+    "require_zero_land_leakage": true,
+    "selection_order": [
+      "minimum_worst_slow_field_all_lead_rmse_ratio",
+      "minimum_worst_primary_rmse_auc_ratio",
+      "minimum_old_ten_day_worst_regime_group_ratio",
+      "earliest_optimizer_step"
+    ],
+    "checkpoint_selection_only_classification": "at_least_one_checkpoint_passes_every_gate",
+    "objective_correction_classification": "exact_replay_passes_but_no_checkpoint_passes_every_gate"
+  },
+  "consequences": {
+    "checkpoint_selection_only_correction_supported": "replicate_the_frozen_checkpoint_selection_rule_across_seeds_before_independent_validation",
+    "objective_correction_required": "freeze_one_bounded_pushforward_or_unrolled_slow_field_objective_test_with_architecture_and_data_held_fixed",
+    "replay_provenance_failed": "resolve_exact_replay_before_interpreting_checkpoint_skill",
+    "fresh_validation_authorized": false,
+    "inference_authorized": false
+  },
+  "read_contract": {
+    "training_pair_code": 1,
+    "training_state_read": true,
+    "prior_report_metadata_read": true,
+    "validation_state_read": false,
+    "inference_read": false,
+    "intermediate_wind_read": false,
+    "response_read": false,
+    "adjoint_read": false
+  },
+  "source_hashes": {
+    "src/bire_repro/af_model_c_checkpoint_replay_audit.py": "399d9cbdad311c525c9946a3194961bc5f4f080fb174125ac06bc1ec65ede65d",
+    "src/bire_repro/af_model_c_successor.py": "62a5a3f91b21137bcaf4b8ed39a4bf3a4f35d1357cf7ab83947bd7dbbbe236e6",
+    "src/bire_repro/af_model_c_successor_validation.py": "ddf87aae293321b3710e3c5530c6ec6f5f603da6cfe466201ef2cade9737923a",
+    "src/bire_repro/af_model_c_rollout_diagnosis.py": "c497cc3e1ea40c1e39ebd600f42d4b03f61d5a20671f1f3274cf8af883c9fb55",
+    "src/bire_repro/af_model_a.py": "5b9ca3d096ee3f8409536a3cf034de65d5faf0f012bb704a57b2ae99179e680b",
+    "src/bire_repro/af_model_b.py": "9fdeb0f67e01e4bf2fbc0a51145452854c4ce038a3535391b2f1fadfa7b6e386",
+    "src/bire_repro/af_model_c.py": "ac81165ceb7e68eafc6cac237fe0e4cd2dafa2c67bf204db41b5dba86551493b",
+    "src/bire_repro/af_forward_complete.py": "18914b77058bfe1abeab3c98ec711ac8fb970deb76507b095ee376a0de447612",
+    "src/bire_repro/af_a0_evaluate.py": "47341bc7f8de8f9a5172911993a1358d82892d799d425f28dc4a6e8267cce4a1",
+    "slurm/af_model_c_checkpoint_replay_audit.sbatch": "756033fe16000eb98e891f5170ddf50f130d4fd619355437249b8f7f1c5b0a20"
+  }
+}

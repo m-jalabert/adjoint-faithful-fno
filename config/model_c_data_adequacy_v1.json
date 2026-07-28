@@ -1,0 +1,63 @@
+{
+  "bootstrap": {
+    "confidence_level": 0.95,
+    "replicates": 4000,
+    "seed": 20260727,
+    "temporal_block_length": "ceil_training_increment_rms_integrated_autocorrelation_time_by_group_and_regime"
+  },
+  "candidate_id": "m24_16_w64",
+  "contract_status": "predeclared_before_per_regime_model_metrics_were_computed",
+  "decision_rules": {
+    "chronology": {
+      "require_strictly_decreasing_worst_group_ratio": true,
+      "stages": [
+        1,
+        2,
+        3,
+        4
+      ]
+    },
+    "effective_independence": {
+      "groups": [
+        "temperature",
+        "ssh"
+      ],
+      "maximum_effective_state_samples_total_per_group": 20.0
+    },
+    "per_regime_generalization": {
+      "group": "ssh",
+      "minimum_regimes_with_seed_median_validation_ratio_above_training_ratio": 2
+    },
+    "training_fit": {
+      "require_all_final_seeds_all_aggregate_groups_below_persistence": true
+    }
+  },
+  "expansion_if_authorized": {
+    "dataset_version": "trajectories_v2",
+    "preserve_v1": true,
+    "target_effective_independent_coverage_multiplier": 2.0,
+    "training_wind_regimes": [
+      "S0",
+      "S1",
+      "S2"
+    ]
+  },
+  "read_contract": {
+    "adjoint_read": false,
+    "inference_pair_code": 3,
+    "inference_read": false,
+    "intermediate_wind_read": false,
+    "pair_split_codes_read": [
+      1,
+      2
+    ],
+    "response_read": false
+  },
+  "source_hashes": {
+    "dataset_metadata_sha256": "cbcf2938f458bafa2bbf9088c57732a7f73958ef59720d13c15c78242ca10847",
+    "final_seed_decision_sha256": "e19d502442fcfbbc75331c455c367c1db58015e8c31f0d649b4c7441e8072155",
+    "search_contract_sha256": "9e1d44299ae6cb36acbb3fc4ad158fb133cbb2d474f004cd2ef5f0e66dc4c6f6",
+    "training_diagnostics_sha256": "c47f5200ec032bab92a1681447b695edb5b395e03060635e04063188d6bc5c84"
+  },
+  "version": "model_c_data_adequacy_v1"
+}

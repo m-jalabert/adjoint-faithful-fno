@@ -36,6 +36,13 @@ MODE_CANDIDATES = ((12, 12), (16, 16), (16, 24), (24, 16), (24, 24))
 MODEL_C_LOSS_CALIBRATION_SHA256 = (
     "3406c9104dd63702f0c10c2d968ae0eb3f1dfc8d3b84db967e069b3df592e469"
 )
+MODEL_C_LOSS_V1_CONTRACT_SHA256 = (
+    "19000a1426ea928db7799c82a73ce071a874911eb7e1df50bd276582ec30b5f9"
+)
+MODEL_C_LATE_AUDIT_SHA256 = {
+    "width32": "2c9c2dc9d31ce171c3c5e51eea7a92adb8ff03f489bfc60f205019edac8ec098",
+    "width64": "15a191fe808ff22b0db78e73491584fad3618b172123bab9eae145d5a06b433e",
+}
 
 
 @dataclass(frozen=True)
@@ -109,6 +116,37 @@ class ModelCLossConfig:
         return asdict(self)
 
 
+@dataclass(frozen=True)
+class ModelCLossV2Config(ModelCLossConfig):
+    """Training-only priority revision after the two late-checkpoint audits."""
+
+    increment_weight: float = 0.0025
+
+    def __post_init__(self) -> None:
+        super().__post_init__()
+        expected = {
+            "rollout_steps": 3,
+            "increment_weight": 0.0025,
+            "rollout_weight": 0.15,
+            "spectral_weight": 0.00001,
+            "boundary_weight": 0.065,
+            "spectral_bins": 12,
+            "western_boundary_width": 4,
+        }
+        if self.to_dict() != expected:
+            raise ValueError("Model C loss v2 changes only increment weight to 0.0025")
+
+
+def model_c_loss_config(version: str = "v1") -> ModelCLossConfig:
+    """Return one explicit, immutable Model C loss version."""
+
+    if version == "v1":
+        return ModelCLossConfig()
+    if version == "v2":
+        return ModelCLossV2Config()
+    raise ValueError("Model C loss version must be 'v1' or 'v2'")
+
+
 def model_c_architecture(
     *,
     n_modes: tuple[int, int] = (16, 16),
@@ -138,7 +176,7 @@ def build_model_c(architecture: ModelCArchitecture = ModelCArchitecture()) -> An
 def loss_contract(config: ModelCLossConfig) -> dict[str, Any]:
     """Machine-readable semantics saved with every Model C experiment."""
 
-    return {
+    result = {
         "state": "equal_mean_U_V_temperature_SSH_masked_relative_l2_at_10_days",
         "increment": (
             "equal_mean_group_rmse_of_10_day_increment_error_scaled_by_"
@@ -160,18 +198,55 @@ def loss_contract(config: ModelCLossConfig) -> dict[str, Any]:
             "spectral_weight*spectral + boundary_weight*boundary"
         ),
         "config": config.to_dict(),
-        "status": "frozen_from_training_only_calibration_2026-07-23",
-        "calibration_report_sha256": MODEL_C_LOSS_CALIBRATION_SHA256,
-        "weight_basis": (
-            "rounded_unclipped_coefficients_targeting_gradient_norms_relative_to_"
-            "state_increment_0.5_rollout_0.5_spectral_0.25_boundary_0.25"
-        ),
     }
+    if isinstance(config, ModelCLossV2Config):
+        result.update(
+            {
+                "version": "v2",
+                "status": "frozen_from_training_only_late_checkpoint_audit_2026-07-26",
+                "calibration_report_sha256": MODEL_C_LOSS_CALIBRATION_SHA256,
+                "late_checkpoint_audit_sha256": MODEL_C_LATE_AUDIT_SHA256,
+                "supersedes_loss_contract_sha256": MODEL_C_LOSS_V1_CONTRACT_SHA256,
+                "weight_basis": (
+                    "increment_weight_raised_2.5x_to_target_late_weighted_increment_"
+                    "gradient_norm_near_1.0_relative_to_state_on_width32_and_width64"
+                ),
+                "scope": (
+                    "training_only_bounded_memorization_test_before_validation"
+                ),
+            }
+        )
+    else:
+        result.update(
+            {
+                "status": "frozen_from_training_only_calibration_2026-07-23",
+                "calibration_report_sha256": MODEL_C_LOSS_CALIBRATION_SHA256,
+                "weight_basis": (
+                    "rounded_unclipped_coefficients_targeting_gradient_norms_relative_to_"
+                    "state_increment_0.5_rollout_0.5_spectral_0.25_boundary_0.25"
+                ),
+            }
+        )
+    return result
 
 
 def loss_contract_sha256(config: ModelCLossConfig) -> str:
     encoded = json.dumps(loss_contract(config), sort_keys=True, separators=(",", ":")).encode()
     return hashlib.sha256(encoded).hexdigest()
+
+
+def loss_config_from_contract(contract: dict[str, Any]) -> ModelCLossConfig:
+    """Reconstruct the explicit loss version stored in a checkpoint/report."""
+
+    config = contract.get("config")
+    if not isinstance(config, dict):
+        raise ValueError("Model C loss contract has no configuration")
+    version = contract.get("version", "v1")
+    if version == "v2":
+        return ModelCLossV2Config(**config)
+    if version == "v1":
+        return ModelCLossConfig(**config)
+    raise ValueError(f"unsupported Model C loss contract version: {version!r}")
 
 
 def _validate_state_pair(prediction: Any, target: Any, mask: Any) -> None:

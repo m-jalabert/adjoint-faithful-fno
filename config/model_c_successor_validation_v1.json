@@ -1,0 +1,170 @@
+{
+  "version": "model_c_successor_validation_v1",
+  "contract_status": "frozen_after_successor_training_gate_before_fresh_v2_validation",
+  "freeze_date": "2026-07-27",
+  "purpose": "three_seed_fresh_v2_bire_aligned_validation_and_single_checkpoint_freeze",
+  "architecture": {
+    "in_channels": 51,
+    "out_channels": 46,
+    "n_modes": [
+      24,
+      16
+    ],
+    "hidden_channels": 128,
+    "n_layers": 4,
+    "lifting_channel_ratio": 2,
+    "projection_channel_ratio": 2,
+    "channel_mlp_expansion": 4.0,
+    "domain_padding": 0.1,
+    "positional_embedding": "grid",
+    "use_channel_mlp": true,
+    "local_kernel_size": 3,
+    "fno_block_precision": "full",
+    "factorization": null
+  },
+  "source_artifacts": {
+    "successor_training_contract": "config/model_c_successor_training_v1.json",
+    "successor_training_contract_sha256": "3e0a300e73ec4044705e29190473d0aee7308fb6ea7d12485346d1fe14159285",
+    "successor_phase2_report": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/successor_training_v1/phase_2/v2_bireprop_w128_mlp4/model_c_successor_training_report.json",
+    "successor_phase2_report_sha256": "5946515ea81ab1cb32e4ccf9f75c9f57cadb3afc2d4d3854732f41457e68433c",
+    "successor_phase2_checkpoint_sha256": "2d10e48adc5e2e8c9f8478fd2d885fe7edc427248c97c4589bd510de0f360060",
+    "dataset_metadata_sha256": "ae7be47c456962f411acb0d8e217dcb7fa6e24c59e5a8f3133f93032e378b8cc",
+    "quality_report_sha256": "a6f7e5234acec1ba29a323d5bc570e8b9e1ece2bfdaa627753609f71f97cf752",
+    "coverage_report_sha256": "7758cfb64e737e6f3ab91e9c919dd492fd92a5ff8409ac8146cf995e6f2918e5"
+  },
+  "seed_replication": {
+    "declared_seeds": [
+      20260723,
+      20260724,
+      20260725
+    ],
+    "new_training_seeds": [
+      20260724,
+      20260725
+    ],
+    "replication_root": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/successor_validation_v1/training",
+    "reference_seed_artifact": {
+      "seed": 20260723,
+      "report": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/successor_training_v1/phase_2/v2_bireprop_w128_mlp4/model_c_successor_training_report.json",
+      "report_sha256": "5946515ea81ab1cb32e4ccf9f75c9f57cadb3afc2d4d3854732f41457e68433c",
+      "checkpoint": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/successor_training_v1/phase_2/v2_bireprop_w128_mlp4/model_c_successor_training_best.pt",
+      "checkpoint_sha256": "2d10e48adc5e2e8c9f8478fd2d885fe7edc427248c97c4589bd510de0f360060",
+      "runtime_source_sha256": "8dd319301e2bdbd89c3c937ede3c3f6d4992e9299e0d6b4b3eb0a002aa1bd5ea"
+    },
+    "training_rule": "same_training_only_checkpoint_selection_loss_optimizer_exposure_records_and_diagnostics_as_phase2_width128",
+    "require_every_seed_complete_training_gate": true,
+    "validation_checkpoint_selection": false
+  },
+  "read_contract": {
+    "training_pair_code": 1,
+    "validation_pair_code": 2,
+    "validation_read_after_contract_freeze": true,
+    "inference_read": false,
+    "intermediate_wind_read": false,
+    "response_read": false,
+    "adjoint_read": false
+  },
+  "validation": {
+    "lead_days": [
+      10,
+      20,
+      30,
+      40,
+      50,
+      60,
+      70,
+      80,
+      90
+    ],
+    "expected_complete_starts_per_regime": 181,
+    "start_rule": "all_daily_split2_starts_with_every_10_day_transition_and_target_through_day90_in_split2",
+    "batch_size": 16,
+    "auc_definition": "trapezoidal_mean_over_discrete_10_to_90_day_leads",
+    "primary_fields": [
+      "surface_speed",
+      "sst",
+      "phihyd_surface"
+    ],
+    "reported_fields": [
+      "u",
+      "v",
+      "temperature",
+      "ssh",
+      "surface_speed",
+      "sst",
+      "phihyd_surface",
+      "phihyd_mid",
+      "phihyd_bottom",
+      "streamfunction"
+    ],
+    "baselines": [
+      "persistence",
+      "climatology",
+      "a0"
+    ],
+    "primary_point_gate": "every_seed_each_primary_field_rmse_auc_ratio_below_one_and_acc_auc_difference_above_zero_against_every_baseline",
+    "stability_gate": {
+      "normalized_state_abs_max": 20.0,
+      "group_mean_bias_training_sigma_max": 2.0,
+      "amplitude_ratio_bounds": [
+        0.5,
+        2.0
+      ],
+      "require_finite": true,
+      "require_zero_land": true,
+      "require_day90_ssh_amplitude": true,
+      "require_day90_streamfunction_amplitude": true,
+      "require_day90_streamfunction_wind_slope_sign_and_factor_two": true
+    }
+  },
+  "a0_baseline": {
+    "checkpoint": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/A0/final_v1/a0_final.pt",
+    "checkpoint_sha256": "b879b64b8cc7ae53d4eb8b471ccfaa2ca0d1238a4fd25df569cb1813663be18f",
+    "normalization": "use_the_frozen_a0_checkpoint_normalizers_not_trajectory_v2_normalizers",
+    "evaluation_records": "identical_fresh_v2_validation_starts"
+  },
+  "bootstrap": {
+    "replicates": 4000,
+    "confidence_level": 0.95,
+    "seed": 20260727,
+    "method": "paired_regime_stratified_circular_block_bootstrap_of_seed_mean_member_auc",
+    "block_length_days_by_regime": [
+      21,
+      122,
+      19
+    ],
+    "block_length_source": "ceil_of_max_temperature_and_ssh_ten_day_increment_iat_across_the_two_training_blocks_for_each_regime",
+    "confidence_gate": "each_primary_and_baseline_requires_rmse_ratio_point_and_upper_bound_below_one_and_acc_difference_point_and_lower_bound_above_zero"
+  },
+  "seed_selection": {
+    "condition": "only_if_complete_three_seed_gate_passes",
+    "rule": "median_ranked_seed_by_mean_primary_field_rmse_auc_ratio_over_persistence_climatology_and_a0",
+    "tiebreaker": "lowest_integer_seed",
+    "reason": "avoid_selecting_a_lucky_best_seed_while_freezing_one_deployable_checkpoint"
+  },
+  "final_gate": {
+    "require_every_seed_training_gate": true,
+    "require_every_seed_primary_point_gate": true,
+    "require_every_seed_validation_stability_gate": true,
+    "require_paired_block_bootstrap_gate": true,
+    "pass_status": "frozen_for_inference",
+    "failure_status": "scientifically_rejected_fresh_v2_validation",
+    "inference_authorized_only_on_pass": true
+  },
+  "source_hashes": {
+    "src/bire_repro/af_model_c_successor_validation.py": "4b80b3bb4cb2ca40efa0d58809cab4311983ac70f6e0456dbb37183e4546b6bb",
+    "src/bire_repro/af_model_c_successor.py": "62a5a3f91b21137bcaf4b8ed39a4bf3a4f35d1357cf7ab83947bd7dbbbe236e6",
+    "src/bire_repro/af_forward_complete.py": "18914b77058bfe1abeab3c98ec711ac8fb970deb76507b095ee376a0de447612",
+    "src/bire_repro/af_pressure.py": "1939645d807ec0281624d4146cadc51b3e9f382c540a56d7ed5afdca4b2c7c6c",
+    "src/bire_repro/af_a0.py": "3e2f4442c712ef0014e4c1d05ee3dd3e84424ee8c34787d75e24f0e329c9b698",
+    "src/bire_repro/af_a0_evaluate.py": "47341bc7f8de8f9a5172911993a1358d82892d799d425f28dc4a6e8267cce4a1",
+    "src/bire_repro/fno.py": "42b6d1f09e7bff489301a89abc3b583ec85e4d52f9997502498909092b6ca503",
+    "src/bire_repro/af_model_c.py": "ac81165ceb7e68eafc6cac237fe0e4cd2dafa2c67bf204db41b5dba86551493b",
+    "src/bire_repro/af_model_a.py": "5b9ca3d096ee3f8409536a3cf034de65d5faf0f012bb704a57b2ae99179e680b",
+    "src/bire_repro/af_model_b.py": "9fdeb0f67e01e4bf2fbc0a51145452854c4ce038a3535391b2f1fadfa7b6e386",
+    "src/bire_repro/af_data.py": "421a0e80feb8e2ae2ee588cc8debaf315927319d2bfb856056294397bf1f65a6",
+    "slurm/af_model_c_successor_seed_replication.sbatch": "cc0e9d712279cc2258c71b0820be49ce4b4eb3d4bff8e1217b2181c1f1e2aad0",
+    "slurm/af_model_c_successor_validation.sbatch": "84e04156da55f6b5cd4a13a4c448546ba3281e5c765e1213618ffc2561e2c594",
+    "config/model_c_successor_training_v1.json": "3e0a300e73ec4044705e29190473d0aee7308fb6ea7d12485346d1fe14159285"
+  }
+}

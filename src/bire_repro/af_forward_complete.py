@@ -200,8 +200,10 @@ def _training_climatology(
     """Regime-specific pointwise training means, including nonlinear diagnostics."""
 
     selected = np.flatnonzero(snapshot_codes == 1)
-    if not selected.size or np.any(np.diff(selected) != 1):
-        raise ValueError("training climatology currently requires one contiguous training interval")
+    if not selected.size or chunk <= 0:
+        raise ValueError("training climatology needs training snapshots and a positive chunk")
+    cuts = np.flatnonzero(np.diff(selected) != 1) + 1
+    training_blocks = tuple(np.split(selected, cuts))
     state_sum = np.zeros(
         (state.shape[0], state.shape[2], state.shape[3], state.shape[4]), dtype=np.float64
     )
@@ -210,12 +212,15 @@ def _training_climatology(
         for name in BIRE_FIELDS
     }
     for experiment in range(state.shape[0]):
-        for start in range(int(selected[0]), int(selected[-1]) + 1, chunk):
-            stop = min(start + chunk, int(selected[-1]) + 1)
-            block = np.asarray(state[experiment, start:stop], dtype=np.float32)
-            state_sum[experiment] += block.sum(axis=0, dtype=np.float64)
-            for name, value in derived_fields(block, wet).items():
-                derived_sum[name][experiment] += value.sum(axis=0, dtype=np.float64)
+        for training_block in training_blocks:
+            block_start = int(training_block[0])
+            block_stop = int(training_block[-1]) + 1
+            for start in range(block_start, block_stop, chunk):
+                stop = min(start + chunk, block_stop)
+                block = np.asarray(state[experiment, start:stop], dtype=np.float32)
+                state_sum[experiment] += block.sum(axis=0, dtype=np.float64)
+                for name, value in derived_fields(block, wet).items():
+                    derived_sum[name][experiment] += value.sum(axis=0, dtype=np.float64)
     state_mean = (state_sum / selected.size).astype(np.float32)
     state_mean[:, :, ~wet] = 0.0
     derived_mean = {

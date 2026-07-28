@@ -1,0 +1,115 @@
+{
+  "version": "model_c_bire_streamfunction_leads_v1",
+  "contract_status": "frozen_before_20_to_90_day_streamfunction_maps",
+  "freeze_date": "2026-07-27",
+  "purpose": "eight_separate_sensitive_scale_streamfunction_comparisons_for_the_fixed_bire_figure3_member",
+  "parent_characterization": {
+    "contract": "/home/mjalabert314/bire_james25_repro/config/model_c_bire_figures_v1.json",
+    "contract_sha256": "791c84f12c2d8dc5b314ca3e24c56b8fcf8b817c2624f26ac0b204fc0feb696b",
+    "report": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/bire_figures_v1/model_c_bire_figures_report.json",
+    "report_sha256": "b704b921444dc4093e0af70f68307d63cea44e4893bd526bbdacf4c65e300ac5",
+    "arrays_sha256": "a73ac9bf2cc96d764885bf51d3822052970dae3e61cfdc637c2c2982a51720b1",
+    "same_member_and_checkpoint": true,
+    "original_day10_remains_in_parent_figure": true
+  },
+  "source_artifacts": {
+    "dataset": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/trajectories_v2.zarr",
+    "dataset_metadata_sha256": "ae7be47c456962f411acb0d8e217dcb7fa6e24c59e5a8f3133f93032e378b8cc",
+    "quality_report": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/trajectories_v2.quality.json",
+    "quality_report_sha256": "a6f7e5234acec1ba29a323d5bc570e8b9e1ece2bfdaa627753609f71f97cf752",
+    "successor_validation_contract": "/home/mjalabert314/bire_james25_repro/config/model_c_successor_validation_v2.json",
+    "successor_validation_contract_sha256": "56bb6ec597993b0689ab699a452ed189392f98806bf95b7add79062b070cf27b",
+    "fresh_validation_report": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/successor_validation_v1/fresh_validation/model_c_successor_validation_report.json",
+    "fresh_validation_report_sha256": "9853ea7aff210ae880b4463583f5aae34a1d11508d98b72eb9fab93f582663fb",
+    "fresh_validation_report_content_sha256": "5537401af56d922b7a74c7bb33ffb2c741678275c39f2c1d3ce5ae66fefe394d",
+    "checkpoint_seed": 20260723,
+    "checkpoint": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/successor_training_v1/phase_2/v2_bireprop_w128_mlp4/model_c_successor_training_best.pt",
+    "checkpoint_sha256": "2d10e48adc5e2e8c9f8478fd2d885fe7edc427248c97c4589bd510de0f360060"
+  },
+  "evaluation": {
+    "regime_index": 2,
+    "regime_label": "S2",
+    "validation_snapshot_code": 2,
+    "start": 6335,
+    "selection": "first_prospectively_drawn_member_from_parent_characterization",
+    "prediction_interval_days": 10,
+    "evaluation_lead_days": [
+      0,
+      10,
+      20,
+      30,
+      40,
+      50,
+      60,
+      70,
+      80,
+      90
+    ],
+    "figure_lead_days": [
+      20,
+      30,
+      40,
+      50,
+      60,
+      70,
+      80,
+      90
+    ],
+    "figure_names": [
+      "model_c_bire_figure3_streamfunction_1deg_day020.png",
+      "model_c_bire_figure3_streamfunction_1deg_day030.png",
+      "model_c_bire_figure3_streamfunction_1deg_day040.png",
+      "model_c_bire_figure3_streamfunction_1deg_day050.png",
+      "model_c_bire_figure3_streamfunction_1deg_day060.png",
+      "model_c_bire_figure3_streamfunction_1deg_day070.png",
+      "model_c_bire_figure3_streamfunction_1deg_day080.png",
+      "model_c_bire_figure3_streamfunction_1deg_day090.png"
+    ],
+    "figure_count": 8
+  },
+  "plot_contract": {
+    "field": "barotropic_streamfunction",
+    "units": "Sv",
+    "native_resolution_degrees": 1.0,
+    "panels": [
+      "MITgcm_ground_truth",
+      "Model_C_prediction",
+      "ground_truth_minus_prediction"
+    ],
+    "truth_prediction_scale": "single_shared_symmetric_scale_across_all_leads",
+    "difference_scale": "lead_specific_symmetric_maximum_absolute_error",
+    "difference_scale_disclosure": "each_figure_labels_its_own_error_bound_so_colors_must_not_be_compared_without_the_numbers",
+    "annotate_rmse_and_maximum_error": true,
+    "coarse_resolution_panel": false
+  },
+  "read_contract": {
+    "training_state": false,
+    "fresh_validation_state": true,
+    "inference_state": false,
+    "intermediate_wind_state": false,
+    "response_state": false,
+    "adjoint_state": false
+  },
+  "decision_contract": {
+    "descriptive_only": true,
+    "tuning_authorized": false,
+    "inference_authorized": false,
+    "model_freeze_authorized": false,
+    "may_not_change_model_or_checkpoint": true
+  },
+  "output_contract": {
+    "scratch_output": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/bire_streamfunction_leads_v1",
+    "project_output": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/bire_streamfunction_leads_v1",
+    "immutable_non_overwriting": true
+  },
+  "source_hashes": {
+    "src/bire_repro/af_model_c_bire_streamfunction_leads.py": "59caa8babcbd565665353970899f57362ac66219d25dd141daf665a65ede263c",
+    "src/bire_repro/af_model_c_bire_figures.py": "728c26158b064ee9706411043453a13f6bdc6f34b11d21a928f8e4d24d4b00d4",
+    "src/bire_repro/af_model_c_successor_validation.py": "ddf87aae293321b3710e3c5530c6ec6f5f603da6cfe466201ef2cade9737923a",
+    "src/bire_repro/af_model_c_successor.py": "62a5a3f91b21137bcaf4b8ed39a4bf3a4f35d1357cf7ab83947bd7dbbbe236e6",
+    "src/bire_repro/af_forward_complete.py": "18914b77058bfe1abeab3c98ec711ac8fb970deb76507b095ee376a0de447612",
+    "src/bire_repro/af_pressure.py": "1939645d807ec0281624d4146cadc51b3e9f382c540a56d7ed5afdca4b2c7c6c",
+    "src/bire_repro/af_data.py": "421a0e80feb8e2ae2ee588cc8debaf315927319d2bfb856056294397bf1f65a6",
+    "slurm/af_model_c_bire_streamfunction_leads.sbatch": "d870796462d3bbdaef9b067a4d8b4563ffaeefbde224281f140b45fdb773f760"
+  }
+}

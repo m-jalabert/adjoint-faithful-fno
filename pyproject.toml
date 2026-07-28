@@ -35,8 +35,8 @@ dev = [
 ]
 
 [project.scripts]
-af-fno = "bire_repro.cli:main"
-repro = "bire_repro.cli:main"
+af-fno = "bire_repro.core.cli:main"
+repro = "bire_repro.core.cli:main"
 
 [tool.setuptools]
 package-dir = {"" = "src"}

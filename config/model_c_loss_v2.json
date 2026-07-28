@@ -1,0 +1,49 @@
+{
+  "audit_jobs": [
+    287581
+  ],
+  "audit_reports": {
+    "width32": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/late_checkpoint_objective_audit_width32_v1/model_c_late_checkpoint_objective_audit.json",
+    "width64": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/late_checkpoint_objective_audit_width64_v1/model_c_late_checkpoint_objective_audit.json"
+  },
+  "audit_reports_sha256": {
+    "width32": "2c9c2dc9d31ce171c3c5e51eea7a92adb8ff03f489bfc60f205019edac8ec098",
+    "width64": "15a191fe808ff22b0db78e73491584fad3618b172123bab9eae145d5a06b433e"
+  },
+  "freeze_date": "2026-07-26",
+  "late_weighted_gradient_ratio_to_state": {
+    "v1_width32": 0.42151321705401573,
+    "v1_width64": 0.4063722234313558,
+    "v2_projected_width32": 1.0537830426350393,
+    "v2_projected_width64": 1.0159305585783895
+  },
+  "revision": {
+    "changed": "increment_weight",
+    "factor": 2.5,
+    "from": 0.001,
+    "to": 0.0025
+  },
+  "memorization_result": {
+    "best_balanced_epoch": 295,
+    "best_balanced_ratios_to_persistence": {
+      "ssh": 1.327883784173531,
+      "temperature": 1.0487039852124227,
+      "u": 0.2219052371241933,
+      "v": 0.37590813498881376
+    },
+    "diagnostic_checkpoint_sha256": "89156ccb065e5516221c9f12264b19a112d2767b6e8a00e3a5161d9d9e9dbe2b",
+    "job": 287583,
+    "report": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/overfit_increment_loss_v2/model_c_overfit_rejected_report.json",
+    "report_sha256": "015c5e956224fc98b34108a4f68e04744d3410b6d844b59df058c1813e80c178",
+    "status": "scientifically_rejected"
+  },
+  "scope": "training_only_bounded_memorization_test_before_validation",
+  "status": "preserved_rejected_training_only_branch",
+  "supersedes_loss_contract_sha256": "19000a1426ea928db7799c82a73ce071a874911eb7e1df50bd276582ec30b5f9",
+  "weights": {
+    "boundary": 0.065,
+    "increment": 0.0025,
+    "rollout": 0.15,
+    "spectral": 0.00001
+  }
+}

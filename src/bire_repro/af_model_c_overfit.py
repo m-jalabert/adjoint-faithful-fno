@@ -29,6 +29,7 @@ from .af_model_c import (
     loss_contract,
     loss_contract_sha256,
     model_c_architecture,
+    model_c_loss_config,
     model_c_loss_terms,
 )
 
@@ -75,6 +76,8 @@ class ModelCOverfitConfig:
     maximum_increment_group_ratio_to_persistence: float = 1.00
     maximum_rollout: float = 0.10
     maximum_boundary: float = 0.15
+    learning_rate_decay_epoch: int | None = None
+    learning_rate_decay_factor: float = 1.0
 
     def __post_init__(self) -> None:
         object.__setattr__(
@@ -106,6 +109,14 @@ class ModelCOverfitConfig:
         )
         if any(value <= 0 for value in maxima):
             raise ValueError("Model C acceptance maxima must be positive")
+        if self.learning_rate_decay_epoch is None:
+            if self.learning_rate_decay_factor != 1.0:
+                raise ValueError("Model C LR decay factor requires a decay epoch")
+        elif (
+            not 0 < self.learning_rate_decay_epoch < self.epochs
+            or not 0 < self.learning_rate_decay_factor < 1
+        ):
+            raise ValueError("Model C LR decay must occur inside training and reduce the LR")
 
 
 def _file_sha256(path: Path) -> str:
@@ -423,6 +434,13 @@ def run_overfit(
         best_epoch: int | None = None
         best_state: dict[str, Any] | None = None
         for epoch in range(1, config.epochs + 1):
+            if (
+                config.learning_rate_decay_epoch is not None
+                and epoch == config.learning_rate_decay_epoch + 1
+            ):
+                for parameter_group in optimizer.param_groups:
+                    parameter_group["lr"] *= config.learning_rate_decay_factor
+            optimizer_learning_rate = float(optimizer.param_groups[0]["lr"])
             training = _epoch(
                 model,
                 train_loader,
@@ -433,7 +451,11 @@ def run_overfit(
                 loss_config=loss_config,
                 optimizer=optimizer,
             )
-            record: dict[str, Any] = {"epoch": epoch, "training": training}
+            record: dict[str, Any] = {
+                "epoch": epoch,
+                "optimizer_learning_rate": optimizer_learning_rate,
+                "training": training,
+            }
             if epoch % config.evaluation_interval == 0:
                 evaluation = _epoch(
                     model,
@@ -663,6 +685,9 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--hidden-channels", type=int, choices=(32, 64), default=32)
     parser.add_argument("--layers", type=int, choices=(4, 6), default=4)
     parser.add_argument("--padding", type=float, choices=(0.10, 0.20), default=0.10)
+    parser.add_argument("--loss-version", choices=("v1", "v2"), default="v1")
+    parser.add_argument("--lr-decay-epoch", type=int)
+    parser.add_argument("--lr-decay-factor", type=float, default=1.0)
     parser.add_argument(
         "--learning-rate",
         type=float,
@@ -690,7 +715,10 @@ def main(argv: list[str] | None = None) -> int:
                 if args.learning_rates is not None
                 else ModelCOverfitConfig().learning_rates
             ),
+            learning_rate_decay_epoch=args.lr_decay_epoch,
+            learning_rate_decay_factor=args.lr_decay_factor,
         ),
+        loss_config=model_c_loss_config(args.loss_version),
         architecture=model_c_architecture(
             n_modes=(args.modes_y, args.modes_x),
             hidden_channels=args.hidden_channels,

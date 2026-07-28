@@ -1,0 +1,102 @@
+{
+  "version": "streamfunction_consistency_v2",
+  "contract_status": "frozen_before_collocated_c_grid_daily_metrics",
+  "freeze_date": "2026-07-28",
+  "purpose": "repeat_the_training_only_u_v_path_test_at_identical_c_grid_corner_indices_after_v1_exposed_a_face_collocation_error",
+  "scientific_motivation": {
+    "pressure_distinction": "PHIHYD_is_an_exact_configured_hydrostatic_reconstruction_whereas_streamfunction_path_independence_depends_on_depth_integrated_transport_divergence",
+    "v1_diagnosis": "v1_correctly_verified_the_project_u_operator_but_centered_the_u_prefix_integral_onto_north_faces_and_the_v_prefix_integral_onto_east_faces_before_comparison",
+    "v2_correction": "prepend_the_same_southwest_zero_gauge_and_compare_raw_u_and_v_prefix_integrals_at_identical_unshifted_c_grid_corner_indices",
+    "threshold_policy": "retain_the_v1_daily_and_annual_5_percent_rmse_0p99_correlation_and_5_percent_amplitude_thresholds_without_tuning",
+    "mathematical_caveat": "a_linear_free_surface_allows_small_instantaneous_transport_divergence_when_eta_changes_so_a_pass_is_numerical_path_consistency_not_algebraic_exact_uniqueness",
+    "no_model_selection": true
+  },
+  "source_artifacts": {
+    "scratch_root": "/bigscratch/mjalabert314/bire_james25_repro/af_fno",
+    "dataset": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/trajectories_v2.zarr",
+    "dataset_metadata_sha256": "ae7be47c456962f411acb0d8e217dcb7fa6e24c59e5a8f3133f93032e378b8cc",
+    "expansion_contract": "/home/mjalabert314/bire_james25_repro/config/trajectories_v2_expansion.json",
+    "expansion_contract_sha256": "7ee2ae10330afaefaea8a30b3fd535a468e90a5c349d1a2befffec469fe045ed",
+    "v1_report": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/streamfunction_consistency_v1/streamfunction_consistency_report.json",
+    "v1_report_sha256": "619ec42429e1d099f29dbfda5f0e5d044c7587de36eb9e6599f112988a0bdb21",
+    "raw_source": "immutable_mitgcm_v2_daily_dynState_and_surfState_mds_files_plus_DXG_DYG_RAC_Depth"
+  },
+  "audit": {
+    "regimes": [
+      "S0",
+      "S1",
+      "S2"
+    ],
+    "global_start_index": 3690,
+    "global_stop_index_exclusive": 4050,
+    "extension_local_start_index": 90,
+    "extension_local_stop_index_exclusive": 450,
+    "days": 360,
+    "selection_reason": "same_first_complete_360_day_year_wholly_inside_the_second_frozen_training_block_as_v1",
+    "averaging_windows_days": [
+      1,
+      5,
+      30,
+      90,
+      360
+    ],
+    "window_partition": "contiguous_nonoverlapping_windows_covering_the_fixed_year",
+    "velocity_source": "raw_mitgcm_c_grid_faces",
+    "vertical_integration": "sum_velocity_times_all_15_DRF_layers",
+    "comparison_grid": "common_unshifted_c_grid_corner_prefix_locations",
+    "comparison_mask": "indices_of_the_60_by_60_wet_tracer_interior",
+    "u_path": "prepend_zero_then_integrate_u_transport_south_to_north",
+    "u_transport_metric": "DYG",
+    "v_path": "prepend_zero_then_integrate_v_transport_west_to_east",
+    "v_transport_metric": "DXG",
+    "gauge_alignment": "one_comparison_mask_mean_difference_removed_per_state",
+    "boundary_check": "maximum_normal_volume_transport_on_the_four_raw_outer_boundaries",
+    "divergence": "east_minus_west_u_volume_transport_plus_north_minus_south_v_volume_transport_divided_by_RAC",
+    "daily_continuity_check": "eta_endpoint_change_plus_trapezoidal_instantaneous_transport_divergence",
+    "daily_continuity_limitation": "daily_endpoint_and_instantaneous_samples_do_not_resolve_subdaily_free_surface_oscillations"
+  },
+  "interpretation_thresholds": {
+    "annual_uv_rmse_fraction": 0.05,
+    "annual_uv_minimum_correlation": 0.99,
+    "annual_uv_amplitude_ratio_interval": [
+      0.95,
+      1.05
+    ],
+    "averaging_improvement_required": true,
+    "daily_uv_rmse_fraction": 0.05,
+    "daily_uv_minimum_correlation": 0.99,
+    "boundary_normal_transport_tolerance_m3_s": 1e-09,
+    "time_mean_pass": "all_annual_uv_checks_all_averaging_improvement_checks_and_all_boundary_checks",
+    "daily_path_pass": "every_regime_daily_p90_relative_rmse_at_most_0p05_and_daily_p10_correlation_at_least_0p99",
+    "failure_interpretation": "retain_the_explicit_u_derived_transport_diagnostic_with_a_failed_collocated_path_consistency_check",
+    "pass_interpretation": "support_the_u_derived_diagnostic_as_a_numerically_path_consistent_daily_and_time_mean_transport_streamfunction_while_retaining_the_linear_free_surface_caveat"
+  },
+  "outputs": {
+    "root": "outputs/af_fno/streamfunction_consistency_v2",
+    "report": "streamfunction_consistency_report.json",
+    "arrays": "streamfunction_consistency_arrays.npz",
+    "summary_figure": "streamfunction_consistency_vs_averaging.png",
+    "map_figure": "streamfunction_daily_and_annual_uv.png",
+    "manifest": "figure_manifest.json"
+  },
+  "read_contract": {
+    "training_snapshot_code": 1,
+    "raw_training_state_read": true,
+    "dataset_centered_training_state_read": false,
+    "dataset_training_split_and_grid_read": true,
+    "validation_state_read": false,
+    "inference_read": false,
+    "intermediate_wind_read": false,
+    "response_read": false,
+    "adjoint_read": false
+  },
+  "source_hashes": {
+    "src/bire_repro/af_streamfunction_consistency_v2.py": "12c64f1fb42f08dc76779d4797af45e11cba29efc6c99704c5e51afc60272f30",
+    "tests/test_af_streamfunction_consistency_v2.py": "aeb5c7c1bfcdebf9d02245f58bdd9cdef080faaa0dcd8dc63b28f6f77fbd6157",
+    "src/bire_repro/af_streamfunction_consistency.py": "19a66e99f31d657a00190f2eca7bd4a9a4cc56279b40d510069e75ba9eff2d81",
+    "src/bire_repro/af_data_v2.py": "ebba40d2c4e1885f1a35dc2903b886761b82fb3f3febe615d31ef78b4bd5566e",
+    "src/bire_repro/af_tutorial_analysis.py": "05f0d290937fbaaa580fd9f7e3794c7929e8b8659ff5676cbcc03bf9fcb93eb3",
+    "src/bire_repro/mds.py": "4098c294a35a1fdcd0521e1eedc6495608ba96fd074dd509347f3efeb788d212",
+    "config/trajectories_v2_expansion.json": "7ee2ae10330afaefaea8a30b3fd535a468e90a5c349d1a2befffec469fe045ed"
+  }
+}

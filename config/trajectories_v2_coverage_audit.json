@@ -1,0 +1,48 @@
+{
+  "assessment": {
+    "minimum_material_multiplier": 1.5,
+    "slow_state_groups": [
+      "temperature",
+      "ssh"
+    ],
+    "target_effective_multiplier": 2.0
+  },
+  "contract_status": "frozen_after_v2_quality_validation_before_coverage_metrics",
+  "freeze_date": "2026-07-27",
+  "method": {
+    "autocorrelation_estimator": "initial_positive_sequence_of_daily_domain_rms_proxy",
+    "effective_samples": "block_length_divided_by_integrated_autocorrelation_time",
+    "horizon_days": 10,
+    "separate_blocks_and_regimes": true
+  },
+  "quality_report": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/trajectories_v2.quality.json",
+  "read_contract": {
+    "adjoint_read": false,
+    "inference_read": false,
+    "intermediate_wind_read": false,
+    "pair_split_codes_read": [
+      1
+    ],
+    "response_read": false,
+    "snapshot_split_codes_read": [
+      1
+    ],
+    "validation_read": false
+  },
+  "source_dataset": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/trajectories_v2.zarr",
+  "source_hashes": {
+    "dataset_metadata_sha256": "ae7be47c456962f411acb0d8e217dcb7fa6e24c59e5a8f3133f93032e378b8cc",
+    "quality_report_sha256": "a6f7e5234acec1ba29a323d5bc570e8b9e1ece2bfdaa627753609f71f97cf752"
+  },
+  "training_blocks": [
+    [
+      0,
+      2520
+    ],
+    [
+      3690,
+      6210
+    ]
+  ],
+  "version": "trajectories_v2_coverage_audit_v1"
+}

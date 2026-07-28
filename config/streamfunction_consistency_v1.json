@@ -1,0 +1,99 @@
+{
+  "version": "streamfunction_consistency_v1",
+  "contract_status": "frozen_before_raw_daily_uv_streamfunction_consistency_metrics",
+  "freeze_date": "2026-07-28",
+  "purpose": "verify_the_project_u_derived_barotropic_transport_diagnostic_and_quantify_when_u_and_v_path_integrals_support_a_unique_streamfunction_interpretation",
+  "scientific_motivation": {
+    "pressure_distinction": "PHIHYD_is_exactly_reconstructed_from_temperature_and_eta_under_the_configured_linear_eos_but_streamfunction_uniqueness_additionally_requires_nearly_nondivergent_depth_integrated_transport",
+    "tutorial_continuity": "eta_t_plus_horizontal_divergence_of_depth_integrated_transport_equals_zero",
+    "tutorial_u_construction": "depth_integrate_raw_u_faces_then_cumulatively_integrate_transport_south_to_north",
+    "independent_check": "depth_integrate_raw_v_faces_then_cumulatively_integrate_transport_west_to_east_and_remove_only_one_additive_gauge",
+    "project_operator": "the_ml_store_centers_raw_u_faces_then_applies_the_same_northward_transport_integral",
+    "time_mean_hypothesis": "u_v_path_mismatch_and_transport_divergence_should_decrease_under_longer_averaging_if_the_tutorial_time_mean_interpretation_is_valid",
+    "no_model_selection": true
+  },
+  "source_artifacts": {
+    "scratch_root": "/bigscratch/mjalabert314/bire_james25_repro/af_fno",
+    "dataset": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/trajectories_v2.zarr",
+    "dataset_metadata_sha256": "ae7be47c456962f411acb0d8e217dcb7fa6e24c59e5a8f3133f93032e378b8cc",
+    "expansion_contract": "/home/mjalabert314/bire_james25_repro/config/trajectories_v2_expansion.json",
+    "expansion_contract_sha256": "7ee2ae10330afaefaea8a30b3fd535a468e90a5c349d1a2befffec469fe045ed",
+    "raw_source": "immutable_mitgcm_v2_daily_dynState_and_surfState_mds_files_plus_DXG_DYG_RAC_Depth"
+  },
+  "audit": {
+    "regimes": [
+      "S0",
+      "S1",
+      "S2"
+    ],
+    "global_start_index": 3690,
+    "global_stop_index_exclusive": 4050,
+    "extension_local_start_index": 90,
+    "extension_local_stop_index_exclusive": 450,
+    "days": 360,
+    "selection_reason": "first_complete_360_day_year_wholly_inside_the_second_frozen_training_block",
+    "averaging_windows_days": [
+      1,
+      5,
+      30,
+      90,
+      360
+    ],
+    "window_partition": "contiguous_nonoverlapping_windows_covering_the_fixed_year",
+    "velocity_source": "raw_mitgcm_c_grid_faces",
+    "vertical_integration": "sum_velocity_times_all_15_DRF_layers",
+    "u_path": "south_to_north",
+    "u_transport_metric": "DYG",
+    "v_path": "west_to_east",
+    "v_transport_metric": "DXG",
+    "gauge_alignment": "wet_cell_mean_difference_removed_per_state",
+    "divergence": "east_minus_west_u_volume_transport_plus_north_minus_south_v_volume_transport_divided_by_RAC",
+    "project_check": "raw_face_centering_must_match_zarr_bitwise_and_the_current_centered_u_operator_is_compared_with_metric_aware_raw_u_integration",
+    "daily_continuity_check": "eta_endpoint_change_plus_trapezoidal_instantaneous_transport_divergence",
+    "daily_continuity_limitation": "daily_endpoint_and_instantaneous_samples_do_not_resolve_subdaily_free_surface_oscillations"
+  },
+  "interpretation_thresholds": {
+    "project_operator_absolute_tolerance_sv": 0.000001,
+    "project_operator_metric_rmse_fraction": 0.005,
+    "annual_uv_rmse_fraction": 0.05,
+    "annual_uv_minimum_correlation": 0.99,
+    "annual_uv_amplitude_ratio_interval": [
+      0.95,
+      1.05
+    ],
+    "averaging_improvement_required": true,
+    "daily_uv_rmse_fraction": 0.05,
+    "daily_uv_minimum_correlation": 0.99,
+    "time_mean_pass": "project_operator_checks_and_all_annual_uv_checks_and_all_averaging_improvement_checks",
+    "instantaneous_unique_pass": "every_regime_daily_p90_relative_rmse_at_most_0p05_and_daily_p10_correlation_at_least_0p99",
+    "failure_interpretation": "retain_the_explicit_u_derived_transport_diagnostic_without_claiming_a_unique_instantaneous_or_time_mean_streamfunction_as_applicable"
+  },
+  "outputs": {
+    "root": "outputs/af_fno/streamfunction_consistency_v1",
+    "report": "streamfunction_consistency_report.json",
+    "arrays": "streamfunction_consistency_arrays.npz",
+    "summary_figure": "streamfunction_consistency_vs_averaging.png",
+    "map_figure": "streamfunction_daily_and_annual_uv.png",
+    "manifest": "figure_manifest.json"
+  },
+  "read_contract": {
+    "training_snapshot_code": 1,
+    "raw_training_state_read": true,
+    "dataset_centered_training_state_read": true,
+    "validation_state_read": false,
+    "inference_read": false,
+    "intermediate_wind_read": false,
+    "response_read": false,
+    "adjoint_read": false
+  },
+  "source_hashes": {
+    "src/bire_repro/af_streamfunction_consistency.py": "19a66e99f31d657a00190f2eca7bd4a9a4cc56279b40d510069e75ba9eff2d81",
+    "tests/test_af_streamfunction_consistency.py": "4d17a45f74e18a3fc434899d7413e04831f575bcd3aa984b6ca107b9be84bc33",
+    "src/bire_repro/af_forward_complete.py": "18914b77058bfe1abeab3c98ec711ac8fb970deb76507b095ee376a0de447612",
+    "src/bire_repro/af_data.py": "421a0e80feb8e2ae2ee588cc8debaf315927319d2bfb856056294397bf1f65a6",
+    "src/bire_repro/af_data_v2.py": "ebba40d2c4e1885f1a35dc2903b886761b82fb3f3febe615d31ef78b4bd5566e",
+    "src/bire_repro/af_tutorial_analysis.py": "05f0d290937fbaaa580fd9f7e3794c7929e8b8659ff5676cbcc03bf9fcb93eb3",
+    "src/bire_repro/mds.py": "4098c294a35a1fdcd0521e1eedc6495608ba96fd074dd509347f3efeb788d212",
+    "config/trajectories_v2_expansion.json": "7ee2ae10330afaefaea8a30b3fd535a468e90a5c349d1a2befffec469fe045ed"
+  }
+}

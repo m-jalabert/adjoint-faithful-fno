@@ -1,0 +1,116 @@
+{
+  "architecture_constants": {
+    "domain_padding": 0.1,
+    "factorization": null,
+    "fno_block_precision": "full",
+    "in_channels": 51,
+    "local_kernel_size": 3,
+    "n_layers": 4,
+    "n_modes": [
+      24,
+      16
+    ],
+    "out_channels": 46,
+    "positional_embedding": "grid",
+    "use_channel_mlp": true
+  },
+  "candidates": [
+    {
+      "candidate_id": "v2_control_w64_mlp05",
+      "channel_mlp_expansion": 0.5,
+      "hidden_channels": 64,
+      "lifting_channel_ratio": 2,
+      "phase": 1,
+      "projection_channel_ratio": 2,
+      "scientific_change": "data_only_control"
+    },
+    {
+      "candidate_id": "v2_mix_w64_mlp4",
+      "channel_mlp_expansion": 4.0,
+      "hidden_channels": 64,
+      "lifting_channel_ratio": 2,
+      "phase": 1,
+      "projection_channel_ratio": 2,
+      "scientific_change": "restore_bire_relative_channel_mixing_only"
+    },
+    {
+      "candidate_id": "v2_bireprop_w128_mlp4",
+      "channel_mlp_expansion": 4.0,
+      "hidden_channels": 128,
+      "lifting_channel_ratio": 2,
+      "phase": 2,
+      "projection_channel_ratio": 2,
+      "scientific_change": "restore_bire_latent_lifting_projection_and_channel_mixing_proportions"
+    }
+  ],
+  "checkpoint_fractions": [
+    0.75,
+    0.875,
+    0.9375,
+    0.96875,
+    0.984375,
+    1.0
+  ],
+  "contract_status": "frozen_after_v2_coverage_before_successor_training_metrics",
+  "diagnostics": {
+    "checkpoint_records_per_regime": 32,
+    "long_rollout_leads_days": [
+      30,
+      90,
+      180
+    ],
+    "long_rollout_records_per_regime": 4,
+    "selection": "minimum_training_only_worst_per_regime_ten_day_group_ratio_then_training_loss",
+    "training_increment_scale": "per_channel_rms_of_normalized_ten_day_increments_over_all_split_1_pairs"
+  },
+  "freeze_date": "2026-07-27",
+  "loss": {
+    "contract_sha256": "19000a1426ea928db7799c82a73ce071a874911eb7e1df50bd276582ec30b5f9",
+    "version": "v1"
+  },
+  "optimizer": {
+    "adam_betas": [
+      0.9,
+      0.95
+    ],
+    "batch_size": 4,
+    "decay_factor": 0.2,
+    "decay_fraction": 0.75,
+    "effective_batch_size": 4,
+    "initial_learning_rate": 0.0005,
+    "maximum_steps": 15360,
+    "weight_decay": 0.00001
+  },
+  "phase_order": {
+    "phase_1": "run_data_control_and_width64_channel_mixing_ablation",
+    "phase_2": "run_width128_only_after_phase1_reports_are_complete"
+  },
+  "read_contract": {
+    "adjoint_read": false,
+    "inference_read": false,
+    "intermediate_wind_read": false,
+    "response_read": false,
+    "training_pair_code": 1,
+    "validation_read": false
+  },
+  "source_hashes": {
+    "coverage_report_sha256": "7758cfb64e737e6f3ab91e9c919dd492fd92a5ff8409ac8146cf995e6f2918e5",
+    "dataset_metadata_sha256": "ae7be47c456962f411acb0d8e217dcb7fa6e24c59e5a8f3133f93032e378b8cc",
+    "dataset_quality_report_sha256": "a6f7e5234acec1ba29a323d5bc570e8b9e1ece2bfdaa627753609f71f97cf752",
+    "model_c_v1_rejection_decision_sha256": "e19d502442fcfbbc75331c455c367c1db58015e8c31f0d649b4c7441e8072155"
+  },
+  "training_gate": {
+    "long_rollout_amplitude_ratio_bounds": [
+      0.5,
+      2.0
+    ],
+    "long_rollout_gate_leads_days": [
+      90,
+      180
+    ],
+    "require_all_regimes_and_groups_ten_day_rmse_below_persistence": true,
+    "require_finite_long_rollout": true,
+    "require_three_step_reload_bitwise_exact": true
+  },
+  "version": "model_c_successor_training_v1"
+}

@@ -60,26 +60,114 @@
   \vspace{0.12in}
   {\large \MITgcm{} baroclinic double-gyre benchmark\par}
   \vspace{0.14in}
-  {\color{graytext}\textbf{Status date: 23 July 2026} \quad
+  {\color{graytext}\textbf{Status date: 28 July 2026} \quad
   Canonical plan: \texttt{AF\_FNO\_Project\_Plan.tex}}
 \end{center}
 
-\projectbox{teal}{lightteal}{%
-\textbf{Current position.}  The control, low-wind, and high-wind trajectory datasets
-(S0--S2) are complete.  S0 reproduces the expected qualitative tutorial circulation
-and has passed all seven numerical validation gates.  A0, A, and B are frozen; B's
-12-epoch realization completed with bitwise-identical reload and its 100-day evaluation
-shows materially better rollout than A but temperature and SSH still lose to persistence.
-Queued complete A/B characterization jobs 284816/284817 were cancelled with zero
-runtime.  The immediate critical path is now forward-optimized Model C.  Training-only
-C0 data/mode jobs 284850/284857 and C1a calibration job 285116 are complete.  The
-clipped automatic weights were rejected, balanced coefficients were frozen from the
-unclipped gradient targets, pending GPU replica 284858 was cancelled, and training-only
-C1b job 285192 completed but was rejected because temperature/SSH increments remained
-1.285/2.032 times persistence at the better learning rate.  Training-only C1c duration
-job 285265 is running on the short CPU partition; no validation, inference, intermediate-wind, response, or
-adjoint data enter it.  Model D response supervision and
-the complete adjoint campaign remain blocked until C passes the forward gate.}
+\begingroup\color{graytext}
+\textbf{Current position.}  S0--S2 and the shared trajectory dataset are complete,
+and A0, A, and B remain frozen controls.  Model C's training-only C1b, 320-epoch C1c,
+and width-64 capacity tests all completed but were scientifically rejected because
+temperature or SSH did not beat persistence.  GPU audit job 287581 checked every
+evaluated epoch and the exact late-checkpoint objective gradients; it found an already
+substantial, SSH-dominated increment gradient and supported late optimization
+stabilization rather than another capacity increase.  Bounded GPU job 287583 retained
+loss v1 and reduced the learning rate from 0.0005 to 0.0001 after epoch 240; this
+schedule passed every 96-record memorization and reload criterion at epoch 315.
+The separately versioned 0.0025 increment-weight loss v2 was rejected.
+
+The predeclared validation-only search is now complete.  GPU jobs
+287604/288466/289379/289915 executed all four from-scratch
+\(10\rightarrow5\rightarrow3\rightarrow2\rightarrow1\) rounds and selected
+\((24,16)\), width 64, four layers, and 10\% padding.  Neither the capacity nor wall
+leakage trigger fired, so no six-layer or 20\%-padding branch was opened.  Final-seed
+array 290382 completed all three runs with exact three-step reload, but their SSH
+validation ratios were 1.00014/1.00383/1.03818; U, V, and temperature beat persistence
+for every seed.  The immutable decision is therefore
+\texttt{scientifically\_rejected\_three\_seed\_gate}, not an operational failure.
+Model C is not frozen and inference is not authorized.  Validation was used only under
+the frozen search contract; inference, intermediate-wind, response, and adjoint data
+remain sealed.  Post-search data-adequacy job 290415 subsequently authorized a
+non-destructive two-times S0--S2 expansion while localizing a separate low-wind S1
+training failure.
+
+That expansion is now complete.  \MITgcm{} array 290439 produced all three exact
+ten-year continuations normally in 15m10s--15m31s.  Jobs 290443/290444 built and
+independently validated the 11~GB, \(3\times7200\times46\times62\times62\)
+\texttt{trajectories\_v2} store, including a bitwise-identical v1 prefix and raw-MDS
+extension spot checks.  Training-only coverage job 290446 then passed its predeclared
+two-times slow-field target: temperature/SSH state effective multipliers are
+2.142/2.039 and increment multipliers are 2.106/2.253.  Fresh v2 validation and
+inference remain unread.  Successor contract
+\texttt{model\_c\_successor\_training\_v1} freezes an exact data-only control, an
+isolated width-64 \(4C\) Channel-MLP ablation, and only then the
+width-128/256-lift/256-projection/\(4C\) candidate.  Both tasks in GPU array 290448
+completed normally but failed only S1 SSH at 1.103435 and 1.003573 times persistence,
+respectively.  Job 290597 completed width 128 normally and passed every training gate,
+including S1 SSH at 0.762683.  Corrected validation contract SHA-256
+\texttt{56bb6ec59799...0cf27b} is frozen.  Split-1 array 290673 completed both missing
+replicas normally; all three seeds pass every training gate at worst regime/group
+ratios 0.762683/0.732270/0.839507.  Fresh-v2 validation job 290738 completed
+operationally but rejected C scientifically: surface speed passes, while
+SST/surface-pressure RMSE-AUC ratios to persistence are 2.313/2.198 after good
+day-10 skill.  Frozen training-only rollout-diagnosis job 291102 completed with exit
+zero and reproduced the same drift for every seed.  Mean training
+day-10/AUC/day-90 ratios are 0.809/2.021/4.221 for SST and
+0.552/1.867/3.873 for surface pressure, classifying an objective/checkpoint-gate
+mismatch.  A baseline-visible Figure-4 companion now shows that SST loses persistence
+and climatology at day 20, while surface \(P/\rho\) loses persistence at day 30 and
+climatology at day 70.  Exact-replay job 291164 then completed in 1h19m14s and
+reproduced step 14,880 bit for bit with zero training-history difference.  None of
+the six late checkpoints passes the frozen long-horizon gate; diagnostic best step
+14,400 still reaches day-90 SST ratios 3.669/5.513 to persistence/climatology and
+surface-pressure ratios 3.800/2.247.  The applied classification is
+\texttt{objective\_correction\_required}.
+
+Pushforward job 291612 completed normally in 20m37s.  Its final step 1,920 is best by
+every frozen priority and reloads exactly.  Worst primary AUC improves from 2.366 to
+1.692, worst slow-field lead ratio from 5.513 to 3.994, and ten-day worst
+regime/group ratio from 0.852 to 0.610, but the complete gate remains failed.
+Day-90 SST ratios are 2.659/3.994 and surface-\(P/\rho\) ratios are 3.222/1.905 to
+persistence/climatology.  Replication and validation are not authorized.
+
+Duration job 291616 completed normally in 51m31s and reproduced step 1,920 bitwise
+before adding all 3,840 low-rate steps.  None of eight checkpoints passes.
+Diagnostic-best step 5,760 improves worst primary AUC/slow-field lead ratios to
+1.597/3.609, but day-90 SST remains 2.402/3.609 and surface-\(P/\rho\)
+2.922/1.727 times persistence/climatology.  The contract therefore rejects
+undertraining as a sufficient explanation and applies the predeclared
+terminal-only-structure diagnosis.
+
+Corrected truncated-unroll contract SHA-256
+\texttt{0c5aabadbe51...92e3c} changed only the correction gradient graph.  Initial
+job 291769 stopped before training because its validator used the wrong
+duration-checkpoint step-field name.  Version 2 checked the actual schema without
+changing the objective, and V100 job 291778 completed normally in 20m01s.  All four
+checkpoints fail.  Diagnostic-best truncated step 1,920 reloads nine calls bitwise,
+but worst primary AUC/slow-lead ratios 1.933/3.701 are worse than the duration source
+at 1.597/3.609.  No replica, fresh-validation, inference, or Model-D job is submitted;
+the next action is no longer another unconstrained temporal variant.
+
+Frozen bias/projection job 292064 completed normally in 7m09s.  Static
+\(9\epsilon\) explains 33.43\%/27.21\% of pooled SST/SSH day-90 error energy, while
+basin mean plus five increment EOFs explain only 4.57\%/1.73\%.  Bias plus
+constraints improves the worst slow-field AUC ratio from 1.986 to 1.603 (19.25\%),
+just below the frozen 20\% threshold; conservation alone slightly worsens it to
+1.996.  Apply the feedback-amplification branch, retain the exact linear constraints
+and a modest bias term, and prioritize forecast-age supervision.
+
+Loss-v3 job 292293 completed normally in 27m46s.  Selected diagnostic step 960 is
+reload-exact and keeps the projection residuals below \(1.17\times10^{-10}\).
+All ten-day groups pass, but the long gate does not: worst primary AUC improves from
+1.597 to 1.462 while worst slow-field lead changes from 3.609 to 3.634.  SST
+RMSE-AUC is 1.119/1.462 and surface-\(P/\rho\) is 1.364/0.615 times
+persistence/climatology.  At the mandatory day-10/day-30 adjoint horizons, however,
+all Bire-primary fields and streamfunction beat both persistence and climatology.
+The next action is to freeze a separate prospective 10--30-day adjoint-readiness gate
+with damped persistence and anomaly-scale drift before any new validation read.
+The two-state/two-output model remains a bounded parallel long-rollout arm; no
+automatic training variant is authorized.  All later archives remain sealed.
+\par\endgroup
 
 \section{Status legend}
 
@@ -111,8 +199,9 @@ M2 & Tutorial validation & \Done & Validation job 283958; seven of seven gates p
 M3 & S1/S2 forcing regimes & \Done & Low- and high-wind adjustment/production jobs 283959--283962 complete; daily inventories verified. \\
 R0 & Git provenance baseline & \Done & Clean first commit pushed to the project remote; generated data, upstream clones, builds, environments, and scheduler logs excluded. \\
 M4 & Shared ML dataset & \Done & Jobs 284041/284042 built and independently validated the 5.3~GB S0--S2 Zarr store: $3\times3600\times46\times62\times62$, centered/masked state, split hashes, and training-only normalizers. \\
+M4b & Version-2 trajectory coverage & \Done & Jobs 290439/290443/290444 completed all exact extensions, the 11~GB successor store, and independent quality validation.  Training-only job 290446 passed the predeclared two-times temperature/SSH effective-coverage target; fresh validation and inference remain sealed. \\
 M5 & A0 adapted Bire baseline & \Done & Jobs 284043/284050/284063/284065 completed the overfit, development, frozen model, and outputs.  A0 improves held U/V forecasts but persistence remains better for temperature and SSH; metrics and figures are saved. \\
-M6 & A--D model ladder & \Active & A0/A/B are frozen.  Model B final job 284342 completed with exact reload, but mandatory temperature/SSH persistence criteria fail.  Model C C0/C1a are complete; C1b rejected slow-field increment skill only, and one-variable C1c duration job 285265 is running.  D is blocked until C passes the forward gate. \\
+M6 & A--D model ladder & \Active & A0/A/B are frozen.  Loss-v3 job 292293 passes all ten-day groups and both baselines at days 10/30, but fails the strict 10--90-day gate.  Freeze the prospective horizon-matched adjoint-readiness gate next; keep long-rollout stability and the two-state arm parallel.  Inference remains sealed. \\
 M7 & I1/I2 wind interpolation & \Pending & Two unseen intermediate-wind trajectories generated and opened for inference only. \\
 M8 & Forward-response campaign & \Pending & 224 ten-day perturbed restarts: 128 training, 32 validation, and 64 inference. \\
 M9 & Blind adjoint evaluation & \Pending & Frozen artifacts/checksums recorded before 12 true-adjoint tests are generated or inspected. \\
@@ -160,6 +249,30 @@ Both branches restart from the validated S0 year-100 state.  Their five-year adj
 periods are kept separate from the ten-year daily production records used by the ML
 pipeline.
 
+\subsection{S0--S2 exact trajectory-v2 continuations}
+
+\begin{tabularx}{\textwidth}{@{}p{0.11\textwidth}p{0.16\textwidth}p{0.18\textwidth}p{0.20\textwidth}Y@{}}
+\toprule
+\textbf{Run} & \textbf{Array task} & \textbf{Elapsed} &
+\textbf{Iteration join} & \textbf{Recorded result} \\
+\midrule
+S0 & 290439\_0 & 15m31s & 2,851,128 to 2,851,200 &
+3,600 daily field pairs, final pickup, normal end \\
+S1 & 290439\_1 & 15m28s & 2,980,728 to 2,980,800 &
+3,600 daily field pairs, final pickup, normal end \\
+S2 & 290439\_2 & 15m10s & 2,980,728 to 2,980,800 &
+3,600 daily field pairs, final pickup, normal end \\
+\bottomrule
+\end{tabularx}
+
+The exact joins are one model day (72 iterations) after each immutable v1 endpoint.
+Every continuation contains 3,600 \texttt{dynState} and 3,600 \texttt{surfState}
+metadata/data pairs with no missing daily iteration.  Logs end in
+\texttt{STOP NORMAL END}; the floating-point status flags printed at shutdown match
+the previously accepted production runs and accompany no NaN, fatal, or model error.
+The three new pickup data SHA-256 values begin
+\texttt{c949...315fb}, \texttt{06be...8087}, and \texttt{e5a8...1744}.
+
 \subsection{Retired high-resolution Bire reconstruction}
 
 The earlier $0.25^\circ$ Bire-oriented spin-up, formerly Slurm job \textbf{283514},
@@ -190,7 +303,12 @@ S2 raw archive & \path{/bigscratch/mjalabert314/bire_james25_repro/af_fno/mitgcm
 Shared ML dataset & \path{/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/trajectories_v1.zarr} \\
 Dataset manifest & \path{/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/trajectories_v1.manifest.json} \\
 Dataset quality report & \path{/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/trajectories_v1.quality.json} \\
+Trajectory-v2 raw continuations & \path{/bigscratch/mjalabert314/bire_james25_repro/af_fno/mitgcm_v2/} \\
+Trajectory-v2 dataset & \path{/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/trajectories_v2.zarr}; metadata SHA-256 \texttt{ae7be47c4569...78b8cc} \\
+Trajectory-v2 quality gate & \path{/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/trajectories_v2.quality.json}; SHA-256 \texttt{a6f7e5234ace...cf752} \\
+Trajectory-v2 effective coverage & \path{/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/trajectories_v2_coverage_v1/}; report SHA-256 \texttt{7758cfb64e73...18e5} \\
 Pressure-postprocessor validation & \path{outputs/af_fno/pressure_validation_v1/pressure_validation.json} \\
+Streamfunction consistency audit & V1 collocation-warning record under \path{outputs/af_fno/streamfunction_consistency_v1/}; corrected collocated v2 contract \path{config/streamfunction_consistency_v2.json}, SHA-256 \texttt{88ff2f20fe1a...dea170}; report/arrays SHA-256 \texttt{14fa2bfb2d2b...eae9a7}/\texttt{f807d3025186...c55773}; figures and manifest-content SHA-256 \texttt{d62eed150a13...e6162} under \path{outputs/af_fno/streamfunction_consistency_v2/} \\
 A0 overfit artifacts & \path{/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/A0/overfit_v1/} \\
 A0 development artifacts & \path{/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/A0/development_v1/} \\
 A0 frozen artifacts & \path{/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/A0/final_v1/} \\
@@ -210,6 +328,31 @@ Model C CPU loss-gradient replica (jobs 284860/284864/285116) & \path{/bigscratc
 Model C frozen loss manifest & \path{config/model_c_loss_v1.json} \\
 Model C memorization/reload gate (job 285192) & \path{/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/overfit_v1/} \\
 Model C controlled duration gate (job 285265) & \path{/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/overfit_duration_v2/} \\
+Model C width-64 GPU capacity gate (job 285325) & \path{/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/overfit_width64_gpu_v1/} \\
+Model C late-checkpoint audits (job 287581) & \path{/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/late_checkpoint_objective_audit_width32_v1/} and \path{/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/late_checkpoint_objective_audit_width64_v1/} \\
+Model C accepted optimization manifest & \path{config/model_c_optimization_v1.json} \\
+Model C accepted memorization gate (job 287583 task 0) & \path{/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/overfit_v1_lr_decay_v1/} \\
+Model C rejected loss-v2 manifest / gate (job 287583 task 1) & \path{config/model_c_loss_v2.json} and \path{/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/overfit_increment_loss_v2/} \\
+Model C CPU fallback scaling (job 287556) & \path{/bigscratch/mjalabert314/bire_james25_repro/af_fno/benchmarks/C/cpu_scaling_width64_v2/} \\
+Model C validation-search contract & \path{config/model_c_validation_search_v1.json}; SHA-256 \texttt{9e1d44299ae6...c4c6f6} \\
+Model C validation-search stages & Jobs 287604, 288466, 289379, and 289915; immutable root \path{/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/validation_search_v1/}; stage-manifest SHA-256 values \texttt{40b54530d7d9...12d2f05}, \texttt{a2d639f8940c...d5e382}, \texttt{9bbd4fc4ce3c...f30e17}, and \texttt{453c05ec408f...2fea2} \\
+Model C rejected three-seed gate (job 290382) & \path{/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/validation_search_v1/final_seed_gate/}; decision SHA-256 \texttt{e19d502442fc...72155}, freeze-contract SHA-256 \texttt{a44622cee685...73628} \\
+Model C data-adequacy contract / job 290415 & \path{config/model_c_data_adequacy_v1.json}; SHA-256 \texttt{e185301947b4...53c84a9}; report \path{/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/data_adequacy_v1/model_c_data_adequacy_report.json}, SHA-256 \texttt{be672face8c4...4e307ee} \\
+Trajectory-v2 expansion contract & \path{config/trajectories_v2_expansion.json}, SHA-256 \texttt{7ee2ae10330a...fe045ed}; three exact ten-year extensions under the new \path{mitgcm_v2/} scratch root \\
+Trajectory-v2 coverage contract / job 290446 & \path{config/trajectories_v2_coverage_audit.json}, SHA-256 \texttt{e539ca1bb61a...9197f36}; immutable report root \path{/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/trajectories_v2_coverage_v1/} \\
+Model C successor-training contract / jobs 290448/290597 & \path{config/model_c_successor_training_v1.json}, SHA-256 \texttt{3e0a300e73ec...159285}; immutable checkpoints/reports under \path{/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/successor_training_v1/}; lightweight results under \path{outputs/af_fno/C/successor_training_v1/} \\
+Model C successor validation / jobs 290673/290738 & Corrected \path{config/model_c_successor_validation_v2.json}, SHA-256 \texttt{56bb6ec59799...0cf27b}; complete rejected report SHA-256 \texttt{9853ea7aff21...663fb}; immutable scratch root \path{/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/successor_validation_v1/}; lightweight training and validation evidence under \path{outputs/af_fno/C/successor_validation_v1/} \\
+Model C validation figures & Five hash-bound PNGs and \path{figure_manifest.json} under \path{outputs/af_fno/C/successor_validation_v1/fresh_validation/}; manifest content SHA-256 \texttt{8b24b6af0686...a0845f} \\
+Model C rollout diagnosis / job 291102 & \path{config/model_c_rollout_diagnosis_v1.json}, SHA-256 \texttt{d0ecee0db2b2...ff7ba}; complete report/arrays SHA-256 \texttt{7efdb0726125...171374}/\texttt{c3c403ab81b2...5f255}; immutable scratch root \path{/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/rollout_diagnosis_v1/}; three figures and lightweight summary under \path{outputs/af_fno/C/rollout_diagnosis_v1/} \\
+Model C exact-replay checkpoint audit / job 291164 & Completed in 1h19m14s; exact step-14,880 replay, no passing checkpoint, diagnostic best step 14,400.  Contract SHA-256 \texttt{494ce9de6688...06682}; report/arrays SHA-256 \texttt{7fd670f482c5...940367}/\texttt{7983cb5e0c74...ee9227}; published root \path{outputs/af_fno/C/checkpoint_replay_audit_v1/} \\
+Model C pushforward objective / job 291612 & Completed scientific rejection in 20m37s; exact selected step 1,920, worst primary AUC/slow-lead ratios 1.692/3.994.  Contract SHA-256 \texttt{406ee5248fb4...bccc2}; report/arrays SHA-256 \texttt{631cec8e5f49...ebd07}/\texttt{a4469e3c2d3d...b0855}; published root \path{outputs/af_fno/C/pushforward_objective_v1/} \\
+Model C pushforward duration / job 291616 & Completed in 51m31s with bitwise pushforward-v1 replay and exact reload; all eight checkpoints fail, and diagnostic-best step 5,760 has worst primary AUC/slow-lead ratios 1.597/3.609.  Contract SHA-256 \texttt{4867fa77d68e...78c79}; report/arrays SHA-256 \texttt{86bf00b800d6...e9d7}/\texttt{46129f2653b7...7bfc}; published root \path{outputs/af_fno/C/pushforward_duration_v1/} \\
+Model C truncated-unroll objective / jobs 291769/291778 & Job 291769 stopped before training on a checkpoint-field schema mismatch.  Corrected job 291778 completed in 20m01s but failed at diagnostic-best worst primary AUC/slow-lead ratios 1.933/3.701.  Contract SHA-256 \texttt{0c5aabadbe51...92e3c}; report/arrays SHA-256 \texttt{86f7981e7a0a...b5b830}/\texttt{0c5222cd6938...d716}; figure/CSV/summary under \path{outputs/af_fno/C/truncated_unroll_objective_v2/}, manifest-content SHA-256 \texttt{cccd8e757495...ae4c03} \\
+Model C slow-field bias/projection audit / job 292064 & Completed in 7m09s; feedback-amplification classification, fixed-bias SST/SSH explained energy 33.43\%/27.21\%, and 19.25\% combined worst-AUC reduction.  Contract SHA-256 \texttt{fd7d39f5c6a4...05428}; report/arrays SHA-256 \texttt{e66b263c826c...0f90}/\texttt{4e7f73c2384e...8547}; plots/CSV/summary under \path{outputs/af_fno/C/slow_field_bias_projection_v1/}, manifest SHA-256 \texttt{0a2b4fbc8411...c4d} \\
+Model C rollout-conditioned loss v3 / job 292293 & Completed in 27m46s; diagnostic step 960, all ten-day groups pass, strict long gate fails at worst primary AUC/slow-lead ratios 1.462/3.634.  Contract SHA-256 \texttt{37f1157851ac...5a08}; report/arrays/checkpoint SHA-256 \texttt{e9af34326c36...7ba11}/\texttt{522fe6145735...edff}/\texttt{e9f962878cb5...970b}; two plots, CSV, summary, and manifest \texttt{c323a18285f1...0a6d} under \path{outputs/af_fno/C/rollout_conditioned_loss_v3/} \\
+Model C Bire-style figures / job 291134 & Completed frozen descriptive contract \path{config/model_c_bire_figures_v1.json}, SHA-256 \texttt{791c84f12c2d...eb696b}; report/arrays SHA-256 \texttt{b704b921444d...e300ac5}/\texttt{a73ac9bf2cc9...20b1}; two PNGs and hash manifest under \path{outputs/af_fno/C/bire_figures_v1/}, manifest-content SHA-256 \texttt{258be6fabe13...827f} \\
+Model C Figure-4 baseline companion & Frozen \path{config/model_c_bire_baseline_zoom_v1.json}, SHA-256 \texttt{2a2324090b83...b2a4a}; full/zoom SST and surface-\(P/\rho\) figure plus complete CSV under \path{outputs/af_fno/C/bire_baseline_zoom_v1/}, manifest-content SHA-256 \texttt{01433936e406...99063} \\
+Model C per-lead streamfunction maps / job 291135 & Completed descriptive contract \path{config/model_c_bire_streamfunction_leads_v1.json}, SHA-256 \texttt{ccb965e58bdc...ae1934c}; report/arrays SHA-256 \texttt{71c6e1dc1f9a...89c206}/\texttt{b4126494d9c0...3bcd48}; eight PNGs and manifest-content SHA-256 \texttt{3b74d759d551...450ac7} under \path{outputs/af_fno/C/bire_streamfunction_leads_v1/} \\
 \bottomrule
 \end{longtable}
 
@@ -232,12 +375,21 @@ fresh normalization recomputation.
   restart-safe jobs that fit the two-hour \texttt{short} partition.
 \item S0--S2 share physics, grid, preprocessing, state definition, splits, and metrics.
   Only the prescribed forcing regime differs.
+\item \texttt{PHIHYD} remains an exact configured hydrostatic reconstruction from all
+  15 temperature levels and SSH.  Streamfunction is labeled the U-derived barotropic
+  transport streamfunction.  The collocated raw-face U/V audit passes daily and annual
+  path consistency in S0--S2 by orders of magnitude, but the linear-free-surface
+  instantaneous-divergence caveat remains explicit.
 \item True \MITgcm{} adjoints are sealed test data.  They are excluded from training,
   early stopping, architecture selection, hyperparameter tuning, perturbation-scale
   selection, and loss selection.
 \item All models must use the same immutable train/validation/test partition and
   training-only normalization statistics so architecture and loss comparisons remain
   interpretable.
+\item Model C validation-search v1 is closed as a scientific rejection.  Its three-seed
+  decision records \texttt{configuration\_frozen=false} and
+  \texttt{inference\_authorized=false}; no later-data archive may be opened on the
+  strength of the near-threshold SSH results.
 \item Git stores source, configuration, tests, small manifests, and project-facing
   documentation.  Raw/reduced arrays, checkpoints, upstream clones, virtual
   environments, compiled trees, and scheduler logs remain external to Git.
@@ -268,6 +420,12 @@ Pressure is not a forgotten channel: evaluation contract v2 reconstructs \MITgcm
 \texttt{PHIHYD} at levels 0, 7, and 14 from predicted temperature and SSH using the
 configured linear EOS and exact finite-difference hydrostatic operator.  Its archived
 S0 validation passes with \(3.89\times10^{-4}\ \mathrm{m^2\,s^{-2}}\) maximum error.
+The velocity-derived circulation diagnostic is independently verified under
+\path{config/streamfunction_consistency_v2.json}: daily U/V path p90 relative RMSE is
+at most \(3.25\times10^{-5}\), annual absolute mismatch is
+\(4.74\)--\(6.00\times10^{-5}\)~Sv, correlation is effectively one, and all boundary
+normal transports are zero.  This supports the U-derived transport streamfunction
+strongly while retaining the free-surface caveat.
 
 The comparison ladder is therefore:
 \begin{center}\small
@@ -284,7 +442,17 @@ confounding the dataset, architecture, and derivative-aware objective at once.
 \section{Immediate execution sequence}
 
 \projectbox{amber}{lightamber}{%
-\textbf{Current next step: Model C stage C1c.}
+\textbf{Current next step: freeze the 10--30-day adjoint-readiness gate.}
+Completed loss-v3 job 292293 selected reload-exact step 960.  Its strict
+10--90-day gate fails, so it cannot support a long-emulator claim, but every
+Bire-primary field plus streamfunction beats persistence and climatology at both
+mandatory adjoint horizons.  Before reading any new validation metric, freeze the
+exact day-10/day-30 leads, damped-persistence baseline, anomaly-scale drift bound,
+three-seed or bootstrap rule, and linear constraint tolerances.  Only a prospectively
+passing short gate may open response and adjoint work.  Keep the 90-day
+rollout-stability track and the bounded two-state/two-output arm separate; do not
+launch another loss-weight, duration, or capacity variant.
+
 The starting C architecture is B's dense four-layer, width-32 residual FNO, but its
 objective gives equal status to U, V, temperature, and SSH; adds training-only
 per-channel increment scaling; and compares tapered spectra of ten-day increments on
@@ -294,26 +462,113 @@ tests.  Width 32 has 630,262 parameters; width 64 has 2,443,542 and is not justi
 unless capacity diagnostics require it.  C0 jobs 284850/284857 found a 147-fold range
 in per-channel increment RMS, only 278--398 effective increment samples across regimes,
 and substantially more velocity-increment energy in meridional than zonal added modes.
-Complex-safe job 285116 completed in 4m39s.  Its unclipped gradient targets froze
-increment/rollout/spectral/boundary coefficients at
-\(0.001/0.15/10^{-5}/0.065\), producing weighted gradient ratios
-0.423/0.495/0.207/0.245 relative to state.  Pending redundant GPU job 284858 was
-cancelled.  C1b job 285192 passed every criterion except increment skill: at the better
-learning rate, U/V were 0.254/0.442 times persistence but temperature/SSH were
-1.285/2.032.  Because its best checkpoint occurred at the final epoch, job 285265
-changes only duration from 160 to 320 epochs at learning rate 0.0005.  It remains a
-training-only gate, not a validated model.}
+Complex-safe job 285116 froze loss-v1 increment/rollout/spectral/boundary coefficients
+at \(0.001/0.15/10^{-5}/0.065\).  C1b, C1c, and width-64 training-only results showed
+that more epochs or parameters did not remove the SSH failure.  Late-checkpoint audit
+287581 found weighted increment-gradient norms 0.422/0.406 times state at widths 32/64
+and SSH--state gradient cosines 0.966/0.927.  In bounded job 287583, raising the
+increment weight to 0.0025 failed, while preserving loss v1 and reducing the learning
+rate fivefold after epoch 240 passed every memorization criterion at epoch 315.
+The accepted schedule, report, checkpoint, and hashes are sealed in
+\path{config/model_c_optimization_v1.json}.
+
+Search contract v1 then ran exactly as frozen: four from-scratch rounds at
+25/50/75/100\% chronology and 1,920/3,840/5,760/7,680 steps.  The \((24,16)\),
+width-64 finalist improved its worst validation group from 2.168 to 1.483, 1.192, and
+1.00014 as chronology increased, but never crossed the strict gate.  The selected
+architecture's full-resource U/V/temperature/SSH ratios were
+0.1473/0.3547/0.6597/1.00014.  Neither conditional architecture trigger fired.
+Fresh final seeds 20260723/20260724/20260725 all reloaded exactly and all missed only
+SSH, at 1.00014/1.00383/1.03818.  The v1 search is exhausted and scientifically
+rejected; it does not authorize inference, D, more architecture/loss tuning on the
+same validation evidence.  Separately frozen data-adequacy contract SHA-256
+\texttt{e185301947b4...53c84a9} was then executed in GPU job 290415.  Its immutable
+report SHA-256 \texttt{be672face8c4...4e307ee} authorizes only a versioned,
+two-times coverage expansion; it does not reverse the v1 rejection or open inference.}
 
 \begin{enumerate}
-\item Complete and interpret C1c job 285265.  Require at least 90\% total and 50\%
-  spectral reduction, every state-group error below 0.08, every increment group below
-  persistence on the exact sampled records, rollout/boundary below 0.10/0.15, and
-  bitwise-exact three-step reload.
-\item Run bounded validation-only successive halving; do not open inference data until
-  the selected architecture, schedule, three seeds, code, dataset, and normalizer hashes
-  are frozen.
-\item Run the complete C forward package.  Generate I1/I2 and response data only after
-  C passes the forward gate; train D only from the selected C design.
+\item Preserve the completed stage manifests, candidate reports/checkpoints, final-seed
+  artifacts, and rejection decision without mutation.  Treat all GPU tasks as
+  operational successes and the gate outcome as a scientific rejection.
+\item Preserve the completed data-adequacy report.  Its four checks pass: aggregate
+  training fit, strictly improving chronology, positive SSH validation--training gaps
+  in all three regimes, and fewer than 20 effective slow-state samples.  The S1
+  training failure prevents interpreting this as a data-only diagnosis.
+\item Preserve completed jobs 290439/290443/290444/290446 and their immutable raw,
+  dataset-quality, and effective-coverage evidence.  The slow-field two-times target
+  passes; do not use the less stable velocity integral-time ratios as a tuning target.
+\item Preserve completed training-only successor jobs 290448/290597 under contract SHA-256
+  \texttt{3e0a300e73ec\allowbreak...\allowbreak159285}.  The unchanged width-64 data
+  control and isolated
+  \(4C\) channel-mixing test both failed only S1 SSH; \(4C\) reduced the full-training
+  ratio from 1.103435 to 1.003573 and improved every aggregate group.  Width 128 passes
+  every regime/group at worst ratio 0.762683 and every reload/stability check.
+\item Preserve completed jobs 290673/290738 and the exact fresh-validation rejection.
+  Surface speed passes every baseline; SST and surface pressure have good day-10 skill
+  but fail persistence over the 10--90-day RMSE curve.  Do not reinterpret the
+  amplitude-only 180-day training check as trajectory skill.
+\item Preserve completed training-only rollout-diagnosis job 291102 under contract
+  SHA-256 \texttt{d0ecee0db2b2\allowbreak...\allowbreak ff7ba}.  Every seed has good day-10 slow-field
+  skill but failed 10--90-day AUC and day-90 skill on training chronology, so apply
+  the predeclared objective/gate-mismatch classification.  Do not generate more data
+  or open inference.
+\item Preserve exact-replay checkpoint-audit job 291164 under contract SHA-256
+  \texttt{494ce9de6688\allowbreak...\allowbreak06682}.  Step 14,880 and its six-row
+  history reproduce exactly, but no original checkpoint passes; step 14,400 is
+  diagnostic best.  Apply \texttt{objective\_correction\_required}, not a
+  checkpoint-only correction.
+\item Preserve rejected pushforward-objective job 291612 under contract SHA-256
+  \texttt{406ee5248fb4\allowbreak...\allowbreak bccc2}.  Step 1,920 improves every
+  displayed curve and all source priorities but still fails both slow-field baselines
+  at long lead.  Do not replicate or validate it.
+\item Preserve completed duration job 291616 under contract SHA-256
+  \texttt{4867fa77d68e\allowbreak...\allowbreak78c79}.  Require bitwise replay of
+  pushforward step 1,920 passed, but none of eight extension checkpoints passes.
+  Retain diagnostic-best step 5,760 and the published SST/\(P/\rho\) curves; classify
+  terminal-only supervision as structurally insufficient and do not validate it.
+\item Preserve completed corrected truncated-unroll contract SHA-256
+  \texttt{0c5aabadbe51\allowbreak...\allowbreak92e3c}.  Starting from duration step
+  5,760, job 291778 supervised three consecutive differentiable calls over the frozen
+  early/late slow-field windows and reloaded nine calls bitwise.  It failed every
+  checkpoint and worsened worst primary AUC/slow-lead ratios to 1.933/3.701.
+  Stop before validation and reassess from the saved lead/training curves.
+\item Keep Model C's temporal interface explicitly classified as one-input/one-output:
+  51/46 are channel counts, while each call sees one state and predicts one ten-day
+  residual.  Samudra's two-past-state/two-future-state design, which Bire proposed only
+  as future work, is a bounded candidate rather than an immediate replacement.
+  Compare it prospectively against a simpler long-rollout objective/checkpoint
+  correction at matched data and controlled compute.
+\item Preserve streamfunction-consistency contract v2 SHA-256
+  \texttt{88ff2f20fe1a\allowbreak...\allowbreak dea170}.  It corrects the v1 C-grid
+  face-collocation error without changing the fixed year or thresholds.  All S0--S2
+  daily/annual U/V path, averaging, amplitude, and impermeable-boundary checks pass.
+  Use the U-derived transport-streamfunction label and retain the instantaneous
+  free-surface-divergence caveat.
+\item Preserve Bire-style figure contract SHA-256
+  \texttt{791c84f12c2d\allowbreak...\allowbreak eb696b}.  It fixes a descriptive
+  \(1^\circ\) streamfunction comparison and 15-member, 0--200-day
+  \(\Delta t=10\) RMSE curves on S2 fresh validation.  Persistence repeats the
+  initial condition; climatology is a pointwise split-1 training mean.  The figures
+  may characterize the rejected model but may not tune or unseal inference.  Job
+  291134 completed: streamfunction is excellent through day 40, whereas SST and
+  surface pressure leave their requested axes at days 100 and 160 as finite
+  long-rollout drift grows.  Preserve both the fixed-axis plots and off-scale
+  numerical archive.  Preserve the separate
+  \path{outputs/af_fno/C/bire_baseline_zoom_v1/} addendum: it changes no source
+  result and makes the SST/\(P/\rho\) baseline crossings visible, with a complete
+  CSV for every plotted lead.
+\item Preserve per-lead streamfunction-map contract SHA-256
+  \texttt{ccb965e58bdc\allowbreak...\allowbreak ae1934c}.  It fixes eight
+  separate maps at days 20--90 for the existing S2 start 6335.  State panels share
+  one scale, while each difference panel has a disclosed lead-specific scale plus
+  numerical RMSE/max error.  It is descriptive only; do not use the maps to select a
+  checkpoint or unseal inference.  Job 291135 completed with all predictions finite:
+  relative streamfunction RMSE rises only from 0.700\% at day 20 to 2.211\% at
+  day 90, showing that barotropic circulation remains much better preserved than SST
+  and surface pressure.
+\item Keep inference, I1/I2, response, and adjoint data sealed.  Open them only if an
+  explicitly versioned Model C successor passes a prospectively declared forward gate;
+  train D only from such an accepted design.
 \end{enumerate}
 
 \section{Remaining simulation and evaluation programme}
@@ -322,6 +577,7 @@ training-only gate, not a validated model.}
 \toprule
 \textbf{Work package} & \textbf{Count} & \textbf{Role} \\
 \midrule
+S0--S2 trajectory-v2 extensions & 3 complete & Exact continuations, conversion, independent quality control, and effective-coverage audit completed in jobs 290439/290443/290444/290446. \\
 I1/I2 trajectories & 2 & Intermediate wind amplitudes; inference-only interpolation test. \\
 Perturbed forward responses & 224 & Ten-day local responses: 128 training, 32 validation, 64 inference. \\
 Mandatory true adjoints & 12 & Three smooth objectives $\times$ two horizons (10/30 days) $\times$ two unseen states. \\
@@ -330,9 +586,10 @@ Optional true adjoints & 6 & Ninety-day extension only if mandatory criteria are
 \bottomrule
 \end{tabularx}
 
-The minimum programme contains 244 scientific integrations in total: five trajectory
-runs (S0, S1, S2, I1, I2), 224 perturbed forward responses, 12 mandatory adjoints, and
-three forward control checks.  S0--S2 account for three completed trajectory runs.
+The expanded programme contains 247 scientific integrations in total: the original
+five trajectory runs, three authorized S0--S2 extensions, 224 perturbed forward
+responses, 12 mandatory adjoints, and three forward control checks.  The extensions add
+30 model-years, taking trajectory accounting from 142 to 172 model-years.
 
 The mandatory adjoints alone are the ground-truth gradient dataset.  They evaluate:
 an interior Gaussian SSH average, a smooth western-boundary SSH average, and an
@@ -348,8 +605,9 @@ criteria, and cryptographic hashes must be frozen before these results are opene
 Scratch is not archival & Raw S0--S2 data live on \texttt{/bigscratch}.  Copy them to
 durable project storage before the cluster retention deadline; retain catalogs, hashes,
 manifests, and figures under the project tree. \\
-Trajectory-year arithmetic & The proposal's listed durations sum to \textbf{142}, not
-132, model-years: $110+15+15+1+1=142$.  Use 142 in compute/storage accounting. \\
+Trajectory-year arithmetic & The original durations sum to \textbf{142}, not 132,
+model-years: $110+15+15+1+1=142$.  The authorized three ten-year extensions raise the
+active compute/storage accounting to 172 model-years. \\
 Historical-code incompleteness & Label A0 ``adapted paper architecture'' and record all
 forced changes; do not claim a bitwise or numerical reproduction of Bire et al. \\
 Data leakage & Freeze chronological indices and derive normalization only from training
@@ -423,7 +681,7 @@ duplicating extensive derivations.
 2026-07-22 & Model B overfit passed & Job 284302 completed in 13m12s.  On 96 balanced training-only rollouts it reduced complete loss from 1.52456 to 0.04213 and one-step state loss from 0.52075 to 0.01704; rollout, spectral, and western-boundary components all fell, learning rate 0.001 passed without fallback, and checkpoint reload was bitwise exact.  Checkpoint SHA-256: \texttt{512707d82bce...17871c159e28}.  Dependency-gated rollout-only, rollout-plus-spectral, and full-loss development jobs 284304--284306 started after acceptance. \\
 2026-07-22 & Model B schedule frozen & Development jobs 284304--284306 completed in 43--44 minutes with bitwise reload.  At each profile's held minimum, common full-objective values were 0.044899 (rollout only), 0.044081 (rollout plus spectra), and 0.043064 (full); the full profile also had the lowest state (0.017925), rollout (0.033599), spectral (0.009012), and boundary (0.031558) terms.  Its minimum was epoch 12 versus persistence 0.306148.  Froze epochs 12, batch 8, learning rate 0.001, unchanged optimizer/seed/loss weights, and submitted final job 284342.  Full-development checkpoint SHA-256: \texttt{e185477b126c...af23a7a8119d}. \\
 2026-07-23 & Model B closed & Final job 284342 completed in 36m19s on one V100, preserved bitwise reload, and saved the frozen checkpoint.  Evaluation job 284346 completed the common 10--100-day package.  B reduces A's 100-day U/V/temperature/SSH errors to 0.521/0.409/0.450/0.405 of A, but its own persistence ratios remain 0.449/0.997/8.009/9.925.  B is retained unchanged as a successful rollout-loss ablation, not accepted as the forward parent of the response model. \\
-2026-07-23 & Complete jobs cancelled & Complete one-year A/B characterization jobs 284816 and 284817 were pending with zero runtime and were cancelled.  Their frozen checkpoints and existing evidence remain; uniform final packages are deferred until C freezes so they are generated once for the final comparison. \\
+2026-07-23 & Complete jobs cancelled & Complete one-year A/B characterization jobs 284816 and 284817 were pending with zero runtime and were cancelled.  Their frozen checkpoints and existing evidence remain; uniform final packages are deferred until an accepted C configuration freezes so they are generated once for the final comparison. \\
 2026-07-23 & Model ladder revised & Inserted forward-selected Model C between B and the response-supervised model, now named D.  The Duruisseaux practical FNO workflow and Bire evidence pattern remain the references.  C uses a bounded dense-FNO search and must pass the complete forward gate before response or adjoint work opens. \\
 2026-07-23 & Model C C0 started & Added the bounded C architecture/loss contract and training-only diagnostics.  Equal U/V/temperature/SSH state and boundary terms, per-channel ten-day increment RMS, and Hann-tapered increment spectra directly address B's aggregate-loss and spectral weaknesses.  Eight Model C tests, style checks, shell validation, and a $62\times62$ three-step forward/backward pass succeeded; width-32/64 parameter counts are 630,262/2,443,542.  CPU job 284849 exposed an incorrect assertion that checked future pair-start codes rather than target snapshot codes and stopped before creating output.  Added a regression test and submitted corrected job 284850 with unchanged train-only scope. \\
 2026-07-23 & Model C C0 complete & Corrected job 284850 completed in 42s and verified the immutable dataset hash and train-only read contract.  Its 96-sample audit found a 147-fold increment-RMS range and only 278--398 effective increment samples.  Because extra meridional modes retained more velocity-increment energy than extra zonal modes, added \((24,16)\) before validation and reran job 284857 in 33s.  At \((16,16)\), U/V/temperature/SSH increment fractions are 8.8/24.0/67.8/85.6\%; at \((24,16)\), 12.5/32.9/70.2/89.0\%. \\
@@ -433,7 +691,57 @@ duplicating extensive derivations.
 2026-07-23 & Model C C1b submitted & Added a 96-rollout, training-only memorization gate with fixed initialization/batch order across the bounded learning-rate fallback.  Acceptance is groupwise rather than aggregate: 90\% total reduction, 50\% spectral reduction, maximum state group 0.08, maximum increment group 1.0, rollout 0.10, boundary 0.15, and bitwise-exact three-step reload.  Eleven Model C tests and all style/diff/shell checks passed; submitted eight-core short-queue job 285192. \\
 2026-07-23 & Model C C1b rejected & Job 285192 completed both 160-epoch attempts in 58m30s and failed only the increment criterion.  At learning rate 0.0005, total/spectral reductions were 97.7/99.1\%, maximum state group was 0.0304, rollout/boundary were 0.0312/0.0397, and U/V increments were 0.254/0.442 times exact-subset persistence; temperature/SSH remained 1.285/2.032.  The absolute-1 threshold is replaced by the mathematically correct per-group ratio to persistence on the same sampled records, without relaxing the requirement. \\
 2026-07-23 & Model C C1c submitted & The lower learning rate reached its best total at epoch 160, so undertraining is tested before changing objective or capacity.  Added version-2 diagnostics that preserve full learning curves and a reload-tested best checkpoint on rejection.  Job 285265 fixes data, architecture, loss, seed, batch order, and learning rate 0.0005, changing only duration from 160 to 320 epochs. \\
-2026-07-23 & Pressure evaluation completed & Added a fixed \MITgcm{}-consistent \texttt{PHIHYD} postprocessor without changing any model input, output, weight, or split.  It integrates the configured linear-EOS density anomaly and adds the linear-free-surface \(g\eta\) term.  Against the archived S0 \texttt{PH} dump at iteration 2,851,200, all-depth wet-cell maximum error is \(3.89\times10^{-4}\) and RMSE is \(9.75\times10^{-6}\ \mathrm{m^2\,s^{-2}}\).  Evaluation contract v2 adds surface/mid/bottom pressure curves, maps, snapshots, spectra, boundary metrics, and gate comparisons.  Existing v1 packages remain immutable and pre-pressure; frozen inference will be replayed once for the uniform v2 comparison after C freezes. \\
+2026-07-23 & Pressure evaluation completed & Added a fixed \MITgcm{}-consistent \texttt{PHIHYD} postprocessor without changing any model input, output, weight, or split.  It integrates the configured linear-EOS density anomaly and adds the linear-free-surface \(g\eta\) term.  Against the archived S0 \texttt{PH} dump at iteration 2,851,200, all-depth wet-cell maximum error is \(3.89\times10^{-4}\) and RMSE is \(9.75\times10^{-6}\ \mathrm{m^2\,s^{-2}}\).  Evaluation contract v2 adds surface/mid/bottom pressure curves, maps, snapshots, spectra, boundary metrics, and gate comparisons.  Existing v1 packages remain immutable and pre-pressure; frozen inference will be replayed once for the uniform v2 comparison after an accepted C configuration freezes. \\
+2026-07-26 & Model C C1c rejected & Job 285265 completed all 320 epochs and every total, spectral, state, rollout, boundary, and exact-reload criterion, but no evaluated epoch passed every increment group.  Epoch 315 gave U/V/temperature/SSH persistence ratios 0.206/0.353/0.979/1.219.  This is a scientific SSH rejection, although the scheduler recorded exit 1 under the older runner. \\
+2026-07-26 & Width-64 capacity rejected & GPU job 285325 completed 320 epochs with exact reload.  Its selected epoch ratios were 0.145/0.292/1.083/1.385, and the best balanced epoch still had SSH at 1.302.  Four times the parameter count did not solve the slow-field failure, so a further width increase is unsupported. \\
+2026-07-26 & CPU fallback measured & Scaling job 287556 completed the same short benchmark at 4, 8, and 16 CPU cores in 436, 272, and 253 seconds.  Sixteen cores is the measured fallback if GPU access would materially delay useful work; backend replication remains secondary. \\
+2026-07-26 & Late-objective audit complete & GPU array 287581 completed in 30/33 seconds and independently rechecked all 64 evaluated epochs in each width history, the exact 96 training records, reload provenance, and every memorization criterion.  At widths 32/64, weighted increment loss was 5.7/7.2\% of state but its gradient norm was already 0.422/0.406 times state; SSH dominated that gradient and was strongly aligned with state.  Exact gradient reconstruction errors were approximately \(10^{-7}\). \\
+2026-07-26 & Memorization schedule accepted & Bounded GPU array 287583 isolated two changes.  Task 1's versioned 0.0025 increment-weight loss was scientifically rejected, with best balanced SSH ratio 1.328.  Task 0 retained loss v1 and applied learning rate 0.0005 through epoch 240 then 0.0001; epoch 315 passed every gate at U/V/temperature/SSH ratios 0.211/0.360/0.794/0.990, 98.24/99.82\% total/spectral reductions, 0.0248 maximum state error, 0.0231 rollout, 0.0301 boundary, and exact reload.  Only epoch 315 passed every group, so this authorizes bounded validation but does not validate or freeze C. \\
+2026-07-26 & Validation contract frozen & Before reading any validation state metric, froze \path{config/model_c_validation_search_v1.json} with SHA-256 \texttt{9e1d44299ae6...c4c6f6}.  Ten mode/width candidates undergo four from-scratch rounds with 25/50/75/100\% chronology and 1,920/3,840/5,760/7,680 optimizer steps.  Ranking first requires all physical U/V/temperature/SSH ten-day ratios below persistence, then minimizes worst-group ratio and a 30/90/180-day full-domain/boundary/spectral score.  Conditional padding/layer triggers and final seeds 20260723/20260724/20260725 are fixed; inference and later data remain sealed. \\
+2026-07-26 & Validation stages 1--2 complete & GPU array 287604 completed all ten 25\%-chronology candidates in 5m58s--8m45s and advanced \texttt{m16\_24\_w64}, \texttt{m24\_16\_w64}, \texttt{m24\_24\_w64}, \texttt{m12\_12\_w64}, and \texttt{m12\_12\_w32}; manifest SHA-256 \texttt{40b54530d7d9...12d2f05}.  Job 288466 completed the five fresh 50\% runs in 10m21s--15m15s and advanced \texttt{m16\_24\_w64}, \texttt{m24\_16\_w64}, and \texttt{m12\_12\_w64}; their worst-group SSH ratios were 1.470, 1.483, and 1.599.  Manifest SHA-256: \texttt{a2d639f8940c...d5e382}.  Every scheduler task and exact-reload check passed; no candidate yet met the scientific gate. \\
+2026-07-26 & Validation stages 3--4 complete & Job 289379 completed the three fresh 75\% runs in 16m24s--21m51s and advanced \texttt{m16\_24\_w64}/\texttt{m24\_16\_w64}, whose SSH ratios were 1.153/1.192; manifest SHA-256 \texttt{9bbd4fc4ce3c...f30e17}.  Job 289915 completed both fresh full-resource runs in 21m18s--28m37s.  The \((24,16)\), width-64 design ranked first at U/V/temperature/SSH ratios 0.1473/0.3547/0.6597/1.00014 and physics score 22.84, ahead of \((16,24)\), width 64 at 0.1577/0.3723/0.6353/1.02477 and 28.22.  Training worst-group ratios 0.915/0.941 and boundary-to-full ratios 0.667/0.639 left both conditional triggers false, so no depth or padding branch opened.  Stage-4 manifest SHA-256: \texttt{453c05ec408f...2fea2}. \\
+2026-07-26 & Three-seed gate rejected & GPU array 290382 trained the selected \((24,16)\), width-64 architecture afresh for seeds 20260723/20260724/20260725; all tasks completed with exit 0 in 28m39s/22m23s/21m36s and all three checkpoints reloaded bitwise exactly.  U/V/temperature beat persistence for every seed, but SSH ratios 1.00014/1.00383/1.03818 failed the strict every-seed rule.  The immutable decision therefore records \texttt{scientifically\_rejected\_three\_seed\_gate}, \texttt{configuration\_frozen=false}, and \texttt{inference\_authorized=false}; SHA-256 \texttt{e19d502442fc...72155}.  Inference, I1/I2, response, and adjoint data remain sealed. \\
+2026-07-27 & Freeze data-adequacy gate & Before computing per-regime checkpoint metrics, froze \path{config/model_c_data_adequacy_v1.json}, SHA-256 \texttt{e185301947b4...53c84a9}.  It requires aggregate training fit for every seed, a strictly improving four-stage chronology curve, a positive median SSH validation--training gap in at least two regimes, and no more than 20 effective state samples for both temperature and SSH.  It reads only split codes 1/2. \\
+2026-07-27 & Authorize trajectory v2 & GPU job 290415 completed in 3m16s.  All four expansion checks passed; state-RMS effective totals are 7.59/7.69 for temperature/SSH, and aggregate SSH block-bootstrap intervals include persistence.  S1 is the localized weakness: training ratios 1.32--1.36 and validation ratios 1.50--1.55, versus sub-persistence S0/S2.  Report SHA-256 \texttt{be672face8c4...4e307ee} authorizes a two-times data expansion but also requires non-data successor changes. \\
+2026-07-27 & Freeze expansion design & \path{config/trajectories_v2_expansion.json}, SHA-256 \texttt{7ee2ae10330a...fe045ed}, declares exact ten-year continuations of S0--S2 in a new \path{mitgcm_v2/} root.  The successor store has 7,200 records per regime and 15,060 training pairs; opened v1 validation is excluded, original inference is preserved, and fresh validation/inference blocks retain 90-day buffers.  Effective coverage must be measured after conversion. \\
+2026-07-27 & Complete v2 simulations & Array 290439 completed all three exact ten-year continuations with exit 0 in 15m10s--15m31s.  Each task wrote 3,600 daily state pairs, a final pickup, a gap-free 72-iteration chronology, and \texttt{STOP NORMAL END}.  No v1 artifact was overwritten. \\
+2026-07-27 & Validate trajectory v2 & Jobs 290443/290444 built and independently checked the 11~GB \(3\times7200\times46\times62\times62\) store.  The v1 prefix and sampled raw extension records are bitwise exact; finite, land-zero, split, chronology, and train-only-normalizer checks pass.  Dataset metadata/quality SHA-256 values are \texttt{ae7be47c4569...78b8cc}/\texttt{a6f7e5234ace...cf752}. \\
+2026-07-27 & Pass effective-coverage target & Contract SHA-256 \texttt{e539ca1bb61a...9197f36} was frozen after quality control and before metrics.  Job 290446 found temperature/SSH state multipliers 2.142/2.039 and increment multipliers 2.106/2.253, passing the prospective two-times slow-field target.  Report SHA-256: \texttt{7758cfb64e73...18e5}. \\
+2026-07-27 & Start C successor phase 1 & Before v2 training metrics, froze contract SHA-256 \texttt{3e0a300e73ec...159285}.  Loss, modes, depth, padding, optimizer exposure, and training records remain fixed.  GPU array 290448 compares the exact width-64 data-only control with the isolated width-64 \(4C\) Channel-MLP ablation; the width-128/256-lift/256-projection candidate is phase 2.  Fresh validation remains sealed. \\
+2026-07-27 & Complete C successor phase 1 & Array tasks 290448\_0/290448\_1 completed with exit zero in 41m53s/57m49s.  Both have exact three-step reload and finite, amplitude-bounded 180-day rollouts.  Each fails only S1 SSH: the data-only control is 1.103435 times persistence and isolated \(4C\) channel mixing is 1.003573 over all 5,020 S1 training pairs.  The \(4C\) change improves aggregate U/V/temperature/SSH ratios by 23.6/22.2/9.4/7.9\%, so it is beneficial but not sufficient under the exact gate.  Reports/checkpoints are hash-addressed in \path{outputs/af_fno/C/successor_training_v1/phase_1/}. \\
+2026-07-27 & Start C successor phase 2 & Because both phase-1 reports completed operationally, submitted the already-contracted width-128, lift-256, projection-256, \(4C\) candidate as GPU job 290597.  It changes no data, loss, modes, depth, padding, optimizer exposure, seed, or training records and does not read fresh validation or any later archive. \\
+2026-07-27 & Pass C successor training gate & Job 290597 completed with exit zero in 1h20m22s.  Aggregate U/V/temperature/SSH ratios are 0.049040/0.121279/0.384816/0.522413; every group passes separately in S0/S1/S2, with S1 SSH at 0.762683.  Exact reload, finite 180-day rollout, and every 90/180-day amplitude check pass.  Report/checkpoint SHA-256 values are \texttt{5946515ea81a...68433c}/\texttt{2d10e48adc5e...360060}. \\
+2026-07-27 & Freeze successor validation v2 & Before any fresh validation state metric, froze seeds 20260723/24/25, all complete 10--90-day starts, Bire-primary surface speed/SST/derived pressure, persistence/climatology/A0 baselines, paired block-bootstrap confidence, and SSH/streamfunction stability.  A split-only audit found exactly 180 complete starts per regime, indices 6300--6479; immutable v1 expected 181 and is superseded by v2 SHA-256 \texttt{56bb6ec59799...0cf27b} without changing science. \\
+2026-07-27 & Start successor seed replication & GPU array 290673 trains only the missing seeds 20260724/20260725 with the accepted width-128 architecture and identical training-only checkpoint-selection rule.  Seed 20260723 reuses job-290597's hash-pinned checkpoint.  Split 2 and every later archive remain unread. \\
+2026-07-27 & Pass three-seed training gate & Array tasks 290673\_0/290673\_1 completed with exit zero in 1h08m03s/1h09m54s.  Seeds 20260723/20260724/20260725 all beat persistence for every U/V/temperature/SSH group separately in S0/S1/S2; their worst ratios are 0.762683/0.732270/0.839507, each for S1 SSH.  Every exact-reload, finite-rollout, and 90/180-day amplitude criterion passes.  This authorizes one execution of frozen fresh-validation v2, not inference. \\
+2026-07-27 & Start frozen fresh validation & Submitted GPU job 290738 to apply the unmodified v2 contract once to all three hash-pinned checkpoints and all 180 complete 10--90-day starts per regime.  Split 2 is now authorized for this job only; inference, intermediate winds, response, and adjoint data remain sealed. \\
+2026-07-27 & Reject successor fresh validation & Job 290738 completed with exit zero in 13m20s, but no seed passed the full point gate and the paired bootstrap failed.  Three-seed mean surface-speed RMSE-AUC is 0.245 times persistence and passes every baseline.  SST/surface-pressure ratios are 2.313/2.198: both are good at day 10, cross persistence around days 20--30, and reach about 4.5--5 by day 90.  Every seed is finite, land-zero, and passes SSH/streamfunction amplitude and wind-slope checks.  The normalized-maximum limit 20 also fails, but validation truth reaches 21.092, so that subgate is non-discriminating; primary failures independently reject C.  Report/arrays SHA-256: \texttt{9853ea7aff21...663fb}/\texttt{fd84199b585e...dccc}. \\
+2026-07-27 & Freeze rollout diagnosis v1 & Before reading balanced long-rollout training metrics, froze \path{config/model_c_rollout_diagnosis_v1.json}, SHA-256 \texttt{d0ecee0db2b2...ff7ba}.  It evaluates the three checkpoints on 90 evenly spaced complete starts from each of the two training blocks, 540 records across regimes, at 10--90 days.  It changes no architecture/loss and reads no validation states or split-3/later archive. \\
+2026-07-27 & Start rollout diagnosis & Submitted GPU job 291102 to execute the frozen 540-record split-1 audit.  Its only purpose is to classify the objective/checkpoint-gate mismatch before any bounded successor revision; it cannot authorize inference. \\
+2026-07-27 & Complete rollout diagnosis & Job 291102 completed with exit zero in 3m58s.  Every seed reproduces good day-10 slow-field skill followed by failed 10--90-day RMSE-AUC and day-90 skill on balanced training chronology.  Mean day-10/AUC/day-90 persistence ratios are 0.809/2.021/4.221 for SST, 0.552/1.867/3.873 for surface pressure, and 0.532/1.844/3.835 for SSH.  Apply the frozen objective/checkpoint-gate-mismatch classification; report/arrays SHA-256 values are \texttt{7efdb0726125...171374}/\texttt{c3c403ab81b2...5f255}. \\
+2026-07-27 & Save validation figures & Generated five project-facing PNGs from the immutable job-290738 member arrays and saved them beside the lightweight validation summary.  Manifest content SHA-256 \texttt{8b24b6af0686...a0845f} binds the figures to report/array SHA-256 values \texttt{9853ea7aff21...663fb}/\texttt{fd84199b585e...dccc}; no sealed archive was opened. \\
+2026-07-27 & Save diagnosis figures & Generated three hash-bound project-facing figures, including a direct training-versus-validation slow-field comparison, plus a lightweight summary under \path{outputs/af_fno/C/rollout_diagnosis_v1/}.  Manifest content SHA-256 is \texttt{664e66a0866d...393671}; no sealed archive was opened. \\
+2026-07-27 & Classify two-input/two-output option & Confirmed that current C is one-state-in/one-residual-out in time; its 51/46 figures are physical channel counts.  Samudra used two consecutive states to predict two future states, whereas Bire named that method as future work.  Preserve it as a bounded temporal ablation compared against the smaller long-rollout-objective correction rather than adopted without evidence. \\
+2026-07-27 & Freeze Bire-style figures & Before reading any 100--200-day validation metric, froze contract SHA-256 \texttt{791c84f12c2d...eb696b}.  It fixes one seed-20260723 checkpoint, 15 randomly drawn complete S2 validation starts, the first draw for the spatial example, native-\(1^\circ\) streamfunction truth/prediction/difference panels, and \(\Delta t=10\) RMSE curves through day 200.  Persistence repeats the initial state; climatology uses all split-1 pointwise training means.  The characterization cannot tune or authorize inference. \\
+2026-07-27 & Start Bire-style figures & Submitted GPU job 291134 under the unchanged contract.  It reads only split-1 training states for climatology and the already opened S2 fresh-validation states for the 15 fixed rollouts; inference and all later archives remain sealed. \\
+2026-07-27 & Complete Bire-style figures & Job 291134 completed with exit zero in 51 seconds.  The fixed member's day-10/20/30/40 streamfunction RMSE is 0.0316/0.0934/0.1580/0.1765~Sv against about 13.34~Sv truth RMS.  All 15 rollouts are finite, but day-200 Model-C/persistence RMSE is 0.07344/0.00480~\(\mathrm{m\,s^{-1}}\) for speed, 5.981/0.0505~\({}^{\circ}\mathrm{C}\) for SST, and 3.747/0.0253~\(\mathrm{m^2\,s^{-2}}\) for surface pressure.  The requested SST/pressure axes clip the model mean from days 100/160.  Preserve report/arrays SHA-256 \texttt{b704b921444d...e300ac5}/\texttt{a73ac9bf2cc9...20b1} and output manifest-content SHA-256 \texttt{258be6fabe13...827f}; no inference data were opened. \\
+2026-07-27 & Freeze per-lead streamfunction maps & Before evaluating the new maps, froze contract SHA-256 \texttt{ccb965e58bdc...ae1934c}.  It reuses the fixed S2 start 6335 and checkpoint, generates exactly eight separate day-20--90 truth/prediction/difference figures, fixes one shared state scale, and requires a labeled lead-specific difference scale with numerical RMSE/max error.  The original output remains immutable; inference remains sealed. \\
+2026-07-27 & Complete per-lead streamfunction maps & GPU job 291135 completed with exit zero in 35 seconds and all eight requested PNGs passed hash checks.  RMSE/max error grows from 0.0934/0.7240~Sv at day 20 to 0.2951/1.1713~Sv at day 90; relative RMSE remains 0.700--2.211\%.  Days 20--40 reproduce the original maps to FP32 roundoff.  Preserve report/arrays SHA-256 \texttt{71c6e1dc1f9a...89c206}/\texttt{b4126494d9c0...3bcd48} and manifest-content SHA-256 \texttt{3b74d759d551...450ac7}; inference remains sealed. \\
+2026-07-27 & Save Figure-4 baseline companion & Generated a full-range/baseline-zoom SST and surface-\(P/\rho\) figure and a complete CSV from only the immutable job-291134 arrays.  SST loses both baselines at day 20; pressure loses persistence at day 30 and climatology at day 70.  Contract/manifest-content SHA-256 values are \texttt{2a2324090b83...b2a4a}/\texttt{01433936e406...99063}; no model or dataset was read. \\
+2026-07-27 & Freeze and start exact checkpoint replay & Frozen contract SHA-256 \texttt{494ce9de6688...06682} replays the original seed-20260723 optimization without changing architecture, loss, optimizer, batch order, or exposure.  It saves all six late checkpoints, requires bitwise equality at the original step 14,880, and scores fixed split-1 SST/\(P/\rho\) curves against both baselines before permitting either checkpoint-only selection or one bounded rollout-objective test.  Preflight, lint, shell validation, and 20 related tests pass.  Submitted only this gate as GPU job 291164; no objective variant is queued. \\
+2026-07-28 & Complete exact checkpoint replay & Job 291164 completed normally in 1h19m14s.  The original selected state is bitwise exact and the six training records have zero numerical difference.  All checkpoints are finite and land-zero, but none passes the long-horizon gate.  Step 14,400 is diagnostic best with worst primary AUC ratio 2.366 and worst slow-field lead ratio 5.513; the result requires objective correction. \\
+2026-07-28 & Start bounded pushforward correction & Frozen contract SHA-256 \texttt{406ee5248fb4...bccc2} makes one change from step 14,400: alternating detached day-60/day-90 SST and surface-\(P/\rho\) terminal supervision with coefficient 0.0025.  Width, modes, layers, padding, normalization, loss-v1 core, and split-1 gate are unchanged.  Sixteen related tests and preflight pass; V100 job 291612 is running and no replica or sealed-state job is queued. \\
+2026-07-28 & Reject first pushforward gate & Job 291612 completed normally in 20m37s and selected reload-exact step 1,920.  Worst primary AUC improves from 2.366 to 1.692, worst slow-field lead ratio from 5.513 to 3.994, and ten-day worst regime/group ratio from 0.852 to 0.610, but neither SST nor surface pressure beats both baselines through day 90.  Publication manifest-content SHA-256 is \texttt{2b7cc78262e6...fa272}; no replication or validation. \\
+2026-07-28 & Start replay-verified duration extension & All pushforward training terms are still descending and the low learning rate covered only the final 480 steps.  Frozen contract SHA-256 \texttt{4867fa77d68e...78c79} replays the complete path and requires bitwise step-1,920 equality before adding 3,840 steps at \(2\times10^{-5}\).  Nine related tests, lint, shell validation, and preflight pass; V100 job 291616 is running and all sealed reads remain blocked. \\
+2026-07-28 & Reject pushforward duration & Job 291616 completed normally in 51m31s and reproduced pushforward-v1 step 1,920 bitwise.  All eight checkpoints fail.  Diagnostic-best step 5,760 improves worst primary AUC/slow-lead ratios to 1.597/3.609, but day-90 SST is 2.402/3.609 and surface-\(P/\rho\) 2.922/1.727 times persistence/climatology.  Published manifest-content SHA-256 is \texttt{e97e78d5729c...e0f51}; replication and validation remain blocked. \\
+2026-07-28 & Correct and start three-call truncated unroll & Initial job 291769 stopped before training or metrics because the source validator expected \texttt{fine\_tune\_step}, while the duration checkpoint records \texttt{total\_fine\_tune\_step}.  Version-2 contract SHA-256 \texttt{0c5aabadbe51...92e3c} validates the actual schema during preflight and changes no scientific setting.  Four focused tests, lint, shell validation, source hashes, and preflight pass; V100 job 291778 is running on node112. \\
+2026-07-28 & Reject three-call truncated unroll & Job 291778 completed normally in 20m01s and diagnostic-best step 1,920 reloaded a nine-step rollout bitwise.  Every checkpoint fails; worst primary AUC/slow-lead ratios 1.933/3.701 are worse than duration step 5,760 at 1.597/3.609.  Day-90 SST is 2.463/3.701 and surface-\(P/\rho\) 2.844/1.681 times persistence/climatology.  Published figure/CSV/summary manifest-content SHA-256 is \texttt{cccd8e757495...ae4c03}.  Stop automatic variants and keep validation sealed. \\
+2026-07-28 & Freeze slow-field bias/projection audit & Contract SHA-256 \texttt{fd7d39f5c6a4...05428} fixes the seed-20260723 width-128 checkpoint, all 5,020 split-1 teacher-forced pairs per regime, the exact 540 job-291102 starts, five post-hoc correction variants, five SST/SSH increment EOFs, damped persistence, and 720-day training decorrelation.  Static bias is declared dominant only if fixed \(9\epsilon\) explains at least half the pooled SST and SSH day-90 error energy; a 20\% worst-slow-AUC reduction is the alternate material-correction threshold.  No held state or model weight may change. \\
+2026-07-28 & Complete streamfunction side study & V1 verified the project centered-U operator exactly but its 10.9\% U/V comparison placed U and V on different C-grid faces.  Preserved that result as a warning, froze corrected v2 SHA-256 \texttt{88ff2f20fe1a...dea170} with unchanged thresholds, and compared raw-face prefix integrals at common corner indices.  S0--S2 all pass: daily p90 relative RMSE is at most \(3.25\times10^{-5}\), annual RMSE is \(4.74\)--\(6.00\times10^{-5}\)~Sv, correlations are effectively one, and boundary-normal transport is zero.  Retain the free-surface caveat. \\
+2026-07-27 & Align final forward gate with Bire & Before fresh v2 validation, separate the strict all-group training-capacity test from final forward selection.  Bire's surface speed, SST, and derived surface pressure use 10--90-day RMSE/ACC curve integrals against persistence/climatology; streamfunction carries circulation/stability and wind-response physics.  SSH remains mandatory with bootstrap and climate-stability diagnostics but is not a standalone veto, because Bire neither predicted nor scored it separately and surface pressure already includes \(g\eta\). \\
+2026-07-28 & Complete slow-field bias/projection audit & Job 292064 completed normally in 7m09s on the frozen 540 split-1 starts and opened no held archive.  Fixed \(9\epsilon\) explains 33.43\%/27.21\% of pooled SST/SSH day-90 error energy; basin mean plus five increment EOFs explain 4.57\%/1.73\%.  Bias plus constraints reduces worst slow-field AUC from 1.986 to 1.603 (19.25\%), below the frozen 20\% threshold, while conservation alone slightly worsens it.  Apply the feedback-amplification branch.  Report/arrays SHA-256: \texttt{e66b263c826c...0f90}/\texttt{4e7f73c2384e...8547}. \\
+2026-07-28 & Freeze rollout-conditioned loss v3 & Contract SHA-256 \texttt{37f1157851ac...5a08} starts at duration step 5,760 and keeps the width-128 one-state interface, loss-v1 core, data order, and 540-record gate.  It applies exact SSH and regime/level temperature-mean projections after every call, adds a weight-0.01 per-cell batch-mean slow-increment penalty, and cycles a weight-0.0025 one-call forecast-age loss over days 10--90.  Five focused tests, lint, shell validation, source hashes, exact forcing-regime identification, and sealed-data preflight pass; no replica or held-state job is authorized. \\
+2026-07-28 & Complete rollout-conditioned loss v3 & GPU job 292293 completed normally in 27m46s without opening held states.  Diagnostic step 960 reloads exactly and all ten-day groups beat persistence at U/V/temperature/SSH ratios 0.0382/0.1058/0.2746/0.3456.  The strict long gate fails: worst primary AUC improves from 1.597 to 1.462, but worst slow-field lead is 3.634.  SST and surface-\(P/\rho\) still reach 2.419 and 3.019 times persistence at day 90.  Their day-10/day-30 values, surface speed, and streamfunction beat both persistence and climatology, so freeze the separate horizon-matched gate next; do not replicate or launch another unconstrained variant. \\
 \bottomrule
 \end{longtable}
 

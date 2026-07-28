@@ -1,0 +1,92 @@
+{
+  "version": "model_c_bire_baseline_zoom_v1",
+  "contract_status": "frozen_before_versioned_baseline_zoom_generation",
+  "freeze_date": "2026-07-27",
+  "purpose": "descriptive_baseline_visible_sst_and_surface_phihyd_companion_to_immutable_bire_figure4",
+  "source_artifacts": {
+    "arrays": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/bire_figures_v1/model_c_bire_figures_arrays.npz",
+    "arrays_sha256": "a73ac9bf2cc96d764885bf51d3822052970dae3e61cfdc637c2c2982a51720b1",
+    "report": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/bire_figures_v1/model_c_bire_figures_report.json",
+    "report_sha256": "b704b921444dc4093e0af70f68307d63cea44e4893bd526bbdacf4c65e300ac5",
+    "bire_figure_contract": "config/model_c_bire_figures_v1.json",
+    "bire_figure_contract_sha256": "791c84f12c2d8dc5b314ca3e24c56b8fcf8b817c2624f26ac0b204fc0feb696b"
+  },
+  "figure": {
+    "fields": [
+      "sst",
+      "phihyd_surface"
+    ],
+    "methods": [
+      "model",
+      "climatology",
+      "persistence"
+    ],
+    "lead_days": [
+      0,
+      10,
+      20,
+      30,
+      40,
+      50,
+      60,
+      70,
+      80,
+      90,
+      100,
+      110,
+      120,
+      130,
+      140,
+      150,
+      160,
+      170,
+      180,
+      190,
+      200
+    ],
+    "layout": "two_rows_fields_by_two_columns_full_range_and_baseline_scale_zoom",
+    "zoom_limits": {
+      "sst": [
+        0.0,
+        0.08
+      ],
+      "phihyd_surface": [
+        0.0,
+        0.1
+      ]
+    },
+    "crossing_rule": "first_positive_lead_where_member_mean_model_rmse_exceeds_member_mean_baseline_rmse",
+    "uncertainty": "member_mean_with_10th_to_90th_percentiles_over_same_15_fixed_S2_starts"
+  },
+  "read_contract": {
+    "existing_npz_only": true,
+    "trajectory_dataset_read": false,
+    "checkpoint_read": false,
+    "validation_state_read": false,
+    "inference_read": false,
+    "intermediate_wind_read": false,
+    "response_read": false,
+    "adjoint_read": false
+  },
+  "decision_contract": {
+    "descriptive_only": true,
+    "tuning_authorized": false,
+    "model_selection_authorized": false,
+    "inference_authorized": false,
+    "original_bire_figure_immutable": true
+  },
+  "output_contract": {
+    "project_output": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/bire_baseline_zoom_v1",
+    "immutable_non_overwriting": true,
+    "required_artifacts": [
+      "model_c_bire_figure4_dt10_sst_phihyd_full_and_zoom.png",
+      "model_c_bire_figure4_dt10_sst_phihyd_rmse.csv",
+      "baseline_zoom_summary.json",
+      "figure_manifest.json",
+      "README.md"
+    ]
+  },
+  "source_hashes": {
+    "src/bire_repro/af_model_c_bire_baseline_zoom.py": "b6c294372aa4f58ecae06d6b43d6e1b4a576d2c8f66661be1ad1b7fac2bb0dc8"
+  }
+}
