@@ -1,0 +1,144 @@
+{
+  "version": "model_c_rollout_conditioned_loss_v3_bire_figure4_v1",
+  "contract_status": "frozen_before_current_model_100_to_200_day_validation_metrics",
+  "freeze_date": "2026-07-28",
+  "purpose": "descriptive_bire_figure4_for_the_selected_projected_rollout_conditioned_loss_v3_checkpoint",
+  "protocol": {
+    "reference": "model_c_bire_figures_v1_figure4",
+    "prediction_interval_days": 10,
+    "regime_index": 2,
+    "regime_label": "S2",
+    "validation_pair_code": 2,
+    "lead_days": [
+      0,
+      10,
+      20,
+      30,
+      40,
+      50,
+      60,
+      70,
+      80,
+      90,
+      100,
+      110,
+      120,
+      130,
+      140,
+      150,
+      160,
+      170,
+      180,
+      190,
+      200
+    ],
+    "fields": [
+      "surface_speed",
+      "sst",
+      "phihyd_surface"
+    ],
+    "member_count": 15,
+    "summary": "mean_p10_p90_over_15_members",
+    "candidate_count": 70,
+    "candidate_bounds": [
+      6300,
+      6369
+    ],
+    "candidate_times_sha256": "b80af512bd5e49dd82028ce71c8a9f5545e59751abda406d94f48542e1d89c6b",
+    "selection": "numpy_default_rng_choice_without_replacement_in_draw_order",
+    "selection_seed": 20260727,
+    "start_draw_order": [
+      6335,
+      6353,
+      6330,
+      6361,
+      6358,
+      6308,
+      6313,
+      6346,
+      6324,
+      6323,
+      6319,
+      6325,
+      6355,
+      6366,
+      6351
+    ],
+    "start_draw_order_sha256": "cb7ba303adfa368ea59952e7a75e486a6ef5f2b546fe16f4cdeab59ffdd5b2e0",
+    "training_climatology_snapshots": 5040,
+    "persistence": "repeat_each_member_initial_condition_for_every_future_lead",
+    "climatology": "regime_specific_pointwise_time_mean_over_split1_training_snapshots",
+    "line_colors": {
+      "prediction": "red",
+      "climatology": "black",
+      "persistence": "blue"
+    },
+    "axis_limits": {
+      "surface_speed": [
+        0.0,
+        0.12
+      ],
+      "sst": [
+        0.0,
+        0.3
+      ],
+      "phihyd_surface": [
+        0.0,
+        1.0
+      ]
+    },
+    "selected_loss_v3_step": 960,
+    "apply_loss_v3_projection_every_call": true,
+    "descriptive_only": true
+  },
+  "source_artifacts": {
+    "dataset": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/trajectories_v2.zarr",
+    "dataset_metadata_sha256": "ae7be47c456962f411acb0d8e217dcb7fa6e24c59e5a8f3133f93032e378b8cc",
+    "quality_report": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/trajectories_v2.quality.json",
+    "quality_report_sha256": "a6f7e5234acec1ba29a323d5bc570e8b9e1ece2bfdaa627753609f71f97cf752",
+    "successor_validation_contract": "/home/mjalabert314/bire_james25_repro/config/model_c_successor_validation_v2.json",
+    "successor_validation_contract_sha256": "56bb6ec597993b0689ab699a452ed189392f98806bf95b7add79062b070cf27b",
+    "fresh_validation_report": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/successor_validation_v1/fresh_validation/model_c_successor_validation_report.json",
+    "fresh_validation_report_sha256": "9853ea7aff210ae880b4463583f5aae34a1d11508d98b72eb9fab93f582663fb",
+    "fresh_validation_report_content_sha256": "5537401af56d922b7a74c7bb33ffb2c741678275c39f2c1d3ce5ae66fefe394d",
+    "loss_v3_report": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/rollout_conditioned_loss_v3/model_c_rollout_conditioned_loss_v3_report.json",
+    "loss_v3_report_sha256": "e9af34326c3656cccf78990b6a21202a22adf99163fcfd1a07338c9fa6c7ba11",
+    "loss_v3_report_content_sha256": "aa7278668552911cb87788951353ad897c66061c129faa0ff14bb08e067227f8",
+    "loss_v3_contract_sha256": "37f1157851acec0da5abce880cf144932cfb37cf6273899ac84a20de58d85a08",
+    "checkpoint": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/rollout_conditioned_loss_v3/model_c_rollout_conditioned_loss_v3_best.pt",
+    "checkpoint_sha256": "e9f962878cb51bfe7dc498b07173f499d982a7f3c31e23afd8036b17afad970b"
+  },
+  "read_contract": {
+    "training_state_for_climatology": true,
+    "fresh_validation_state": true,
+    "inference_state": false,
+    "intermediate_wind_state": false,
+    "response_state": false,
+    "adjoint_state": false
+  },
+  "decision_contract": {
+    "descriptive_only": true,
+    "may_not_select_checkpoint_loss_architecture_or_data": true,
+    "may_compare_directly_with_model_c_bire_figures_v1": true,
+    "tuning_authorized": false,
+    "inference_authorized": false,
+    "response_or_adjoint_authorized": false
+  },
+  "output_contract": {
+    "scratch_output": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/rollout_conditioned_loss_v3/bire_figure4_current_model_v1",
+    "project_output": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/rollout_conditioned_loss_v3",
+    "figure_name": "model_c_bire_figure4_dt10_rmse_0_200_days.png",
+    "immutable_non_overwriting": true
+  },
+  "source_hashes": {
+    "src/bire_repro/analysis/af_model_c_rollout_conditioned_loss_v3_bire_figure4.py": "b371af9d0346f20b56310dfd78e0cbb1ff5f0dc00132d21fe91fe0c40374e101",
+    "src/bire_repro/af_model_c_bire_figures.py": "728c26158b064ee9706411043453a13f6bdc6f34b11d21a928f8e4d24d4b00d4",
+    "src/bire_repro/af_model_c_rollout_conditioned_loss_v3.py": "f1e1b9c40cbabc2387507a18d89e3c1312747aa68dc4901f61b879515c8526da",
+    "src/bire_repro/af_model_c_successor_validation.py": "ddf87aae293321b3710e3c5530c6ec6f5f603da6cfe466201ef2cade9737923a",
+    "src/bire_repro/af_model_c_successor.py": "62a5a3f91b21137bcaf4b8ed39a4bf3a4f35d1357cf7ab83947bd7dbbbe236e6",
+    "src/bire_repro/af_forward_complete.py": "18914b77058bfe1abeab3c98ec711ac8fb970deb76507b095ee376a0de447612",
+    "src/bire_repro/af_model_c_slow_field_bias_projection.py": "37722dda6382a4e808b3e2b348ecdfe56153b35a106b053bb52b01ca0f92a3a2",
+    "tests/model_c/test_af_model_c_rollout_conditioned_loss_v3_bire_figure4.py": "d630af1660f09a00e3e867f5d084cfe968eec5593399c619c08b3589d06fb213",
+    "slurm/models/c/af_model_c_rollout_conditioned_loss_v3_bire_figure4.sbatch": "1e42121679803287bb43ef193eaf348fe6e14d76c148e1950fcdb334ad6eb01a"
+  }
+}

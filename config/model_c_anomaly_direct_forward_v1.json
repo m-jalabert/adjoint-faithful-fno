@@ -1,0 +1,215 @@
+{
+  "version": "model_c_anomaly_direct_forward_v1",
+  "frozen_utc_date": "2026-07-29",
+  "purpose": "Held-inference 10-to-360-day forward evaluation and separate horizon-matched 10/30-day adjoint-readiness decision for the frozen median pointwise-anomaly direct-state Model C replicate.",
+  "inference_opened_before_freeze": false,
+  "response_or_adjoint_opened_before_freeze": false,
+  "selection": {
+    "rule": "median of the three passing seeds under the prospectively frozen mean six-ratio S2 score",
+    "seed": 20260724,
+    "optimizer_step": 13440,
+    "loss_contract_sha256": "19000a1426ea928db7799c82a73ce071a874911eb7e1df50bd276582ec30b5f9",
+    "replication_summary_content_sha256": "c69e009abb834650bb5a62111c1cea3e5ce2f6d67fa22b7445e96700fd4bdb18"
+  },
+  "architecture": {
+    "in_channels": 51,
+    "out_channels": 46,
+    "n_modes": [
+      24,
+      16
+    ],
+    "hidden_channels": 128,
+    "n_layers": 4,
+    "lifting_channel_ratio": 2,
+    "projection_channel_ratio": 2,
+    "channel_mlp_expansion": 4.0,
+    "domain_padding": 0.1,
+    "positional_embedding": "grid",
+    "use_channel_mlp": true,
+    "local_kernel_size": 3,
+    "fno_block_precision": "full",
+    "factorization": null
+  },
+  "normalization": {
+    "centering": "pooled_S0_S1_S2_split1_pointwise_time_mean",
+    "scaling": "pooled_S0_S1_S2_split1_pointwise_population_std_with_fifth_percentile_per_channel_wet_floor",
+    "pointwise_mean_sha256": "36489318e23fdf6eddae5c85078f71085542b7955b6a52a5adb36672a2f8a649",
+    "pointwise_scale_sha256": "b08f340a70f19b3f75b6e814768aada7c85e7f748d40a888c830819cbabca83f",
+    "direct_future_anomaly_state": true,
+    "residual_addition": false
+  },
+  "protocol": {
+    "dataset_split_code": 3,
+    "fresh_inference_block": {
+      "snapshot_start_inclusive": 6660,
+      "snapshot_stop_inclusive": 7199,
+      "pair_start_inclusive": 6660,
+      "pair_stop_inclusive": 7189,
+      "selection": "new_trajectory_v2_inference_block_only"
+    },
+    "horizon_days": 10,
+    "rollout_steps": 36,
+    "rollout_days": 360,
+    "starts_per_regime": 15,
+    "start_times": [
+      6660,
+      6672,
+      6684,
+      6696,
+      6708,
+      6720,
+      6732,
+      6744,
+      6756,
+      6768,
+      6780,
+      6792,
+      6804,
+      6816,
+      6829
+    ],
+    "ensemble_starts_json_sha256": "6661622d73c2a8badbbc1e4bf2370dea65b8e25337dc1288e2567781b5ebd351",
+    "ensemble_size": 45,
+    "climatology": "regime-specific pointwise mean over all trajectories_v2 split1 snapshots",
+    "persistence": "unchanged initial physical state",
+    "damped_persistence": "training-only regime-and-channel scalar AR1 anomaly coefficient toward regime-specific pointwise climatology",
+    "a0": "frozen A0 checkpoint with its original trajectories_v1 scalar normalization, scored on the identical fresh trajectories_v2 inference starts",
+    "maps_days": [
+      10,
+      60,
+      180,
+      360
+    ],
+    "spectra_days": [
+      10,
+      90,
+      180,
+      360
+    ],
+    "forcing_switch": "five fixed control-regime inference starts branched under low_control_high static forcing; provisional and non-vetoing without matching MITgcm switch truth"
+  },
+  "gates": {
+    "primary_fields": [
+      "surface_speed",
+      "sst",
+      "phihyd_surface"
+    ],
+    "adjoint_readiness_leads_days": [
+      10,
+      30
+    ],
+    "adjoint_readiness": "at each fixed horizon every primary-field Model C RMSE must beat persistence, climatology, damped persistence, and A0 on identical starts; Model C ACC must be positive; state must be finite, bounded, and exactly zero on land through day 30",
+    "primary_auc_leads_days": [
+      10,
+      20,
+      30,
+      40,
+      50,
+      60,
+      70,
+      80,
+      90
+    ],
+    "primary_auc": "each primary-field Model C 10-to-90-day mean-RMSE AUC must beat persistence, climatology, damped persistence, and A0",
+    "normalized_state_max_abs": 40.0,
+    "normalized_state_bound_rationale": "fixed two-times the legacy scalar-normalized complete-forward guard because pointwise quiet-cell scaling has a fifth-percentile floor",
+    "normalized_land_max_abs": 0.0,
+    "final_group_mean_bias_training_sigma_abs": 2.0,
+    "day360_resolved_spectral_energy_ratio_bounds": [
+      0.25,
+      4.0
+    ],
+    "day360_wind_streamfunction_slope": "same sign as truth and absolute model/truth slope ratio between 0.5 and 2.0",
+    "forcing_switch_expected_sign": "reported_provisionally_but_not_a_veto",
+    "complete_adjoint_campaign_may_open": "true only if both the 10/30-day adjoint-readiness gate and the complete long-forward gate pass"
+  },
+  "artifacts": {
+    "dataset": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/trajectories_v2.zarr",
+      "metadata_sha256": "ae7be47c456962f411acb0d8e217dcb7fa6e24c59e5a8f3133f93032e378b8cc"
+    },
+    "dataset_quality": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/trajectories_v2.quality.json",
+      "sha256": "a6f7e5234acec1ba29a323d5bc570e8b9e1ece2bfdaa627753609f71f97cf752"
+    },
+    "checkpoint": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/anomaly_direct_replication_v1/seeds/seed_20260724/model_c_anomaly_direct_v1_best.pt",
+      "sha256": "28b4809089a2a61b6a6be8bd82f9ab72751a1e625b8accbaec8474f073bd1a23"
+    },
+    "normalization": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/anomaly_direct_replication_v1/seeds/seed_20260724/model_c_anomaly_direct_v1_normalization.npz",
+      "sha256": "a81a27ce86b0d0b296d0d960bb5856cbcf2f3d88b21e7ffa398ae4983a30ebd1"
+    },
+    "selected_seed_report": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/anomaly_direct_replication_v1/seeds/seed_20260724/model_c_anomaly_direct_v1_report.json",
+      "sha256": "fd300f04a1dd4cea8b239a4100c333ee17788cbc59681469c832604f8110eb44"
+    },
+    "replication_summary": {
+      "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/anomaly_direct_replication_v1/replication_summary.json",
+      "sha256": "a1d3d1e0e332a8dad0fed8e3169bf3421676adb6579fa18743221960dd306a99"
+    },
+    "replication_manifest": {
+      "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/anomaly_direct_replication_v1/replication_manifest.json",
+      "sha256": "82c83a3fb3d08292ea3a9a6ccf0a007f1f7ac6af19655ae667682e9a13c34c00"
+    },
+    "damped_persistence_report": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/slow_field_bias_projection_v1/model_c_slow_field_bias_projection_report.json",
+      "sha256": "e66b263c826c3e8251c8e0efab8c5e535b22003120564821ad555c8deabe0f90"
+    },
+    "a0_checkpoint": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/A0/final_v1/a0_final.pt",
+      "sha256": "b879b64b8cc7ae53d4eb8b471ccfaa2ca0d1238a4fd25df569cb1813663be18f"
+    },
+    "a0_dataset": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/trajectories_v1.zarr",
+      "metadata_sha256": "cbcf2938f458bafa2bbf9088c57732a7f73958ef59720d13c15c78242ca10847"
+    }
+  },
+  "sources": {
+    "runner": {
+      "path": "/home/mjalabert314/bire_james25_repro/src/bire_repro/af_model_c_anomaly_direct_forward.py",
+      "sha256": "cd8bad86709972e5335b4b2003ebfe9cd1c4e2cee2dcec9cc5027bb091af0199"
+    },
+    "complete_forward_helpers": {
+      "path": "/home/mjalabert314/bire_james25_repro/src/bire_repro/af_forward_complete.py",
+      "sha256": "18914b77058bfe1abeab3c98ec711ac8fb970deb76507b095ee376a0de447612"
+    },
+    "anomaly_direct": {
+      "path": "/home/mjalabert314/bire_james25_repro/src/bire_repro/af_model_c_anomaly_direct.py",
+      "sha256": "c7f5d24530f501ee1f2ac8e719ecb73715de34c7441c08600a985f51e1860d89"
+    },
+    "successor": {
+      "path": "/home/mjalabert314/bire_james25_repro/src/bire_repro/af_model_c_successor.py",
+      "sha256": "62a5a3f91b21137bcaf4b8ed39a4bf3a4f35d1357cf7ab83947bd7dbbbe236e6"
+    }
+  },
+  "output": {
+    "directory": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/anomaly_direct_forward_v1",
+    "overwrite": false,
+    "required": [
+      "model_c_anomaly_direct_forward_metrics.json",
+      "model_c_anomaly_direct_forward_arrays.npz",
+      "model_c_anomaly_direct_adjoint_readiness.png",
+      "forward_rmse_vs_lead.png",
+      "forward_acc_vs_lead.png",
+      "forward_group_rmse_ratios.png",
+      "forward_spatial_rmse_maps.png",
+      "forward_snapshots_day010.png",
+      "forward_snapshots_day060.png",
+      "forward_snapshots_day180.png",
+      "forward_snapshots_day360.png",
+      "forward_spectra.png",
+      "forward_stability_by_regime.png",
+      "forward_wind_response.png",
+      "forward_forcing_switch_response.png",
+      "forward_gate_scorecard.png",
+      "manifest.json",
+      "README.md"
+    ]
+  },
+  "next_decision": {
+    "pass": "open the separately frozen complete 10-day and 30-day adjoint campaign",
+    "adjoint_readiness_fail_only": "retain the forward emulator but do not open adjoint archives; diagnose the failed horizon before any response tuning",
+    "long_forward_fail": "retain the 10-to-30-day determination separately and diagnose the prospectively failed stability or statistical gate without tuning on inference"
+  }
+}

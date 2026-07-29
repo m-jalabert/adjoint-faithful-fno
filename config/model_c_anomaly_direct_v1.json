@@ -1,0 +1,272 @@
+{
+  "version": "model_c_anomaly_direct_v1",
+  "contract_status": "frozen_before_anomaly_direct_training_or_validation_metrics",
+  "freeze_date": "2026-07-28",
+  "purpose": "primary_Bire_derived_state_representation_test_for_long_horizon_Model_C_stability",
+  "scientific_motivation": {
+    "current_model": "rollout_conditioned_loss_v3_step_960",
+    "current_model_contract_sha256": "37f1157851acec0da5abce880cf144932cfb37cf6273899ac84a20de58d85a08",
+    "current_day200_model_rmse": {
+      "surface_speed_m_s": 0.058,
+      "sst_degC": 4.5,
+      "phihyd_surface_m2_s2": 3.13
+    },
+    "diagnosis": "the_scalar_per_channel_state_coordinates leave slow ten_day anomalies as a nearly_identity_residual_map whose small feedback error accumulates into a genuinely_unstable_attractor",
+    "Bire_derived_change": "pointwise_training_climatology_anomalies_followed_by_direct_future_state_prediction",
+    "controlled_constants": "width128_four_layers_modes24x16_padding0p1_lift256_projection256_channel_mlp4C_local3x3_loss_v1_three_step_optimizer_and_data_order",
+    "why_no_layernorm_dropout_or_three_layer_control_yet": "the representation test is highest_priority_and_these_bounded_regularization_or_architecture_controls_follow_only_after_its_result",
+    "why_pooled_regime_normalization": "one S0_S1_S2 transform keeps normalization independent_of_wind_and_smooth_for_later_wind_derivatives_and_adjoints",
+    "preflight_floor_finding": {
+      "old_scalar_scale_fraction_0p01_rejected": "would_floor_69_percent_of_SST_wet_points",
+      "selected_floor": "per_channel_5th_percentile_of_wet_point_temporal_std",
+      "interpretation": "protect_the_quiet_tail_while_leaving_95_percent_of_wet_points_unchanged"
+    }
+  },
+  "source_artifacts": {
+    "dataset": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/trajectories_v2.zarr",
+    "dataset_metadata_sha256": "ae7be47c456962f411acb0d8e217dcb7fa6e24c59e5a8f3133f93032e378b8cc",
+    "quality_report": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/trajectories_v2.quality.json",
+    "quality_report_sha256": "a6f7e5234acec1ba29a323d5bc570e8b9e1ece2bfdaa627753609f71f97cf752"
+  },
+  "normalization": {
+    "centering": "pooled_S0_S1_S2_split1_pointwise_time_mean",
+    "scaling": "pooled_S0_S1_S2_split1_pointwise_population_std",
+    "accumulation": "float64_sums_and_squares_in_regime_major_chronological_chunk_order",
+    "saved_dtype": "float32",
+    "wet_cell_floor_quantile": 0.05,
+    "absolute_scale_floor": 1e-06,
+    "floor_application": "maximum_of_raw_pointwise_std_channel_wet_quantile_and_absolute_guard",
+    "land_mean": 0.0,
+    "land_scale": 1.0,
+    "normalized_land_value": 0.0,
+    "regime_dependent": false,
+    "statistics_source": "all_15120_split1_snapshots_only_5040_per_S0_S1_S2",
+    "expected": {
+      "training_snapshots_total": 15120,
+      "training_snapshots_per_regime": 5040,
+      "wet_cells": 3600,
+      "pointwise_mean_sha256": "36489318e23fdf6eddae5c85078f71085542b7955b6a52a5adb36672a2f8a649",
+      "pointwise_raw_scale_sha256": "ca1cb352d25b604d6157e2b9221d40164a09739872b7d2c0a25e8982087793d7",
+      "pointwise_scale_sha256": "b08f340a70f19b3f75b6e814768aada7c85e7f748d40a888c830819cbabca83f",
+      "channel_floor_sha256": "01c68f417e0054156fbacfa347dde057b7963f8bd5e1e8f2e70bb4ec46280c50"
+    }
+  },
+  "prediction": {
+    "input": "current_pointwise_normalized_anomaly_state_plus_unchanged_five_static_forcing_channels",
+    "target": "direct_normalized_future_anomaly_state",
+    "residual_addition": false,
+    "autoregressive_feedback": "feed_each_direct_normalized_output_as_the_next_current_state",
+    "zero_dynamic_output_semantics": "pooled_pointwise_split1_climatological_ocean_state",
+    "ten_day_interval": true
+  },
+  "architecture": {
+    "in_channels": 51,
+    "out_channels": 46,
+    "n_modes": [
+      24,
+      16
+    ],
+    "hidden_channels": 128,
+    "n_layers": 4,
+    "lifting_channel_ratio": 2,
+    "projection_channel_ratio": 2,
+    "channel_mlp_expansion": 4.0,
+    "domain_padding": 0.1,
+    "positional_embedding": "grid",
+    "use_channel_mlp": true,
+    "local_kernel_size": 3,
+    "fno_block_precision": "full",
+    "factorization": null
+  },
+  "training": {
+    "seed": 20260723,
+    "loss": {
+      "version": "v1",
+      "contract_sha256": "19000a1426ea928db7799c82a73ce071a874911eb7e1df50bd276582ec30b5f9",
+      "semantics": "same_equal_group_state_increment_rollout_spectral_boundary_objective_evaluated_in_pointwise_anomaly_coordinates"
+    },
+    "optimizer": {
+      "batch_size": 4,
+      "effective_batch_size": 4,
+      "initial_learning_rate": 0.0005,
+      "adam_betas": [
+        0.9,
+        0.95
+      ],
+      "weight_decay": 1e-05,
+      "maximum_steps": 15360,
+      "decay_fraction": 0.75,
+      "decay_factor": 0.2
+    },
+    "checkpoint_steps": [
+      3840,
+      7680,
+      11520,
+      13440,
+      14400,
+      14880,
+      15360
+    ],
+    "checkpoint_basis": "include_early_and_late_training_so_long_rollout_selection_cannot_assume_the_final_epoch_is_best",
+    "data_order": "same_chunk_aware_seeded_split1_regime_major_order_as_width128_successor"
+  },
+  "training_evaluation": {
+    "checkpoint_records_per_regime": 32,
+    "batch_size": 16,
+    "lead_days": [
+      10,
+      20,
+      30,
+      40,
+      50,
+      60,
+      70,
+      80,
+      90
+    ],
+    "records": {
+      "training_pair_code": 1,
+      "selection": "same_evenly_spaced_complete_90_day_starts_as_checkpoint_replay_and_loss_v3",
+      "expected_training_blocks": 2,
+      "starts_per_training_block": 90,
+      "selected_times_per_regime": 180,
+      "records_total": 540,
+      "training_times_sha256": "bb5aab82d7f97a86f89908f035a1b2845f77e1b39056b2454c70e9cdf9b6ab09",
+      "records_sha256": "f7f829281375aaeaab5a4dcbe7081babf2534a48e9c4100986e6b731df9ed944"
+    },
+    "baselines": [
+      "persistence",
+      "training_climatology"
+    ],
+    "checkpoint_gate": {
+      "strict_rmse_ratio_threshold": 1.0,
+      "primary_fields": [
+        "surface_speed",
+        "sst",
+        "phihyd_surface"
+      ],
+      "slow_primary_fields": [
+        "sst",
+        "phihyd_surface"
+      ],
+      "baselines": [
+        "persistence",
+        "climatology"
+      ],
+      "require_primary_rmse_auc_below_both_baselines": true,
+      "require_slow_field_rmse_below_both_at_every_lead": true,
+      "require_old_ten_day_regime_group_gate": true,
+      "require_finite_rollout": true,
+      "require_zero_land_leakage": true,
+      "selection_order": [
+        "passing_checkpoint_if_any",
+        "minimum_worst_slow_field_all_lead_rmse_ratio",
+        "minimum_worst_primary_rmse_auc_ratio",
+        "minimum_old_ten_day_worst_regime_group_ratio",
+        "earliest_optimizer_step"
+      ]
+    }
+  },
+  "validation_figure": {
+    "purpose": "prospectively_fixed_requested_Bire_Figure4_and_streamfunction_characterization_after_training_only_selection",
+    "regime_index": 2,
+    "regime_label": "S2",
+    "validation_pair_code": 2,
+    "lead_days": [
+      0,
+      10,
+      20,
+      30,
+      40,
+      50,
+      60,
+      70,
+      80,
+      90,
+      100,
+      110,
+      120,
+      130,
+      140,
+      150,
+      160,
+      170,
+      180,
+      190,
+      200
+    ],
+    "candidate_count": 70,
+    "candidate_bounds": [
+      6300,
+      6369
+    ],
+    "candidate_times_sha256": "b80af512bd5e49dd82028ce71c8a9f5545e59751abda406d94f48542e1d89c6b",
+    "member_count": 15,
+    "selection_seed": 20260727,
+    "selection": "same_prospective_draw_as_prior_Model_C_for_paired_visual_comparison",
+    "start_draw_order": [
+      6335,
+      6353,
+      6330,
+      6361,
+      6358,
+      6308,
+      6313,
+      6346,
+      6324,
+      6323,
+      6319,
+      6325,
+      6355,
+      6366,
+      6351
+    ],
+    "start_draw_order_sha256": "cb7ba303adfa368ea59952e7a75e486a6ef5f2b546fe16f4cdeab59ffdd5b2e0",
+    "figure3_start": 6335,
+    "fields": [
+      "surface_speed",
+      "sst",
+      "phihyd_surface"
+    ],
+    "methods": [
+      "prediction",
+      "persistence",
+      "S2_training_climatology"
+    ],
+    "member_summary": "mean_and_10th_to_90th_percentiles",
+    "required_project_figure": "outputs/af_fno/C/anomaly_direct_v1/model_c_bire_figure4_dt10_rmse_0_200_days.png"
+  },
+  "output_contract": {
+    "scratch_output": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/anomaly_direct_v1",
+    "project_output": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/anomaly_direct_v1",
+    "required_plots": [
+      "model_c_anomaly_direct_training_rmse_ratios.png",
+      "model_c_anomaly_direct_checkpoint_selection.png",
+      "model_c_anomaly_direct_normalization_scales.png",
+      "model_c_bire_figure3_streamfunction_1deg.png",
+      "model_c_bire_figure4_dt10_rmse_0_200_days.png",
+      "model_c_anomaly_direct_rmse_0_200_days_full_scale.png"
+    ]
+  },
+  "next_decision": {
+    "training_gate_passed_and_day200_bounded": "freeze_replication_contract_before_any_additional_validation_or_architecture_change",
+    "training_gate_failed_but_day200_bounded": "retain_as_statistical_stability_candidate_and_apply_the_separate_10_to_30_day_adjoint_readiness_gate",
+    "day200_unbounded": "stop_and_run_the_predeclared_LayerNorm_ChannelMLP_dropout_bounded_regularization_test",
+    "no_automatic_layer_mode_padding_or_head_change": true
+  },
+  "read_contract": {
+    "training_state": true,
+    "fixed_S2_validation_figure_state": true,
+    "validation_use": "descriptive_only_after_training_only_checkpoint_selection",
+    "inference_state": false,
+    "intermediate_wind_state": false,
+    "response_state": false,
+    "adjoint_state": false
+  },
+  "source_hashes": {
+    "src/bire_repro/af_model_c_anomaly_direct.py": "c7f5d24530f501ee1f2ac8e719ecb73715de34c7441c08600a985f51e1860d89",
+    "src/bire_repro/analysis/af_model_c_anomaly_direct_plots.py": "a9bbb80e9181e4ff7acdf6c935afa21f43b0a8d68167ce52aa07ae0fedc2cfab",
+    "tests/model_c/test_af_model_c_anomaly_direct.py": "7c541ef3b66a5988375d65c464e7c10bf710a0cf6ada4f4a1b996a50ededb04c",
+    "slurm/models/c/af_model_c_anomaly_direct.sbatch": "239a81822e891ce7a6d48ece8da0b03072dfb01b530dd96154068f17260a3ab9"
+  }
+}

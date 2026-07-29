@@ -1,0 +1,193 @@
+{
+  "version": "model_c_anomaly_direct_replication_v1",
+  "contract_status": "frozen_after_seed20260723_pass_before_independent_seed_replication",
+  "freeze_date": "2026-07-28",
+  "purpose": "test_seed_robustness_of_the_Bire_derived_pointwise_anomaly_direct_state_Model_C_before_any_architecture_change_or_later_archive_read",
+  "scientific_decision": {
+    "parent_result": "seed_20260723_passed_the_strict_training_only_10_to_90_day_gate_and_remained_bounded_on_the_fixed_S2_0_to_200_day_characterization",
+    "interpretation": "pointwise_temporal_anomaly_coordinates_plus_direct_future_state_prediction_remove_the_previous_slow_field_runaway_for_the_reference_seed",
+    "controlled_follow_up": "repeat_the_identical_training_selection_and_fixed_characterization_for_two_independent_seeds",
+    "changes_allowed": [
+      "parameter_initialization_seed",
+      "chunk_aware_batch_order_seed"
+    ],
+    "changes_forbidden": [
+      "dataset_or_split",
+      "normalization",
+      "prediction_parameterization",
+      "architecture",
+      "loss",
+      "optimizer_exposure",
+      "checkpoint_steps",
+      "checkpoint_selection_records_or_rule",
+      "fixed_S2_member_set",
+      "baselines",
+      "LayerNorm_or_dropout",
+      "layers_modes_padding_or_heads"
+    ]
+  },
+  "parent_contract": {
+    "path": "config/model_c_anomaly_direct_v1.json",
+    "sha256": "fa38b41578f5dc99bcb3e238609d59b3530d8242d5c2ccc92e6de9328b88acea"
+  },
+  "reference_result": {
+    "seed": 20260723,
+    "report": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/anomaly_direct_v1/model_c_anomaly_direct_v1_report.json",
+    "report_sha256": "2d840fb91682fe6c1c37a117f891bf8ed90d92c40711ab757084c0fa89feb6d5",
+    "report_content_sha256": "4d5dd3d54a677678ba3f837961d0aac04758b88e7686cf0129d11372bfee0302",
+    "checkpoint": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/anomaly_direct_v1/model_c_anomaly_direct_v1_best.pt",
+    "checkpoint_sha256": "1d4b7cae82496a478eaed0687b3807feec068c9a4e0a40c1cff330ad0e2c362e",
+    "selected_optimizer_step": 14400,
+    "classification": "training_only_pushforward_gate_passed",
+    "training_worst_primary_rmse_auc_ratio": 0.39395962130846207,
+    "training_worst_slow_field_lead_ratio": 0.5191066000808978,
+    "fixed_S2_10_to_90_day_rmse_auc_ratio_to_persistence": {
+      "surface_speed": 0.2216682821504342,
+      "sst": 0.20637047669147088,
+      "phihyd_surface": 0.6006620348536086
+    },
+    "fixed_S2_10_to_90_day_rmse_auc_ratio_to_climatology": {
+      "surface_speed": 0.3129009672818764,
+      "sst": 0.25759189579551695,
+      "phihyd_surface": 0.21443793248408663
+    },
+    "day200_model_rmse": {
+      "surface_speed": 0.0021196244129290183,
+      "sst": 0.028797152762611706,
+      "phihyd_surface": 0.05518824035922686
+    },
+    "day200_model_ratio_to_persistence": {
+      "surface_speed": 0.4420147677650457,
+      "sst": 0.5704366798284725,
+      "phihyd_surface": 2.180247459332728
+    },
+    "day200_model_ratio_to_climatology": {
+      "surface_speed": 0.6657121295484799,
+      "sst": 0.7896681145445728,
+      "phihyd_surface": 0.7678572099913169
+    }
+  },
+  "seed_replication": {
+    "declared_seeds": [
+      20260723,
+      20260724,
+      20260725
+    ],
+    "new_seeds": [
+      20260724,
+      20260725
+    ],
+    "change_from_parent": "seed_only",
+    "checkpoint_selection": "training_split1_only",
+    "training_rule": "identical_parent_pointwise_normalizer_direct_state_architecture_loss_optimizer_exposure_checkpoint_steps_records_and_gate",
+    "fixed_validation_rule": "after_each_training_only_checkpoint_selection_repeat_the_already_frozen_same_15_S2_members_through_day200",
+    "array_index_rule": "zero_based_order_of_new_seeds",
+    "require_every_seed_complete": true
+  },
+  "replication_gate": {
+    "applies_to_every_declared_seed": true,
+    "require_parent_training_only_checkpoint_gate": true,
+    "require_nine_step_save_reload_bitwise_exact": true,
+    "fixed_S2_primary_fields": [
+      "surface_speed",
+      "sst",
+      "phihyd_surface"
+    ],
+    "fixed_S2_10_to_90_day_requirement": "each_primary_RMSE_AUC_ratio_strictly_below_one_against_persistence_and_training_climatology",
+    "fixed_S2_0_to_200_day_bounded_requirement": "finite_mean_and_p90_curves_and_neither_exceeds_the_prospectively_fixed_Figure4_axis",
+    "fixed_S2_day200_climatology_requirement": "each_primary_model_RMSE_strictly_below_training_climatology",
+    "fixed_S2_day200_persistence_requirement": {
+      "surface_speed": "strictly_below",
+      "sst": "strictly_below",
+      "phihyd_surface": "reported_not_a_veto_because_S2_pressure_persistence_is_exceptionally_small_near_day200"
+    },
+    "require_zero_land_leakage": true,
+    "seed_selection_if_all_pass": "median_ranked_seed_by_mean_primary_10_to_90_day_RMSE_AUC_ratio_over_persistence_and_climatology",
+    "seed_selection_tiebreaker": "lowest_integer_seed",
+    "why_median": "freeze_a_typical_deployable_checkpoint_without_selecting_the_luckiest_seed"
+  },
+  "fixed_validation_characterization": {
+    "regime": "S2",
+    "lead_days": [
+      0,
+      10,
+      20,
+      30,
+      40,
+      50,
+      60,
+      70,
+      80,
+      90,
+      100,
+      110,
+      120,
+      130,
+      140,
+      150,
+      160,
+      170,
+      180,
+      190,
+      200
+    ],
+    "member_count": 15,
+    "start_draw_order": [
+      6335,
+      6353,
+      6330,
+      6361,
+      6358,
+      6308,
+      6313,
+      6346,
+      6324,
+      6323,
+      6319,
+      6325,
+      6355,
+      6366,
+      6351
+    ],
+    "start_draw_order_sha256": "cb7ba303adfa368ea59952e7a75e486a6ef5f2b546fe16f4cdeab59ffdd5b2e0",
+    "uses_checkpoint_selection": false,
+    "new_validation_members_or_metrics": false
+  },
+  "output_contract": {
+    "scratch_root": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/anomaly_direct_replication_v1",
+    "project_root": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/anomaly_direct_replication_v1",
+    "seed_subdirectory": "seed_<seed>",
+    "required_per_seed_figures": [
+      "model_c_anomaly_direct_training_rmse_ratios.png",
+      "model_c_anomaly_direct_checkpoint_selection.png",
+      "model_c_anomaly_direct_normalization_scales.png",
+      "model_c_bire_figure3_streamfunction_1deg.png",
+      "model_c_bire_figure4_dt10_rmse_0_200_days.png",
+      "model_c_anomaly_direct_rmse_0_200_days_full_scale.png"
+    ]
+  },
+  "next_decision": {
+    "all_three_seeds_pass": "freeze_the_complete_three_seed_10_to_360_day_forward_evaluation_and_horizon_matched_adjoint_readiness_contract_before_any_inference_or_response_archive_is_opened",
+    "training_gate_not_reproduced": "stop_and_classify_seed_sensitivity_without_launching_an_architecture_variant",
+    "training_reproduced_but_fixed_S2_gate_fails": "retain_the_reference_as_a_bounded_candidate_but_do_not_freeze_a_long_rollout_Model_C",
+    "no_automatic_architecture_or_regularization_branch": true
+  },
+  "read_contract": {
+    "training_state": true,
+    "fixed_S2_validation_figure_state": true,
+    "fixed_S2_membership_already_opened_and_unchanged": true,
+    "validation_use": "replication_only_after_training_only_checkpoint_selection",
+    "inference_state": false,
+    "intermediate_wind_state": false,
+    "response_state": false,
+    "adjoint_state": false
+  },
+  "source_hashes": {
+    "src/bire_repro/af_model_c_anomaly_direct_replication.py": "891b2ccadcc10b4452811d4a60dbd1d0e0a62545c76cab9fc08ed987cdc05873",
+    "src/bire_repro/af_model_c_anomaly_direct.py": "c7f5d24530f501ee1f2ac8e719ecb73715de34c7441c08600a985f51e1860d89",
+    "src/bire_repro/analysis/af_model_c_anomaly_direct_plots.py": "a9bbb80e9181e4ff7acdf6c935afa21f43b0a8d68167ce52aa07ae0fedc2cfab",
+    "tests/model_c/test_af_model_c_anomaly_direct_replication.py": "0c735920ad88d511696e29a733a52fbec2367b4a4f3e1202a79033607ddfb052",
+    "tests/model_c/test_af_model_c_anomaly_direct.py": "7c541ef3b66a5988375d65c464e7c10bf710a0cf6ada4f4a1b996a50ededb04c",
+    "slurm/models/c/af_model_c_anomaly_direct_replication.sbatch": "195e8eb1481dad463f053a8dd2e2a801920ba0f58b89362561cfdb45aa67ce6c"
+  }
+}

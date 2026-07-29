@@ -68,7 +68,7 @@ forward losses and a small set of forward perturbation--response pairs. Generate
 \MITgcm{} adjoints only after the emulators are frozen, and use them as a blind test.
 \end{decisionbox}
 \vfill
-{\large Revised technical proposal --- 27 July 2026\par}\vspace{0.45in}
+{\large Revised technical proposal --- 29 July 2026\par}\vspace{0.45in}
 {\small Ten-week scope; official \MITgcm{} baroclinic-gyre tutorial;
 NeuralOperator 2.0 implementation\par}
 \end{titlepage}
@@ -1033,6 +1033,227 @@ loss/capacity variant is authorized.  Report/arrays/checkpoint SHA-256 values ar
 and hash manifest are under
 \path{outputs/af_fno/C/rollout_conditioned_loss_v3/}.
 
+\paragraph{Bire-derived state correction.}
+The archive comparison identifies a difference in state representation more consequential
+than another layer, mode, or padding change.  Bire centres and scales each channel at
+each grid point over training time and predicts the normalized future state directly.
+The present Model C instead uses one scalar mean/scale per channel and predicts a small
+residual increment.  Its slow fields therefore occupy poorly conditioned nearly
+identity coordinates: a small systematic feedback error is inexpensive at one call but
+accumulates at every recursive call.
+
+The primary representation contract is frozen before its training or validation
+metrics:
+\begin{quote}
+\path{config/model_c_anomaly_direct_v1.json}\\
+SHA-256 \texttt{fa38b41578f5...8acea}.
+\end{quote}
+It computes one wind-independent pointwise mean and population standard deviation from
+all 15,120 split-1 S0--S2 snapshots.  Pooling regimes keeps the normalization smooth
+with respect to wind amplitude for the later derivative study.  Each channel's wet
+point scale is floored at its fifth percentile, with a \(10^{-6}\) absolute guard.
+This changes exactly 5\% of wet points per channel; a floor equal to 1\% of the old
+scalar scale was rejected during preflight because it would floor 69\% of SST points.
+The exact mean, raw-scale, and floored-scale SHA-256 values are
+\texttt{36489318e23f...a649}, \texttt{ca1cb352d25b...93d7}, and
+\texttt{b08f340a70f1...a83f}.
+
+The FNO output is the next pointwise-normalized anomaly state; it is never added to the
+current state.  A zero dynamic output therefore maps to the pooled pointwise training
+climatology.  Width 128, four blocks, modes \((24,16)\), 10\% padding, lift/projection
+width 256, the \(4C\) Channel MLP, local \(3\times3\) branch, loss-v1 three-step core,
+optimizer, seed, and batch order remain fixed.  Seven checkpoints from steps
+3,840--15,360 are selected only on the same 540 balanced split-1 rollouts and strict
+10--90-day gate.  After that selection, the same prospectively fixed 15 S2 members are
+characterized through day 200.  The required deliverable is
+\begin{quote}
+\path{outputs/af_fno/C/anomaly_direct_v1/}\\
+\path{model_c_bire_figure4_dt10_rmse_0_200_days.png},
+\end{quote}
+along with normalization, checkpoint-selection, training-curve, streamfunction, and
+unclipped full-range plots.  LayerNorm/dropout, a three-block/no-padding control, and
+group-specific heads remain subsequent bounded tests rather than simultaneous changes.
+Eight focused and inherited figure tests, lint, shell validation, source hashes,
+normalizer preflight, and a production-grid three-step differentiable smoke test pass.
+Inference, intermediate-wind, response, and adjoint states remain sealed.
+
+\textbf{Completed representation result, 28 July 2026.}  V100 job 303447 completed
+normally in 1h29m32s and selected optimizer step 14,400 using split 1 only.  Its
+strict training-only gate passes: the worst primary RMSE-AUC ratio to either baseline
+is 0.394 and the worst SST/surface-\(P/\rho\) single-lead ratio is 0.519.  Aggregate
+ten-day U/V/temperature/SSH ratios to persistence are
+0.0820/0.1905/0.2345/0.2645.  On the prospectively fixed S2 members, 10--90-day
+surface-speed/SST/surface-\(P/\rho\) RMSE-AUC ratios to persistence are
+0.222/0.206/0.601; the corresponding ratios to climatology are
+0.313/0.258/0.214.  At day 200 their RMSEs remain bounded at
+0.00212~\(\mathrm{m\,s^{-1}}\), 0.0288~\({}^{\circ}\mathrm{C}\), and
+0.0552~\(\mathrm{m^2\,s^{-2}}\), compared with the loss-v3 map's approximate
+0.058, 4.50, and 3.13.  Surface pressure no longer runs away, although its day-200
+error is 2.18 times the exceptionally small persistence error; it remains 0.768
+times climatology.  The requested Figure~4 and all five companion plots are saved
+under the contracted project output root.
+
+This is evidence for the combined representation change, not yet a claim that every
+random seed or the complete 360-day physical gate passes.  Before changing layers,
+padding, regularization, or heads, the independent-seed contract
+\begin{quote}
+\path{config/model_c_anomaly_direct_replication_v1.json}\\
+SHA-256 \texttt{dd7e0f92ef50...d8325f}
+\end{quote}
+freezes replicas 20260724/20260725.  Only initialization and seed-driven batch order
+may change.  Each checkpoint is again selected on split 1 before repeating the
+already fixed 15-member S2 characterization.
+
+\textbf{Completed replication result, 29 July 2026.}  Array 303640 completed both
+tasks normally, and all three seeds pass every frozen gate.  Their mean six-ratio
+ranking scores are 0.30227, 0.24717, and 0.23184 for
+20260723/20260724/20260725, so the predeclared median is seed 20260724 at step
+13,440.  Its day-200 speed/SST/surface-\(P/\rho\) RMSE is
+0.00242/0.0262/0.0223, below both persistence and climatology.  The sealed summary,
+CSV, manifest, and comparison plot are under
+\path{outputs/af_fno/C/anomaly_direct_replication_v1/}.
+
+The complete held-inference contract was frozen before opening split 3:
+\begin{quote}
+\path{config/model_c_anomaly_direct_forward_v1.json}\\
+SHA-256 \texttt{d11029fce3aa...c2f6c}.
+\end{quote}
+It fixes 45 starts wholly inside the fresh trajectory-v2 inference block, 36 ten-day
+calls, the median checkpoint, persistence, regime climatology, training-only damped
+persistence, and A0 on identical starts.  The separate adjoint-readiness gate requires
+all three primary fields at days 10 and 30 to beat every baseline with positive ACC;
+the long gate adds 10--90-day AUC, day-360 boundedness/drift, resolved spectra, and
+wind-response slope.  The forcing-switch sign remains reported but non-vetoing until
+matching \MITgcm{} truth exists.  This job may open only the declared inference states;
+intermediate-wind, response, and adjoint archives remain sealed.
+
+\textbf{Completed held-inference result, 29 July 2026.}  V100 job 303993
+completed normally in 3m00s.  The separate 10/30-day adjoint-readiness
+determination passes every primary-field comparison.  At day 30 the model
+RMSE for surface speed, SST, and surface-\(P/\rho\) is
+0.000781~\(\mathrm{m\,s^{-1}}\), 0.00798~\({}^{\circ}\mathrm{C}\), and
+0.00524~\(\mathrm{m^2\,s^{-2}}\), with ACC
+0.9767/0.9778/0.9977; each is below persistence, climatology, damped
+persistence, and same-start A0.  The primary 10--90-day RMSE-AUC also beats
+all four baselines.  The one-year rollout is finite, exactly zero on land, and
+bounded at a maximum normalized magnitude of 15.81; final U/V/temperature/SSH
+mean biases are only 0.00676/0.00306/0.000285/0.00653 training standard
+deviations.  The streamfunction wind-slope ratio is 1.180 and the provisional
+forcing-switch sign is correct.
+
+The combined gate nevertheless remains a frozen \emph{failure}.  Five of seven
+day-360 spectral ratios pass, but the modewise medians for mid-depth and bottom
+\texttt{PHIHYD} are 22.29 and 9.63, above the factor-four bound.  Consequently
+the complete adjoint campaign remains closed even though the short-horizon
+scientific determination is retained as a pass.  The complete metrics, arrays,
+scorecard, readiness plot, spectra, maps, snapshots, and stability figures are
+under
+\path{outputs/af_fno/C/anomaly_direct_forward_v1/}.
+
+The immutable posthoc diagnosis
+\path{outputs/af_fno/C/anomaly_direct_forward_spectral_diagnosis_v1/}
+does not reinterpret that failure.  It shows that total integrated day-360
+energy is 1.029 times truth at mid-depth and 0.947 at the bottom, while modes
+\(k\geq10\) contain only 0.0159\% and 0.0193\% of the respective model energy
+(truth shares \(2.24\times10^{-6}\) and \(5.26\times10^{-6}\)).  Thus the
+failure is a real but small high-wavenumber tail rather than basin-scale drift
+or an unstable attractor.  Before changing weights, the training-only
+attribution contract
+\begin{quote}
+\path{config/model_c_anomaly_direct_training_spectral_attribution_v1.json}\\
+SHA-256 \texttt{afb64d5a0f3a...d0246}
+\end{quote}
+fixes all three accepted seeds, 36 split-1 starts, all 15 pressure levels, and
+360-day rollouts.  It will establish seed consistency, depth, and onset without
+reading validation, inference, response, or adjoint state; only a
+seed-consistent split-1 tail authorizes one prospective spectral-regularization
+fine-tune.
+
+\textbf{Rejected attribution implementation, 29 July 2026.}  Job 304125
+completed normally in 1m07s, but its scientific output is invalid.  The runner
+advanced the model by one ten-day call while gathering truth at daily offset
+\(t+s\), not \(t+10s\).  The impossible 10--90-day primary RMSE ratios
+3.48--4.48 times persistence exposed the mismatch.  Its output is retained only
+as rejected provenance and cannot authorize a loss change.  The corrected
+contract
+\begin{quote}
+\path{config/model_c_anomaly_direct_training_spectral_attribution_v2.json}\\
+SHA-256 \texttt{29c344310e50...a3de1}
+\end{quote}
+pins a stride of ten daily snapshots per model call, verifies the inclusive
+\(t\) through \(t+360\) window stays wholly in split 1, and replaces the
+invalid starts with 12 fixed admissible times.  Six focused tests, lint, shell
+validation, source hashes, and production-data preflight pass.  No
+regularization or later archive read is authorized until this corrected
+attribution completes.  V100 job 304177 completed normally in 1m11s and
+validly classifies a seed-consistent training-split tail.  Across seeds
+20260723--20260725, day-360 mid-level ratios are 12.25--13.54 and bottom ratios
+are 4.96--5.69; failure begins at days 170--190 and 310--330, respectively.
+Total mid/bottom pressure energy remains 1.02--1.07 times truth, while every
+10--90-day primary ratio remains only 0.19--0.37 times persistence.  Report
+content SHA-256 is \texttt{f3cb1bd6de11...141927}, and the immutable package is
+under
+\path{outputs/af_fno/C/anomaly_direct_training_spectral_attribution_v2/}.
+
+\textbf{Single authorized spectral fine-tune, 29 July 2026.}  Contract
+\begin{quote}
+\path{config/model_c_anomaly_direct_deep_pressure_spectral_regularization_v1.json}\\
+SHA-256 \texttt{4f3377382dc0...acef37}
+\end{quote}
+starts from median seed 20260724 at step 13,440 and changes only one term: a
+weight \(10^{-3}\) differentiable complex-Fourier PHIHYD error over levels
+7--14 and radial modes 10--30 on the existing 10/20/30-day rollout.  It fixes
+1,920 constant-\(2\times10^{-5}\) fine-tune steps and five checkpoints.  The
+same 36 corrected split-1 records select a candidate only if both mid and
+bottom spectra stay within factor four at every lead through day 360, total
+energy remains 0.8--1.25 times truth, every primary remains better than
+persistence, and no primary degrades more than 10\% from the source.  Four
+focused tests, lint, shell validation, source locks, and production-data
+preflight pass.  V100 job 304324 completed normally in 10m25s.  The term
+substantially helps but does not pass the prospective rule: at fine-tune step
+1,920 the day-360 mid/bottom ratios fall from 13.37/5.57 to 6.19/2.97, the
+bottom tail never crosses four, and mid-tail onset moves from day 180 to day
+280.  Integrated mid/bottom energy remains 1.006/0.980 times truth and all
+primary 10--90-day ratios improve or remain protected.  Because the mid-level
+ratio still exceeds four, no fine-tune checkpoint is promoted; the selected
+model remains original seed 20260724 at step 13,440.  Report/manifest content
+SHA-256 is \texttt{8065faafeecf...ddb75}/
+\texttt{280a863a5892...f3a8}, with JSON, arrays, and two plots under
+\path{outputs/af_fno/C/anomaly_direct_deep_pressure_spectral_regularization_v1/}.
+No second spectral weight or duration is authorized, and validation and later
+archives remain sealed.
+
+\textbf{Bire regularization factorial, 29 July 2026.}  Contract
+\begin{quote}
+\path{config/model_c_anomaly_direct_bire_regularization_controls_v1.json}\\
+SHA-256 \texttt{dd9089e9675a...0f827}
+\end{quote}
+implements the next originally ordered Bire-derived control without extending
+the failed spectral loss.  Three from-scratch seed-20260724 arms isolate
+pointwise channel LayerNorm after spectral and Channel-MLP mixing, archived
+Channel-MLP dropout 0.5, and their interaction.  The unregularized
+seed-20260724/step-13,440 model is the fixed reference.  Every arm retains the
+pointwise anomaly/direct-state representation, width 128, four layers,
+modes \(24\times16\), padding 0.1, loss v1, data order, optimizer, and
+15,360-step budget.  Seven checkpoints per arm are scored only on the corrected
+36-member split-1 protocol through day 360 with the same factor-four,
+integrated-energy, persistence, and 10\%-degradation guards.  Four focused
+tests, lint, shell validation, all-arm production preflight, and finite
+62-by-62 forward smoke tests pass.  No validation, held-inference, long-term,
+response, or adjoint state may be read.  V100 array 304376 is submitted with
+task mapping 0=LayerNorm, 1=dropout, and 2=combined.
+
+\textbf{Bire long-term skill and learned-physics scope.}  A replicated
+candidate must still undergo a Bire-section-5.3-style approximately 2,000-day
+ensemble test.  Beyond decorrelation this is a bounded statistical test of
+climatological mean and variance, drift, spatial spectra/scales, and mean
+circulation, not a claim of trajectory RMSE superiority.  A Bire-section-6
+learned-physics test is also required: initial-state and changed-wind
+sensitivity must have the correct sign, amplitude, spatial pattern, and time
+evolution.  The existing one-year boundedness and scalar wind-slope checks are
+promising precursors, not substitutes.  Spatial response and forward/adjoint
+archives remain sealed until the original combined forward gate passes.
+
 \paragraph{Temporal-interface decision.}
 The active Model C is one-input/one-output in \emph{time}, despite its
 51 input and 46 output \emph{channel} counts.  Each call receives one 46-channel
@@ -1299,22 +1520,28 @@ the network.
   snapshots, maps, and all per-member values needed to reproduce uncertainty bands.
 \end{enumerate}
 
-The project now separates two claims.  The \emph{adjoint-readiness} forward gate is
+The project separates two scientific claims while retaining the stricter combined
+authorization rule.  The \emph{adjoint-readiness} forward gate is
 matched to the mandatory 10- and 30-day adjoint horizons.  Job 292064 supplies its
 training-only predictability evidence: damped persistence has SST/SSH RMSE-AUC
 ratios 0.771/0.954 to plain persistence, SST spatial e-folding times are
 23--37 days, and SSH spatial persistence is 248 days in S0 and beyond 720 days in
 S1/S2.  The versioned short gate will therefore include damped persistence and
-anomaly-scale drift.  Job 292293 now supplies the required training-only parent:
-at days 10/30 its SST ratios are 0.541/0.601 to persistence and
-0.293/0.693 to climatology; surface-\(P/\rho\), surface speed, and streamfunction
-also beat both baselines at both horizons.  The next contracted action is to freeze
-this short gate, its damped-persistence comparison, ensemble rule, and anomaly-scale
-bound before any new validation metric is read.  Passing that versioned 10--30-day gate may open the
-response/adjoint campaign without asserting 90-day autoregressive stability.  The
-\emph{long-rollout} gate below remains mandatory for a 90--360-day emulator claim and
-continues in parallel; it is no longer the sole serial blocker for M7--M10.  Until the
-short-horizon amendment is frozen and passed, all later archives remain sealed.
+anomaly-scale drift.  Job 292293 supplies the original training-only parent at days
+10/30, and job 303447 now supplies a substantially stronger anomaly-direct candidate
+whose fixed S2 primary fields beat both baselines throughout the 10--90-day AUC
+comparison and remain bounded through day 200.  All three independent seeds pass,
+and the median seed is frozen before inference.  Contract
+\texttt{model\_c\_anomaly\_direct\_forward\_v1} fixes the short gate, its
+damped-persistence and same-start A0 comparisons, ensemble rule, anomaly-scale bound,
+and complete long-forward characterization before any held value is read.  Passing the
+versioned 10--30-day determination is retained separately from the 360-day
+long-rollout claim.  Job 303993 passes that short determination and every
+10--90-day primary AUC, boundedness/drift, and wind-slope check, but fails the
+combined contract solely at the mid/bottom-pressure spectral criterion.  Under
+the prospectively frozen rule, the complete response/adjoint campaign opens only
+when both determinations pass.  It therefore remains sealed while the localized
+training-split spectral attribution and one bounded successor test proceed.
 
 The long-rollout forward gate is passed by a modern model only if all of the following
 hold:

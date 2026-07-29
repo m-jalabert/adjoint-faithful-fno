@@ -1,0 +1,208 @@
+{
+  "version": "model_c_anomaly_direct_deep_pressure_spectral_regularization_v1",
+  "contract_status": "frozen_after_corrected_three_seed_attribution_before_fine_tune_metrics",
+  "freeze_date": "2026-07-29",
+  "purpose": "one_bounded_training_only_deep_pressure_high_wavenumber_regularization_fine_tune_for_anomaly_direct_Model_C",
+  "scientific_motivation": {
+    "corrected_attribution": "all_three_accepted_seeds_reproduce_the_day360_mid_and_bottom_PHIHYD_factor_four_failure_on_split1",
+    "scale_diagnosis": "total_integrated_pressure_energy_remains_near_truth_and_the_excess_is_confined_to_a_tiny_high_wavenumber_tail",
+    "controlled_change": "add_one_differentiable_physical_PHIHYD_high_mode_error_term_without_changing_coordinates_architecture_direct_state_parameterization_or_base_loss",
+    "why_single_candidate": "the_attribution_authorizes_one_bounded_loss_test_not_a_weight_or_architecture_search",
+    "long_term_and_physics_scope": "this_training_only_test_precedes_replication_held_inference_Bire_style_2000_day_statistics_and_spatial_response_or_adjoint_physics_tests"
+  },
+  "sources": {
+    "dataset": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/trajectories_v2.zarr",
+      "metadata_sha256": "ae7be47c456962f411acb0d8e217dcb7fa6e24c59e5a8f3133f93032e378b8cc"
+    },
+    "source_seed": 20260724,
+    "source_checkpoint": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/anomaly_direct_replication_v1/seeds/seed_20260724/model_c_anomaly_direct_v1_best.pt",
+      "sha256": "28b4809089a2a61b6a6be8bd82f9ab72751a1e625b8accbaec8474f073bd1a23"
+    },
+    "source_normalization": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/anomaly_direct_replication_v1/seeds/seed_20260724/model_c_anomaly_direct_v1_normalization.npz",
+      "sha256": "a81a27ce86b0d0b296d0d960bb5856cbcf2f3d88b21e7ffa398ae4983a30ebd1"
+    },
+    "replication_summary": {
+      "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/anomaly_direct_replication_v1/replication_summary.json",
+      "sha256": "a1d3d1e0e332a8dad0fed8e3169bf3421676adb6579fa18743221960dd306a99"
+    },
+    "attribution_contract": {
+      "path": "/home/mjalabert314/bire_james25_repro/config/model_c_anomaly_direct_training_spectral_attribution_v2.json",
+      "sha256": "29c344310e5058a67d36a470eb92d9a37a89e64ab3082e25fc856c3085ba3de1"
+    },
+    "attribution_report": {
+      "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/anomaly_direct_training_spectral_attribution_v2/training_spectral_attribution.json",
+      "sha256": "3787586c0d83c069de6099e74806b8c32e00d96ff2f4069807a5bd0ace43047b",
+      "content_sha256": "f3cb1bd6de11f7d47e6d65db8f0fdd9f1444ebde1cbd990a232b18c027141927"
+    },
+    "attribution_manifest": {
+      "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/anomaly_direct_training_spectral_attribution_v2/manifest.json",
+      "sha256": "4b8d559e9710ec54936e2e1d88ccdc32de48d794b83511d1cc2ee515a269c2c5",
+      "content_sha256": "952eb9ee49f4118adca420249b84b135e6fd6996ff0c6a39d56ec8eec46243b8"
+    }
+  },
+  "representation": {
+    "normalization": "unchanged_pooled_S0_S1_S2_split1_pointwise_temporal_mean_and_robust_scale",
+    "prediction": "unchanged_direct_normalized_future_anomaly_state",
+    "source_optimizer_step": 13440,
+    "source_normalizer_pointwise_mean_sha256": "36489318e23fdf6eddae5c85078f71085542b7955b6a52a5adb36672a2f8a649",
+    "source_normalizer_pointwise_scale_sha256": "b08f340a70f19b3f75b6e814768aada7c85e7f748d40a888c830819cbabca83f"
+  },
+  "objective": {
+    "base_loss_version": "v1",
+    "base_loss_contract_sha256": "19000a1426ea928db7799c82a73ce071a874911eb7e1df50bd276582ec30b5f9",
+    "added_term": "mean_complex_Fourier_RMSE_of_physical_PHIHYD_over_truth_tail_energy",
+    "pressure_reconstruction": "differentiable_MITgcm_linear_EOS_finite_difference_hydrostatic_integration_plus_g_times_ETA",
+    "pressure_levels": [
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14
+    ],
+    "rollout_target_days": [
+      10,
+      20,
+      30
+    ],
+    "spatial_processing": "crop_exact_rectangular_wet_basin_subtract_member_mean_and_apply_nonperiodic_Hann_window",
+    "radial_modes": [
+      10,
+      30
+    ],
+    "truth_tail_floor_fraction_of_total": 1e-08,
+    "weight": 0.001,
+    "total": "unchanged_loss_v1_total_plus_0p001_times_deep_pressure_high_mode_relative_RMSE",
+    "no_power_ratio_targeting": "loss_matches_complex_pressure_coefficients_and_does_not_train_on_the_factor_four_decision_statistic"
+  },
+  "fine_tune": {
+    "source_seed": 20260724,
+    "source_optimizer_step": 13440,
+    "batch_order_seed": 20260729,
+    "batch_size": 4,
+    "effective_batch_size": 4,
+    "maximum_steps": 1920,
+    "checkpoint_steps": [
+      240,
+      480,
+      960,
+      1440,
+      1920
+    ],
+    "learning_rate": 2e-05,
+    "learning_rate_schedule": "constant",
+    "adam_betas": [
+      0.9,
+      0.95
+    ],
+    "weight_decay": 1e-05,
+    "optimizer_state": "fresh_AdamW",
+    "training_records": "all_complete_three_step_pair_split1_rollouts",
+    "architecture": "unchanged_width128_four_layer_modes24x16_padding0p1"
+  },
+  "selection": {
+    "split_code": 1,
+    "records": "same_36_corrected_attribution_v2_records",
+    "records_sha256": "f571f4479e09a031e74a6ba1909ea491b2ca3684b33b384b1f7aefe88fac49e5",
+    "lead_days": [
+      10,
+      20,
+      30,
+      40,
+      50,
+      60,
+      70,
+      80,
+      90,
+      100,
+      110,
+      120,
+      130,
+      140,
+      150,
+      160,
+      170,
+      180,
+      190,
+      200,
+      210,
+      220,
+      230,
+      240,
+      250,
+      260,
+      270,
+      280,
+      290,
+      300,
+      310,
+      320,
+      330,
+      340,
+      350,
+      360
+    ],
+    "primary_fields": [
+      "surface_speed",
+      "sst",
+      "phihyd_surface"
+    ],
+    "primary_ratio_limit": 1.0,
+    "maximum_primary_relative_to_source": 1.1,
+    "spectral_levels": [
+      7,
+      14
+    ],
+    "spectral_ratio_limit": 4.0,
+    "spectral_ratio_requirement": "both_mid_and_bottom_at_every_ten_day_lead_through_day360",
+    "integrated_energy_bounds": [
+      0.8,
+      1.25
+    ],
+    "selection_order": [
+      "passing_fine_tune_checkpoint_if_any",
+      "minimum_worst_mid_bottom_modewise_ratio_over_all_leads",
+      "minimum_worst_primary_relative_to_source",
+      "earliest_fine_tune_step"
+    ],
+    "source_step_zero_is_fallback_only": true
+  },
+  "read_contract": {
+    "training_state": true,
+    "prior_training_metadata": true,
+    "validation_state": false,
+    "inference_state": false,
+    "intermediate_wind_state": false,
+    "response_state": false,
+    "adjoint_state": false
+  },
+  "output": {
+    "scratch_directory": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/anomaly_direct_deep_pressure_spectral_regularization_v1",
+    "project_directory": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/anomaly_direct_deep_pressure_spectral_regularization_v1",
+    "required_project_artifacts": [
+      "deep_pressure_spectral_regularization_report.json",
+      "deep_pressure_spectral_regularization_arrays.npz",
+      "model_c_deep_pressure_spectral_checkpoint_selection.png",
+      "model_c_deep_pressure_spectral_rollout.png",
+      "README.md",
+      "manifest.json"
+    ]
+  },
+  "next_decision": {
+    "candidate_training_gate_passed": "freeze_identical_two_seed_training_only_replication_before_any_new_held_inference_or_learned_physics_read",
+    "no_fine_tune_checkpoint_passed": "retain_original_anomaly_direct_model_and_do_not_open_new_held_or_physics_archives",
+    "Bire_style_2000_day_long_term_statistics": "required_after_replicated_candidate_passes_fresh_held_forward_selection",
+    "learned_physics_spatial_response_and_adjoint": "required_but_remains_sealed_until_the_combined_forward_gate_passes",
+    "no_automatic_second_weight_or_architecture_variant": true
+  },
+  "source_hashes": {
+    "src/bire_repro/af_model_c_anomaly_direct_deep_pressure_spectral_regularization.py": "7996c6353ca1f8eadc44a3fb3de97c5b9ff0cd5d0c5d04dcf4386be1bb8c2f57",
+    "tests/model_c/test_af_model_c_anomaly_direct_deep_pressure_spectral_regularization.py": "c38a2b0e00b952ec9f87ad85f12059de3e56379b25b83f3bf17a9ca5c640ef76",
+    "slurm/models/c/af_model_c_anomaly_direct_deep_pressure_spectral_regularization.sbatch": "77923e1a2530e1c06022dcbd4f1d5dcd14dce753846c2c8e83ec94019ea96fa1"
+  }
+}

@@ -1,0 +1,62 @@
+{
+  "version": "model_c_anomaly_direct_spectral_diagnosis_v1",
+  "contract_status": "frozen_after_forward_gate_and_before_posthoc_spectral_computation",
+  "freeze_date": "2026-07-29",
+  "purpose": "attribute_the_only_failed_frozen_long_forward_criterion_without_reinterpreting_or_retuning_against_inference",
+  "source": {
+    "directory": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/anomaly_direct_forward_v1",
+    "metrics": {
+      "name": "model_c_anomaly_direct_forward_metrics.json",
+      "sha256": "baa1613fb7101f9f47e857a268344a69bbfb9dcc2f38479327d93c0ff5593c7d"
+    },
+    "arrays": {
+      "name": "model_c_anomaly_direct_forward_arrays.npz",
+      "sha256": "445f4a10f03306edca97373dd4110430687978b31d24ffeb65b4c962fbf943bb"
+    },
+    "manifest": {
+      "name": "manifest.json",
+      "sha256": "02a800c7f7f3cab2d74924f2c7b4029a52cab1b0ef3b2942c284481fa1f87590"
+    }
+  },
+  "analysis": {
+    "fields": [
+      "phihyd_mid",
+      "phihyd_bottom"
+    ],
+    "lead_days": 360,
+    "frozen_valid_mode_definition": "truth_energy_greater_than_max_truth_times_1e-8_or_1e-20",
+    "frozen_ratio_statistic": "median_of_model_over_truth_across_valid_radial_modes",
+    "frozen_bounds": [
+      0.25,
+      4.0
+    ],
+    "large_scale_band": "radial_modes_1_through_5",
+    "tail_band": "radial_modes_10_and_higher",
+    "additional_statistics_are_diagnostic_only": true
+  },
+  "interpretation_rule": {
+    "do_not_rescue_or_change_frozen_gate": true,
+    "negligible_tail_threshold_fraction_of_total_model_energy": 0.001,
+    "basin_scale_integrated_energy_ratio_bounds": [
+      0.9,
+      1.1
+    ],
+    "classification": "localized_small_amplitude_high_wavenumber_tail_only_if_both_diagnostic_thresholds_pass_for_both_fields"
+  },
+  "output": {
+    "directory": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/anomaly_direct_forward_spectral_diagnosis_v1",
+    "overwrite": false,
+    "required": [
+      "spectral_diagnosis.json",
+      "spectral_modes.csv",
+      "model_c_day360_deep_pressure_spectral_diagnosis.png",
+      "manifest.json",
+      "README.md"
+    ]
+  },
+  "next_decision": {
+    "localized_tail": "freeze_one_prospective_training_only_regularization_test_targeting_deep_high_wavenumber_energy_without_using_inference_for_selection",
+    "basin_scale_or_material_energy_error": "stop_and_revisit_state_parameterization_or_group_specific_heads_before_more_forward_testing",
+    "complete_adjoint_campaign": "remains_closed_because_the_original_frozen_combined_gate_failed"
+  }
+}
