@@ -1,0 +1,222 @@
+{
+  "version": "model_c_s0_stability_tangent_comparison_v1",
+  "contract_status": "frozen_zero_retraining_after_stability_instrument_correction",
+  "purpose": "Distinguish representation, normalization, and prior-residual effects on S0 long-rollout stability using already-trained maps; estimate local singular and finite-time tangent gains without interpreting fitted RMSE growth as a Jacobian spectral radius.",
+  "protocol": {
+    "wind_regime": "S0",
+    "wind_stress_n_m2": 0.1,
+    "dt_days": 10,
+    "lead_days": [
+      0,
+      2000
+    ],
+    "calls": 200,
+    "members": 15,
+    "start_indices": [
+      6913,
+      6689,
+      7174,
+      6962,
+      6781,
+      7155,
+      6676,
+      7019,
+      7199,
+      6733,
+      6969,
+      6662,
+      6986,
+      7068,
+      6885
+    ],
+    "methods": [
+      "selected",
+      "layernorm",
+      "prior_residual"
+    ],
+    "fields": [
+      "surface_speed",
+      "phihyd_surface",
+      "sst"
+    ],
+    "statistical_fields": [
+      "surface_speed",
+      "phihyd_surface",
+      "sst",
+      "streamfunction"
+    ],
+    "spectrum_leads": [
+      200,
+      500,
+      1000,
+      1500,
+      2000
+    ],
+    "spectrum_bands": {
+      "low_k1_3": [
+        1,
+        3
+      ],
+      "mid_k4_9": [
+        4,
+        9
+      ],
+      "high_k10_30": [
+        10,
+        30
+      ]
+    },
+    "fit_windows": [
+      [
+        300,
+        600
+      ],
+      [
+        700,
+        1000
+      ],
+      [
+        1700,
+        2000
+      ]
+    ],
+    "climatology": "training-only S0 temporal mean",
+    "truth": "completed frozen job 304735 continuous S0 MITgcm extension",
+    "selection": "none",
+    "retraining": false
+  },
+  "tangent": {
+    "methods": [
+      "selected",
+      "layernorm"
+    ],
+    "training_experiment": "S0",
+    "training_times": [
+      431,
+      2159,
+      4985
+    ],
+    "coordinate_system": "shared_pointwise_normalized_state_selected_and_layernorm_only",
+    "bands": {
+      "full": null,
+      "low_k1_3": [
+        1,
+        3
+      ],
+      "mid_k4_9": [
+        4,
+        9
+      ],
+      "high_k10_30": [
+        10,
+        30
+      ]
+    },
+    "power_iterations": 5,
+    "finite_time_calls": 10,
+    "interpretation_limit": "one-step singular and ten-call tangent gains only; no spectral-radius claim"
+  },
+  "architecture": {
+    "in_channels": 51,
+    "out_channels": 46,
+    "n_modes": [
+      24,
+      16
+    ],
+    "hidden_channels": 128,
+    "n_layers": 4,
+    "lifting_channel_ratio": 2,
+    "projection_channel_ratio": 2,
+    "channel_mlp_expansion": 4.0,
+    "domain_padding": 0.1,
+    "positional_embedding": "grid",
+    "use_channel_mlp": true,
+    "local_kernel_size": 3,
+    "fno_block_precision": "full",
+    "factorization": null
+  },
+  "artifacts": {
+    "dataset_metadata": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/trajectories_v2.zarr/.zmetadata",
+      "sha256": "ae7be47c456962f411acb0d8e217dcb7fa6e24c59e5a8f3133f93032e378b8cc"
+    },
+    "long_truth_result": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/mitgcm_long_truth_v1/S0/production/years_120_126/segment_result.json",
+      "sha256": "9ebd446ff6f39b86c4281d86732d54b602e265ce240718314cd4d282bc799925"
+    },
+    "selected_checkpoint": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/anomaly_direct_replication_v1/seeds/seed_20260724/model_c_anomaly_direct_v1_best.pt",
+      "sha256": "28b4809089a2a61b6a6be8bd82f9ab72751a1e625b8accbaec8474f073bd1a23"
+    },
+    "pointwise_normalization": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/anomaly_direct_replication_v1/seeds/seed_20260724/model_c_anomaly_direct_v1_normalization.npz",
+      "sha256": "a81a27ce86b0d0b296d0d960bb5856cbcf2f3d88b21e7ffa398ae4983a30ebd1"
+    },
+    "layernorm_checkpoint": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/anomaly_direct_bire_regularization_controls_v1/layernorm/training_checkpoints/model_c_bire_regularization_step_14400.pt",
+      "sha256": "7e13629303555e6ec124de66cf4ec0c955c2d6649af39e53ed6e059565b311bb"
+    },
+    "layernorm_report": {
+      "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/anomaly_direct_bire_regularization_controls_v1/layernorm/bire_regularization_control_report.json",
+      "sha256": "9cdeb828f253d85de07a3c02784c4b36534350e0baaeb218d775b9a09966e757"
+    },
+    "prior_checkpoint": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/rollout_conditioned_loss_v3/model_c_rollout_conditioned_loss_v3_best.pt",
+      "sha256": "e9f962878cb51bfe7dc498b07173f499d982a7f3c31e23afd8036b17afad970b"
+    },
+    "job304736_contract": {
+      "path": "/home/mjalabert314/bire_james25_repro/config/model_c_bire_s0_figures_v1.json",
+      "sha256": "6afa41cfaaf8987457d0b9febc92d52c324c37bd85f040329466f9b42d616030"
+    },
+    "stability_instrument_contract": {
+      "path": "/home/mjalabert314/bire_james25_repro/config/model_c_s0_stability_instrument_v1.json",
+      "sha256": "ab6d597843b13e5dc71e65b9c4dcc5a5e1ff783182d2ae9ff43ae2d61bfc5be7"
+    },
+    "stability_instrument_report": {
+      "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/anomaly_direct_s0_stability_instrument_v1/model_c_s0_stability_instrument_report.json",
+      "sha256": "5212f3aee081bbff532d606e6883251dc7bfb8b1442c18b7a7362622ab072040"
+    }
+  },
+  "source_hashes": {
+    "src/bire_repro/af_model_c_s0_stability_tangent_comparison.py": "632fb0f84cf71db19aecba6934f06ff5f62a3f5c8d6fbb9e3640724d5b1e5b9d",
+    "tests/model_c/test_af_model_c_s0_stability_tangent_comparison.py": "de4ed645c6d79f5eaa9aaf67d12892bffe7da5db3bcbb6fce2f8bad6213f2a5d",
+    "slurm/models/c/af_model_c_s0_stability_tangent_comparison.sbatch": "ba03d748ac7406db6211da17e45ddff261cc1ab5e8f9bae6f598c5741bb5ee02",
+    "src/bire_repro/af_model_c_s0_stability_instrument.py": "f556a27aa8f5bfbb90945dd7fb55168858e10a5a620b149794935f5b50553ab9",
+    "src/bire_repro/af_model_c_bire_s0_figures.py": "48636fe7daca00958414207c3bb15fc8ad16545fbd0ff08704a0de68ad7598e6",
+    "src/bire_repro/af_model_c_bire_s0_long_truth.py": "15b681e6d9c9f96a23bfc14541956a6169e4a995aa29d6620caaf0a1d2452787",
+    "src/bire_repro/af_model_c_anomaly_direct.py": "c7f5d24530f501ee1f2ac8e719ecb73715de34c7441c08600a985f51e1860d89",
+    "src/bire_repro/af_model_c_anomaly_direct_bire_regularization_controls.py": "4ad782837f58edae649e8a1535773951b8291892576bb8e6b6a9921094b92c65",
+    "src/bire_repro/af_model_c_successor.py": "62a5a3f91b21137bcaf4b8ed39a4bf3a4f35d1357cf7ab83947bd7dbbbe236e6",
+    "src/bire_repro/af_forward_complete.py": "18914b77058bfe1abeab3c98ec711ac8fb970deb76507b095ee376a0de447612",
+    "src/bire_repro/af_a0_evaluate.py": "47341bc7f8de8f9a5172911993a1358d82892d799d425f28dc4a6e8267cce4a1",
+    "src/bire_repro/af_data.py": "421a0e80feb8e2ae2ee588cc8debaf315927319d2bfb856056294397bf1f65a6"
+  },
+  "output": {
+    "scratch": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/anomaly_direct_s0_stability_tangent_comparison_v1",
+    "project": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/anomaly_direct_s0_stability_tangent_comparison_v1",
+    "overwrite": false,
+    "required": [
+      "model_c_s0_stability_models_log_rmse.png",
+      "model_c_s0_stability_normalized_envelope.png",
+      "model_c_s0_stability_day2000_spectra.png",
+      "model_c_s0_tangent_gain_comparison.png",
+      "model_c_s0_stability_tangent_arrays.npz",
+      "model_c_s0_stability_tangent_curves.csv",
+      "model_c_s0_stability_tangent_report.json",
+      "model_c_s0_stability_tangent_summary.json",
+      "README.md",
+      "manifest.json"
+    ]
+  },
+  "promotion_gate": {
+    "classification_only": true,
+    "checkpoint_promotion": false,
+    "causal_test": "Compare selected direct map with already-trained LayerNorm control and prior contracting residual map; use shared-coordinate tangent gains only for the two direct maps.",
+    "interpretation": {
+      "layernorm_improves_long_rollout_and_tangent_gain": "block normalization is implicated as a stabilizing mechanism, but this diagnostic cannot establish sufficiency",
+      "layernorm_does_not_improve": "LayerNorm alone does not explain or cure the selected map's instability",
+      "prior_residual_remains_bounded": "representation and objective differences remain causal candidates, not an automatic reason to restore the prior checkpoint",
+      "all_maps_runaway": "the S0 truth/reference protocol or a shared implementation path must be re-audited"
+    }
+  }
+}

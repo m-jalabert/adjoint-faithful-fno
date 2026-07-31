@@ -1,0 +1,349 @@
+{
+  "version": "model_c_reduced_channel_control_v1",
+  "contract_status": "frozen_before_arm_r_training_or_held_evaluation",
+  "freeze_date": "2026-07-29",
+  "arm": "R",
+  "purpose": "Directly test whether the 46-versus-10-output capacity and conditioning bottleneck causes the selected Model C long-term runaway.",
+  "scientific_hypothesis": {
+    "primary": "Width 128 may be insufficiently conditioned for 46 jointly autoregressed outputs even though it is well proportioned for the ten recovered Bire-facing outputs.",
+    "causal_control": "Keep selected Model C fixed except for the declared dynamic state and the unavoidable remapping of the same group-balanced objective form onto the state groups that remain.",
+    "source_latent_output_ratio": 2.782608695652174,
+    "arm_r_latent_output_ratio": 12.8,
+    "ratio_increase": 4.6,
+    "no_claim_before_result": "The reduced state can remove problematic feedback channels or omit information needed for closure; either outcome is scientifically informative and no stability improvement is presumed."
+  },
+  "reduced_state": {
+    "channels": [
+      "U_surface_k0",
+      "U_mid_k7",
+      "V_surface_k0",
+      "V_mid_k7",
+      "Theta_surface_k0",
+      "Theta_mid_k7",
+      "PHIHYD_surface_k0",
+      "PHIHYD_mid_k7",
+      "PHIHYD_bottom_k14",
+      "barotropic_streamfunction"
+    ],
+    "vertical_indices_zero_based": {
+      "surface": 0,
+      "mid": 7,
+      "bottom": 14
+    },
+    "phihyd": "MITgcm-consistent finite-difference hydrostatic reconstruction from all 15 truth-temperature levels and Eta only while deriving each stored target; PHIHYD is a directly predicted channel during rollout.",
+    "streamfunction": "Meridional cumulative integral of full-depth tracer-centred U transport only while deriving each stored target; streamfunction is a directly predicted channel during rollout.",
+    "autoregressive_closure": "After initialization, the model receives only its previous ten predicted reduced channels plus the unchanged five static/forcing channels. No omitted 46-channel state is reconstructed or fed back.",
+    "cache_version": "model_c_reduced_bire_channels_v1",
+    "cache_shape": [
+      3,
+      7200,
+      10,
+      62,
+      62
+    ],
+    "cache_logical_state_sha256": "b24728abf50fa5e1504dd6ac4682321b50ded8edb3e2a165165dceaf4920c5aa"
+  },
+  "source_artifacts": {
+    "full_dataset": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/trajectories_v2.zarr",
+      "metadata_sha256": "ae7be47c456962f411acb0d8e217dcb7fa6e24c59e5a8f3133f93032e378b8cc"
+    },
+    "reduced_dataset": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/model_c_reduced_bire_channels_v1.zarr",
+      "metadata_sha256": "3ec92a0b30d6e99d866a0cd820fe562b642eda528381384597f389555de39253",
+      "quality_path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/model_c_reduced_bire_channels_v1.quality.json",
+      "quality_sha256": "b8842dea6f508fe73fc0ff866d470a83516d1971eacbde67a6d43314fe24ca50",
+      "logical_state_sha256": "b24728abf50fa5e1504dd6ac4682321b50ded8edb3e2a165165dceaf4920c5aa",
+      "cache_build_elapsed_seconds": 209.30205185059458,
+      "fresh_reconstruction_checks": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          2519
+        ],
+        [
+          1,
+          2970
+        ],
+        [
+          2,
+          7199
+        ]
+      ],
+      "fresh_reconstruction_check": "bitwise_equal_for_all_four_declared_snapshots"
+    }
+  },
+  "normalization": {
+    "centering": "pooled_S0_S1_S2_split1_pointwise_time_mean",
+    "scaling": "pooled_S0_S1_S2_split1_pointwise_population_std",
+    "wet_cell_floor_quantile": 0.05,
+    "absolute_scale_floor": 1e-06,
+    "regime_dependent": false,
+    "same_method_as_selected_model_c": true,
+    "expected": {
+      "training_snapshots_total": 15120,
+      "training_snapshots_per_regime": 5040,
+      "wet_cells": 3600,
+      "pointwise_mean_sha256": "3e2c26c3f6db83c84dbf62b41b1ef0a73858decacd0c8ab8ff6af15db72a9687",
+      "pointwise_raw_scale_sha256": "b9bb679751abb6e31d02166cbfae3dc8b4e46e67d148662a6822975416611d3f",
+      "pointwise_scale_sha256": "6a2d4c7403c18f266d3a5a8b983874ed53373f5212fa80d11eff7e48f20f117f",
+      "channel_floor_sha256": "e2cb5043bec12828b19e9de5f474f2c966ffce3ce45e0af3d1b5bdbd46fce0f2"
+    }
+  },
+  "prediction": {
+    "input": "current ten-channel pointwise normalized anomaly state plus unchanged wind, longitude, latitude, mask, and wall-distance channels",
+    "target": "direct normalized ten-channel future anomaly state",
+    "residual_addition": false,
+    "prediction_interval_days": 10
+  },
+  "architecture": {
+    "in_channels": 15,
+    "out_channels": 10,
+    "n_modes": [
+      24,
+      16
+    ],
+    "hidden_channels": 128,
+    "n_layers": 4,
+    "lifting_channel_ratio": 2,
+    "projection_channel_ratio": 2,
+    "channel_mlp_expansion": 4.0,
+    "domain_padding": 0.1,
+    "positional_embedding": "grid",
+    "use_channel_mlp": true,
+    "local_kernel_size": 3,
+    "fno_block_precision": "full",
+    "factorization": null
+  },
+  "training": {
+    "seed": 20260724,
+    "seed_basis": "same seed as the retained median selected 46-channel Model C",
+    "loss": {
+      "version": "arm_r_reduced_loss_v1",
+      "base_model_c_loss_version": "v1",
+      "contract_sha256": "3e6f062dcc63cacebc6a841ff9395040a979a50b4d028212b63db67d4ae28c44",
+      "objective_form": "The same state, increment, rollout, spectral, and western-boundary terms, same coefficients, and same three differentiable steps are averaged over U, V, temperature, PHIHYD, and streamfunction groups.",
+      "unavoidable_adaptation": "The original 46-channel U/V/temperature/SSH groups cannot be applied to a state without those channels; semantic groups are defined only over the ten declared outputs.",
+      "weights": {
+        "state": 1.0,
+        "increment": 0.001,
+        "rollout": 0.15,
+        "spectral": 1e-05,
+        "boundary": 0.065
+      }
+    },
+    "optimizer": {
+      "batch_size": 4,
+      "effective_batch_size": 4,
+      "initial_learning_rate": 0.0005,
+      "adam_betas": [
+        0.9,
+        0.95
+      ],
+      "weight_decay": 1e-05,
+      "maximum_steps": 15360,
+      "decay_fraction": 0.75,
+      "decay_factor": 0.2
+    },
+    "checkpoint_steps": [
+      3840,
+      7680,
+      11520,
+      13440,
+      14400,
+      14880,
+      15360
+    ],
+    "data_order": "same chunk-aware seeded split-1 regime-major ordering as selected Model C"
+  },
+  "training_evaluation": {
+    "checkpoint_records_per_regime": 32,
+    "batch_size": 16,
+    "lead_days": [
+      10,
+      20,
+      30,
+      40,
+      50,
+      60,
+      70,
+      80,
+      90
+    ],
+    "records": {
+      "starts_per_training_block": 90,
+      "expected_training_blocks": 2,
+      "records_total": 540,
+      "training_times_sha256": "bb5aab82d7f97a86f89908f035a1b2845f77e1b39056b2454c70e9cdf9b6ab09",
+      "records_sha256": "f7f829281375aaeaab5a4dcbe7081babf2534a48e9c4100986e6b731df9ed944"
+    },
+    "baselines": [
+      "persistence",
+      "regime_training_climatology"
+    ],
+    "checkpoint_gate": {
+      "primary_fields": [
+        "surface_speed",
+        "sst",
+        "phihyd_surface"
+      ],
+      "slow_primary_fields": [
+        "sst",
+        "phihyd_surface"
+      ],
+      "require_primary_10_90_day_rmse_auc_below_both_baselines": true,
+      "require_slow_fields_below_both_baselines_at_every_lead": true,
+      "require_every_reduced_group_below_persistence_at_day10_in_every_regime": true,
+      "require_finite_rollout": true,
+      "require_zero_land_leakage": true,
+      "selection_order": [
+        "passing_checkpoint_if_any",
+        "minimum_worst_slow_field_all_lead_rmse_ratio",
+        "minimum_worst_primary_rmse_auc_ratio",
+        "minimum_worst_ten_day_regime_group_ratio",
+        "earliest_optimizer_step"
+      ]
+    }
+  },
+  "output": {
+    "training_scratch": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/anomaly_direct_reduced_channel_control_v1",
+    "figure_scratch": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/anomaly_direct_reduced_channel_bire_s0_inference_v1",
+    "figure_project": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/anomaly_direct_reduced_channel_bire_s0_inference_v1",
+    "overwrite": false
+  },
+  "read_contract": {
+    "training_state": true,
+    "held_s0_state_after_selection": true,
+    "held_s0_role": "fixed descriptive deterministic and statistical forward gate; never checkpoint selection",
+    "intermediate_wind_state": false,
+    "response_state": false,
+    "adjoint_state": false
+  },
+  "source_hashes": {
+    "src/bire_repro/af_model_c_reduced_channels.py": "f92d7fbd1c6ec2e58af2d16a3fe4d5ed0739c01f6a1530c22f0edfcb0b33fd28",
+    "src/bire_repro/af_model_c_reduced_channel_control.py": "5d8b8b134ea057a40842a294c1897beef5a31f2a724be09554f408a3d3f68c7f",
+    "src/bire_repro/af_model_c_reduced_channel_s0_figures.py": "9ba1e07430660f44cc8bbe9204b4bb976556f20983e76b84b522cbe64e20e702",
+    "src/bire_repro/af_model_c.py": "ac81165ceb7e68eafc6cac237fe0e4cd2dafa2c67bf204db41b5dba86551493b",
+    "src/bire_repro/af_model_c_successor.py": "62a5a3f91b21137bcaf4b8ed39a4bf3a4f35d1357cf7ab83947bd7dbbbe236e6",
+    "src/bire_repro/af_data.py": "421a0e80feb8e2ae2ee588cc8debaf315927319d2bfb856056294397bf1f65a6",
+    "src/bire_repro/af_pressure.py": "1939645d807ec0281624d4146cadc51b3e9f382c540a56d7ed5afdca4b2c7c6c",
+    "src/bire_repro/af_forward_complete.py": "18914b77058bfe1abeab3c98ec711ac8fb970deb76507b095ee376a0de447612",
+    "src/bire_repro/af_model_c_bire_s0_figures.py": "48636fe7daca00958414207c3bb15fc8ad16545fbd0ff08704a0de68ad7598e6",
+    "src/bire_repro/af_model_c_bire_s0_long_truth.py": "15b681e6d9c9f96a23bfc14541956a6169e4a995aa29d6620caaf0a1d2452787",
+    "src/bire_repro/af_model_c_rollout_diagnosis.py": "c497cc3e1ea40c1e39ebd600f42d4b03f61d5a20671f1f3274cf8af883c9fb55",
+    "src/bire_repro/af_model_c_successor_validation.py": "ddf87aae293321b3710e3c5530c6ec6f5f603da6cfe466201ef2cade9737923a",
+    "src/bire_repro/af_model_a.py": "5b9ca3d096ee3f8409536a3cf034de65d5faf0f012bb704a57b2ae99179e680b",
+    "src/bire_repro/af_model_b.py": "9fdeb0f67e01e4bf2fbc0a51145452854c4ce038a3535391b2f1fadfa7b6e386",
+    "tests/model_c/test_af_model_c_reduced_channel_control.py": "28a64473dc9268a2a594044b91b8bca5c79fb9231481b2c6b73cd0919c657571",
+    "tests/model_c/test_af_model_c_reduced_channel_s0_figures.py": "2bed634bea3a687b927b48ab10572400c0e6bd23b09772368edcb2004cba023d",
+    "slurm/models/c/af_model_c_reduced_channel_control.sbatch": "1dbec9e498a6da9530bc5a9966b771cdad7c1ba27d660ff5f7e028e6eb1a457f"
+  },
+  "s0_evaluation": {
+    "protocol": {
+      "experiment": "S0",
+      "regime_index": 0,
+      "tau0_n_m2": 0.1,
+      "prediction_interval_days": 10,
+      "maximum_lead_days": 2000,
+      "member_count": 15,
+      "start_draw_order": [
+        6913,
+        6689,
+        7174,
+        6962,
+        6781,
+        7155,
+        6676,
+        7019,
+        7199,
+        6733,
+        6969,
+        6662,
+        6986,
+        7068,
+        6885
+      ],
+      "single_member_start": 6913,
+      "rmse_fields": [
+        "surface_speed",
+        "phihyd_surface",
+        "sst"
+      ],
+      "acc_fields": [
+        "surface_u",
+        "surface_v",
+        "phihyd_surface",
+        "sst"
+      ],
+      "figure_names": [
+        "model_c_bire_figure3_streamfunction_1deg_s0_dt10.png",
+        "model_c_bire_figure4_dt10_rmse_0_200_days_s0.png",
+        "model_c_bire_figure5_dt10_single_member_rmse_s0.png",
+        "model_c_bire_figure6_dt10_acc_0_200_days_s0.png",
+        "model_c_bire_figure7_dt10_streamfunction_day060_day2000_s0.png",
+        "model_c_bire_figure8_dt10_rmse_0_2000_days_s0.png"
+      ],
+      "metric_and_member_contract": "identical starts, leads, wet-cell reductions, ensemble mean/p10/p90, and filenames as anomaly_direct_bire_s0_inference_v1"
+    },
+    "source_model_architecture": {
+      "in_channels": 51,
+      "out_channels": 46,
+      "n_modes": [
+        24,
+        16
+      ],
+      "hidden_channels": 128,
+      "n_layers": 4,
+      "lifting_channel_ratio": 2,
+      "projection_channel_ratio": 2,
+      "channel_mlp_expansion": 4.0,
+      "domain_padding": 0.1,
+      "positional_embedding": "grid",
+      "use_channel_mlp": true,
+      "local_kernel_size": 3,
+      "fno_block_precision": "full",
+      "factorization": null
+    },
+    "baselines": {
+      "climatology": "pointwise S0 temporal mean over split-1 training snapshots only, with surface speed averaged after derivation",
+      "persistence": "each member's initial physical reduced field held fixed",
+      "rmse": "wet-cell RMSE per member followed by ensemble mean and p10/p90"
+    },
+    "figure6": {
+      "black": "retained 46-channel seed-20260724 step-13440 source Model C",
+      "red": "Arm R ten-channel training-selected Model C",
+      "interpretation": "direct channel-count causal comparison on identical starts and truth, not pretraining or fine-tuning"
+    },
+    "forward_gates": {
+      "deterministic": "For surface speed, surface PHIHYD, and SST separately, aggregate S0 day-10--90 RMSE AUC must be below both persistence and S0 split-1 climatology; report ACC through day 200.",
+      "long_term": "Do not require day-2000 trajectory RMSE below persistence or climatology after decorrelation. Require bounded non-runaway behavior and a statistically plausible ensemble before promotion; same Figure 3--8 outputs are mandatory evidence.",
+      "promotion": "No adjoint expansion is authorized merely by job completion. Both deterministic and long-term statistical forward gates must be interpreted from the frozen outputs."
+    },
+    "held_evaluation_policy": "The fixed descriptive S0 evaluation runs after training-only checkpoint selection even if no checkpoint passes, because the user explicitly requested the same six long figures. A failed training gate prevents promotion but does not alter the held protocol.",
+    "artifacts": {
+      "full_dataset_metadata": {
+        "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/trajectories_v2.zarr/.zmetadata",
+        "sha256": "ae7be47c456962f411acb0d8e217dcb7fa6e24c59e5a8f3133f93032e378b8cc"
+      },
+      "source_checkpoint": {
+        "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/anomaly_direct_replication_v1/seeds/seed_20260724/model_c_anomaly_direct_v1_best.pt",
+        "sha256": "28b4809089a2a61b6a6be8bd82f9ab72751a1e625b8accbaec8474f073bd1a23"
+      },
+      "source_normalization": {
+        "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/anomaly_direct_replication_v1/seeds/seed_20260724/model_c_anomaly_direct_v1_normalization.npz",
+        "sha256": "a81a27ce86b0d0b296d0d960bb5856cbcf2f3d88b21e7ffa398ae4983a30ebd1"
+      },
+      "long_truth_result": {
+        "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/mitgcm_long_truth_v1/S0/production/years_120_126/segment_result.json",
+        "sha256": "9ebd446ff6f39b86c4281d86732d54b602e265ce240718314cd4d282bc799925"
+      },
+      "long_truth_manifest": {
+        "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/mitgcm_long_truth_v1/S0/production/years_120_126/segment_manifest.json",
+        "sha256": "e15530c67dbe07f9b0133a68bf8cf4da72ede6060bf691966d083f142e741c6f"
+      }
+    }
+  }
+}

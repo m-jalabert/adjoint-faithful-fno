@@ -1,0 +1,236 @@
+{
+  "version": "model_c_bire_s0_long_truth_v1",
+  "contract_status": "frozen_before_evaluation_only_s0_continuation",
+  "frozen_utc_date": "2026-07-29",
+  "purpose": "Provide continuous unseen S0 MITgcm truth for six prospectively defined Bire-style figures of the selected ten-day Model C through day 2000.",
+  "paper_alignment": {
+    "reference": "Bire_et_al_2025_JAMES_e2023MS004137",
+    "wind_regime": "control",
+    "tau0_n_m2": 0.1,
+    "prediction_interval_days": 10,
+    "ensemble_source": "late_trajectories_v2_S0_inference_block",
+    "ensemble_sampling": "numpy_default_rng_choice_without_replacement_before_model_metrics"
+  },
+  "simulation": {
+    "experiment": "S0",
+    "tau0_n_m2": 0.1,
+    "start_year": 120,
+    "end_year": 126,
+    "years": 6,
+    "start_iteration": 3110400,
+    "end_iteration": 3265920,
+    "expected_daily_records": 2160,
+    "daily_diagnostics": true,
+    "output_root": "mitgcm_long_truth_v1",
+    "continuation": "exact_from_immutable_S0_year120_pickup",
+    "append_to_training_dataset": false,
+    "data_policy": "evaluation_only_unseen_truth"
+  },
+  "ensemble": {
+    "regime_index": 0,
+    "regime_name": "S0_control",
+    "tau0_n_m2": 0.1,
+    "dataset_split_code": 3,
+    "eligible_inference_block": [
+      6660,
+      7199
+    ],
+    "eligibility_reason": "fresh late inference snapshots whose complete future truth is supplied only by the evaluation-only continuation",
+    "member_count": 15,
+    "rng": "numpy.random.default_rng",
+    "rng_seed": 20260729,
+    "sampling": "choice_without_replacement_in_draw_order",
+    "start_draw_order": [
+      6913,
+      6689,
+      7174,
+      6962,
+      6781,
+      7155,
+      6676,
+      7019,
+      7199,
+      6733,
+      6969,
+      6662,
+      6986,
+      7068,
+      6885
+    ],
+    "start_draw_order_json_sha256": "c8756f5d3f4b0ac381b52a597b181049dc170b59a0a2b3d7f7dfe85750cb1241",
+    "single_member_start": 6913,
+    "prediction_interval_days": 10,
+    "maximum_lead_days": 2000
+  },
+  "selected_model": {
+    "name": "Model_C_pointwise_anomaly_direct_state",
+    "selection": "median passing replication seed under the prospectively frozen score",
+    "seed": 20260724,
+    "optimizer_step": 13440,
+    "checkpoint_sha256": "28b4809089a2a61b6a6be8bd82f9ab72751a1e625b8accbaec8474f073bd1a23",
+    "architecture": {
+      "in_channels": 51,
+      "out_channels": 46,
+      "n_modes": [
+        24,
+        16
+      ],
+      "hidden_channels": 128,
+      "n_layers": 4,
+      "lifting_channel_ratio": 2,
+      "projection_channel_ratio": 2,
+      "channel_mlp_expansion": 4.0,
+      "domain_padding": 0.1,
+      "positional_embedding": "grid",
+      "use_channel_mlp": true,
+      "local_kernel_size": 3,
+      "fno_block_precision": "full",
+      "factorization": null
+    }
+  },
+  "figures": {
+    "output_directory": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/anomaly_direct_bire_s0_inference_v1",
+    "common": {
+      "truth": "MITgcm_S0_control_tau0_0.1_N_m2",
+      "wet_cell_reduction": "memberwise_spatial_RMSE_then_mean_p10_p90_across_15_members",
+      "climatology": "S0_pointwise_temporal_mean_over_split1_training_snapshots_only",
+      "persistence": "each_members_initial_physical_field_held_fixed",
+      "uncertainty": "10th_and_90th_percentiles_across_members"
+    },
+    "figure3": {
+      "filename": "model_c_bire_figure3_streamfunction_1deg_s0_dt10.png",
+      "member_start": 6913,
+      "lead_days": [
+        0,
+        10,
+        20,
+        30,
+        40
+      ],
+      "panels": "MITgcm_truth_Model_C_prediction_truth_minus_prediction",
+      "units": "Sv"
+    },
+    "figure4": {
+      "filename": "model_c_bire_figure4_dt10_rmse_0_200_days_s0.png",
+      "lead_days": "0_to_200_by_10",
+      "row_order": [
+        "surface_speed",
+        "phihyd_surface",
+        "sst"
+      ],
+      "method_colors": {
+        "model": "red",
+        "climatology": "black",
+        "persistence": "blue"
+      }
+    },
+    "figure5": {
+      "filename": "model_c_bire_figure5_dt10_single_member_rmse_s0.png",
+      "member_start": 6913,
+      "lead_days": "0_to_200_by_10",
+      "row_order": [
+        "barotropic_streamfunction",
+        "sst"
+      ]
+    },
+    "figure6": {
+      "filename": "model_c_bire_figure6_dt10_acc_0_200_days_s0.png",
+      "lead_days": "0_to_200_by_10",
+      "row_order": [
+        "surface_u",
+        "surface_v",
+        "phihyd_surface",
+        "sst"
+      ],
+      "black_curve": "prior_residual_rollout_conditioned_Model_C_v3",
+      "red_curve": "selected_pointwise_anomaly_direct_state_Model_C",
+      "interpretation": "architecture_direction_comparison_not_a_literal_pretrained_to_finetuned_pair",
+      "uncertainty": "black_dotted_p10_p90_red_shaded_p10_p90"
+    },
+    "figure7": {
+      "filename": "model_c_bire_figure7_dt10_streamfunction_day060_day2000_s0.png",
+      "member_start": 6913,
+      "lead_days": [
+        60,
+        2000
+      ],
+      "columns": [
+        "MITgcm_ground_truth",
+        "selected_Model_C"
+      ],
+      "units": "Sv"
+    },
+    "figure8": {
+      "filename": "model_c_bire_figure8_dt10_rmse_0_2000_days_s0.png",
+      "lead_days": "0_to_2000_by_10",
+      "row_order": [
+        "surface_speed",
+        "phihyd_surface",
+        "sst"
+      ],
+      "methods": [
+        "selected_Model_C",
+        "climatology",
+        "persistence"
+      ]
+    }
+  },
+  "artifacts": {
+    "parent_result": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/mitgcm_v2/S0/production/years_110_120/segment_result.json",
+      "sha256": "48c139772046288c5ee0d14fe57f5930c7fdbf41d9c7aad6034fb436d586f41e"
+    },
+    "parent_pickup_meta": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/mitgcm_v2/S0/production/years_110_120/pickup.0003110400.meta",
+      "sha256": "700f252f61ea226e04cde4a8071c5eac7dac559a943545f6b39fe32f86454bef"
+    },
+    "parent_pickup_data": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/mitgcm_v2/S0/production/years_110_120/pickup.0003110400.data",
+      "sha256": "c949a73b1411d83bb985f5848f18d69587d8d8d6f31a98fba04c54fcd50315fb"
+    },
+    "executable": {
+      "path": "/home/mjalabert314/bire_james25_repro/build/af_s0/mitgcmuv",
+      "sha256": "cb32bb76ad31c3db6bbd7646d1e3f3589012b0f6ca477b6f59396ec0046f9b4e"
+    },
+    "dataset_metadata": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/trajectories_v2.zarr/.zmetadata",
+      "sha256": "ae7be47c456962f411acb0d8e217dcb7fa6e24c59e5a8f3133f93032e378b8cc"
+    },
+    "dataset_quality": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/trajectories_v2.quality.json",
+      "sha256": "a6f7e5234acec1ba29a323d5bc570e8b9e1ece2bfdaa627753609f71f97cf752"
+    },
+    "selected_checkpoint": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/anomaly_direct_replication_v1/seeds/seed_20260724/model_c_anomaly_direct_v1_best.pt",
+      "sha256": "28b4809089a2a61b6a6be8bd82f9ab72751a1e625b8accbaec8474f073bd1a23"
+    },
+    "selected_normalization": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/anomaly_direct_replication_v1/seeds/seed_20260724/model_c_anomaly_direct_v1_normalization.npz",
+      "sha256": "a81a27ce86b0d0b296d0d960bb5856cbcf2f3d88b21e7ffa398ae4983a30ebd1"
+    },
+    "selected_report": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/anomaly_direct_replication_v1/seeds/seed_20260724/model_c_anomaly_direct_v1_report.json",
+      "sha256": "fd300f04a1dd4cea8b239a4100c333ee17788cbc59681469c832604f8110eb44"
+    },
+    "prior_residual_checkpoint": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/rollout_conditioned_loss_v3/model_c_rollout_conditioned_loss_v3_best.pt",
+      "sha256": "e9f962878cb51bfe7dc498b07173f499d982a7f3c31e23afd8036b17afad970b"
+    },
+    "prior_residual_report": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/rollout_conditioned_loss_v3/model_c_rollout_conditioned_loss_v3_report.json",
+      "sha256": "e9af34326c3656cccf78990b6a21202a22adf99163fcfd1a07338c9fa6c7ba11"
+    }
+  },
+  "source_hashes": {
+    "src/bire_repro/af_model_c_bire_s0_long_truth.py": "15b681e6d9c9f96a23bfc14541956a6169e4a995aa29d6620caaf0a1d2452787",
+    "src/bire_repro/af_s0.py": "cd1cbc055f0222b1ebbd3216ba63542b567bc096e7de026bb1dc0f73eaee73ac",
+    "src/bire_repro/af_wind_trajectories.py": "245cc8937fc2ae07754f4e3c247be11634a2e92d6d466aadbe3eb3d7a6529005",
+    "af_fno/mitgcm/input/data.pkg": "3844b673ec488a4277a67938cfd2ca6ba12a17e9d56cf00f38c90fa9294b4695",
+    "af_fno/mitgcm/input/eedata": "25cc0bc3a482d4b14cfa655a5b55e320a9503b7fe3b52adae2b88aed27e01d25",
+    "af_fno/mitgcm/input/data.diagnostics.production": "46b26dc5d481a37965efeecf1f6c9703e26f32faa21af8ef897d782288d31efa"
+  },
+  "next_step": {
+    "on_complete": "source-lock the long-truth result and submit one GPU evaluation that generates all six figures and their metrics",
+    "on_failure": "preserve the failed run and diagnose without using partial truth"
+  }
+}

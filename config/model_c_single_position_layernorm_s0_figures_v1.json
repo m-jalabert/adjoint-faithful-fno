@@ -1,0 +1,224 @@
+{
+  "artifacts": {
+    "dataset_metadata": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/trajectories_v2.zarr/.zmetadata",
+      "sha256": "ae7be47c456962f411acb0d8e217dcb7fa6e24c59e5a8f3133f93032e378b8cc"
+    },
+    "dataset_quality": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/trajectories_v2.quality.json",
+      "sha256": "a6f7e5234acec1ba29a323d5bc570e8b9e1ece2bfdaa627753609f71f97cf752"
+    },
+    "long_truth_contract": {
+      "path": "/home/mjalabert314/bire_james25_repro/config/model_c_bire_s0_long_truth_v1.json",
+      "sha256": "dc204636660d17daa35aa29835aa30034beb0252eabba5aac173a483bfd75ea5"
+    },
+    "long_truth_manifest": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/mitgcm_long_truth_v1/S0/production/years_120_126/segment_manifest.json",
+      "sha256": "e15530c67dbe07f9b0133a68bf8cf4da72ede6060bf691966d083f142e741c6f"
+    },
+    "long_truth_result": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/mitgcm_long_truth_v1/S0/production/years_120_126/segment_result.json",
+      "sha256": "9ebd446ff6f39b86c4281d86732d54b602e265ce240718314cd4d282bc799925"
+    },
+    "prior_checkpoint": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/rollout_conditioned_loss_v3/model_c_rollout_conditioned_loss_v3_best.pt",
+      "sha256": "e9f962878cb51bfe7dc498b07173f499d982a7f3c31e23afd8036b17afad970b"
+    },
+    "prior_report": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/rollout_conditioned_loss_v3/model_c_rollout_conditioned_loss_v3_report.json",
+      "sha256": "e9af34326c3656cccf78990b6a21202a22adf99163fcfd1a07338c9fa6c7ba11"
+    },
+    "selected_checkpoint": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/anomaly_direct_single_position_layernorm_v1/layernorm/model_c_bire_regularization_control_best_diagnostic.pt",
+      "sha256": "f6fdeaa2cead7758999c2f61de2e37cb78c9693f24158da417c38cf71080fd14"
+    },
+    "selected_normalization": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/anomaly_direct_replication_v1/seeds/seed_20260724/model_c_anomaly_direct_v1_normalization.npz",
+      "sha256": "a81a27ce86b0d0b296d0d960bb5856cbcf2f3d88b21e7ffa398ae4983a30ebd1"
+    },
+    "selected_report": {
+      "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/anomaly_direct_single_position_layernorm_v1/layernorm/bire_regularization_control_report.json",
+      "sha256": "0a73d09707a6424e79d95c6d36301b18a63243c66432656ff7e3f9f0d8eef11f"
+    }
+  },
+  "baselines": {
+    "climatology": "pointwise_S0_temporal_mean_over_split1_training_snapshots_only_with_nonlinear_fields_averaged_after_derivation",
+    "ensemble_summary": "mean_and_10th_90th_percentiles_across_15_member_metrics",
+    "persistence": "each_members_initial_physical_field_held_fixed_at_every_lead",
+    "rmse": "square_root_of_mean_squared_error_over_wet_cells_for_each_member",
+    "training_snapshots": 5040
+  },
+  "contract_status": "frozen_after_the_single_position_training_gate_and_before_any_figure_metric",
+  "figure6": {
+    "black": "prior_residual_rollout_conditioned_Model_C_v3_mean_with_dotted_p10_p90",
+    "literal_pretrain_finetune_pair": false,
+    "reason": "the selected anomaly-direct model was trained from scratch and has no scientifically valid one-step-pretrained parent checkpoint",
+    "red": "single_position_layernorm_Model_C_mean_with_shaded_p10_p90",
+    "required_label": "architecture_direction_comparison_not_literal_pretrained_to_finetuned"
+  },
+  "frozen_utc_date": "2026-07-30",
+  "output": {
+    "overwrite": false,
+    "project": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/single_position_layernorm_bire_s0_inference_v1",
+    "required": [
+      "model_c_bire_figure3_streamfunction_1deg_s0_dt10.png",
+      "model_c_bire_figure4_dt10_rmse_0_200_days_s0.png",
+      "model_c_bire_figure5_dt10_single_member_rmse_s0.png",
+      "model_c_bire_figure6_dt10_acc_0_200_days_s0.png",
+      "model_c_bire_figure7_dt10_streamfunction_day060_day2000_s0.png",
+      "model_c_bire_figure8_dt10_rmse_0_2000_days_s0.png",
+      "model_c_bire_s0_figures_report.json",
+      "model_c_bire_s0_figures_arrays.npz",
+      "model_c_bire_s0_figures_summary.json",
+      "model_c_bire_s0_ensemble_curves.csv",
+      "manifest.json",
+      "README.md"
+    ],
+    "scratch": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/single_position_layernorm_bire_s0_inference_v1"
+  },
+  "prior_model": {
+    "architecture": {
+      "channel_mlp_expansion": 4.0,
+      "domain_padding": 0.1,
+      "factorization": null,
+      "fno_block_precision": "full",
+      "hidden_channels": 128,
+      "in_channels": 51,
+      "lifting_channel_ratio": 2,
+      "local_kernel_size": 3,
+      "n_layers": 4,
+      "n_modes": [
+        24,
+        16
+      ],
+      "out_channels": 46,
+      "positional_embedding": "grid",
+      "projection_channel_ratio": 2,
+      "use_channel_mlp": true
+    },
+    "name": "prior_residual_rollout_conditioned_Model_C_v3",
+    "role": "unchanged_Figure_6_black_comparator"
+  },
+  "protocol": {
+    "acc_fields": [
+      "surface_u",
+      "surface_v",
+      "phihyd_surface",
+      "sst"
+    ],
+    "experiment": "S0",
+    "figure3_lead_days": [
+      0,
+      10,
+      20,
+      30,
+      40
+    ],
+    "figure4_lead_days": "0_to_200_inclusive_by_10",
+    "figure5_lead_days": "0_to_200_inclusive_by_10",
+    "figure6_lead_days": "0_to_200_inclusive_by_10",
+    "figure7_lead_days": [
+      60,
+      2000
+    ],
+    "figure8_lead_days": "0_to_2000_inclusive_by_10",
+    "figure_names": [
+      "model_c_bire_figure3_streamfunction_1deg_s0_dt10.png",
+      "model_c_bire_figure4_dt10_rmse_0_200_days_s0.png",
+      "model_c_bire_figure5_dt10_single_member_rmse_s0.png",
+      "model_c_bire_figure6_dt10_acc_0_200_days_s0.png",
+      "model_c_bire_figure7_dt10_streamfunction_day060_day2000_s0.png",
+      "model_c_bire_figure8_dt10_rmse_0_2000_days_s0.png"
+    ],
+    "maximum_lead_days": 2000,
+    "member_count": 15,
+    "prediction_interval_days": 10,
+    "regime_index": 0,
+    "rmse_fields": [
+      "surface_speed",
+      "phihyd_surface",
+      "sst"
+    ],
+    "single_member_start": 6913,
+    "start_draw_order": [
+      6913,
+      6689,
+      7174,
+      6962,
+      6781,
+      7155,
+      6676,
+      7019,
+      7199,
+      6733,
+      6969,
+      6662,
+      6986,
+      7068,
+      6885
+    ],
+    "start_selection": "numpy_default_rng_seed_20260729_choice_without_replacement_from_inclusive_indices_6660_7199",
+    "tau0_n_m2": 0.1
+  },
+  "purpose": "Publish the same six Bire-style S0 Figure 3-8 plots as anomaly_direct_bire_s0_inference_v1 for the single-position LayerNorm arm, using the identical 15 starts, day-2000 truth, baselines, reductions, and filenames.",
+  "read_contract": {
+    "adjoint_state": false,
+    "authorized_by": "single_position_training_only_gate_passed_at_step_14880",
+    "held_s0_state": true,
+    "intermediate_wind_state": false,
+    "promotes_no_checkpoint": true,
+    "response_state": false,
+    "training_state": false
+  },
+  "selected_model": {
+    "architecture": {
+      "channel_mlp_expansion": 4.0,
+      "domain_padding": 0.1,
+      "factorization": null,
+      "fno_block_precision": "full",
+      "hidden_channels": 128,
+      "in_channels": 51,
+      "lifting_channel_ratio": 2,
+      "local_kernel_size": 3,
+      "n_layers": 4,
+      "n_modes": [
+        24,
+        16
+      ],
+      "out_channels": 46,
+      "positional_embedding": null,
+      "projection_channel_ratio": 2,
+      "use_channel_mlp": true
+    },
+    "name": "single_position_layernorm_pointwise_anomaly_direct_state_Model_C",
+    "optimizer_step": 14880,
+    "pointwise_layer_norm": true,
+    "seed": 20260724,
+    "selection": "training_only_corrected_gate_pass_at_step_14880",
+    "training_contract": "/home/mjalabert314/bire_james25_repro/config/model_c_anomaly_direct_single_position_layernorm_v1.json"
+  },
+  "source_hashes": {
+    "slurm/models/c/af_model_c_single_position_s0_figures.sbatch": "c50bdd6931d93d346017df79cb7e3332ba5a7e3648c66debae7981b4589c257a",
+    "src/bire_repro/af_data.py": "421a0e80feb8e2ae2ee588cc8debaf315927319d2bfb856056294397bf1f65a6",
+    "src/bire_repro/af_forward_complete.py": "18914b77058bfe1abeab3c98ec711ac8fb970deb76507b095ee376a0de447612",
+    "src/bire_repro/af_model_c_anomaly_direct.py": "c7f5d24530f501ee1f2ac8e719ecb73715de34c7441c08600a985f51e1860d89",
+    "src/bire_repro/af_model_c_anomaly_direct_bire_regularization_controls.py": "4ad782837f58edae649e8a1535773951b8291892576bb8e6b6a9921094b92c65",
+    "src/bire_repro/af_model_c_anomaly_direct_single_position_layernorm.py": "a9f7e38d1a738d18adeb38a14a9462438827afae6aae172ddc14c09984644711",
+    "src/bire_repro/af_model_c_bire_s0_figures.py": "48636fe7daca00958414207c3bb15fc8ad16545fbd0ff08704a0de68ad7598e6",
+    "src/bire_repro/af_model_c_rollout_conditioned_loss_v3.py": "f1e1b9c40cbabc2387507a18d89e3c1312747aa68dc4901f61b879515c8526da",
+    "src/bire_repro/af_model_c_single_position_s0_figures.py": "d5a94db8db64fcaf95b0777149a8645acce4be287e157c7f7d63b3599e2eed37",
+    "src/bire_repro/af_model_c_slow_field_bias_projection.py": "37722dda6382a4e808b3e2b348ecdfe56153b35a106b053bb52b01ca0f92a3a2",
+    "src/bire_repro/af_model_c_successor.py": "62a5a3f91b21137bcaf4b8ed39a4bf3a4f35d1357cf7ab83947bd7dbbbe236e6",
+    "src/bire_repro/af_pressure.py": "1939645d807ec0281624d4146cadc51b3e9f382c540a56d7ed5afdca4b2c7c6c",
+    "src/bire_repro/mds.py": "4098c294a35a1fdcd0521e1eedc6495608ba96fd074dd509347f3efeb788d212",
+    "tests/model_c/test_af_model_c_single_position_s0_figures.py": "ef3c64ea0ff17485155ebc92c0297ac173714b8dd9dffc7495585ad69a763882"
+  },
+  "truth": {
+    "append_to_training_dataset": false,
+    "base": "trajectories_v2_S0_indices_0_7199",
+    "extension": "job_304735_evaluation_only_S0_indices_7200_9359",
+    "maximum_available_index": 9359,
+    "maximum_requested_index": 9199
+  },
+  "version": "model_c_single_position_layernorm_s0_figures_v1"
+}

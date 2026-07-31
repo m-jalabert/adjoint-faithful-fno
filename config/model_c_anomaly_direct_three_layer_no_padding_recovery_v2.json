@@ -1,0 +1,104 @@
+{
+  "version": "model_c_anomaly_direct_three_layer_no_padding_recovery_v2",
+  "contract_status": "frozen_after_complete_training_before_any_control_metric",
+  "freeze_date": "2026-07-29",
+  "purpose": "evaluation_only_recovery_of_all_seven_checkpoints_completed_by_failed_job_304526",
+  "source_contract": {
+    "path": "/home/mjalabert314/bire_james25_repro/config/model_c_anomaly_direct_three_layer_no_padding_v1.json",
+    "sha256": "7d405cfb83074545eed818629c66d4badc3e90762e2da4281793cf121545fd20"
+  },
+  "failed_job": {
+    "job_id": 304526,
+    "state": "FAILED",
+    "exit_code": "1:0",
+    "elapsed": "00:46:37",
+    "node": "node112",
+    "failure_stage": "before_first_checkpoint_metric_after_all_15360_training_steps_and_all_seven_checkpoint_writes",
+    "cause": "the_inherited_attribution_evaluator_reconstructed_the_checkpoint_with_the_old_four_layer_only_architecture_dataclass",
+    "log": {
+      "path": "/home/mjalabert314/bire_james25_repro/slurm-304526.out",
+      "sha256": "7488ddfc467ec3de6fdad81ae8137f2c6de3940e9fb99b089490e0893a23c0ce"
+    }
+  },
+  "checkpoint_steps": [
+    3840,
+    7680,
+    11520,
+    13440,
+    14400,
+    14880,
+    15360
+  ],
+  "checkpoints": [
+    {
+      "optimizer_step": 3840,
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/anomaly_direct_three_layer_no_padding_v1/three_layer_no_padding.tmp/training_checkpoints/model_c_three_layer_no_padding_step_03840.pt",
+      "sha256": "aed5b1935930f5d578384bc1799a6122f7351910d49edd98080e4bfa1b60ba2a"
+    },
+    {
+      "optimizer_step": 7680,
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/anomaly_direct_three_layer_no_padding_v1/three_layer_no_padding.tmp/training_checkpoints/model_c_three_layer_no_padding_step_07680.pt",
+      "sha256": "ba8c03cc0e521daa3433bf5788599da61f0f5bddc3475e5272d4d66f28e91702"
+    },
+    {
+      "optimizer_step": 11520,
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/anomaly_direct_three_layer_no_padding_v1/three_layer_no_padding.tmp/training_checkpoints/model_c_three_layer_no_padding_step_11520.pt",
+      "sha256": "e6a4ab41070d8ad59e8a59c952ac2a9654ff7b0bb6d67bf60af57dd305d39604"
+    },
+    {
+      "optimizer_step": 13440,
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/anomaly_direct_three_layer_no_padding_v1/three_layer_no_padding.tmp/training_checkpoints/model_c_three_layer_no_padding_step_13440.pt",
+      "sha256": "cf137690984a92dde4804eaf614649d7083427796885aba2d5efa88b60dc47e8"
+    },
+    {
+      "optimizer_step": 14400,
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/anomaly_direct_three_layer_no_padding_v1/three_layer_no_padding.tmp/training_checkpoints/model_c_three_layer_no_padding_step_14400.pt",
+      "sha256": "9d06bace2b650161db1768dd83264e30c186c986f7253c743ec9125ea3489579"
+    },
+    {
+      "optimizer_step": 14880,
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/anomaly_direct_three_layer_no_padding_v1/three_layer_no_padding.tmp/training_checkpoints/model_c_three_layer_no_padding_step_14880.pt",
+      "sha256": "2e1cc18dcc6fc52a14d078312465660a50ba4856e74ff2df7ddfffcac382f53a"
+    },
+    {
+      "optimizer_step": 15360,
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/anomaly_direct_three_layer_no_padding_v1/three_layer_no_padding.tmp/training_checkpoints/model_c_three_layer_no_padding_step_15360.pt",
+      "sha256": "2bc00e2d477b3b1b17187cc2e070a4bb610cdcc9ba162f41ee7e4f1ae109f559"
+    }
+  ],
+  "recovery": {
+    "retraining_steps": 0,
+    "weight_changes": false,
+    "optimizer_state_used": false,
+    "evaluation_change": "temporarily_reconstruct_checkpoint_architecture_with_the_frozen_three_layer_no_padding_dataclass",
+    "selection": "unchanged_source_contract_corrected_36_record_split1_day360_gate",
+    "publication": "write_missing_report_arrays_plot_README_manifest_then_atomically_promote_existing_temporary_directories",
+    "scientific_equivalence": "exact_same_checkpoint_bytes_and_predeclared_metrics_as_v1"
+  },
+  "read_contract": {
+    "training_state": true,
+    "prior_training_metadata": true,
+    "validation_state": false,
+    "inference_state": false,
+    "intermediate_wind_state": false,
+    "response_state": false,
+    "adjoint_state": false,
+    "long_term_state": false
+  },
+  "output": {
+    "scratch_temporary": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/anomaly_direct_three_layer_no_padding_v1/three_layer_no_padding.tmp",
+    "scratch_final": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/anomaly_direct_three_layer_no_padding_v1/three_layer_no_padding",
+    "project_temporary": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/anomaly_direct_three_layer_no_padding_v1/three_layer_no_padding.tmp",
+    "project_final": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/anomaly_direct_three_layer_no_padding_v1/three_layer_no_padding"
+  },
+  "next_decision": {
+    "control_passes": "freeze_replication_before_any_later_archive_read",
+    "control_fails": "retain_original_model_then_advance_to_group_specific_heads_or_slow_fast_split",
+    "operational_failure": "diagnose_without_retraining_or_opening_later_archives"
+  },
+  "source_hashes": {
+    "src/bire_repro/af_model_c_anomaly_direct_three_layer_no_padding_recovery.py": "a2cfd4df6b0f18019cc8834d5ede06aade39b61625dc13cf08ee2c3cbe6e65eb",
+    "tests/model_c/test_af_model_c_anomaly_direct_three_layer_no_padding_recovery.py": "84b5e511889803d025de74f031445fd8c309deefeb30244829f765c10bcbacd8",
+    "slurm/models/c/af_model_c_anomaly_direct_three_layer_no_padding_recovery.sbatch": "9a5f01f3ac782c6528dad4ebc8102bd15aa53767fe0bf060abf5390fbd3cbd64"
+  }
+}

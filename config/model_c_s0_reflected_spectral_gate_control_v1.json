@@ -1,0 +1,192 @@
+{
+  "version": "model_c_s0_reflected_spectral_gate_control_v1",
+  "contract_status": "frozen_zero_retraining_after_job304753",
+  "purpose": "Test whether low-mode-preserving, reflected spectral attenuation can control the selected anomaly-direct Model C high-k runaway without the short-skill damage caused by fixed binomial smoothing.",
+  "protocol": {
+    "wind_regime": "S0",
+    "wind_stress_n_m2": 0.1,
+    "dt_days": 10,
+    "alphas": [
+      0.0,
+      0.25,
+      0.5,
+      0.75,
+      1.0
+    ],
+    "filter": "reflected_even_extension_radial_spectral_gate_k8_to_k10_on_normalized_anomaly",
+    "spectral_transition": [
+      8.0,
+      10.0
+    ],
+    "filter_transfer": "identity_for_k_le_8_cosine_transition_for_8_lt_k_lt_10_and_amplitude_multiplier_1_minus_alpha_for_k_ge_10",
+    "filter_location": "after_each_direct_state_model_call",
+    "filter_boundary": "two_dimensional_even_reflection_on_the_60_by_60_wet_rectangle_then_exact_land_zero",
+    "training_times": [
+      0,
+      379,
+      759,
+      1139,
+      1519,
+      3690,
+      4069,
+      4449,
+      4829,
+      5209
+    ],
+    "training_records": "ten_fixed_S0_starts_with_inclusive_t_to_t_plus_1000_inside_split1",
+    "training_leads": [
+      0,
+      1000
+    ],
+    "training_spectrum_leads": [
+      500,
+      1000
+    ],
+    "short_leads": [
+      10,
+      30,
+      90
+    ],
+    "inference_starts": [
+      6913,
+      6689,
+      7174,
+      6962,
+      6781,
+      7155,
+      6676,
+      7019,
+      7199,
+      6733,
+      6969,
+      6662,
+      6986,
+      7068,
+      6885
+    ],
+    "inference_leads": [
+      0,
+      2000
+    ],
+    "inference_spectrum_leads": [
+      200,
+      500,
+      1000,
+      1500,
+      2000
+    ],
+    "fields": [
+      "surface_speed",
+      "phihyd_surface",
+      "sst"
+    ],
+    "statistical_fields": [
+      "surface_speed",
+      "phihyd_surface",
+      "sst",
+      "streamfunction"
+    ],
+    "high_band": [
+      10,
+      30
+    ],
+    "selection": "smallest_nonzero_alpha_passing_all_gates",
+    "training_gate": {
+      "maximum_short_candidate_to_source_rmse": 1.05,
+      "maximum_day1000_worst_rmse_climate_relative_to_source": 0.8,
+      "maximum_day1000_normalized_amplitude_relative_to_source": 0.8,
+      "maximum_day1000_worst_highk_power_relative_to_source": 0.5
+    },
+    "inference_open_condition": "a_nonzero_alpha_passes_every_training_only_gate",
+    "inference_characterization": {
+      "maximum_short_candidate_to_source_rmse": 1.05,
+      "maximum_day2000_rmse_to_climatology": 2.0,
+      "maximum_day2000_normalized_amplitude_to_truth": 2.0,
+      "maximum_day2000_highk_power_to_truth": 4.0,
+      "maximum_late_gain_per_call": 1.005
+    },
+    "retraining": false,
+    "checkpoint_selection": false,
+    "promotion": "none_filter_mechanism_characterization_only"
+  },
+  "architecture": {
+    "in_channels": 51,
+    "out_channels": 46,
+    "n_modes": [
+      24,
+      16
+    ],
+    "hidden_channels": 128,
+    "n_layers": 4,
+    "lifting_channel_ratio": 2,
+    "projection_channel_ratio": 2,
+    "channel_mlp_expansion": 4.0,
+    "domain_padding": 0.1,
+    "positional_embedding": "grid",
+    "use_channel_mlp": true,
+    "local_kernel_size": 3,
+    "fno_block_precision": "full",
+    "factorization": null
+  },
+  "artifacts": {
+    "dataset_metadata": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/trajectories_v2.zarr/.zmetadata",
+      "sha256": "ae7be47c456962f411acb0d8e217dcb7fa6e24c59e5a8f3133f93032e378b8cc"
+    },
+    "selected_checkpoint": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/anomaly_direct_replication_v1/seeds/seed_20260724/model_c_anomaly_direct_v1_best.pt",
+      "sha256": "28b4809089a2a61b6a6be8bd82f9ab72751a1e625b8accbaec8474f073bd1a23"
+    },
+    "pointwise_normalization": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/anomaly_direct_replication_v1/seeds/seed_20260724/model_c_anomaly_direct_v1_normalization.npz",
+      "sha256": "a81a27ce86b0d0b296d0d960bb5856cbcf2f3d88b21e7ffa398ae4983a30ebd1"
+    },
+    "long_truth_result": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/mitgcm_long_truth_v1/S0/production/years_120_126/segment_result.json",
+      "sha256": "9ebd446ff6f39b86c4281d86732d54b602e265ce240718314cd4d282bc799925"
+    },
+    "job304753_contract": {
+      "path": "/home/mjalabert314/bire_james25_repro/config/model_c_s0_highk_damping_control_v1.json",
+      "sha256": "cf2f1c179d3609c7093e01c0000fe6e1503de3f40cab156cbf69ea5f46bf9554"
+    },
+    "job304753_report": {
+      "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/anomaly_direct_s0_highk_damping_control_v1/model_c_s0_highk_damping_report.json",
+      "sha256": "8ca08f114763106721ea9688bb83fa56be15bc3cdf76266543e90335bc927a66"
+    },
+    "job304753_manifest": {
+      "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/anomaly_direct_s0_highk_damping_control_v1/manifest.json",
+      "sha256": "7492e1a64dbbe5692258ec68f81077f08afe7c566438beed364e9e7a05bbbc66"
+    }
+  },
+  "source_hashes": {
+    "src/bire_repro/af_model_c_s0_reflected_spectral_gate_control.py": "18af2018cfb3c15427a6934e592a07842869ef0416d6abfe5c03f2437ab161c5",
+    "tests/model_c/test_af_model_c_s0_reflected_spectral_gate_control.py": "a37ff8eca86aac63244c21e093a157dc460e0c61035e4daade8650466f8ba681",
+    "slurm/models/c/af_model_c_s0_reflected_spectral_gate_control.sbatch": "82cfc5a68bbea782209245bc5188bc933373709c430fce325219e688a1c2087d",
+    "src/bire_repro/af_model_c_s0_highk_damping_control.py": "a663df96853867a6226bc87c989aafaad9e959b083104afa60b8023fd1cd462e",
+    "src/bire_repro/af_model_c_s0_stability_tangent_recovery.py": "f75a62d41bebcad0f9158e867906f4566d10b186f0926305331a535078bd34ca",
+    "src/bire_repro/af_model_c_s0_stability_tangent_comparison.py": "632fb0f84cf71db19aecba6934f06ff5f62a3f5c8d6fbb9e3640724d5b1e5b9d",
+    "src/bire_repro/af_model_c_bire_s0_figures.py": "48636fe7daca00958414207c3bb15fc8ad16545fbd0ff08704a0de68ad7598e6",
+    "src/bire_repro/af_model_c_bire_s0_long_truth.py": "15b681e6d9c9f96a23bfc14541956a6169e4a995aa29d6620caaf0a1d2452787",
+    "src/bire_repro/af_model_c_anomaly_direct.py": "c7f5d24530f501ee1f2ac8e719ecb73715de34c7441c08600a985f51e1860d89",
+    "src/bire_repro/af_model_c_successor.py": "62a5a3f91b21137bcaf4b8ed39a4bf3a4f35d1357cf7ab83947bd7dbbbe236e6",
+    "src/bire_repro/af_a0_evaluate.py": "47341bc7f8de8f9a5172911993a1358d82892d799d425f28dc4a6e8267cce4a1",
+    "src/bire_repro/af_data.py": "421a0e80feb8e2ae2ee588cc8debaf315927319d2bfb856056294397bf1f65a6"
+  },
+  "output": {
+    "scratch": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/anomaly_direct_s0_reflected_spectral_gate_control_v1",
+    "project": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/anomaly_direct_s0_reflected_spectral_gate_control_v1",
+    "overwrite": false,
+    "required": [
+      "model_c_s0_reflected_spectral_training_selection.png",
+      "model_c_s0_reflected_spectral_inference_log_rmse.png",
+      "model_c_s0_reflected_spectral_inference_normalized_envelope.png",
+      "model_c_s0_reflected_spectral_inference_day2000_spectra.png",
+      "model_c_s0_reflected_spectral_gate_arrays.npz",
+      "model_c_s0_reflected_spectral_gate_curves.csv",
+      "model_c_s0_reflected_spectral_gate_report.json",
+      "model_c_s0_reflected_spectral_gate_summary.json",
+      "README.md",
+      "manifest.json"
+    ]
+  }
+}

@@ -194,8 +194,49 @@ The complete held-inference contract SHA-256
 from only the fresh trajectory-v2 inference block through day 360, against
 persistence, regime climatology, damped persistence, and A0 on identical starts.
 Its 10/30-day adjoint-readiness decision is separate from the long-forward gate.
-V100 job 303993 executes this evaluation; intermediate-wind/response/adjoint state
-remains sealed.
+V100 job 303993 completed normally: short readiness, primary AUC, one-year
+boundedness/drift, and scalar wind response pass, while the complete gate fails
+only at day-360 mid/bottom pressure spectral ratios 22.29/9.63.
+
+Corrected training-only attribution then reproduced the tail across all three
+seeds without primary-skill or integrated-energy failure.  A targeted spectral
+fine-tune, the LayerNorm/dropout factorial, and the faithful three-layer/no-padding
+control all failed their frozen gates.  Zero-retraining recovery job 304597
+completed normally in 2m41s and found the three-layer diagnostic best at step
+14,400: day-360 mid/bottom ratios 12.51/5.84, failure onset days 210/310,
+energy ratios 1.032/1.011, and worst primary degradation 1.131.  This delays
+the source mid-level onset by 30 days but does not reach factor four or protect
+primary skill within 10\%; original seed 20260724/step 13,440 remains selected.
+
+Group-specific-head job 304708 completed normally in 1h30m46s but no
+checkpoint passes.  Diagnostic-best step 14,880 keeps speed/SST/surface-
+\(P/\rho\) at 0.211/0.202/0.360 times persistence and worst source-relative
+degradation at 1.055.  It improves source mid/bottom modewise ratios
+13.37/5.57 to 9.21/4.40, delays onset to days 220/350, and keeps energy
+1.004/0.995, but both levels still exceed four.  The original model remains
+selected.
+
+The requested Bire-style control-wind suite is complete.  CPU job 304735
+generated the isolated evaluation-only truth, and GPU job 304736 completed
+all 15 selected rollouts through day 2,000 in 1m07s.  At day 200, selected
+Model C beats persistence and climatology for speed, surface \(P/\rho\), and
+SST; its ACC is also much higher than the prior residual model for every
+Figure-6 field.  This establishes the anomaly/direct-state representation as
+the best deterministic Model C direction so far.  It does not establish a
+stable long-term emulator: day-2,000 model RMSE is 81.9/67.7/87.1 times
+persistence for speed/\(P/\rho\)/SST, and the runaway is present across the
+ensemble.  Retain the checkpoint for the 10--30-day forward/adjoint campaign,
+but reject a Bire-section-5.3-style stability claim.  The separate spatial
+changed-wind learned-physics test is still required.
+
+The fixed member's day-2,000 streamfunction error is spatially informative:
+71.3\% of its squared error lies in the four-cell wet-boundary union, with
+45.2\% in the western four columns and 31.5\% in the northern four rows.
+Because this diagnostic integrates all predicted U levels, a frozen
+zero-retraining seven-checkpoint/15-member boundary study is next.  Contract
+SHA-256 \texttt{e859999279a7\allowbreak...\allowbreak d2c0} will distinguish
+checkpoint age from systematic boundary-first transport amplification; it
+cannot change model selection.
 \par\endgroup
 
 \section{Purpose and reading guide}
@@ -1448,6 +1489,657 @@ already adequate.  The current architecture must be retrained unchanged on v2 be
 the bounded successor variants are interpreted.  Inference and all later archives
 remain sealed.
 
+\section{S0 Bire-style Figures 3--8: completed long-horizon test}
+
+\resultbox{green}{lightteal}{\textbf{Short-to-medium result: best Model C so far.}
+Job 304736 evaluated the frozen seed-20260724, step-13,440 checkpoint at
+\(\tau_0=0.1~\mathrm{N\,m^{-2}}\) and \(\Delta t=10\) days for 15
+inference initializations.  At day 200, model/persistence/climatology RMSE is
+\(0.00270/0.00457/0.00351~\mathrm{m\,s^{-1}}\) for surface speed,
+\(0.0151/0.0198/0.0625~\mathrm{m^2\,s^{-2}}\) for surface \(P/\rho\),
+and \(0.0241/0.0488/0.0391~{}^\circ\mathrm{C}\) for SST.}
+
+The selected/prior-residual day-200 mean ACC values are 0.784/0.107 for
+surface U, 0.887/0.033 for surface V, 0.972/0.003 for surface \(P/\rho\),
+and 0.833/\(-0.036\) for SST.  Figure~6 is therefore an
+architecture-direction comparison, not a literal pretrained/fine-tuned pair:
+the selected anomaly/direct-state model was trained from scratch.
+
+\begin{center}\small
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+\textbf{Field} & \textbf{Day-200 model} & \textbf{Persistence} &
+\textbf{Climatology} & \textbf{Day-2,000 model} \\
+\midrule
+Surface speed (\(\mathrm{m\,s^{-1}}\)) & 0.00270 & 0.00457 & 0.00351 & 0.426 \\
+Surface \(P/\rho\) (\(\mathrm{m^2\,s^{-2}}\)) & 0.0151 & 0.0198 & 0.0625 & 2.593 \\
+SST (\({}^\circ\mathrm{C}\)) & 0.0241 & 0.0488 & 0.0391 & 5.339 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\resultbox{red}{lightred}{\textbf{Long-term result: finite is not stable.}
+All 15 states remain numerically finite, but by day 2,000 the model is
+81.9/67.7/87.1 times persistence and 108.9/30.4/128.1 times climatology for
+speed/\(P/\rho\)/SST.  The day-2,000 model 10th--90th percentile intervals
+are 0.372--0.463, 2.371--2.825, and 3.838--6.484 in their respective units,
+so the failure is ensemble-wide.  The fixed member's streamfunction RMSE
+grows from 0.294~Sv at day 60 (correlation 0.9996) to 96.2~Sv at day 2,000
+(correlation \(-0.183\)).  Model C therefore fails the Bire-style
+long-term-statistical stability requirement even though it is excellent over
+the deterministic forecast window.}
+
+\widefigure
+  {../outputs/af_fno/C/anomaly_direct_bire_s0_inference_v1/model_c_bire_figure3_streamfunction_1deg_s0_dt10.png}
+  {Figure-3 analogue for the fixed inference member.  Truth, selected Model C,
+  and error retain an accurate basin-scale streamfunction through day 40.}
+
+\widefigure
+  {../outputs/af_fno/C/anomaly_direct_bire_s0_inference_v1/model_c_bire_figure4_dt10_rmse_0_200_days_s0.png}
+  {Figure-4 analogue.  Lines are 15-member means and bands are memberwise
+  10th--90th percentiles; red is Model C, blue persistence, and black the
+  training-only pointwise S0 climatology.  Model C beats both baselines at
+  day 200 for all three fields.}
+
+\widefigure
+  {../outputs/af_fno/C/anomaly_direct_bire_s0_inference_v1/model_c_bire_figure5_dt10_single_member_rmse_s0.png}
+  {Figure-5 analogue for start index 6913.  At day 200, streamfunction and
+  SST RMSE are 0.657~Sv and \(0.0232~{}^\circ\mathrm{C}\).}
+
+\widefigure
+  {../outputs/af_fno/C/anomaly_direct_bire_s0_inference_v1/model_c_bire_figure6_dt10_acc_0_200_days_s0.png}
+  {Figure-6 analogue.  Red is the selected anomaly/direct-state Model C and
+  black the prior residual rollout-conditioned Model C; this is a
+  representation-direction comparison, not literal fine-tuning.}
+
+\widefigure
+  {../outputs/af_fno/C/anomaly_direct_bire_s0_inference_v1/model_c_bire_figure7_dt10_streamfunction_day060_day2000_s0.png}
+  {Figure-7 analogue.  A single shared scale preserves honest amplitude
+  comparison: the day-2,000 model range dominates the page because its
+  streamfunction has become unstable, while day-60 agreement remains close.}
+
+\widefigure
+  {../outputs/af_fno/C/anomaly_direct_bire_s0_inference_v1/model_c_bire_figure8_dt10_rmse_0_2000_days_s0.png}
+  {Figure-8 analogue.  The same 15-member ensemble that is skillful through
+  day 200 develops a coherent runaway at longer lead, whereas both MITgcm
+  baselines remain bounded.}
+
+The complete package is
+\path{outputs/af_fno/C/anomaly_direct_bire_s0_inference_v1/}.  Arrays/report
+SHA-256 is \texttt{30abd95810d3...3c7}/
+\texttt{32ac2e051726...bd18}; report-content SHA-256 is
+\texttt{9711016c7fca...e022}; manifest-content SHA-256 is
+\texttt{593dd43de772...57d1}.  These results support continuing with the
+anomaly/direct-state representation for short deterministic forecasts, but
+they do not authorize a long-term-stability claim or replace the separate
+learned-physics wind-response assessment.
+
+\resultbox{green}{lightteal}{\textbf{Boundary mechanism result: common,
+ensemble-coherent runaway; checkpoint age is not the cure.}  V100 job
+304740 completed normally in 1m46s with zero retraining.  All seven
+checkpoints remain finite but cross mean maximum normalized amplitude 20 by
+day 880.  The earlier 3,840/7,680/11,520 checkpoints cross on days
+410/580/780, whereas selected step 13,440 crosses latest at day 880.
+Shorter training therefore worsens rather than removes this instability.
+The diagnostic is descriptive and does not reselect the checkpoint.}
+
+The boundary result is strong spatially.  The four-cell wet-boundary union
+contains 896 of 3,600 wet cells, or 24.9\%, but at selected step 13,440 it
+holds 72.8\%, 85.2\%, and 72.7\% of ensemble-mean day-2,000
+\(Q_x\), \(Q_y\), and streamfunction squared error.  Boundary/interior
+RMSE is \(147.4/51.1~\mathrm{m^2\,s^{-1}}\) for \(Q_x\),
+\(100.6/23.8~\mathrm{m^2\,s^{-1}}\) for \(Q_y\), and
+192.7/63.3~Sv for streamfunction.  This is not one exceptional member:
+member-to-ensemble-mean day-2,000 spatial cosine is
+0.783/0.649/0.902, and hotspot sign agreement is
+93.2/88.5/97.1\% for \(Q_x/Q_y/\psi\).
+
+The temporal mechanism is subtler.  Selected-model boundary/interior
+day-200-relative \(2\times/5\times/10\times\) crossing days are
+360/620/860 versus 340/570/840 for \(Q_x\),
+360/600/790 versus 340/550/820 for \(Q_y\), and
+660/920/1,260 versus 320/590/920 for streamfunction.  Boundary error is
+larger and disproportionate, but it does not consistently start growing
+before the interior.  The supported classification is a systematic,
+boundary-amplified global transport mode.  The experiment does not support a
+simple boundary-to-interior propagation cascade, nor does it isolate padding
+as the cause.
+
+\widefigure
+  {../outputs/af_fno/C/anomaly_direct_bire_s0_boundary_checkpoint_v1/model_c_s0_boundary_transport_rmse_checkpoints.png}
+  {Depth-integrated zonal-transport RMSE by checkpoint and region.  Every
+  checkpoint grows, while the selected step 13,440 is among the least
+  unstable and is not improved by reverting to an earlier checkpoint.}
+
+\widefigure
+  {../outputs/af_fno/C/anomaly_direct_bire_s0_boundary_checkpoint_v1/model_c_s0_boundary_fraction_checkpoints.png}
+  {Fraction of total squared error inside the four-cell wet-boundary union.
+  The dotted 0.249 line is the boundary cell fraction; transport and
+  streamfunction errors are spatially overrepresented there.}
+
+\widefigure
+  {../outputs/af_fno/C/anomaly_direct_bire_s0_boundary_checkpoint_v1/model_c_s0_checkpoint_stability_timing.png}
+  {Checkpoint-age diagnosis.  All checkpoints cross every plotted amplitude
+  threshold, with selected step 13,440 crossing 20/100 on days 880/1,610.}
+
+\widefigure
+  {../outputs/af_fno/C/anomaly_direct_bire_s0_boundary_checkpoint_v1/model_c_s0_selected_boundary_spatial_consistency.png}
+  {Selected-model day-2,000 spatial consistency across 15 members.  The
+  western and northeastern streamfunction/transport hotspots recur with high
+  pattern and sign agreement.}
+
+\widefigure
+  {../outputs/af_fno/C/anomaly_direct_bire_s0_boundary_checkpoint_v1/model_c_s0_selected_boundary_growth.png}
+  {Selected-model boundary versus interior error growth.  Boundary RMSE is
+  persistently larger, but its relative growth thresholds do not
+  consistently precede the interior.}
+
+All ten manifest-listed artifacts verify against their SHA-256 and byte
+counts.  Report/summary/arrays SHA-256 is
+\texttt{bc62501a18f7...2fc67}/\texttt{c6c069e52ee5...fef50e}/
+\texttt{d37d570337a3...b9942ae}; report-content SHA-256 is
+\texttt{0a370f256a39...155345} and manifest-content SHA-256 is
+\texttt{134afea7b726...ce562}.  The complete package is
+\path{outputs/af_fno/C/anomaly_direct_bire_s0_boundary_checkpoint_v1/}.
+
+\resultbox{green}{lightteal}{\textbf{Instrument correction: the day-200
+boundedness check was too short.}  The post-hoc, zero-rollout contract
+\path{config/model_c_s0_stability_instrument_v1.json}, SHA-256
+\texttt{ab6d597843b1...fc5be7}, reads only immutable job-304736 arrays.
+Over days 300--600, fitted RMSE gain per ten-day call is
+1.0332 [1.0297, 1.0369] for speed, 1.0397 [1.0391, 1.0401] for surface
+\(P/\rho\), and 1.0456 [1.0424, 1.0485] for SST, where intervals are
+10,000-replicate member bootstraps.  All remain supercritical over days
+1,700--2,000 at 1.0321/1.0240/1.0227.}
+
+Maximum absolute normalized state is only 3.49 at initialization and 3.75
+at day 200, then reaches 5.57 at day 300 and 322.39 at day 2,000.  Its
+days-300--600 gain is 1.0252 per call, an approximately 401-day e-folding.
+Thus the failure is present as sustained multiplicative growth before the
+former reporting horizon, even though its amplitude is visually modest at
+day 200.
+
+\widefigure
+  {../outputs/af_fno/C/anomaly_direct_s0_stability_instrument_v1/model_c_s0_rmse_log_growth.png}
+  {The job-304736 Figure-8 curves on logarithmic axes.  After the
+  approximately 90-day decorrelation horizon, both baselines remain bounded
+  while Model C continues nearly linearly in log error.}
+
+\widefigure
+  {../outputs/af_fno/C/anomaly_direct_s0_stability_instrument_v1/model_c_s0_windowed_rmse_gain.png}
+  {Windowed multiplicative RMSE gain with 95\% member-bootstrap intervals.
+  Every field and every fitted window remains above one.}
+
+\widefigure
+  {../outputs/af_fno/C/anomaly_direct_s0_stability_instrument_v1/model_c_s0_normalized_amplitude_log_growth.png}
+  {Normalized-amplitude growth.  The former day-200 check precedes the
+  sustained threshold crossings and cannot establish long-term boundedness.}
+
+The fitted RMSE gain is descriptive; it is not the Jacobian spectral radius
+and is not a sufficient stand-alone gate for a chaotic forecast.  The
+corrected future instrument keeps the 10--90-day deterministic skill gate
+separate, then requires post-decorrelation saturation, a truth-relative
+normalized-amplitude envelope, time-averaged field means/variances and
+low/mid/high spectral energy, and streamfunction extrema/mean circulation
+through at least 200 calls.  Local operator work will report singular gain
+and finite-time tangent growth unless eigenvalue analysis is actually
+performed.
+
+LayerNorm is therefore a causal control, not the presumed solution.  It does
+not mathematically bound the full autoregressive map, and the completed
+LayerNorm-only arm already misses the protected day-360 gate at
+mid/bottom ratios 9.74/4.92 with 18.6\% worst primary degradation.  A
+zero-retraining 2,000-day comparison remains useful to test whether it lowers
+growth, but it cannot supersede the selected model without passing both
+short-skill and statistical-stability criteria.
+
+All six manifest-listed artifacts verify.  Report/content/manifest-content
+SHA-256 is \texttt{5212f3aee081...72040}/
+\texttt{945495f0e096...6cfbe}/\texttt{f03aeb9487ab...869a}; the package is
+\path{outputs/af_fno/C/anomaly_direct_s0_stability_instrument_v1/}.
+
+\resultbox{amber}{lightamber}{\textbf{Original diagnostic failed
+operationally; evaluation-only recovery frozen.}  Contract
+\path{config/model_c_s0_stability_tangent_comparison_v1.json}, SHA-256
+\texttt{5d32d472509a...bca4}, permitted zero retraining and no checkpoint
+selection.  Job 304750 exited 1 after 1m42s because explosive float32
+physical reductions overflowed and the log-fit rejected the non-finite
+series.  No transactional result package was published.}
+
+The long-rollout half records speed, surface \(P/\rho\), SST, and
+streamfunction means/variances; truth-relative normalized-amplitude
+envelopes; RMSE growth over days 300--600, 700--1,000, and 1,700--2,000;
+and radial spectra at days 200/500/1,000/1,500/2,000.  Truth is the immutable
+job-304735 S0 \MITgcm{} continuation, while climatology remains the
+training-only S0 pointwise temporal mean.
+
+The local-operator half uses three fixed training-only S0 states.  It
+estimates dominant one-step singular gain and ten-call tangent geometric
+gain for full, \(k=1\)--3, \(k=4\)--9, and \(k=10\)--30 perturbations.
+Only the selected and LayerNorm direct-state maps enter this tangent
+comparison because they share pointwise-normalized state coordinates; the
+prior residual map's different coordinates would make a raw norm ranking
+misleading.  No result is labeled a spectral radius.  Three focused tests,
+lint, shell validation, source/artifact hashes, complete-truth coverage, and
+CPU finite/land-zero one-step reloads of all three models pass.  Four plots,
+NPZ, CSV, report, summary, README, and manifest are reserved under
+\path{outputs/af_fno/C/anomaly_direct_s0_stability_tangent_comparison_v1/}.
+
+Recovery contract
+\path{config/model_c_s0_stability_tangent_recovery_v2.json}, SHA-256
+\texttt{8bc5c0937d0e...e1ac}, preserves the failed job and every model,
+checkpoint, initial condition, lead, truth field, spectrum band, and tangent
+state.  It changes only physical reductions to float64, records first
+non-finite model-state lead per member, and censors a fit at its first
+incomplete all-member sample.  Four focused tests verify large-amplitude
+overflow safety, agreement with the original diagnostics at physical
+amplitudes, and exact censoring behavior.  Preflight and all three one-step
+reloads pass.  Recovered numerical results remain pending under
+\path{outputs/af_fno/C/anomaly_direct_s0_stability_tangent_recovery_v2/};
+no model may be trained, selected, or promoted.
+
+\resultbox{green}{lightteal}{\textbf{Recovery result: LayerNorm strongly
+reduces but does not cure the runaway.}  Job 304751 completed normally in
+2m12s.  Every state remains finite through day 2,000, proving that finiteness
+is not a stability gate.  The prior residual map caused the original
+float32 diagnostic overflow and is catastrophically unstable, not
+contracting.}
+
+At day 2,000, mean speed/\(P/\rho\)/SST RMSE is
+0.4260/2.5933/5.3391 for selected Model C,
+0.0217/0.5525/0.4218 for LayerNorm, and
+\(3.32\times10^{25}/6.76\times10^{26}/1.41\times10^{27}\) for the prior
+residual map.  Relative to climatology, the three triplets are
+108.89/30.44/128.10, 5.54/6.48/10.12, and
+\(8.48\times10^{27}/7.93\times10^{27}/3.39\times10^{28}\).
+LayerNorm therefore removes 94.9/78.7/92.1\% of selected error but still
+fails Bire-style statistical stability.  Its normalized-amplitude ratio to
+same-time truth is 4.01, versus 63.57 selected and
+\(1.94\times10^{26}\) prior.
+
+Every LayerNorm growth window remains supercritical.  Days-300--600
+speed/\(P/\rho\)/SST gain per call is
+1.02045/1.02177/1.02702; days-1,700--2,000 gain remains
+1.00330/1.00541/1.00646.  It crosses and then stays worse than climatology
+on days 270/530/300.  Its day-2,000 circulation is also wrong:
+streamfunction ensemble-mean extrema are \(-78.5/17.6\)~Sv versus
+\(-30.0/34.1\)~Sv truth, and spatial standard deviation is 16.77 versus
+10.67~Sv.
+
+The spectral result identifies the controlled part of the mechanism.
+LayerNorm day-2,000 high-\(k\) power ratio for
+speed/\(P/\rho\)/SST/streamfunction is 25.5/38.9/77.0/31.5, much smaller
+than selected Model C's 3,335/9,240/13,237/10,207 but still unacceptable.
+At day 200, the corresponding LayerNorm ratios are only
+1.04/1.32/1.05/1.60, so a small tail grows persistently after the former
+reporting horizon.  The prior residual map already has day-200 high-\(k\)
+ratios 104/11,193/3,226/232 and subsequently dominates the log plots.
+
+The local tangent result is not a simple contraction ranking.  Averaged over
+three training-only S0 states, selected versus LayerNorm full-field
+one-step singular gain is 4.04 versus 3.66 and ten-call gain is 1.020
+versus 1.117.  In the high-\(k\) band LayerNorm improves
+3.65/0.992 to 2.36/0.964, but in the mid-\(k\) band it worsens
+3.34/1.085 to 4.07/1.130.  Thus LayerNorm's long-run benefit is consistent
+with selective high-\(k\) suppression and changed nonlinear off-manifold
+dynamics, not uniform local contractivity.  It simultaneously degrades
+day-30 speed/\(P/\rho\)/SST RMSE by 9.1/36.8/8.6\% relative to selected,
+so it cannot be promoted.
+
+\widefigure
+  {../outputs/af_fno/C/anomaly_direct_s0_stability_tangent_recovery_v2/model_c_s0_stability_models_log_rmse.png}
+  {Float64-recovered S0 RMSE through day 2,000.  The prior residual map
+  grows almost linearly on the log scale to \(10^{25}\)--\(10^{27}\);
+  LayerNorm substantially flattens the direct-state runaway but remains
+  above climatology and keeps growing.}
+
+\widefigure
+  {../outputs/af_fno/C/anomaly_direct_s0_stability_tangent_recovery_v2/model_c_s0_stability_normalized_envelope.png}
+  {Truth-relative method-native normalized amplitude.  Day-2,000 ratios are
+  63.57 selected, 4.01 LayerNorm, and \(1.94\times10^{26}\) prior.}
+
+\widefigure
+  {../outputs/af_fno/C/anomaly_direct_s0_stability_tangent_recovery_v2/model_c_s0_stability_day2000_spectra.png}
+  {Day-2,000 power relative to truth.  LayerNorm selectively suppresses the
+  selected model's extreme mid/high-\(k\) excess but does not restore a
+  statistically plausible spectrum.}
+
+\widefigure
+  {../outputs/af_fno/C/anomaly_direct_s0_stability_tangent_recovery_v2/model_c_s0_tangent_gain_comparison.png}
+  {Shared-coordinate local tangent audit.  LayerNorm damps high-\(k\)
+  response but has larger mid-\(k\) and full-field ten-call gain; no
+  uniform-contraction claim is supported.}
+
+\widefigure
+  {../outputs/af_fno/C/anomaly_direct_s0_stability_tangent_recovery_v2/model_c_s0_first_nonfinite_lead.png}
+  {All 15 members of every map remain finite through day 2,000.  The
+  catastrophic prior residual curve demonstrates why finiteness cannot
+  substitute for amplitude and statistical-climate gates.}
+
+All ten manifest-listed artifacts and both scratch/project copies verify.
+Contract/arrays/report/summary SHA-256 is
+\texttt{8bc5c0937d0e...e1ac}/\texttt{95e0a42bc437...01175}/
+\texttt{684815b7882b...7b84}/\texttt{bdd7c1a06c0d...cc25};
+report-content/manifest-content SHA-256 is
+\texttt{05e92283b2a0...00dd}/\texttt{30a5288053ef...c4e5}.  The complete
+package is
+\path{outputs/af_fno/C/anomaly_direct_s0_stability_tangent_recovery_v2/}.
+Retain selected Model C only for the accepted short forecast role.  The next
+bounded control should test high-\(k\) suppression or a gated normalization
+path while explicitly protecting short skill; a blanket Jacobian-norm
+penalty is not authorized by these data.
+
+\resultbox{amber}{lightamber}{\textbf{Fixed high-\(k\) damping rejected.}
+Job 304753 completed normally in 1m07s under contract
+\path{config/model_c_s0_highk_damping_control_v1.json}, SHA-256
+\texttt{cf2f1c179d36...9554}.  Every nonzero strength fails the prospective
+training gate, so inference remains sealed and no filter or checkpoint is
+selected.}
+
+The candidate strengths are \(\alpha=0,0.02,0.05,0.10,0.20\), where
+zero is exact selected Model C and nonzero values blend each predicted
+normalized anomaly with a channelwise \(3\times3\) binomial smoothing.
+Selection uses only ten fixed S0 starts with complete day-1,000 windows in
+split 1.  A nonzero strength must keep all day-10/30/90 primary RMSE within
+5\% of source, reduce day-1,000 worst RMSE/climatology and normalized
+amplitude to 80\% of source, and halve worst high-\(k\) power.  The smallest
+passing value alone opens the frozen 15-member S0 day-2,000
+characterization.
+
+The weakest intervention, \(\alpha=0.02\), passes all three long-horizon
+requirements.  At day 1,000, worst RMSE/climatology, normalized amplitude,
+and worst high-\(k\) power are respectively
+0.7768/0.7742/0.4448 of the unfiltered source.  It fails the 5\% short guard:
+worst short RMSE is 1.0658 times source at day-90 SST, while day-90 speed is
+1.0612 times source.  For \(\alpha=0.05/0.10/0.20\), worst short ratios
+increase to 1.5000/2.2640/3.3406.  Thus smoothing produces a monotonic
+short-skill cost even as it removes the long-horizon tail.
+
+\widefigure
+  {../outputs/af_fno/C/anomaly_direct_s0_highk_damping_control_v1/model_c_s0_highk_training_selection.png}
+  {Prospective training-only filter selection.  Weak damping jointly lowers
+  day-1,000 RMSE, normalized amplitude, and high-\(k\) power, but no nonzero
+  strength stays within the frozen 5\% short-skill guard.}
+
+This intervention supports high-\(k\) content as a causal contributor to the
+off-manifold runaway, but rejects fixed isotropic smoothing as sufficient.
+The useful short-range SST/speed scales and unstable tail are not separable
+with one constant post-step \(\alpha\).  The conditional inference phase was
+correctly not run; do not weaken the guard or tune another fixed strength.
+The next bounded correction should integrate a state- or scale-aware gate
+into training while using the unfiltered short forecast as an explicit
+reference.
+
+All nine manifest-listed artifacts verify, and the scratch/project arrays
+and report are byte-identical.  Contract/arrays/report/summary SHA-256 is
+\texttt{cf2f1c179d36...9554}/\texttt{88eac7163328...9d}/
+\texttt{8ca08f114763...a66}/\texttt{3c100081bd10...806};
+report-content/manifest-content SHA-256 is
+\texttt{856612ebb748...e11}/\texttt{248c1b2e9a8a...057}.  The complete
+package is
+\path{outputs/af_fno/C/anomaly_direct_s0_highk_damping_control_v1/}.
+
+\resultbox{amber}{lightamber}{\textbf{Scale-selective filter rejected.}
+Job 304754 completed normally in 1m06s under contract
+\path{config/model_c_s0_reflected_spectral_gate_control_v1.json}, SHA-256
+\texttt{69b0100aae27...b8e7}.  No nonzero strength passes, so fixed
+inference remains sealed and no filter or checkpoint is selected.}
+
+The wet \(60\times60\) rectangle is extended evenly in both directions,
+avoiding a periodic seam.  The frozen radial transfer is exactly one for
+\(k\leq8\), a cosine transition over \(8<k<10\), and \(1-\alpha\) for
+\(k\geq10\), with \(\alpha=0,0.25,0.50,0.75,1.00\).  This isolates scale
+selectivity from the previous all-scale binomial smoothing: it asks whether
+the 5\% short guard and the three day-1,000 reduction gates can overlap when
+low modes are untouched.  Only the smallest passing nonzero strength may
+open the unchanged fixed 15-member S0 inference characterization.
+
+At \(\alpha=0.25\), day-1,000 normalized amplitude, worst high-\(k\) power,
+and worst RMSE/climatology are 0.4365/0.0638/0.6178 of the source.  The
+intervention therefore removes 93.6\% of source high-band power.  It does
+not recover a plausible state: amplitude remains 3.65 times truth and worst
+RMSE remains 4.41 times climatology.  It also destroys short skill.  SST
+day-10/30/90 RMSE is 5.30/6.49/5.94 times source, and the corresponding
+worst ratios for \(\alpha=0.50/0.75/1.00\) rise to
+10.45/15.63/20.82.
+
+\widefigure
+  {../outputs/af_fno/C/anomaly_direct_s0_reflected_spectral_gate_control_v1/model_c_s0_reflected_spectral_training_selection.png}
+  {Training-only reflected spectral-gate result.  High-band power and
+  long-horizon amplitude fall sharply, but short forecast error rises by
+  factors of 6--21 and absolute day-1,000 statistics remain implausible.}
+
+The high-\(k\) excess is therefore a coupled symptom and amplifier, not the
+sole instability source or a safely removable component.  Fixed
+postprocessing is closed.  The next forward-model study should directly test
+the unresolved channel bottleneck: Bire assigns width 128 to ten outputs,
+whereas selected Model C assigns the same width to 46.  Establish a reduced
+ten-output Bire-facing model and require deterministic 10--90-day skill plus
+bounded statistical day-2,000 behavior before resuming the complete adjoint
+campaign.  Do not require post-decorrelation trajectory RMSE to beat
+persistence indefinitely.
+
+All nine manifest-listed artifacts verify, and scratch/project arrays and
+reports are byte-identical.  Contract/arrays/report/summary SHA-256 is
+\texttt{69b0100aae27...b8e7}/\texttt{74827af0d9e6...e164}/
+\texttt{2b739a495fc8...ec53}/\texttt{0e2f11d7fba3...4a36};
+report-content/manifest-content SHA-256 is
+\texttt{84e7b3521a54...85c3}/\texttt{018af80f1942...154d}.  The complete
+package is
+\path{outputs/af_fno/C/anomaly_direct_s0_reflected_spectral_gate_control_v1/}.
+
+\resultbox{blue}{lightblue}{\textbf{Arm R frozen; numerical results pending.}
+Contract \path{config/model_c_reduced_channel_control_v1.json}, SHA-256
+\texttt{a1b8ce50d1b...5a6c5}, isolates the 46-versus-10-output hypothesis.
+It changes the selected Model C dynamical task to ten Bire-facing channels
+while preserving the direct pointwise-anomaly map, width-128 four-block
+trunk, modes, padding, optimizer, checkpoints, and three-step objective
+form.}
+
+The exact ordered state is surface/mid \(U\), surface/mid \(V\),
+surface/mid temperature, surface/mid/bottom \texttt{PHIHYD}, and barotropic
+streamfunction.  The latter four diagnostics are derived only when building
+truth targets and are predicted directly thereafter.  Thus the rollout is a
+genuine reduced closure: it cannot consult or reconstruct any omitted
+46-channel state after initialization.  The semantic loss groups are
+U/V/temperature/\texttt{PHIHYD}/streamfunction with the original term
+weights; this unavoidable adaptation is explicit in the contract.
+
+The derived cache is 2.2~GB with shape
+\(3\times7200\times10\times62\times62\).  Logical-state SHA-256 is
+\texttt{b24728abf50f...c5aa}, metadata/quality SHA-256 is
+\texttt{3ec92a0b30d6...253}/\texttt{b8842dea6f50...a50}, and four
+split-spanning snapshots reproduce fresh 46-to-10 reconstruction bitwise.
+Pooled split-1 pointwise mean/raw-scale/final-scale/floor SHA-256 is
+\texttt{3e2c26c3f6db...9687}/\texttt{b9bb679751ab...d3f}/
+\texttt{6a2d4c7403c1...117f}/\texttt{e2cb5043bec1...e0f2}.
+
+Training selection uses seed 20260724, seven checkpoints through step 15,360,
+and the unchanged 540 split-1 starts through day 90.  After selection, the
+runner automatically computes the same six S0 Figure~3--8 analogues as
+\path{anomaly_direct_bire_s0_inference_v1}: identical 15 starts, day-2,000
+truth, persistence, S0 training climatology, wet-cell reductions, ensemble
+summaries, and filenames.  Figure~6 directly compares the retained
+46-channel source in black with Arm R in red.  A failed training gate still
+receives the fixed descriptive long evaluation requested here, but cannot be
+promoted.
+
+Six focused tests, lint, shell validation, both source-locked preflights, and
+a \(62\times62\) three-call forward/loss smoke test pass; all outputs are
+finite with exact zero land leakage.  Parameter count is 14,823,642.
+Training artifacts will be stored under
+\path{/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/anomaly_direct_reduced_channel_control_v1/};
+the complete six-figure package will be published under
+\path{outputs/af_fno/C/anomaly_direct_reduced_channel_bire_s0_inference_v1/}.
+No adjoint authorization follows from completion alone.
+
+\section{Arm R falsifies the channel-count hypothesis}
+
+\resultbox{red}{lightred}{\textbf{Channel count is not the cause.}  Arm R reduces the
+autoregressive state from 46 to the ten Bire-facing outputs, raising the latent-per-output
+ratio from 2.78 to 12.8, and holds seed, normalization, trunk, modes, padding, optimizer,
+checkpoints, and the three-step objective form fixed.  It is roughly 20\% \emph{better}
+short-term and passes both of its own gates, yet the per-call error growth rate is
+unchanged.  A 4.6-fold increase in conditioning per output rescaled the runaway without
+removing it.}
+
+\begin{center}\small
+\begin{tabular}{@{}lrrrrr@{}}
+\toprule
+\textbf{Field} & \textbf{d30} & \textbf{d90} & \textbf{d200} &
+\textbf{d2,000 (46ch)} & \textbf{d2,000 (Arm R)} \\
+\midrule
+Surface speed (\(\mathrm{m\,s^{-1}}\)) & 0.774 & 0.803 & 0.963 & 0.426 & 0.242 \\
+SST (\({}^\circ\mathrm{C}\)) & 0.708 & 0.811 & 0.935 & 5.339 & 2.149 \\
+Surface \(P/\rho\) (\(\mathrm{m^2\,s^{-2}}\)) & 0.938 & 0.861 & 0.751 & 2.593 & 11.500 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The first three columns are Arm R divided by the retained 46-channel model; the last two
+are absolute day-2,000 ensemble-mean RMSE.  Arm R day-2,000 error is still
+61.8/51.6/135.0 times climatology for speed/SST/\(P/\rho\).  Per-ten-day-call RMSE gains
+over days 300--600 are 1.0325/1.0455/1.0401 for the 46-channel model and
+1.0247/1.0396/1.0627 for Arm R; over days 1,700--2,000 they are 1.0320/1.0229/1.0241 and
+1.0376/1.0255/1.0204.  Surface pressure is 4.4 times \emph{worse} at day 2,000 under the
+reduced state, so removing the deep temperature levels also removes information the
+hydrostatic closure needs.  This eliminates channel count and latent conditioning as
+explanations, alongside depth/padding, output-head interference, and both fixed
+high-\(k\) postprocessing controls.
+
+\subsection{The duplicated positional encoding}
+
+Position currently enters the forward map twice.  The 51 input channels already contain
+\texttt{longitude\_normalized} and \texttt{latitude\_normalized} from
+\path{src/bire_repro/af_data.py}, and the \MITgcm{}-facing FNO is constructed with
+\texttt{positional\_embedding="grid"}, so \texttt{GridEmbeddingND} appends two further
+coordinate channels immediately before lifting.  Both encodings are computed on the same
+unpadded \(62\times62\) grid, so the lifting block receives 53 channels carrying 51
+distinct fields.  Bire et al.\ encode position exactly once (Section 3.3.1, two
+sine/cosine channels before lifting).  Removing the appended grid embedding drops 512
+lifting weights, so this is a redundancy and conditioning correction, not a capacity
+change; the parallel \(3\times3\) local branch still sees the two static position
+channels.
+
+\subsection{Two gate clauses were mis-specified}
+
+Four consecutive controls failed the same two clauses, and both are defective rather than
+demanding.  The deep-pressure clause requires the median mode-wise model-over-truth energy
+ratio at levels 7 and 14 to stay at or below four at every ten-day lead through day 360.
+Its denominator is the truth high-wavenumber energy, about \(2\times10^{-6}\) of the
+field, so the clause thresholds numerical noise on a \emph{derived} quantity.  In both
+prior controls the day-360 mid integrated energy ratio was 1.00--1.03, inside the retained
+\([0.8,1.25]\) bound, while only the mode-wise ratio failed at 9.2--12.5.  The
+short-lead clause caps degradation at 1.1 times the incumbent, but every stabilizing
+change costs short-lead sharpness: the LayerNorm checkpoint is 1.05/1.17/1.82 times the
+incumbent at day 90 while remaining 0.278/0.248/0.368 of persistence and
+0.413/0.363/0.189 of climatology.  It is therefore vetoed for being worse than the
+incumbent while comfortably satisfying the actual scientific requirement.
+
+\subsection{Frozen single-position LayerNorm arm}
+
+Contract \path{config/model_c_anomaly_direct_single_position_layernorm_v1.json} returns to
+the full 46-channel pointwise-anomaly direct-state Model C and changes exactly two things:
+the appended grid embedding is disabled, and the Bire pointwise channel LayerNorm is
+applied after spectral and Channel-MLP mixing.  Seed 20260724, normalization, modes,
+width, depth, padding, optimizer, the seven checkpoint steps, and the 540 split-1
+selection rollouts are unchanged.  The source-relative veto moves from 1.1 to 2.0 and the
+deep-pressure mode-wise ratio becomes reported-not-a-veto with the integrated energy bound
+retained, both recorded explicitly under \texttt{gate\_corrections}; the principled fix,
+restricting the mode-wise statistic to modes carrying the truth's cumulative 99\% energy,
+requires a code change and is deferred rather than applied.  On a passing training gate the
+same six Figure~3--8 filenames, the same 15 S0 starts, and the same reductions are
+republished under
+\path{outputs/af_fno/C/anomaly_direct_single_position_layernorm_v1/}, with the log-scale
+RMSE, per-call gain intervals, and day-2,000 spatial standard-deviation ratio added.  On
+failure the declared successor is a tangent-penalty arm targeting the dominant one-step
+singular gain in the diagnosed \(k=4\)--9 band; no threshold tuning is authorized.
+
+\section{Single-position LayerNorm arm: first passing gate and first
+near-neutral map}
+
+\subsection{Training-only result}
+
+Job 305203 trained the arm in 1h13m and selected optimizer step 14,880 with
+\texttt{arm\_training\_gate\_passed} (14,863,446 parameters).
+
+\begin{center}\small
+\begin{tabular}{@{}rrrrrrc@{}}
+\toprule
+\textbf{Step} & \textbf{Worst primary} & \textbf{Rel.\ source} &
+\textbf{Mode-wise} & \textbf{Mid int.} & \textbf{Bot.\ int.} & \textbf{Pass} \\
+\midrule
+11,520 & 1.1911 & 3.495 & 45.21 & 0.995 & 1.058 & No \\
+13,440 & 0.7343 & 2.155 & 14.52 & 0.868 & 0.972 & No \\
+14,400 & 0.7482 & 2.195 & 12.42 & 0.920 & 1.017 & No \\
+\textbf{14,880} & \textbf{0.4716} & \textbf{1.384} & \textbf{9.50} &
+\textbf{1.035} & \textbf{1.043} & \textbf{Yes} \\
+15,360 & 0.6859 & 2.013 & 9.93 & 1.043 & 1.016 & No \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\resultbox{red}{lightred}{\textbf{The gate correction, not the architecture change,
+produced the first pass.}  Re-scoring the already-trained parent LayerNorm arm --- the
+one that \emph{keeps} the duplicated positional encoding --- against the corrected gate
+shows it passing at both step 14,400 (0.4042/1.186/9.74) and step 14,880
+(0.3253/1.067/10.17).  At step 14,880 it satisfies the primary clause, the
+integrated-energy clause, and even the \emph{original} 1.1 source-relative cap; it
+failed the original gate \emph{solely} on the deep-pressure mode-wise clause.  That
+clause alone had been blocking a checkpoint that was already trained.}
+
+On training-only 10--90-day error the single-position arm is the weakest of the four
+controls: 0.4716 against 0.3253 for the parent LayerNorm arm, 0.3596 for group heads,
+and 0.3855 for three layers without padding.  Removing the duplicated encoding costs
+short-lead accuracy.
+
+\subsection{Held S0 evaluation}
+
+Job 310508 published the same six Figure 3--8 plots, the same 15 starts, the same
+day-2,000 truth, the same baselines, and the same filenames as
+\path{anomaly_direct_bire_s0_inference_v1}, under
+\path{outputs/af_fno/C/single_position_layernorm_bire_s0_inference_v1/}.
+
+\begin{center}\small
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+\textbf{Field} & \textbf{Day 200} & \textbf{Day 2,000} &
+\textbf{Day 2,000 (46ch)} & \textbf{Gain 1,700--2,000} \\
+\midrule
+Surface speed & 0.00280 & \textbf{0.0316} & 0.426 & \textbf{1.0082} (was 1.0320) \\
+SST & 0.0228 & \textbf{0.4155} & 5.339 & \textbf{1.0019} (was 1.0229) \\
+Surface \(P/\rho\) & 0.0305 & \textbf{0.4822} & 2.593 & \textbf{1.0011} (was 1.0241) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\resultbox{green}{lightteal}{\textbf{Long-horizon behaviour is a different regime.}
+Day-2,000 error falls 13.5/12.8/5.4-fold and the asymptotic per-call gain collapses from
+1.023--1.032 to 1.0011--1.0082, with SST and surface pressure within 0.2\% of a
+non-expanding map.  This is also below the plain LayerNorm arm's 1.003--1.007.  All 15
+states remain finite.  Short-term skill is retained: at day 90 the arm is
+0.29/0.22/0.53 of persistence and 0.43/0.32/0.27 of climatology for
+speed/SST/\(P/\rho\), beating both baselines on every primary field.  Day-200 ACC is
+0.844/0.833/0.926/0.862 for U/V/\(P/\rho\)/SST.}
+
+Two caveats belong with that result.  First, surface pressure regresses at short lead:
+day-200 RMSE rises from 0.0151 to 0.0305 and now \emph{loses} to persistence there
+(1.54 times) while still beating climatology (0.49 times); speed and SST are unaffected.
+Second, and more consequential for the protocol, the training gate ranked these arms in
+close to the opposite order to their long-horizon behaviour.  The arm with the worst
+10--90-day error has by far the best autoregressive gain.  This is direct evidence that
+the training-only gate is still not measuring the quantity the project needs, and it
+argues for promoting the per-call gain from a reported diagnostic to a selection
+criterion.
+
+\subsection{Provenance correction}
+
+The frozen figure runner hard-codes \texttt{step-13440} in its published README text, so
+the first attempt (job 308944) published a package whose README misdescribed the model.
+The package was withdrawn and regenerated by job 310508 with an arm-specific README; the
+numerical artifacts reproduce bitwise.  A regression test now asserts that the published
+README names step 14,880 and that the frozen runner's own text is unchanged.
+
 \section{Forward gate and decision}
 
 The decision ledger reports the 10/30-day adjoint-readiness determination separately
@@ -1465,7 +2157,7 @@ scientific result is retained but no later archive opens.
 A0 & \Fail & Complete gate: short-skill, ACC, and spectra fail; boundedness and wind slope pass. & Adapted transfer reference \\
 A & \Fail & Temperature/SSH lose to persistence at 10 days; unstable error growth through 100 days. & Modern one-step control \\
 B & \Fail & Rollout loss materially helps A, but temperature/SSH still lose at 10 and 100 days. & Frozen loss ablation \\
-C & \Active & All three anomaly-direct seeds pass and seed 20260724/step 13,440 is frozen.  Job 303993 passes 10/30-day readiness, primary AUC, boundedness/drift, and wind slope; it fails the combined gate only at tiny mid/bottom-pressure high-\(k\) tails. & Attribute the tail on split 1 across all seeds and depths before one bounded regularization test \\
+C & \Active & All three anomaly-direct seeds pass and seed 20260724/step 13,440 is frozen.  Job 304736 confirms baseline skill through day 200 and rejects ensemble stability by day 2,000. & Retain for deterministic 10--30-day work; develop and predeclare a separate long-term statistical-stability correction \\
 D & \Pending & Blocked until an explicitly versioned C successor freezes and response data pass linearity checks. & Response/adjoint model \\
 \midrule
 \multicolumn{3}{@{}l}{\textbf{Complete adjoint campaign may open}} &
@@ -1543,7 +2235,17 @@ Model C deep-pressure spectral diagnosis & Frozen failure retained; integrated m
 Model C training-only spectral attribution v1 / job 304125 & Completed in 1m07s but scientifically invalid: each ten-day call was compared with truth one daily snapshot later.  The output under \path{outputs/af_fno/C/anomaly_direct_training_spectral_attribution_v1/} is rejected provenance only \\
 Model C corrected training-only spectral attribution v2 / job 304177 & Completed normally in 1m11s.  Day-360 mid/bottom ratios are 12.25--13.54/4.96--5.69 across all seeds, integrated energy is 1.02--1.07 times truth, and every primary 10--90-day ratio is 0.19--0.37 times persistence.  Report/manifest content SHA-256 \texttt{f3cb1bd6de11...141927}/\texttt{952eb9ee49f4...243b8}; JSON/NPZ/two plots under \path{outputs/af_fno/C/anomaly_direct_training_spectral_attribution_v2/} \\
 Model C deep-pressure spectral regularization v1 / job 304324 & Completed normally in 10m25s; no checkpoint passes and source step 13,440 remains selected.  Step 1,920 lowers mid/bottom day-360 ratios from 13.37/5.57 to 6.19/2.97, removes bottom failure, delays mid onset to day 280, keeps energy at 1.006/0.980 times truth, and protects primary skill.  Report/manifest content SHA-256 \texttt{8065faafeecf...ddb75}/\texttt{280a863a5892...f3a8}; JSON/NPZ/two plots under \path{outputs/af_fno/C/anomaly_direct_deep_pressure_spectral_regularization_v1/} \\
-Model C Bire LayerNorm/dropout controls v1 / array 304376 & Submitted under frozen training-only three-arm factorial SHA-256 \texttt{dd9089e9675a...0f827}; tasks 0/1/2 are LayerNorm, Channel-MLP dropout 0.5, and both; identical seed 20260724, pointwise anomaly/direct-state representation, base architecture/loss/optimizer, 15,360 steps, seven checkpoints, and corrected split-1 day-360 gate; outputs under \path{outputs/af_fno/C/anomaly_direct_bire_regularization_controls_v1/} \\
+Model C Bire LayerNorm/dropout controls v1 / array 304376 & All tasks completed normally; no arm passes.  LayerNorm/dropout/combined diagnostic-best day-360 mid/bottom ratios are 9.74/4.92, 37.59/15.04, and 19.51/8.27, while worst primary degradation is 18.6\%, 57.4\%, and 63.2\%.  Aggregate contract/report/manifest content SHA-256 \texttt{c977c196b487...eaea}/\texttt{9f7b7cbbf5dc...5527}/\texttt{fb6e622fef1f...53b2}; original checkpoint retained; per-arm and aggregate JSON/CSV/plots under \path{outputs/af_fno/C/anomaly_direct_bire_regularization_controls_v1/} \\
+Model C Bire three-layer/no-padding control v1 / jobs 304526/304597 & Training job 304526 failed only at evaluator reconstruction after writing all checkpoints.  Zero-retraining recovery 304597 completed in 2m41s; no checkpoint passes.  Diagnostic-best step 14,400 has day-360 mid/bottom ratios 12.51/5.84, onset days 210/310, energy ratios 1.032/1.011, primary persistence ratios 0.225/0.211/0.386, and 13.1\% worst source-relative degradation.  Report/manifest content SHA-256 \texttt{a429db0f64bb...58416}/\texttt{152190e6d06f...14539}; outputs under \path{outputs/af_fno/C/anomaly_direct_three_layer_no_padding_v1/three_layer_no_padding/} \\
+Model C group-specific-head control v1 / job 304708 & Completed normally in 1h30m46s; no checkpoint passes.  Diagnostic-best step 14,880 keeps primary ratios at 0.211/0.202/0.360 times persistence and 5.5\% worst source-relative degradation, while improving source mid/bottom ratios 13.37/5.57 to 9.21/4.40, onset to days 220/350, and energy to 1.004/0.995.  Report/manifest content SHA-256 \texttt{fa25da048b5d...0f3b6}/\texttt{8e9c6a867727...5488e}; outputs under \path{outputs/af_fno/C/anomaly_direct_group_heads_v1/group_specific_heads/} \\
+Model C S0 Bire Figure 3--8 suite v1 / job 304736 & Completed normally in 1m07s for 15 fixed inference starts through day 2,000.  Day-200 speed/\(P/\rho\)/SST RMSE 0.00270/0.0151/0.0241 beats both baselines, but day-2,000 RMSE 0.426/2.593/5.339 rejects long-term stability.  Six PNGs, CSV, summary, report, and arrays under \path{outputs/af_fno/C/anomaly_direct_bire_s0_inference_v1/}; arrays/report SHA-256 \texttt{30abd95810d3...3c7}/\texttt{32ac2e051726...bd18}; manifest-content SHA-256 \texttt{593dd43de772...57d1} \\
+Model C S0 boundary/checkpoint diagnosis v1 / job 304740 & Completed normally in 1m46s with zero retraining.  All seven checkpoints run away; selected step 13,440 crosses mean normalized amplitude 20 latest at day 880.  Its 24.9\%-of-cells boundary band holds 72.8/85.2/72.7\% of day-2,000 \(Q_x/Q_y/\psi\) squared error, with spatial cosines 0.783/0.649/0.902 across 15 members, but boundary growth does not consistently precede interior growth.  Report/summary/arrays SHA-256 \texttt{bc62501a18f7...2fc67}/\texttt{c6c069e52ee5...fef50e}/\texttt{d37d570337a3...b9942ae}; five plots and complete evidence under \path{outputs/af_fno/C/anomaly_direct_bire_s0_boundary_checkpoint_v1/} \\
+Model C S0 stability instrument v1 & Post-hoc re-expression of immutable job-304736 arrays only.  Days-300--600 speed/\(P/\rho\)/SST gain per ten-day call is 1.0332/1.0397/1.0456 with bootstrap intervals above one; normalized maximum gain is 1.0252.  Contract SHA-256 \texttt{ab6d597843b1...fc5be7}; report/content/manifest-content SHA-256 \texttt{5212f3aee081...72040}/\texttt{945495f0e096...6cfbe}/\texttt{f03aeb9487ab...869a}; three plots/CSV/JSON under \path{outputs/af_fno/C/anomaly_direct_s0_stability_instrument_v1/} \\
+Model C S0 stability/tangent comparison v1 / job 304750 & Failed operationally after 1m42s: an explosive comparator overflowed float32 squared-error/spectral reductions and the log-fit rejected non-finite samples.  No output package was published and no completed comparison is assigned.  Contract/failed-log SHA-256 \texttt{5d32d472509a...bca4}/\texttt{ae476ab3b0c...1356} \\
+Model C S0 stability/tangent recovery v2 / job 304751 & Completed normally in 2m12s; all ten artifacts verify.  All states stay finite.  Prior residual day-2,000 speed/\(P/\rho\)/SST RMSE is \(3.32\times10^{25}/6.76\times10^{26}/1.41\times10^{27}\).  LayerNorm reduces selected error to 5.1/21.3/7.9\% but remains 5.54/6.48/10.12 times climatology; selective high-\(k\), not uniform, tangent stabilization.  Contract/arrays/report/summary SHA-256 \texttt{8bc5c0937d0e...e1ac}/\texttt{95e0a42bc437...01175}/\texttt{684815b7882b...7b84}/\texttt{bdd7c1a06c0d...cc25}; five plots and package under \path{outputs/af_fno/C/anomaly_direct_s0_stability_tangent_recovery_v2/} \\
+Model C S0 high-\(k\) damping control v1 / job 304753 & Completed normally in 1m07s; no nonzero strength passes and inference remains sealed.  At \(\alpha=0.02\), day-1,000 worst RMSE/climatology, amplitude, and high-\(k\) power fall to 0.7768/0.7742/0.4448 of source, but worst short RMSE is 1.0658 times source.  Contract/arrays/report/summary SHA-256 \texttt{cf2f1c179d36...9554}/\texttt{88eac7163328...9d}/\texttt{8ca08f114763...a66}/\texttt{3c100081bd10...806}; complete package under \path{outputs/af_fno/C/anomaly_direct_s0_highk_damping_control_v1/} \\
+Model C S0 reflected spectral-gate control v1 / job 304754 & Completed normally in 1m06s; no strength passes and inference remains sealed.  At \(\alpha=0.25\), day-1,000 amplitude/high-\(k\) power/worst RMSE fall to 0.4365/0.0638/0.6178 of source, but worst short RMSE is 6.49 times source and absolute day-1,000 amplitude/RMSE remain 3.65/4.41 times truth/climatology.  Contract/arrays/report/summary SHA-256 \texttt{69b0100aae27...b8e7}/\texttt{74827af0d9e6...e164}/\texttt{2b739a495fc8...ec53}/\texttt{0e2f11d7fba3...4a36}; complete package under \path{outputs/af_fno/C/anomaly_direct_s0_reflected_spectral_gate_control_v1/} \\
+Model C Arm R reduced-channel causal control v1 & Frozen and preflight-complete; numerical results pending.  Contract SHA-256 \texttt{a1b8ce50d1b...5a6c5}; derived-cache logical/metadata/quality SHA-256 \texttt{b24728abf50f...c5aa}/\texttt{3ec92a0b30d6...253}/\texttt{b8842dea6f50...a50}.  Training package is planned under \path{/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/anomaly_direct_reduced_channel_control_v1/}; matching six-figure package under \path{outputs/af_fno/C/anomaly_direct_reduced_channel_bire_s0_inference_v1/} \\
 Model C Bire-style figures / job 291134 & \path{config/model_c_bire_figures_v1.json}, SHA-256 \texttt{791c84f12c2d...eb696b}; report/arrays SHA-256 \texttt{b704b921444d...e300ac5}/\texttt{a73ac9bf2cc9...20b1}; two PNGs and hash manifest under \path{outputs/af_fno/C/bire_figures_v1/}, manifest-content SHA-256 \texttt{258be6fabe13...827f} \\
 Model C Figure-4 baseline companion & \path{config/model_c_bire_baseline_zoom_v1.json}, SHA-256 \texttt{2a2324090b83...b2a4a}; full/zoom SST and surface-\(P/\rho\) PNG plus complete CSV under \path{outputs/af_fno/C/bire_baseline_zoom_v1/}, manifest-content SHA-256 \texttt{01433936e406...99063} \\
 Model C per-lead streamfunction maps / job 291135 & \path{config/model_c_bire_streamfunction_leads_v1.json}, SHA-256 \texttt{ccb965e58bdc...ae1934c}; report/arrays SHA-256 \texttt{71c6e1dc1f9a...89c206}/\texttt{b4126494d9c0...3bcd48}; eight PNGs under \path{outputs/af_fno/C/bire_streamfunction_leads_v1/}, manifest-content SHA-256 \texttt{3b74d759d551...450ac7} \\
@@ -1643,6 +2345,35 @@ Frozen criteria & \path{docs/AF_FNO_Project_Plan.tex} \\
 2026-07-29 & Complete deep-pressure spectral fine-tune & Job 304324 completed normally in 10m25s and substantially improves the localized tail without passing the frozen gate.  Final mid/bottom ratios are 6.19/2.97, bottom has no failure, mid onset moves to day 280, integrated energy is 1.006/0.980 times truth, and short skill is protected.  Retain the original checkpoint and authorize neither a second spectral weight nor any later archive read. \\
 2026-07-29 & Freeze Bire regularization controls & Contract SHA-256 \texttt{dd9089e9675a...0f827} fixes three from-scratch training-only arms separating pointwise LayerNorm, archived Channel-MLP dropout 0.5, and their interaction.  All retain the direct-state representation, seed, data order, architecture apart from regularizers, base loss, optimizer, and 15,360-step budget.  Four tests, lint, source locks, all-arm preflight, shell validation, and full-grid smoke tests pass; later archives remain sealed. \\
 2026-07-29 & Start Bire regularization controls & Submit V100 array 304376 with task mapping 0=LayerNorm, 1=dropout 0.5, and 2=combined.  Every arm trains from scratch under the same controlled constants and uses only the corrected split-1 day-360 selection protocol.  No validation, held-inference, long-term, response, or adjoint archive is opened. \\
+2026-07-29 & Reject Bire regularization controls & Array 304376 completes normally, but no arm satisfies both the spectral and protected-primary gates.  Diagnostic-best LayerNorm/dropout/combined mid/bottom day-360 ratios are 9.74/4.92, 37.59/15.04, and 19.51/8.27; worst primary degradation is 18.6\%, 57.4\%, and 63.2\%.  Publish the source-locked aggregate and retain original seed 20260724/step 13,440. \\
+2026-07-29 & Freeze three-layer/no-padding control & Contract SHA-256 \texttt{7d405cfb8307...fd20} changes only FNO block count four to three and padding 0.1 to none.  All other representation, architecture, training, checkpoint, and corrected split-1 selection choices remain fixed.  Nine focused tests, lint, shell validation, immutable-source preflight, and a 62-by-62 forward smoke test pass; later archives remain sealed. \\
+2026-07-29 & Preserve failed architecture-control job & Job 304526 completes the full 15,360-step training and all seven checkpoint writes, then exits 1 before any metric when the inherited evaluator enforces its old four-layer-only reconstruction.  Record an operational failure only; make no scientific decision and preserve every checkpoint byte. \\
+2026-07-29 & Freeze evaluation-only recovery & Contract SHA-256 \texttt{9232cea2ae58...165b} source-locks the failed log and seven completed checkpoints.  The recovery performs zero retraining, corrects only checkpoint architecture reconstruction, and applies the unchanged corrected split-1 day-360 gate.  Eleven focused tests, lint, shell validation, immutable-source preflight, and all archive-sealing checks pass. \\
+2026-07-29 & Reject three-layer/no-padding control & Recovery job 304597 completed normally in 2m41s without retraining.  Diagnostic-best step 14,400 delays mid-level failure to day 210 but day-360 mid/bottom ratios remain 12.51/5.84 and worst primary degradation is 13.1\%.  Neither prospective gate passes; retain original seed 20260724/step 13,440 and publish the recovered outputs. \\
+2026-07-29 & Freeze group-specific-head control & Contract SHA-256 \texttt{932afdd1b6b5...b1c6} changes only the shared output projection/local path to independent U/V/temperature/SSH heads on the unchanged source trunk.  Training and the corrected split-1 gate remain fixed.  Three tests, lint, shell validation, immutable-source preflight, and native-grid forward smoke pass; later archives stay sealed. \\
+2026-07-29 & Reject group-specific-head control & Job 304708 completed normally in 1h30m46s.  Diagnostic-best step 14,880 preserves every primary guard and improves mid/bottom day-360 ratios to 9.21/4.40 with onset at days 220/350 and energy 1.004/0.995, but factor four remains failed.  Retain original seed 20260724/step 13,440 and publish the complete source-locked package. \\
+2026-07-29 & Freeze control-wind long-term figure suite & Contract SHA-256 \texttt{dc204636660d...d75ea5} prospectively fixes the S0 wind at \(0.1~\mathrm{N\,m^{-2}}\), selected median seed 20260724/step 13,440, 15 RNG-selected late-inference starts, training-only S0 climatology, memberwise persistence, and all six requested figure definitions at a ten-day interval.  An exact six-year continuation from year 120 supplies unseen truth through every day-2,000 target and is prohibited from training use.  Focused tests, lint, shell validation, immutable-source and MITgcm preflight pass; results remain pending. \\
+2026-07-29 & Complete control-wind long truth & Job 304735 completed normally in 6m59s and produced all 2,160 evaluation-only daily truth pairs, continuous iterations, and the final year-126 pickup.  Result/manifest SHA-256 is \texttt{9ebd446ff6f3...99925}/\texttt{e15530c67dbe...41c6f}; no new record enters training. \\
+2026-07-29 & Freeze six-figure GPU evaluation & Contract SHA-256 \texttt{6afa41cfaaf8...616030} binds the complete truth, selected seed 20260724/step 13,440, prior residual comparator, all 15 starts, exact RMSE/ACC/baseline definitions, days 0--2,000, and six non-overwriting output filenames.  Figure 6 is labeled as an architecture-direction comparison because the selected anomaly-direct model was trained from scratch.  Four tests, lint, shell validation, complete-truth preflight, and both native-grid checkpoint reloads pass; numerical results were deliberately pending at contract freeze. \\
+2026-07-29 & Reject long-term stability; retain short Model C & GPU job 304736 completed normally in 1m07s.  At day 200, selected Model C beats persistence and climatology for all three primary fields and preserves U/V/\(P/\rho\)/SST ACC 0.784/0.887/0.972/0.833.  By day 2,000, model RMSE is 81.9/67.7/87.1 times persistence and fixed-member streamfunction RMSE is 96.2~Sv.  Publish all six figures and the hash-bound numerical package; keep the checkpoint for 10--30-day deterministic work but reject Bire-style long-term stability. \\
+2026-07-29 & Freeze boundary/checkpoint mechanism diagnosis & The fixed member places 71.3\% of day-2,000 streamfunction squared error in the four-cell boundary union.  Contract SHA-256 \texttt{e859999279a7...d2c0} now binds all seven unchanged seed-20260724 checkpoints, the same 15 starts and truth, exact \(Q_x/Q_y/\psi\) region/growth/spatial metrics, and five output plots before ensemble/checkpoint results.  It cannot retrain or reselect.  Tests, lint, shell validation, all source/artifact hashes, complete-truth preflight, and seven one-step reloads pass. \\
+2026-07-29 & Classify boundary-amplified global runaway & Job 304740 completed normally in 1m46s.  All checkpoints cross mean normalized amplitude 20 by day 880; earlier 3,840/7,680/11,520 steps cross on days 410/580/780, rejecting shorter training as the cure.  At selected step 13,440, 72.8/85.2/72.7\% of day-2,000 \(Q_x/Q_y/\psi\) error energy lies in the 24.9\%-of-cells boundary band and the pattern recurs across 15 members.  Boundary relative-growth timing does not consistently lead the interior, so classify a reproducible boundary-amplified global transport mode rather than a demonstrated propagation cascade; do not reselect the checkpoint. \\
+2026-07-29 & Correct the long-stability instrument & Immutable job-304736 curves show days-300--600 speed/\(P/\rho\)/SST gain 1.0332/1.0397/1.0456 per ten-day call and normalized-amplitude gain 1.0252, all without a new rollout or selection.  Replace day-200 finiteness by at least 200-call saturation, amplitude-envelope, mean/variance, spectrum, and circulation statistics; keep short deterministic skill separate and do not identify RMSE growth with Jacobian spectral radius. \\
+2026-07-29 & Freeze zero-retraining stability/tangent comparison & Contract SHA-256 \texttt{5d32d472509a...bca4} fixes selected anomaly-direct step 13,440, LayerNorm diagnostic step 14,400, the prior residual model, the same 15 S0 starts, and corrected 200-call statistical/spectral metrics.  Three training-only states supply shared-coordinate singular and ten-call tangent gains for the two direct maps only.  Preflight loads and advances all models with finite land-zero output; numerical results remain pending, with no retraining, selection, promotion, or spectral-radius claim. \\
+2026-07-29 & Preserve failed stability/tangent evaluation & Job 304750 exits 1 after 1m42s when explosive float32 diagnostic reductions overflow and the log-gain reducer refuses non-finite samples.  The failure occurs after successful preflight, no transaction is published, and no completed scientific comparison is claimed.  Preserve failed-log SHA-256 \texttt{ae476ab3b0c...1356}. \\
+2026-07-29 & Freeze evaluation-only overflow recovery & Contract SHA-256 \texttt{8bc5c0937d0e...e1ac} binds job 304750, the original contract, all unchanged checkpoints and states, float64 physical reductions, memberwise first-nonfinite recording, and censored fit windows.  Four tests, lint, shell validation, hashes, original preflight, and all-model smoke pass.  Results remain pending; retraining, selection, promotion, and spectral-radius claims remain prohibited. \\
+2026-07-29 & Complete stability/tangent recovery & Job 304751 completes normally in 2m12s with all ten artifacts verified.  All maps remain finite, but the prior residual state is catastrophically unstable and caused the original reduction overflow.  LayerNorm removes 94.9/78.7/92.1\% of selected day-2,000 speed/\(P/\rho\)/SST error while remaining 5.54/6.48/10.12 times climatology and supercritical in every window.  Its high-\(k\) tangent gain is smaller but full/mid ten-call gain is larger, supporting selective spectral/off-manifold stabilization rather than uniform contraction; do not promote it. \\
+2026-07-29 & Freeze high-\(k\) causal filter control & Contract SHA-256 \texttt{cf2f1c179d36...9554} fixes exact selected Model C, five reflected-binomial normalized-anomaly damping strengths, ten fixed split-1 S0 day-1,000 trajectories, short-skill and long RMSE/amplitude/high-\(k\) gates, and conditional fixed S0 inference opening.  Tests, lint, shell validation, hashes, exact zero identity, and filtered one-step smoke pass.  No retraining, checkpoint selection, or promotion; results remain pending. \\
+2026-07-29 & Reject fixed high-\(k\) damping & Job 304753 completes normally in 1m07s and all nine artifacts verify.  No nonzero strength passes.  The weakest \(\alpha=0.02\) meets all day-1,000 reduction gates at 0.7768/0.7742/0.4448 of source for worst RMSE/climatology, amplitude, and worst high-\(k\) power, but violates the frozen short guard at 1.0658 times source.  Keep conditional inference sealed, select no filter, and infer that high-\(k\) removal is causal but fixed isotropic smoothing is insufficient. \\
+2026-07-29 & Freeze reflected spectral-gate control & Contract SHA-256 \texttt{69b0100aae27...b8e7} retains the exact training/inference seal and replaces all-scale smoothing by an even-reflected transfer that preserves \(k\leq8\), transitions over modes 8--10, and attenuates only \(k\geq10\).  Five prospective strengths, six combined tests, lint, shell validation, immutable hashes, exact identity, low-mode preservation, checkerboard damping, and native-grid preflight pass.  Zero retraining; no selection or promotion before results. \\
+2026-07-29 & Reject reflected spectral gate and refocus on channels & Job 304754 completes normally in 1m06s and all nine artifacts verify.  The weakest strength removes 93.6\% of source high-band power but raises worst short RMSE to 6.49 times source; day-1,000 amplitude/worst RMSE remain 3.65/4.41 times truth/climatology.  No strength passes, inference stays sealed, and nothing is promoted.  Close fixed filtering and prioritize a ten-output Bire-facing forward baseline to test the 46-channel bottleneck before resuming the complete adjoint campaign. \\
+2026-07-29 & Freeze Arm R reduced-channel causal control & Contract SHA-256 \texttt{a1b8ce50d1b...5a6c5} fixes ten ordered Bire-facing outputs and changes no selected-Model-C trunk, optimizer, checkpoint, or three-step loss coefficient.  The explicit five-group adaptation is the only unavoidable objective change.  The 2.2-GB cache reproduces four fresh derivations bitwise; six tests, lint, shell validation, immutable hashes, training and static held-evaluation preflights, exact normalizer/record hashes, and native-grid forward/loss smoke pass.  One GPU job will train/select on split 1 and then generate the same fixed 15-member S0 Figure~3--8 suite through day 2,000.  Results pending; no adjoint authorization. \\
+2026-07-30 & Complete Arm R; falsify the channel-count hypothesis & Arm R passes its training-only checkpoint gate and its S0 10--90-day deterministic gate, and is about 20\% better than the 46-channel model at days 30--200 (ratios 0.774/0.708/0.938 at day 30 and 0.803/0.811/0.861 at day 90 for speed/SST/\(P/\rho\)).  Day-2,000 speed and SST error halve to 0.242 and 2.149, but surface pressure worsens 4.4-fold to 11.500 and all three remain 61.8/51.6/135.0 times climatology.  Per-call gains over days 300--600 are 1.0247/1.0396/1.0627 against 1.0325/1.0455/1.0401 for the retained model, so a 4.6-fold rise in latent-per-output conditioning rescales the runaway without changing its growth rate.  Reject autoregressive channel count and latent conditioning as the cause and return to the full 46-channel state. \\
+2026-07-30 & Record the duplicated positional encoding & Position enters the map twice: as the \texttt{longitude\_normalized} and \texttt{latitude\_normalized} static data channels inside the 51 inputs, and again as the \texttt{GridEmbeddingND} pair appended before lifting by \texttt{positional\_embedding="grid"}.  Both are computed on the same unpadded \(62\times62\) grid, so lifting receives 53 channels carrying 51 distinct fields, whereas Bire Section 3.3.1 encodes position once.  Removing the appended embedding drops 512 lifting weights and is a redundancy correction, not a capacity change. \\
+2026-07-30 & Complete the single-position LayerNorm arm & Job 305203 trained in 1h13m and selected step 14,880 with \texttt{arm\_training\_gate\_passed} at worst primary 0.4716, source-relative 1.384, mode-wise 9.50, and integrated energy 1.035/1.043.  Re-scoring the already-trained parent LayerNorm arm against the corrected gate shows it also passing at steps 14,400 and 14,880, and at 14,880 it clears even the original 1.1 source-relative cap---it had failed only the deep-pressure mode-wise clause.  The gate correction, not the architecture change, produced the first pass, and on 10--90-day error the single-position arm is the weakest of the four controls. \\
+2026-07-30 & Publish the single-position S0 Figure 3--8 suite & Job 310508 completed in 1m20s and published the same six filenames, 15 starts, day-2,000 truth, baselines, and reductions as \path{anomaly_direct_bire_s0_inference_v1} under \path{outputs/af_fno/C/single_position_layernorm_bire_s0_inference_v1/}.  Day-2,000 RMSE falls 13.5/12.8/5.4-fold to 0.0316/0.4155/0.4822 and the 1,700--2,000-day per-call gain collapses from 1.0320/1.0229/1.0241 to 1.0082/1.0019/1.0011, below the plain LayerNorm arm's 1.003--1.007.  Day-90 skill is retained at 0.29/0.22/0.53 of persistence and 0.43/0.32/0.27 of climatology; day-200 ACC is 0.844/0.833/0.926/0.862.  Surface pressure regresses at short lead, losing to persistence at day 200 (1.54 times).  The training gate ranked the arms in close to the opposite order to their long-horizon gain. \\
+2026-07-30 & Withdraw and regenerate a mislabelled package & The frozen figure runner hard-codes \texttt{step-13440} in its README text, so job 308944 published a package whose README misdescribed the model.  The package was withdrawn, an arm-specific README was bound in, and job 310508 regenerated it with bitwise-identical numerical artifacts.  A regression test now asserts the published README names step 14,880. \\
+2026-07-30 & Freeze single-position LayerNorm arm and correct two gate clauses & Contract \path{config/model_c_anomaly_direct_single_position_layernorm_v1.json} returns to the full 46-channel state and changes only the duplicated positional encoding and the Bire pointwise LayerNorm.  The source-relative veto moves 1.1\(\rightarrow\)2.0 because the requirement is beating persistence and climatology, which the LayerNorm checkpoint does at 0.278/0.248/0.368 and 0.413/0.363/0.189 on day 90 while being 1.05/1.17/1.82 times the incumbent.  The deep-pressure mode-wise ratio becomes reported-not-a-veto because its denominator is about \(2\times10^{-6}\) of the field, with the day-360 integrated energy bound retained; the principled 99\%-energy restriction is deferred to a declared code change.  The architecture validator now accepts \texttt{positional\_embedding} in \{grid, null\}, an additive change that re-records the \path{af_model_c_successor.py} hash.  Not validated or submitted: the \path{/sw} mount was repointed, \path{/sw/anaconda/anaconda-3.12} is gone, and \path{.venv/bin/python} is a dangling symlink, so tests, preflight, and submission are blocked. \\
 \bottomrule
 \end{longtable}
 

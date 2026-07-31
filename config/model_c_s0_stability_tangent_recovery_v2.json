@@ -1,0 +1,225 @@
+{
+  "version": "model_c_s0_stability_tangent_recovery_v2",
+  "contract_status": "frozen_evaluation_only_recovery_after_job304750_overflow",
+  "failed_job_id": "304750",
+  "failed_job_state": "FAILED",
+  "failed_job_exit_code": "1:0",
+  "failed_job_elapsed": "00:01:42",
+  "failure_classification": "model rollouts reached the reducer, but explosive float32 physical diagnostics overflowed and the log-fit correctly rejected non-finite samples; no output package was published",
+  "original_contract_sha256": "5d32d472509a49e4734218bfd9be38a313f2b59fdd4fe7335ebcef168cc2bca4",
+  "protocol": {
+    "wind_regime": "S0",
+    "wind_stress_n_m2": 0.1,
+    "dt_days": 10,
+    "lead_days": [
+      0,
+      2000
+    ],
+    "calls": 200,
+    "members": 15,
+    "start_indices": [
+      6913,
+      6689,
+      7174,
+      6962,
+      6781,
+      7155,
+      6676,
+      7019,
+      7199,
+      6733,
+      6969,
+      6662,
+      6986,
+      7068,
+      6885
+    ],
+    "methods": [
+      "selected",
+      "layernorm",
+      "prior_residual"
+    ],
+    "fields": [
+      "surface_speed",
+      "phihyd_surface",
+      "sst"
+    ],
+    "statistical_fields": [
+      "surface_speed",
+      "phihyd_surface",
+      "sst",
+      "streamfunction"
+    ],
+    "spectrum_leads": [
+      200,
+      500,
+      1000,
+      1500,
+      2000
+    ],
+    "spectrum_bands": {
+      "low_k1_3": [
+        1,
+        3
+      ],
+      "mid_k4_9": [
+        4,
+        9
+      ],
+      "high_k10_30": [
+        10,
+        30
+      ]
+    },
+    "fit_windows": [
+      [
+        300,
+        600
+      ],
+      [
+        700,
+        1000
+      ],
+      [
+        1700,
+        2000
+      ]
+    ],
+    "tangent_methods": [
+      "selected",
+      "layernorm"
+    ],
+    "tangent_times": [
+      431,
+      2159,
+      4985
+    ],
+    "tangent_bands": {
+      "full": null,
+      "low_k1_3": [
+        1,
+        3
+      ],
+      "mid_k4_9": [
+        4,
+        9
+      ],
+      "high_k10_30": [
+        10,
+        30
+      ]
+    },
+    "truth": "unchanged completed job 304735 continuous S0 MITgcm extension",
+    "selection": "none",
+    "retraining": false
+  },
+  "recovery_changes": {
+    "physical_reduction_dtype": "float64",
+    "model_state_dtype": "unchanged_float32",
+    "nonfinite_policy": "record_first_lead_per_member_then_censor_later_metrics",
+    "fit_policy": "fit_only_complete_all_member_positive_prefix_within_window",
+    "model_or_weight_change": false,
+    "retraining_steps": 0,
+    "checkpoint_selection": false
+  },
+  "architecture": {
+    "in_channels": 51,
+    "out_channels": 46,
+    "n_modes": [
+      24,
+      16
+    ],
+    "hidden_channels": 128,
+    "n_layers": 4,
+    "lifting_channel_ratio": 2,
+    "projection_channel_ratio": 2,
+    "channel_mlp_expansion": 4.0,
+    "domain_padding": 0.1,
+    "positional_embedding": "grid",
+    "use_channel_mlp": true,
+    "local_kernel_size": 3,
+    "fno_block_precision": "full",
+    "factorization": null
+  },
+  "artifacts": {
+    "failed_job_log": {
+      "path": "/home/mjalabert314/bire_james25_repro/slurm-304750.out",
+      "sha256": "ae476ab3b0c59a4a2ad041bc9b70be785c4b7e5fdc0ae3a32aec1e0ddae01356"
+    },
+    "original_contract": {
+      "path": "/home/mjalabert314/bire_james25_repro/config/model_c_s0_stability_tangent_comparison_v1.json",
+      "sha256": "5d32d472509a49e4734218bfd9be38a313f2b59fdd4fe7335ebcef168cc2bca4"
+    },
+    "dataset_metadata": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/trajectories_v2.zarr/.zmetadata",
+      "sha256": "ae7be47c456962f411acb0d8e217dcb7fa6e24c59e5a8f3133f93032e378b8cc"
+    },
+    "long_truth_result": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/mitgcm_long_truth_v1/S0/production/years_120_126/segment_result.json",
+      "sha256": "9ebd446ff6f39b86c4281d86732d54b602e265ce240718314cd4d282bc799925"
+    },
+    "selected_checkpoint": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/anomaly_direct_replication_v1/seeds/seed_20260724/model_c_anomaly_direct_v1_best.pt",
+      "sha256": "28b4809089a2a61b6a6be8bd82f9ab72751a1e625b8accbaec8474f073bd1a23"
+    },
+    "pointwise_normalization": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/anomaly_direct_replication_v1/seeds/seed_20260724/model_c_anomaly_direct_v1_normalization.npz",
+      "sha256": "a81a27ce86b0d0b296d0d960bb5856cbcf2f3d88b21e7ffa398ae4983a30ebd1"
+    },
+    "layernorm_checkpoint": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/anomaly_direct_bire_regularization_controls_v1/layernorm/training_checkpoints/model_c_bire_regularization_step_14400.pt",
+      "sha256": "7e13629303555e6ec124de66cf4ec0c955c2d6649af39e53ed6e059565b311bb"
+    },
+    "layernorm_report": {
+      "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/anomaly_direct_bire_regularization_controls_v1/layernorm/bire_regularization_control_report.json",
+      "sha256": "9cdeb828f253d85de07a3c02784c4b36534350e0baaeb218d775b9a09966e757"
+    },
+    "prior_checkpoint": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/rollout_conditioned_loss_v3/model_c_rollout_conditioned_loss_v3_best.pt",
+      "sha256": "e9f962878cb51bfe7dc498b07173f499d982a7f3c31e23afd8036b17afad970b"
+    },
+    "job304736_contract": {
+      "path": "/home/mjalabert314/bire_james25_repro/config/model_c_bire_s0_figures_v1.json",
+      "sha256": "6afa41cfaaf8987457d0b9febc92d52c324c37bd85f040329466f9b42d616030"
+    },
+    "stability_instrument_contract": {
+      "path": "/home/mjalabert314/bire_james25_repro/config/model_c_s0_stability_instrument_v1.json",
+      "sha256": "ab6d597843b13e5dc71e65b9c4dcc5a5e1ff783182d2ae9ff43ae2d61bfc5be7"
+    },
+    "stability_instrument_report": {
+      "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/anomaly_direct_s0_stability_instrument_v1/model_c_s0_stability_instrument_report.json",
+      "sha256": "5212f3aee081bbff532d606e6883251dc7bfb8b1442c18b7a7362622ab072040"
+    }
+  },
+  "source_hashes": {
+    "src/bire_repro/af_model_c_s0_stability_tangent_recovery.py": "f75a62d41bebcad0f9158e867906f4566d10b186f0926305331a535078bd34ca",
+    "tests/model_c/test_af_model_c_s0_stability_tangent_recovery.py": "3956a3dece99f69e76682e9ac242b8e8be947e2d987c3b02a1d82ae20cfaa116",
+    "slurm/models/c/af_model_c_s0_stability_tangent_recovery.sbatch": "3314bc512a61ca0dfa9d5ba3f53bffaa2f82ff344f3dfe2f3207bfcd664deda6",
+    "src/bire_repro/af_pressure.py": "1939645d807ec0281624d4146cadc51b3e9f382c540a56d7ed5afdca4b2c7c6c",
+    "src/bire_repro/af_tutorial_analysis.py": "05f0d290937fbaaa580fd9f7e3794c7929e8b8659ff5676cbcc03bf9fcb93eb3"
+  },
+  "output": {
+    "scratch": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/anomaly_direct_s0_stability_tangent_recovery_v2",
+    "project": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/anomaly_direct_s0_stability_tangent_recovery_v2",
+    "overwrite": false,
+    "required": [
+      "model_c_s0_stability_models_log_rmse.png",
+      "model_c_s0_stability_normalized_envelope.png",
+      "model_c_s0_stability_day2000_spectra.png",
+      "model_c_s0_tangent_gain_comparison.png",
+      "model_c_s0_first_nonfinite_lead.png",
+      "model_c_s0_stability_tangent_recovery_arrays.npz",
+      "model_c_s0_stability_tangent_recovery_curves.csv",
+      "model_c_s0_stability_tangent_recovery_report.json",
+      "model_c_s0_stability_tangent_recovery_summary.json",
+      "README.md",
+      "manifest.json"
+    ]
+  },
+  "interpretation": {
+    "layernorm_explodes_earlier_or_faster": "reject LayerNorm alone as a stability correction and treat job 304750 overflow as scientific evidence after recovery quantifies it",
+    "selected_and_layernorm_both_grow_while_prior_saturates": "representation and objective remain causal candidates; do not restore or promote the prior checkpoint without the short-skill gate",
+    "all_models_grow_or_fail": "re-audit shared rollout and truth pathways before any training change",
+    "no_checkpoint_selection_or_promotion": true
+  }
+}

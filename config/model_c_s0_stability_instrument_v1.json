@@ -1,0 +1,111 @@
+{
+  "version": "model_c_s0_stability_instrument_v1",
+  "contract_status": "posthoc_instrument_correction_after_job304736",
+  "created_utc_date": "2026-07-29",
+  "purpose": "Correct the long-rollout measurement instrument before another Model C change by quantifying sustained RMSE and normalized-amplitude growth from the immutable job-304736 ensemble.",
+  "scope": {
+    "posthoc": true,
+    "runs_emulator": false,
+    "trains_or_modifies_weights": false,
+    "selects_checkpoint": false,
+    "reads_new_state": false,
+    "interpretation": "Windowed RMSE gain is descriptive evidence of non-saturation and is not a Jacobian eigenvalue, spectral radius, or sufficient stand-alone stability gate."
+  },
+  "known_before_contract": {
+    "source": "User-supplied independent analysis and completed jobs 304736/304740",
+    "normalized_max_abs_ensemble_mean_day0_day200_day300_day2000": [
+      3.4879751205444336,
+      3.7522425651550293,
+      5.574065685272217,
+      322.39166259765625
+    ],
+    "reported_windowed_gain_is_positive": true,
+    "selected_model_rejected_for_long_term_stability": true
+  },
+  "inputs": {
+    "job304736_arrays": {
+      "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/anomaly_direct_bire_s0_inference_v1/model_c_bire_s0_figures_arrays.npz",
+      "sha256": "30abd95810d3025935dc0de71e2721f5bfa7dc4291bf855b35e96894fc12c3c7"
+    },
+    "job304736_report": {
+      "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/anomaly_direct_bire_s0_inference_v1/model_c_bire_s0_figures_report.json",
+      "sha256": "32ac2e051726ed5f3e2fb3790ca3d626f1054d85b05524e14cf7e56ce8d1bd18"
+    },
+    "job304736_manifest": {
+      "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/anomaly_direct_bire_s0_inference_v1/manifest.json",
+      "sha256": "400763f859d6c1ab80a12f103feb176ca66a90641fa76f8aaf7805aab7eb4a80"
+    }
+  },
+  "analysis": {
+    "member_count": 15,
+    "lead_days": "0_to_2000_inclusive_by_10",
+    "fields": [
+      "surface_speed",
+      "phihyd_surface",
+      "sst"
+    ],
+    "fit_windows_days": [
+      [
+        30,
+        330
+      ],
+      [
+        200,
+        500
+      ],
+      [
+        300,
+        600
+      ],
+      [
+        400,
+        700
+      ],
+      [
+        700,
+        1000
+      ],
+      [
+        1700,
+        2000
+      ]
+    ],
+    "fit": "ordinary_least_squares_of_log_ensemble_mean_RMSE_against_ten_day_call_index",
+    "gain": "exp_fitted_slope_per_ten_day_call",
+    "uncertainty": "95_percent_nonparametric_member_bootstrap_interval",
+    "bootstrap_seed": 20260729,
+    "bootstrap_replicates": 10000,
+    "baseline_crossing": "first_crossing_and_first_lead_after_which_model_mean_RMSE_remains_above_baseline",
+    "normalized_amplitude": "ensemble_mean_and_10th_90th_percentiles_of_maximum_absolute_normalized_state",
+    "plot_scale": "logarithmic_y_for_long_RMSE_and_normalized_amplitude"
+  },
+  "future_gate_correction": {
+    "short_skill": "retain_separate_10_to_90_day_deterministic_RMSE_ACC_gate",
+    "long_stability": "replace_finiteness_or_day200_axis_limit_with_post_decorrelation_saturation_and_time_averaged_climate_statistics_through_at_least_200_calls",
+    "required_statistics": [
+      "normalized_state_amplitude_relative_to_truth_envelope",
+      "field_mean_and_variance_relative_to_MITgcm",
+      "low_mid_high_wavenumber_energy_relative_to_MITgcm",
+      "streamfunction_extrema_and_mean_circulation_relative_to_MITgcm",
+      "persistent_post_decorrelation_log_growth_with_uncertainty"
+    ],
+    "tangent_followup": "Measure dominant one_step_singular_gain and finite_time_tangent_growth; do not call these the spectral radius unless eigenvalue analysis justifies that label."
+  },
+  "output": {
+    "project": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/anomaly_direct_s0_stability_instrument_v1",
+    "overwrite": false,
+    "required": [
+      "model_c_s0_rmse_log_growth.png",
+      "model_c_s0_windowed_rmse_gain.png",
+      "model_c_s0_normalized_amplitude_log_growth.png",
+      "model_c_s0_stability_instrument_curves.csv",
+      "model_c_s0_stability_instrument_report.json",
+      "README.md",
+      "manifest.json"
+    ]
+  },
+  "source_hashes": {
+    "src/bire_repro/af_model_c_s0_stability_instrument.py": "f556a27aa8f5bfbb90945dd7fb55168858e10a5a620b149794935f5b50553ab9",
+    "tests/model_c/test_af_model_c_s0_stability_instrument.py": "b0e06f918c336bd7cd32421742e6b1e4f0f5b98e3c7c1231e9f74b559f0c902e"
+  }
+}

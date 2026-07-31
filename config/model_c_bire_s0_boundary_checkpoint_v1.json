@@ -1,0 +1,233 @@
+{
+  "version": "model_c_bire_s0_boundary_checkpoint_v1",
+  "contract_status": "frozen_after_single_member_figure7_before_ensemble_checkpoint_metrics",
+  "frozen_utc_date": "2026-07-29",
+  "purpose": "Determine without retraining whether optimizer-step age controls the S0 day-2000 runaway and whether boundary transport error precedes interior error across the same 15 fresh inference members.",
+  "interpretation": {
+    "trigger": "Job-304736 Figure 7 showed a day-2000 streamfunction error concentrated along the western boundary and northern/eastern corner for one member.",
+    "known_before_freeze": {
+      "selected_step": 13440,
+      "single_member_day2000_streamfunction_rmse_sv": 96.20813186224069,
+      "single_member_four_cell_boundary_squared_error_fraction": 0.7126616248773385,
+      "single_member_west_four_columns_squared_error_fraction": 0.45159064228063606,
+      "single_member_north_four_rows_squared_error_fraction": 0.3147782782209479
+    },
+    "unknown_at_freeze": [
+      "whether the same spatial pattern is shared by all 15 members",
+      "whether boundary transport error grows before interior error",
+      "whether earlier or later stored checkpoints avoid the runaway",
+      "whether checkpoint age or the learned map is the stronger explanation"
+    ],
+    "classification_only": true,
+    "may_reselect_checkpoint": false,
+    "may_train_or_modify_weights": false
+  },
+  "protocol": {
+    "experiment": "S0",
+    "regime_index": 0,
+    "tau0_n_m2": 0.1,
+    "prediction_interval_days": 10,
+    "lead_days": "0_to_2000_inclusive_by_10",
+    "member_count": 15,
+    "start_draw_order": [
+      6913,
+      6689,
+      7174,
+      6962,
+      6781,
+      7155,
+      6676,
+      7019,
+      7199,
+      6733,
+      6969,
+      6662,
+      6986,
+      7068,
+      6885
+    ],
+    "checkpoint_steps": [
+      3840,
+      7680,
+      11520,
+      13440,
+      14400,
+      14880,
+      15360
+    ],
+    "selected_step": 13440,
+    "checkpoint_order": "ascending_optimizer_step",
+    "retraining": false,
+    "checkpoint_selection": false,
+    "boundary_band_cells": 4,
+    "wet_rectangle_cells": 3600,
+    "boundary_union_cells": 896,
+    "interior_cells": 2704,
+    "regions": [
+      "wet",
+      "boundary",
+      "west",
+      "east",
+      "south",
+      "north",
+      "interior"
+    ],
+    "snapshot_leads": [
+      200,
+      500,
+      1000,
+      1500,
+      2000
+    ],
+    "fields": {
+      "qx": "sum_over_15_levels_of_U_times_layer_thickness_in_m2_s-1",
+      "qy": "sum_over_15_levels_of_V_times_layer_thickness_in_m2_s-1",
+      "streamfunction": "south_to_north_cumulative_integral_of_minus_qx_times_one_degree_dy_in_Sv"
+    },
+    "regional_rmse": "square_root_of_mean_squared_error_over_each_named_wet_region_for_each_member",
+    "boundary_fraction": "memberwise_fraction_of_total_wet_squared_error_inside_the_union_of_four_cell_boundary_strips",
+    "ensemble_summary": "mean_and_10th_90th_percentiles_across_15_members",
+    "normalized_stability_thresholds": [
+      20,
+      40,
+      100,
+      200
+    ],
+    "post_day200_growth_factors": [
+      2,
+      5,
+      10
+    ],
+    "spatial_consistency": {
+      "pattern_metric": "member_to_ensemble_mean_spatial_cosine_over_wet_cells",
+      "sign_agreement": "larger_fraction_of_members_above_or_below_zero_at_each_cell",
+      "hotspot": "absolute_ensemble_mean_at_least_25_percent_of_its_wet_maximum"
+    }
+  },
+  "model": {
+    "name": "pointwise_anomaly_direct_state_Model_C",
+    "seed": 20260724,
+    "architecture": {
+      "in_channels": 51,
+      "out_channels": 46,
+      "n_modes": [
+        24,
+        16
+      ],
+      "hidden_channels": 128,
+      "n_layers": 4,
+      "lifting_channel_ratio": 2,
+      "projection_channel_ratio": 2,
+      "channel_mlp_expansion": 4.0,
+      "domain_padding": 0.1,
+      "positional_embedding": "grid",
+      "use_channel_mlp": true,
+      "local_kernel_size": 3,
+      "fno_block_precision": "full",
+      "factorization": null
+    }
+  },
+  "checkpoints": [
+    {
+      "optimizer_step": 3840,
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/anomaly_direct_replication_v1/seeds/seed_20260724/training_checkpoints/model_c_anomaly_direct_step_03840.pt",
+      "sha256": "a8bc944e504ef268ece2bd6675a8562699d0d2664a317022374a4c73005544a7"
+    },
+    {
+      "optimizer_step": 7680,
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/anomaly_direct_replication_v1/seeds/seed_20260724/training_checkpoints/model_c_anomaly_direct_step_07680.pt",
+      "sha256": "1b81cfdb3317670020c01a3b00df5e6b02d09082c80ed9fd3e9d8ae684b089ed"
+    },
+    {
+      "optimizer_step": 11520,
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/anomaly_direct_replication_v1/seeds/seed_20260724/training_checkpoints/model_c_anomaly_direct_step_11520.pt",
+      "sha256": "335cf33f27aeb4a79b293c57ad78ad4884c90675c5f1c2945e60427d148d4a85"
+    },
+    {
+      "optimizer_step": 13440,
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/anomaly_direct_replication_v1/seeds/seed_20260724/training_checkpoints/model_c_anomaly_direct_step_13440.pt",
+      "sha256": "c68bf91f77136f8c9e25340d7bda234d056c4bf193e1d378646390b84990d3a6"
+    },
+    {
+      "optimizer_step": 14400,
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/anomaly_direct_replication_v1/seeds/seed_20260724/training_checkpoints/model_c_anomaly_direct_step_14400.pt",
+      "sha256": "a4ef1832185c69d175f49d56f8f63542fa1af70338c1f67158fdd49079dd0457"
+    },
+    {
+      "optimizer_step": 14880,
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/anomaly_direct_replication_v1/seeds/seed_20260724/training_checkpoints/model_c_anomaly_direct_step_14880.pt",
+      "sha256": "079088e9f58cc0e463a3e9520e413faddf9bc7e0225321a79690a24bdd06f574"
+    },
+    {
+      "optimizer_step": 15360,
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/anomaly_direct_replication_v1/seeds/seed_20260724/training_checkpoints/model_c_anomaly_direct_step_15360.pt",
+      "sha256": "ca7278cbb3e7a1e29b8c542dc0e9b76c74270c00dfc861e0867c2ad87556c09b"
+    }
+  ],
+  "artifacts": {
+    "selected_normalization": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/anomaly_direct_replication_v1/seeds/seed_20260724/model_c_anomaly_direct_v1_normalization.npz",
+      "sha256": "a81a27ce86b0d0b296d0d960bb5856cbcf2f3d88b21e7ffa398ae4983a30ebd1"
+    },
+    "selected_training_report": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/anomaly_direct_replication_v1/seeds/seed_20260724/model_c_anomaly_direct_v1_report.json",
+      "sha256": "fd300f04a1dd4cea8b239a4100c333ee17788cbc59681469c832604f8110eb44"
+    },
+    "dataset_metadata": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/trajectories_v2.zarr/.zmetadata",
+      "sha256": "ae7be47c456962f411acb0d8e217dcb7fa6e24c59e5a8f3133f93032e378b8cc"
+    },
+    "dataset_quality": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/trajectories_v2.quality.json",
+      "sha256": "a6f7e5234acec1ba29a323d5bc570e8b9e1ece2bfdaa627753609f71f97cf752"
+    },
+    "long_truth_result": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/mitgcm_long_truth_v1/S0/production/years_120_126/segment_result.json",
+      "sha256": "9ebd446ff6f39b86c4281d86732d54b602e265ce240718314cd4d282bc799925"
+    },
+    "job304736_contract": {
+      "path": "/home/mjalabert314/bire_james25_repro/config/model_c_bire_s0_figures_v1.json",
+      "sha256": "6afa41cfaaf8987457d0b9febc92d52c324c37bd85f040329466f9b42d616030"
+    },
+    "job304736_arrays": {
+      "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/anomaly_direct_bire_s0_inference_v1/model_c_bire_s0_figures_arrays.npz",
+      "sha256": "30abd95810d3025935dc0de71e2721f5bfa7dc4291bf855b35e96894fc12c3c7"
+    },
+    "job304736_report": {
+      "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/anomaly_direct_bire_s0_inference_v1/model_c_bire_s0_figures_report.json",
+      "sha256": "32ac2e051726ed5f3e2fb3790ca3d626f1054d85b05524e14cf7e56ce8d1bd18"
+    },
+    "job304736_manifest": {
+      "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/anomaly_direct_bire_s0_inference_v1/manifest.json",
+      "sha256": "400763f859d6c1ab80a12f103feb176ca66a90641fa76f8aaf7805aab7eb4a80"
+    }
+  },
+  "source_hashes": {
+    "src/bire_repro/af_model_c_bire_s0_boundary_checkpoint.py": "c80351e63c71f5755fc832eded25bbeda238f6c058fe82c7e58757eec07da97c",
+    "src/bire_repro/af_model_c_bire_s0_figures.py": "48636fe7daca00958414207c3bb15fc8ad16545fbd0ff08704a0de68ad7598e6",
+    "src/bire_repro/af_model_c_anomaly_direct.py": "c7f5d24530f501ee1f2ac8e719ecb73715de34c7441c08600a985f51e1860d89",
+    "src/bire_repro/af_model_c_successor.py": "62a5a3f91b21137bcaf4b8ed39a4bf3a4f35d1357cf7ab83947bd7dbbbe236e6",
+    "src/bire_repro/af_forward_complete.py": "18914b77058bfe1abeab3c98ec711ac8fb970deb76507b095ee376a0de447612",
+    "src/bire_repro/af_data.py": "421a0e80feb8e2ae2ee588cc8debaf315927319d2bfb856056294397bf1f65a6",
+    "src/bire_repro/af_tutorial_analysis.py": "05f0d290937fbaaa580fd9f7e3794c7929e8b8659ff5676cbcc03bf9fcb93eb3",
+    "slurm/models/c/af_model_c_bire_s0_boundary_checkpoint.sbatch": "acd392f678cc201aa2d9b8a9854328bc0f121cf0755bebd894e77636b41fbe92"
+  },
+  "output": {
+    "scratch": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/anomaly_direct_bire_s0_boundary_checkpoint_v1",
+    "project": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/anomaly_direct_bire_s0_boundary_checkpoint_v1",
+    "overwrite": false,
+    "required": [
+      "model_c_s0_boundary_transport_rmse_checkpoints.png",
+      "model_c_s0_boundary_fraction_checkpoints.png",
+      "model_c_s0_checkpoint_stability_timing.png",
+      "model_c_s0_selected_boundary_spatial_consistency.png",
+      "model_c_s0_selected_boundary_growth.png",
+      "model_c_s0_boundary_checkpoint_arrays.npz",
+      "model_c_s0_boundary_checkpoint_report.json",
+      "model_c_s0_boundary_checkpoint_summary.json",
+      "model_c_s0_boundary_checkpoint_curves.csv",
+      "README.md",
+      "manifest.json"
+    ]
+  }
+}

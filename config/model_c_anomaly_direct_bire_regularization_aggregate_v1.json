@@ -1,0 +1,127 @@
+{
+  "version": "model_c_anomaly_direct_bire_regularization_aggregate_v1",
+  "contract_status": "frozen_after_all_three_factorial_tasks_completed_before_cross_arm_aggregate",
+  "freeze_date": "2026-07-29",
+  "purpose": "source_locked_training_only_cross_arm_decision_for_Bire_LayerNorm_and_ChannelMLP_dropout_controls",
+  "factorial_contract": {
+    "path": "/home/mjalabert314/bire_james25_repro/config/model_c_anomaly_direct_bire_regularization_controls_v1.json",
+    "sha256": "dd9089e9675a70b0ff329e95f3212a21c3900607dceaf8817fa7e7eb4500f827"
+  },
+  "scheduler_job": {
+    "job_id": 304376,
+    "state": "COMPLETED",
+    "tasks": {
+      "0": {
+        "arm_id": "layernorm",
+        "state": "COMPLETED",
+        "exit_code": "0:0",
+        "elapsed": "01:09:29"
+      },
+      "1": {
+        "arm_id": "dropout",
+        "state": "COMPLETED",
+        "exit_code": "0:0",
+        "elapsed": "01:17:44"
+      },
+      "2": {
+        "arm_id": "layernorm_dropout",
+        "state": "COMPLETED",
+        "exit_code": "0:0",
+        "elapsed": "01:23:33"
+      }
+    }
+  },
+  "arm_order": [
+    "layernorm",
+    "dropout",
+    "layernorm_dropout"
+  ],
+  "arm_sources": [
+    {
+      "arm_id": "layernorm",
+      "report": {
+        "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/anomaly_direct_bire_regularization_controls_v1/layernorm/bire_regularization_control_report.json",
+        "sha256": "9cdeb828f253d85de07a3c02784c4b36534350e0baaeb218d775b9a09966e757",
+        "content_sha256": "92269d5a6679ec05bbc348b5c47a44c1bbfb5017cb6ec50d6f38d33a6600af72"
+      },
+      "arrays": {
+        "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/anomaly_direct_bire_regularization_controls_v1/layernorm/bire_regularization_control_arrays.npz",
+        "sha256": "c8e91c3fa41d68987a0f0a78b460d957b85fdc70bdbd025311fd8372d1660080"
+      },
+      "manifest": {
+        "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/anomaly_direct_bire_regularization_controls_v1/layernorm/manifest.json",
+        "sha256": "07dfa234f31063a25ff31c17e1d2d6628323e28fa77955cfe1c08bc8cf1fff3c",
+        "content_sha256": "4cc2cdd1f62ec716f56cecad2a9f38db16d14bdaf321e74208e708096983f353"
+      }
+    },
+    {
+      "arm_id": "dropout",
+      "report": {
+        "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/anomaly_direct_bire_regularization_controls_v1/dropout/bire_regularization_control_report.json",
+        "sha256": "2a051e2316c089546037c3254bde7ac4b1ad214657857523db75f818581671fd",
+        "content_sha256": "05847cc9bbc296d8f95daf35db39fc32f91f62166e4154025968ed9d94e3958f"
+      },
+      "arrays": {
+        "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/anomaly_direct_bire_regularization_controls_v1/dropout/bire_regularization_control_arrays.npz",
+        "sha256": "071da9b72014bf1cce20ddfe7f2562b80be73bfd9f9f79dca419686a506a2ff4"
+      },
+      "manifest": {
+        "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/anomaly_direct_bire_regularization_controls_v1/dropout/manifest.json",
+        "sha256": "327d40f2bef1d874c39cc2b014135f2a8aa59c2b372acf3843f7c2902132bb32",
+        "content_sha256": "99af1637b27f21e51530e5eccfad44f5575f898e4683b394177b73e7d02f903e"
+      }
+    },
+    {
+      "arm_id": "layernorm_dropout",
+      "report": {
+        "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/anomaly_direct_bire_regularization_controls_v1/layernorm_dropout/bire_regularization_control_report.json",
+        "sha256": "7246771a19670635ee3c26539c83151dbd5f83d0ff95e6f351cadafe897cfbe4",
+        "content_sha256": "1c0cbf7d04a28c7865fb1ca84e0344e68c9c5675714fadfc6fadd24168464400"
+      },
+      "arrays": {
+        "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/anomaly_direct_bire_regularization_controls_v1/layernorm_dropout/bire_regularization_control_arrays.npz",
+        "sha256": "d1b4342f62b1aef0797291c2bf087192edb8a9d20d3ea8c14d764eb16b625258"
+      },
+      "manifest": {
+        "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/anomaly_direct_bire_regularization_controls_v1/layernorm_dropout/manifest.json",
+        "sha256": "270348f791e46fdd9d82e777e2a313bcbb780dbcb9030719be9917db94182d41",
+        "content_sha256": "da5c6777578ab304cf26337d64f317629386670f07e1275dc85611ef65d71915"
+      }
+    }
+  ],
+  "selection": {
+    "require_at_least_one_checkpoint_to_pass_all_frozen_within_arm_gates": true,
+    "passing_arm_order": [
+      "minimum_worst_mid_bottom_modewise_ratio",
+      "minimum_worst_primary_relative_to_source",
+      "earliest_optimizer_step",
+      "frozen_arm_order"
+    ],
+    "no_passing_arm": "retain_original_seed_20260724_step_13440_and_advance_to_three_layer_no_padding_control",
+    "no_posthoc_regularizer_or_checkpoint_search": true
+  },
+  "read_contract": {
+    "training_state": true,
+    "prior_training_metadata": true,
+    "validation_state": false,
+    "inference_state": false,
+    "intermediate_wind_state": false,
+    "response_state": false,
+    "adjoint_state": false,
+    "long_term_state": false
+  },
+  "output": {
+    "directory": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/anomaly_direct_bire_regularization_controls_v1/aggregate",
+    "artifacts": [
+      "bire_regularization_aggregate_report.json",
+      "bire_regularization_aggregate.csv",
+      "model_c_bire_regularization_cross_arm.png",
+      "README.md",
+      "manifest.json"
+    ]
+  },
+  "source_hashes": {
+    "src/bire_repro/analysis/af_model_c_bire_regularization_aggregate.py": "feea08a81cf7586a91b3dbdb81235d81d834ff063adb5051f32581cf5e9861f1",
+    "tests/model_c/test_af_model_c_bire_regularization_aggregate.py": "63dad59ae013a40af3f7282ebc27b0ea77a51cf4f5cf44bb6ffccbd638807274"
+  }
+}
