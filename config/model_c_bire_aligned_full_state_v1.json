@@ -1,0 +1,346 @@
+{
+  "version": "model_c_bire_aligned_full_state_v1",
+  "contract_status": "frozen_before_any_bire_aligned_full_state_metric",
+  "freeze_date": "2026-07-30",
+  "purpose": "one_training_only_full_46_channel_arm_that_replaces_every_remaining_project_specific_architecture_and_training_choice_with_the_Bire_choice",
+  "scientific_motivation": {
+    "question": "does_a_substantially_more_faithful_Bire_FNO_architecture_and_training_protocol_improve_the_short_and_long_term_behaviour_of_the_46_channel_closed_state_emulator",
+    "kind": "composite_package_test_not_a_one_factor_ablation",
+    "incumbent": "model_c_anomaly_direct_single_position_layernorm_v1_layernorm_step_14880",
+    "if_it_succeeds": "architecture_only_and_training_only_controls_can_then_determine_which_part_caused_the_improvement",
+    "remains_a_control_not_a_reproduction": "the_data_and_the_46_channel_closed_state_remain_fundamentally_different_from_Bire",
+    "no_claim_before_result": "the_arm_is_declared_before_any_metric_is_read"
+  },
+  "retained_from_the_incumbent": {
+    "horizontal_grid": [
+      62,
+      62
+    ],
+    "prediction_interval_days": 10,
+    "prognostic_state": "15U_15V_15Theta_eta_equals_46_channels",
+    "output_channels": 46,
+    "fourier_modes": [
+      24,
+      16
+    ],
+    "hidden_channels": 128,
+    "lifting_hidden_width": 256,
+    "projection_hidden_width": 256,
+    "channel_mlp_width": 512,
+    "domain_padding": 0.1,
+    "numerical_precision": "float32",
+    "factorization": null,
+    "dataset_and_chronological_splits": "unchanged",
+    "pointwise_anomaly_normalization": "unchanged",
+    "evaluation_suite": "same_15_S0_starts_and_day2000_truth"
+  },
+  "changed_relative_to_the_incumbent": {
+    "fno_blocks": {
+      "was": 4,
+      "now": 3
+    },
+    "layer_norm_placements": {
+      "was": 8,
+      "now": 6
+    },
+    "position_fields": {
+      "was": "linear_longitude_normalized_and_latitude_normalized_data_channels",
+      "now": "exact_oceanfourcast_PosEmbed_alternating_sine_cosine_fields"
+    },
+    "position_entry_point": {
+      "was": "carried_in_the_dataset",
+      "now": "appended_internally_immediately_before_lifting"
+    },
+    "external_local_branch": {
+      "was": "three_by_three_convolution_from_all_raw_inputs_to_the_46_outputs",
+      "now": "removed"
+    },
+    "objective": {
+      "was": "custom_five_term_model_c_loss_v1",
+      "now": "wet_cell_MSE_plus_0p01_MAE"
+    },
+    "training_protocol": {
+      "was": "three_step_unrolled_training_from_scratch",
+      "now": "one_step_pretraining_then_two_step_autoregressive_fine_tuning"
+    },
+    "optimizer": {
+      "was": "adamw",
+      "now": "adam"
+    },
+    "initial_learning_rate": {
+      "was": 0.0005,
+      "now": 0.01
+    },
+    "batch_size": {
+      "was": 4,
+      "now": 8
+    },
+    "weight_decay": {
+      "was": 1e-05,
+      "now": 0.0
+    }
+  },
+  "sources": {
+    "dataset": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/trajectories_v2.zarr",
+      "metadata_sha256": "ae7be47c456962f411acb0d8e217dcb7fa6e24c59e5a8f3133f93032e378b8cc"
+    },
+    "normalization": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/anomaly_direct_replication_v1/seeds/seed_20260724/model_c_anomaly_direct_v1_normalization.npz",
+      "sha256": "a81a27ce86b0d0b296d0d960bb5856cbcf2f3d88b21e7ffa398ae4983a30ebd1",
+      "role": "unchanged_pointwise_anomaly_normalization_shared_with_the_incumbent"
+    },
+    "bire_reference_implementation": {
+      "path": "external/oceanfourcast/oceanfourcast/fourcastnet.py",
+      "role": "supplies_the_exact_PosEmbed_alternating_sine_cosine_construction",
+      "optimizer_reference": "external/oceanfourcast/oceanfourcast/train.py_uses_torch_optim_Adam_with_betas_0p9_0p95"
+    },
+    "attribution_contract": {
+      "path": "/home/mjalabert314/bire_james25_repro/config/model_c_anomaly_direct_training_spectral_attribution_v2.json",
+      "sha256": "29c344310e5058a67d36a470eb92d9a37a89e64ab3082e25fc856c3085ba3de1",
+      "role": "supplies_the_unchanged_training_only_360_day_gate_instrument"
+    },
+    "attribution_report": {
+      "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/anomaly_direct_training_spectral_attribution_v2/training_spectral_attribution.json",
+      "sha256": "3787586c0d83c069de6099e74806b8c32e00d96ff2f4069807a5bd0ace43047b"
+    },
+    "attribution_arrays": {
+      "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/anomaly_direct_training_spectral_attribution_v2/training_spectral_attribution_arrays.npz",
+      "sha256": "aa5855c8f4c24bcfb6c9e03637b2678291515de1389bdff2a8378e12bf72ab00",
+      "role": "supplies_the_fixed_unregularized_seed_20260724_step_13440_source_comparator"
+    },
+    "attribution_manifest": {
+      "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/anomaly_direct_training_spectral_attribution_v2/manifest.json",
+      "sha256": "4b8d559e9710ec54936e2e1d88ccdc32de48d794b83511d1cc2ee515a269c2c5"
+    },
+    "incumbent_report": {
+      "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/anomaly_direct_single_position_layernorm_v1/layernorm/bire_regularization_control_report.json",
+      "sha256": "0a73d09707a6424e79d95c6d36301b18a63243c66432656ff7e3f9f0d8eef11f",
+      "role": "the_selected_arm_this_package_is_measured_against"
+    }
+  },
+  "input_channels": {
+    "state": 46,
+    "retained_static": [
+      "wind_stress_x",
+      "wet_mask",
+      "distance_to_wall_normalized"
+    ],
+    "removed_static": [
+      "longitude_normalized",
+      "latitude_normalized"
+    ],
+    "removal_reason": "position_must_enter_exactly_once_and_it_enters_through_the_Bire_positional_encoder_immediately_before_lifting",
+    "retention_reason": "the_wet_mask_and_the_distance_to_wall_field_encode_basin_geometry_rather_than_generic_absolute_coordinates",
+    "external_inputs": 49,
+    "appended_positional_channels": 2,
+    "lifting_inputs": 51,
+    "outputs": 46,
+    "rejected_alternative": "keeping_all_51_current_inputs_and_adding_the_two_Bire_channels_would_recreate_the_duplicated_position_problem_and_give_53_lifting_inputs"
+  },
+  "positional_encoding": {
+    "source": "oceanfourcast_PosEmbed",
+    "construction": "p(j)_equals_sin(pi_over_2N_times_j)_for_even_j_and_cos(pi_over_2N_times_j)_for_odd_j_in_each_direction",
+    "concatenation_order": "external_inputs_then_p_x_then_p_y",
+    "enters": [
+      "the_lifting_network",
+      "the_subsequent_latent_FNO_representation"
+    ],
+    "does_not_enter": [
+      "a_separate_raw_input_output_branch",
+      "the_dataset_as_linear_longitude_and_latitude_channels"
+    ],
+    "not_used": "neuraloperator_GridEmbeddingND"
+  },
+  "architecture": {
+    "in_channels": 49,
+    "out_channels": 46,
+    "positional_channels": 2,
+    "lifting_in_channels": 51,
+    "grid_shape": [
+      62,
+      62
+    ],
+    "n_modes": [
+      24,
+      16
+    ],
+    "hidden_channels": 128,
+    "n_layers": 3,
+    "lifting_channel_ratio": 2,
+    "projection_channel_ratio": 2,
+    "channel_mlp_expansion": 4.0,
+    "channel_mlp_dropout": 0.0,
+    "domain_padding": 0.1,
+    "positional_embedding": null,
+    "use_channel_mlp": true,
+    "pointwise_layer_norm": true,
+    "local_kernel_size": null,
+    "fno_block_precision": "full",
+    "factorization": null
+  },
+  "architecture_notes": {
+    "map": "49_append_position_51_lift_256_to_128_three_FNO_blocks_project_256_to_46",
+    "lifting": "two_layer_pointwise_51_to_256_to_128_with_GELU_between",
+    "projection": "two_layer_pointwise_128_to_256_to_46_with_GELU_after_the_first",
+    "block": "spectral_conv_plus_pointwise_residual_then_LayerNorm_then_ChannelMLP_128_512_128_then_LayerNorm",
+    "retained_residual": "the_pointwise_W_h_path_inside_each_spectral_block_is_neuraloperator_fno_skip_linear_and_is_kept",
+    "removed_residual": "only_the_external_raw_input_51_to_46_convolution_around_the_whole_FNO_is_removed",
+    "layer_norm": "channel_wise_at_every_grid_point_over_the_128_hidden_channels_with_epsilon_1e_minus_5_after_spectral_mixing_and_after_channel_mixing",
+    "layer_norm_modules": 6,
+    "non_linearity": "neuraloperator_applies_GELU_between_blocks_and_not_after_the_final_block_which_is_unchanged_from_every_earlier_arm_in_this_project",
+    "prediction": "direct_normalized_future_state_not_an_increment"
+  },
+  "loss": {
+    "objective": "wet_cell_mse_plus_0p01_mae",
+    "mae_weight": 0.01,
+    "channels": "all_46_normalized_state_channels",
+    "reduction": "sum_of_masked_error_divided_by_batch_times_channels_times_wet_cell_count",
+    "wet_mask_reason": "our_grid_contains_land_so_the_dense_grid_Bire_objective_must_be_restricted_to_wet_cells",
+    "removed_terms": [
+      "state",
+      "increment",
+      "rollout",
+      "spectral",
+      "western_boundary"
+    ]
+  },
+  "stages": [
+    {
+      "stage_id": "pretrained",
+      "autoregressive_steps": 1,
+      "first_optimizer_step": 1,
+      "last_optimizer_step": 3840,
+      "objective": "MSE(x_hat_t10, x_t10) + 0.01 MAE(x_hat_t10, x_t10)",
+      "inputs": "true_normalized_state_at_every_update"
+    },
+    {
+      "stage_id": "finetuned",
+      "autoregressive_steps": 2,
+      "first_optimizer_step": 3841,
+      "last_optimizer_step": 7680,
+      "objective": "sum over k=1,2 of MSE(x_hat_t10k, x_t10k) + 0.01 MAE(x_hat_t10k, x_t10k)",
+      "inputs": "one_self_generated_input_at_the_second_step"
+    }
+  ],
+  "training": {
+    "seed": 20260724,
+    "optimizer": "adam",
+    "batch_size": 8,
+    "initial_learning_rate": 0.01,
+    "adam_betas": [
+      0.9,
+      0.95
+    ],
+    "weight_decay": 0.0,
+    "gradient_clipping": false,
+    "gradient_clipping_reason": "adding_a_clip_would_introduce_another_untested_stabilizing_mechanism_into_a_composite_test",
+    "on_non_finite": "fail_fast_and_report",
+    "maximum_steps": 7680,
+    "checkpoint_steps": [
+      3840,
+      7680
+    ],
+    "decay_fraction": 0.75,
+    "decay_factor": 0.2,
+    "optimizer_state_across_stages": "carried_over_because_the_public_oceanfourcast_fine_tune_resumes_from_the_pretrained_checkpoint_and_reloads_the_optimizer_state",
+    "records": "unchanged_split1_complete_three_step_rollout_starts_read_two_steps_deep",
+    "exposure_budget": {
+      "incumbent_sequences": 61440,
+      "incumbent_steps_times_batch": "15360_times_4",
+      "this_arm_steps_times_batch": "7680_times_8",
+      "basis": "total_sequence_exposure_is_matched_not_optimizer_step_count"
+    },
+    "schedule_status": "the_decay_schedule_is_a_separately_declared_control_not_a_claim_about_the_published_Bire_configuration",
+    "dropout_status": "frozen_at_zero_because_the_successful_incumbent_uses_zero_and_the_requested_changes_do_not_include_dropout_and_the_paper_does_not_establish_the_repository_default_of_0p5"
+  },
+  "selection": {
+    "split_code": 1,
+    "instrument": "unchanged_360_day_split1_spectral_and_primary_summary_from_the_corrected_attribution_v2_records",
+    "records_sha256": "f571f4479e09a031e74a6ba1909ea491b2ca3684b33b384b1f7aefe88fac49e5",
+    "lead_days": "10_to_360_by_10",
+    "primary_fields": [
+      "surface_speed",
+      "sst",
+      "phihyd_surface"
+    ],
+    "primary_ratio_limit": 1.0,
+    "maximum_primary_relative_to_source": 2.0,
+    "spectral_levels": [
+      7,
+      14
+    ],
+    "spectral_ratio_limit": 1000000000.0,
+    "spectral_ratio_requirement": "recorded_at_every_ten_day_lead_through_day360_but_no_longer_a_veto",
+    "integrated_energy_bounds": [
+      0.8,
+      1.25
+    ],
+    "fixed_reference": "unregularized_seed_20260724_step_13440",
+    "no_within_arm_selection": "both_stage_checkpoints_are_retained_and_reported_and_neither_is_promoted_here",
+    "why_no_selection": "the_two_checkpoints_are_the_two_declared_products_of_the_Bire_protocol_not_competing_candidates_so_the_held_figure_suite_publishes_both"
+  },
+  "held_evaluation": {
+    "protocol": "reuse_the_frozen_S0_figure_contract_with_the_same_15_starts_and_the_same_six_filenames_once_per_stage",
+    "figures": [
+      "model_c_bire_figure3_streamfunction_1deg_s0_dt10.png",
+      "model_c_bire_figure4_dt10_rmse_0_200_days_s0.png",
+      "model_c_bire_figure5_dt10_single_member_rmse_s0.png",
+      "model_c_bire_figure6_dt10_acc_0_200_days_s0.png",
+      "model_c_bire_figure7_dt10_streamfunction_day060_day2000_s0.png",
+      "model_c_bire_figure8_dt10_rmse_0_2000_days_s0.png"
+    ],
+    "long_term_success_criterion": "per_step_gain_at_or_below_one_and_day2000_spatial_std_ratio_within_0p8_to_1p25",
+    "short_term_success_criterion": "every_primary_field_10_to_90_day_RMSE_below_both_persistence_and_climatology"
+  },
+  "read_contract": {
+    "training_state": true,
+    "prior_training_metadata": true,
+    "validation_state": false,
+    "inference_state": false,
+    "held_s0_state": false,
+    "intermediate_wind_state": false,
+    "response_state": false,
+    "adjoint_state": false
+  },
+  "output": {
+    "scratch_root": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/bire_aligned_full_state_v1",
+    "project_root": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/bire_aligned_full_state_v1",
+    "artifacts": [
+      "bire_aligned_full_state_report.json",
+      "bire_aligned_full_state_arrays.npz",
+      "model_c_bire_aligned_full_state_selection.png",
+      "README.md",
+      "manifest.json"
+    ],
+    "on_divergence": [
+      "bire_aligned_full_state_divergence.json",
+      "README.md"
+    ]
+  },
+  "implementation": {
+    "runner_module": "src/bire_repro/af_model_c_bire_aligned_full_state.py",
+    "why_a_new_module": "the_map_changes_depth_input_width_positional_encoding_residual_structure_objective_and_optimizer_so_no_existing_loader_or_training_loop_accepts_it",
+    "no_certified_source_modified": true,
+    "reuse_mechanism": "the_frozen_360_day_gate_instrument_resolves_ModelCSuccessorArchitecture_and_build_successor_and_PointwiseDirectStepper_as_module_globals_at_call_time_so_the_three_are_rebound_for_the_duration_of_the_call_and_restored_afterwards",
+    "idiom_precedent": "the_single_position_layernorm_arm_already_rebinds_parent_globals_the_same_way",
+    "reused_unchanged": [
+      "ModelCAnomalyRolloutDataset_and_ChunkAwareBatchSampler",
+      "PointwiseChannelLayerNorm",
+      "direct_state_unroll",
+      "the_360_day_split1_gate_instrument_and_its_fixed_source_comparator",
+      "the_frozen_S0_figure_runner"
+    ]
+  },
+  "source_hashes": {
+    "src/bire_repro/af_model_c_bire_aligned_full_state.py": "6ae2756577946c934b246bd49ac8ace625835c2970d9d4e43cf147268c1f23de",
+    "tests/model_c/test_af_model_c_bire_aligned_full_state.py": "6b445915821496c0d94c038ce12cbff675a0e4cf76bc34d44e40597c3a3a40c7",
+    "slurm/models/c/af_model_c_bire_aligned_full_state.sbatch": "becb7baa13416f5f5b4981bb75dcef7eebbf034024c05ce16c1f92cdd725fcd0",
+    "src/bire_repro/af_model_c_anomaly_direct.py": "c7f5d24530f501ee1f2ac8e719ecb73715de34c7441c08600a985f51e1860d89",
+    "src/bire_repro/af_model_c_anomaly_direct_bire_regularization_controls.py": "4ad782837f58edae649e8a1535773951b8291892576bb8e6b6a9921094b92c65",
+    "src/bire_repro/af_model_c_anomaly_direct_training_spectral_attribution_v2.py": "7bae18a53033e3f05642a560fe51db0d086d614a3b412874ffe66eb309b6063a",
+    "src/bire_repro/af_model_c_successor.py": "62a5a3f91b21137bcaf4b8ed39a4bf3a4f35d1357cf7ab83947bd7dbbbe236e6",
+    "external/oceanfourcast/oceanfourcast/fourcastnet.py": "17940f77028389c8194506ed9d81bb6bd37de9370d5c0f08d1112cb62ad6fb7e"
+  },
+  "login_node_note": "the_slash_sw_mount_is_repointed_on_the_login_node_so_dot_venv_slash_bin_slash_python_is_a_dangling_symlink_there_but_compute_nodes_still_see_slash_sw_anaconda_and_the_interpreter_works_under_srun_and_sbatch"
+}
