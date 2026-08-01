@@ -1,0 +1,257 @@
+{
+  "artifacts": {
+    "dataset_metadata": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/trajectories_v2.zarr/.zmetadata",
+      "sha256": "ae7be47c456962f411acb0d8e217dcb7fa6e24c59e5a8f3133f93032e378b8cc"
+    },
+    "dataset_quality": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/trajectories_v2.quality.json",
+      "sha256": "a6f7e5234acec1ba29a323d5bc570e8b9e1ece2bfdaa627753609f71f97cf752"
+    },
+    "long_truth_contract": {
+      "path": "/home/mjalabert314/bire_james25_repro/config/model_c_bire_s0_long_truth_v1.json",
+      "sha256": "dc204636660d17daa35aa29835aa30034beb0252eabba5aac173a483bfd75ea5"
+    },
+    "long_truth_manifest": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/mitgcm_long_truth_v1/S0/production/years_120_126/segment_manifest.json",
+      "sha256": "e15530c67dbe07f9b0133a68bf8cf4da72ede6060bf691966d083f142e741c6f"
+    },
+    "long_truth_result": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/mitgcm_long_truth_v1/S0/production/years_120_126/segment_result.json",
+      "sha256": "9ebd446ff6f39b86c4281d86732d54b602e265ce240718314cd4d282bc799925"
+    },
+    "prior_checkpoint": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/rollout_conditioned_loss_v3/model_c_rollout_conditioned_loss_v3_best.pt",
+      "sha256": "e9f962878cb51bfe7dc498b07173f499d982a7f3c31e23afd8036b17afad970b"
+    },
+    "prior_report": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/rollout_conditioned_loss_v3/model_c_rollout_conditioned_loss_v3_report.json",
+      "sha256": "e9af34326c3656cccf78990b6a21202a22adf99163fcfd1a07338c9fa6c7ba11"
+    },
+    "selected_normalization": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/anomaly_direct_replication_v1/seeds/seed_20260724/model_c_anomaly_direct_v1_normalization.npz",
+      "sha256": "a81a27ce86b0d0b296d0d960bb5856cbcf2f3d88b21e7ffa398ae4983a30ebd1"
+    },
+    "selected_report": {
+      "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/bire_aligned_loss_recovery_v1/bire_aligned_loss_recovery_report.json",
+      "sha256": "c5f7c5e7c7d6d342d4f28f28950a4e412635b3d12cd00c31092e49d93ac04c46"
+    }
+  },
+  "baselines": {
+    "climatology": "pointwise_S0_temporal_mean_over_split1_training_snapshots_only_with_nonlinear_fields_averaged_after_derivation",
+    "ensemble_summary": "mean_and_10th_90th_percentiles_across_15_member_metrics",
+    "persistence": "each_members_initial_physical_field_held_fixed_at_every_lead",
+    "rmse": "square_root_of_mean_squared_error_over_wet_cells_for_each_member",
+    "training_snapshots": 5040
+  },
+  "comparison": {
+    "incumbent_package": "/home/mjalabert314/bire_james25_repro/config/model_c_single_position_layernorm_s0_figures_v1.json",
+    "note": "all_packages_share_starts_truth_baselines_reductions_and_filenames",
+    "objective_partner": "/home/mjalabert314/bire_james25_repro/config/model_c_bire_aligned_full_state_lr5e4_s0_figures_v1.json",
+    "partner_note": "identical_architecture_optimizer_and_budget_but_bire_mse_mae_and_the_one_then_two_step_protocol"
+  },
+  "contract_status": "frozen_after_the_loss_recovery_training_run_and_before_any_figure_metric",
+  "figure6": {
+    "black": "prior_residual_rollout_conditioned_Model_C_v3_mean_with_dotted_p10_p90",
+    "literal_pretrain_finetune_pair": false,
+    "reason": "the black comparator is the prior residual rollout-conditioned Model C, which is not the one-step pretrained parent of this arm; the pretrained and fine-tuned members of this arm are compared through their two separate figure folders instead",
+    "red": "bire_aligned_full_state_Model_C_mean_with_shaded_p10_p90",
+    "required_label": "architecture_direction_comparison_not_literal_pretrained_to_finetuned"
+  },
+  "frozen_utc_date": "2026-07-30",
+  "output_policy": {
+    "one_folder_per_stage": true,
+    "overwrite": false,
+    "project_root": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/bire_aligned_loss_recovery_bire_s0_inference_v1",
+    "scratch_root": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/bire_aligned_loss_recovery_bire_s0_inference_v1"
+  },
+  "prior_model": {
+    "architecture": {
+      "channel_mlp_expansion": 4.0,
+      "domain_padding": 0.1,
+      "factorization": null,
+      "fno_block_precision": "full",
+      "hidden_channels": 128,
+      "in_channels": 51,
+      "lifting_channel_ratio": 2,
+      "local_kernel_size": 3,
+      "n_layers": 4,
+      "n_modes": [
+        24,
+        16
+      ],
+      "out_channels": 46,
+      "positional_embedding": "grid",
+      "projection_channel_ratio": 2,
+      "use_channel_mlp": true
+    },
+    "name": "prior_residual_rollout_conditioned_Model_C_v3",
+    "role": "unchanged_Figure_6_black_comparator"
+  },
+  "protocol": {
+    "acc_fields": [
+      "surface_u",
+      "surface_v",
+      "phihyd_surface",
+      "sst"
+    ],
+    "experiment": "S0",
+    "figure3_lead_days": [
+      0,
+      10,
+      20,
+      30,
+      40
+    ],
+    "figure4_lead_days": "0_to_200_inclusive_by_10",
+    "figure5_lead_days": "0_to_200_inclusive_by_10",
+    "figure6_lead_days": "0_to_200_inclusive_by_10",
+    "figure7_lead_days": [
+      60,
+      2000
+    ],
+    "figure8_lead_days": "0_to_2000_inclusive_by_10",
+    "figure_names": [
+      "model_c_bire_figure3_streamfunction_1deg_s0_dt10.png",
+      "model_c_bire_figure4_dt10_rmse_0_200_days_s0.png",
+      "model_c_bire_figure5_dt10_single_member_rmse_s0.png",
+      "model_c_bire_figure6_dt10_acc_0_200_days_s0.png",
+      "model_c_bire_figure7_dt10_streamfunction_day060_day2000_s0.png",
+      "model_c_bire_figure8_dt10_rmse_0_2000_days_s0.png"
+    ],
+    "maximum_lead_days": 2000,
+    "member_count": 15,
+    "prediction_interval_days": 10,
+    "regime_index": 0,
+    "rmse_fields": [
+      "surface_speed",
+      "phihyd_surface",
+      "sst"
+    ],
+    "single_member_start": 6913,
+    "start_draw_order": [
+      6913,
+      6689,
+      7174,
+      6962,
+      6781,
+      7155,
+      6676,
+      7019,
+      7199,
+      6733,
+      6969,
+      6662,
+      6986,
+      7068,
+      6885
+    ],
+    "start_selection": "numpy_default_rng_seed_20260729_choice_without_replacement_from_inclusive_indices_6660_7199",
+    "tau0_n_m2": 0.1
+  },
+  "purpose": "Publish the same six Bire-style S0 Figure 3-8 plots for the gate-selected checkpoint of the loss-recovery control (Bire-aligned architecture, incumbent group-balanced Model C loss v1), using the identical 15 starts, day-2000 truth, baselines, reductions, and filenames as every earlier package.",
+  "read_contract": {
+    "adjoint_state": false,
+    "authorized_by": "the_loss_recovery_training_run_completed_and_selected_one_checkpoint",
+    "held_s0_state": true,
+    "intermediate_wind_state": false,
+    "promotes_no_checkpoint": true,
+    "response_state": false,
+    "training_state": false
+  },
+  "source_hashes": {
+    "slurm/models/c/af_model_c_bire_aligned_loss_recovery_s0_figures.sbatch": "681445f3ce830fadfbec5ddd07ddc0b521129672515acb2dea1a93a232a956c9",
+    "src/bire_repro/af_data.py": "421a0e80feb8e2ae2ee588cc8debaf315927319d2bfb856056294397bf1f65a6",
+    "src/bire_repro/af_forward_complete.py": "18914b77058bfe1abeab3c98ec711ac8fb970deb76507b095ee376a0de447612",
+    "src/bire_repro/af_model_c.py": "ac81165ceb7e68eafc6cac237fe0e4cd2dafa2c67bf204db41b5dba86551493b",
+    "src/bire_repro/af_model_c_anomaly_direct.py": "c7f5d24530f501ee1f2ac8e719ecb73715de34c7441c08600a985f51e1860d89",
+    "src/bire_repro/af_model_c_anomaly_direct_bire_regularization_controls.py": "4ad782837f58edae649e8a1535773951b8291892576bb8e6b6a9921094b92c65",
+    "src/bire_repro/af_model_c_bire_aligned_full_state.py": "6ae2756577946c934b246bd49ac8ace625835c2970d9d4e43cf147268c1f23de",
+    "src/bire_repro/af_model_c_bire_aligned_loss_recovery.py": "8e8128eb3752a225f416fa4933c53c4ed18805bb865241ebc1feb338b9d76343",
+    "src/bire_repro/af_model_c_bire_aligned_loss_recovery_s0_figures.py": "949cfdad5c39a804d72d8175605786e4a41c4662b305b3c02e9f636790a6147b",
+    "src/bire_repro/af_model_c_bire_aligned_s0_figures.py": "0e0bd1db823b577ddf7e6e07273c4281ff0ee5f890fb6493368d9df25a359747",
+    "src/bire_repro/af_model_c_bire_s0_figures.py": "48636fe7daca00958414207c3bb15fc8ad16545fbd0ff08704a0de68ad7598e6",
+    "src/bire_repro/af_model_c_rollout_conditioned_loss_v3.py": "f1e1b9c40cbabc2387507a18d89e3c1312747aa68dc4901f61b879515c8526da",
+    "src/bire_repro/af_model_c_slow_field_bias_projection.py": "37722dda6382a4e808b3e2b348ecdfe56153b35a106b053bb52b01ca0f92a3a2",
+    "src/bire_repro/af_model_c_successor.py": "62a5a3f91b21137bcaf4b8ed39a4bf3a4f35d1357cf7ab83947bd7dbbbe236e6",
+    "src/bire_repro/af_pressure.py": "1939645d807ec0281624d4146cadc51b3e9f382c540a56d7ed5afdca4b2c7c6c",
+    "src/bire_repro/mds.py": "4098c294a35a1fdcd0521e1eedc6495608ba96fd074dd509347f3efeb788d212",
+    "tests/model_c/test_af_model_c_bire_aligned_loss_recovery_s0_figures.py": "921586b4abefc152ce6e7cd3cb65a0108bfe357dede3aceb1c63e26fa2fc1c3e"
+  },
+  "stage_order": [
+    "selected"
+  ],
+  "stages": {
+    "selected": {
+      "checkpoint": {
+        "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/bire_aligned_loss_recovery_v1/selected.pt",
+        "sha256": "c0bbde9e72cdbd60627555029e29b4ec47353d03173962599be2ea718af778fa"
+      },
+      "model": {
+        "architecture": {
+          "channel_mlp_dropout": 0.0,
+          "channel_mlp_expansion": 4.0,
+          "domain_padding": 0.1,
+          "factorization": null,
+          "fno_block_precision": "full",
+          "grid_shape": [
+            62,
+            62
+          ],
+          "hidden_channels": 128,
+          "in_channels": 49,
+          "lifting_channel_ratio": 2,
+          "lifting_in_channels": 51,
+          "local_kernel_size": null,
+          "n_layers": 3,
+          "n_modes": [
+            24,
+            16
+          ],
+          "out_channels": 46,
+          "pointwise_layer_norm": true,
+          "positional_channels": 2,
+          "positional_embedding": null,
+          "projection_channel_ratio": 2,
+          "use_channel_mlp": true
+        },
+        "base_loss_contract_sha256": "19000a1426ea928db7799c82a73ce071a874911eb7e1df50bd276582ec30b5f9",
+        "initial_learning_rate": 0.0005,
+        "name": "bire_aligned_loss_recovery_Model_C",
+        "objective": "incumbent_group_balanced_model_c_loss_v1",
+        "optimizer_step": 7680,
+        "rollout_steps": 3,
+        "seed": 20260724,
+        "selected_by": "select_arm_checkpoint_on_the_unchanged_360_day_split1_gate",
+        "stage_id": "selected",
+        "training_contract": "/home/mjalabert314/bire_james25_repro/config/model_c_bire_aligned_loss_recovery_v1.json"
+      },
+      "output": {
+        "project": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/bire_aligned_loss_recovery_bire_s0_inference_v1/selected",
+        "required": [
+          "model_c_bire_figure3_streamfunction_1deg_s0_dt10.png",
+          "model_c_bire_figure4_dt10_rmse_0_200_days_s0.png",
+          "model_c_bire_figure5_dt10_single_member_rmse_s0.png",
+          "model_c_bire_figure6_dt10_acc_0_200_days_s0.png",
+          "model_c_bire_figure7_dt10_streamfunction_day060_day2000_s0.png",
+          "model_c_bire_figure8_dt10_rmse_0_2000_days_s0.png",
+          "model_c_bire_s0_figures_report.json",
+          "model_c_bire_s0_figures_arrays.npz",
+          "model_c_bire_s0_figures_summary.json",
+          "model_c_bire_s0_ensemble_curves.csv",
+          "manifest.json",
+          "README.md"
+        ],
+        "scratch": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/bire_aligned_loss_recovery_bire_s0_inference_v1/selected"
+      }
+    }
+  },
+  "truth": {
+    "append_to_training_dataset": false,
+    "base": "trajectories_v2_S0_indices_0_7199",
+    "extension": "job_304735_evaluation_only_S0_indices_7200_9359",
+    "maximum_available_index": 9359,
+    "maximum_requested_index": 9199
+  },
+  "version": "model_c_bire_aligned_loss_recovery_s0_figures_v1"
+}

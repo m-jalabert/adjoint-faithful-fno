@@ -1974,6 +1974,32 @@ remain bounded, preserve resolved spatial scales, and express the correct forcin
 ordering.  The complete adjoint campaign does not open until at least one modern
 forward model passes the gate below.
 
+\subsubsection*{Their hyperparameters are not transferable either}
+
+The same caution applies to Bire's optimizer settings, and it has now been demonstrated
+rather than assumed.  Their Table~2 fixes batch size 8, learning rate 0.01, \(L=3\),
+\(C=128\), \(C_{\mathrm{lift}}=C_{\mathrm{proj}}=256\), \(C_{\mathrm{hidden}}=4C\), GELU,
+and \(\Delta t\in\{5,10,30\}\) days --- but for a \(248\times248\) grid with
+\((N_h,N_w)=(64,64)\) retained modes and \(C_{\mathrm{in}},C_{\mathrm{out}}=11,10\).
+Our configuration keeps their latent proportions but is a very different optimization
+problem: \(62\times62\) points, \((24,16)\) modes, and a 46-channel closed state, so the
+spectral operator carries 384 modes against their 4,096 while the state carries four to
+five times as many channels.  Adopting 0.01 unchanged drove our map to the trivial
+zero-anomaly solution without ever producing a non-finite loss.  Transfer the
+architecture proportions and the training \emph{protocol} from Bire; re-derive the
+learning rate for this configuration and declare it separately.
+
+\subsubsection*{A collapsed model must not be scored as a stable one}
+
+That failure also exposed a gap in the criteria below.  A map that emits the
+climatological field is perfectly bounded, has near-unit spectral and integrated-energy
+ratios, and a per-call gain of one; every long-horizon stability diagnostic in this plan
+scores it as the best result available.  Any claim of improved stability must therefore
+be accompanied by evidence that the model retains skill: one-step error compared against
+the zero-anomaly baseline, which equals 1.0 by construction in normalized units, and
+anomaly correlation at the evaluated leads.  Stability statistics alone are not
+sufficient evidence of a better emulator.
+
 \subsection{Frozen forward evaluation package}
 
 Evaluate A0 and Models A--D on identical chronological records and identical 15-member
