@@ -265,6 +265,17 @@ properties at once.  The Bire-aligned architecture is therefore useful and the
 channel-averaged Bire objective was the cause of the lost skill; the day-2,000
 pressure attractor still moves the wrong way, so the incorrect invariant
 distribution is not fixed by reweighting alone.
+
+Retraining that model under a strictly chronological protocol --- train 0--5039,
+validation 5130--5759, test 5850--7199, with every train-derived statistic
+recomputed and checkpoints selected on held validation --- then separated the two
+claims.  Short-lead skill does not survive: the selected checkpoint scores
+0.48--0.56 of persistence on validation but 1.18--6.20 on the held S0 block, so
+part of the earlier result depended on temporally interleaved training coverage.
+The long-horizon behaviour does survive unchanged at 3.3--5.6 times climatology
+with per-call gain at or below 1.001, which removes the split and the normalizer
+as explanations for the displaced attractor and leaves the map and objective as
+the remaining cause.
 \par\endgroup
 
 \section{Purpose and reading guide}
@@ -2402,6 +2413,88 @@ further from climatology, so the wrong-invariant-distribution problem is not sol
 reweighting alone.  The training window was still falling monotonically at step 7,680
 (0.330, 0.180, 0.145, 0.090), so this arm is not converged.
 
+\subsection{Strictly chronological split: prospective skill is much weaker, the
+displaced attractor is not}
+
+Every result above was obtained under the stored split, whose training block
+(0--2519 and 3690--6209) surrounds the validation block in time and so supports an
+interpolation claim rather than a prospective one.  The contract
+\begin{quote}
+\path{config/model_c_bire_aligned_loss_recovery_chronological_v1.json}\\
+SHA-256 \texttt{276830e38ac3...8a7ae6}
+\end{quote}
+retrains the loss-recovery model, unchanged in every architectural and optimizer
+respect and from scratch on the same seed, under train 0--5039, then validation 5130--5759, then test 5850--7199,
+with 90-day buffers at both boundaries.  Every train-derived statistic ---
+pointwise mean, pointwise scale, channel floors, per-regime climatology, and the
+pointwise increment scale --- is recomputed from 0--5039 alone; reusing the
+incumbent normalizer would import 5040--6209, which is validation or test here.
+Wind normalization is unchanged because \texttt{static\_features} has no time
+axis.  Checkpoint selection moves to 90 held 360-day rollouts inside the
+validation block under the declared rule.
+
+This is not a pure reordering.  Both training sets hold 5,040 days but only 3,870
+overlap: 5040--6209 is exchanged for 2520--3689, so 23.2\% of the training
+snapshots change.  The arm tests the chronological protocol \emph{and}
+sensitivity to the training period.
+
+Job 317123 completed in 47m19s.  Validation selected step 7,680, which dominated
+every field and both lead windows, so the short-skill guard never bound.
+
+\begin{center}\small
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+\textbf{Evaluation block} & \textbf{Speed} & \textbf{SST} & \textbf{\(P/\rho\)} \\
+\midrule
+Validation 5130--5759, 10--90-day AUC / persistence & 0.480 & 0.472 & 0.560 \\
+Held S0 test 6660--7199, 10--90-day RMSE / persistence & 1.175 & 1.161 & 6.202 \\
+\midrule
+Stored-split arm on the same S0 block & 0.436 & 0.395 & 0.398 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\resultbox{red}{lightred}{\textbf{The same checkpoint looks good on validation and
+loses to persistence on test.}  Day-200 ACC falls from \(+0.63/+0.64/+0.93/+0.56\)
+on validation to \(+0.26/+0.09/+0.66/+0.11\) on the held S0 block, and the
+10--90-day error rises from 0.47--0.56 of persistence to 1.16--6.20.  Against the
+stored-split arm evaluated on the identical 15 starts, short-lead skill is two to
+sixteen times worse.  This is the second predeclared outcome: part of the earlier
+result depended on temporally interleaved training coverage, and true prospective
+generalization is substantially weaker than the stored protocol suggested.}
+
+The mechanism is decorrelation distance, not distribution drift.  Sampled S0
+wet-cell means move by only \(-0.0045\,^\circ\mathrm{C}\) in SST and
+\(+4.5\times10^{-4}\) in \(\eta\) between the training and test blocks, so the
+climate is effectively stationary.  What differs is how far each evaluation block
+sits beyond the end of training: validation starts are 91--352 days after index
+5039, whereas the S0 test starts are 1,623--2,160 days after it.  This project's
+own slow-field audit measured S0 SSH spatial-anomaly \(e\)-folding at 248 days,
+with S1/S2 still above \(e^{-1}\) at 720 days.  The 630-day validation block,
+placed immediately after training behind a 90-day buffer, therefore lies
+\emph{inside} the slow-field correlation window and over-estimates prospective
+skill; the 90-day buffer was sized for a ten-day pair horizon, not for slow-field
+decorrelation.  The stored-split arm scored well on the same S0 starts for the
+same reason: it trained through 6209, only 453--990 days before them.
+
+\resultbox{green}{lightteal}{\textbf{The displaced attractor is intrinsic to the
+map and objective, not to the split or the normalization.}  Day-2,000 error is
+3.33/3.81/5.62 times climatology against the stored-split arm's 3.30/4.28/6.47,
+with per-call gain 1.0009/1.0002/1.0000 and amplitude 7.2 against 7.1.  Changing
+the training period, recomputing every train-derived statistic, and moving
+checkpoint selection to held data leave the long-horizon behaviour essentially
+unchanged.  This is the fourth predeclared outcome and it removes the split and
+the normalizer as explanations, which is what justifies a targeted
+attractor-supervision experiment.}
+
+Two qualifications.  The training window was still falling monotonically at step
+7,680 (0.321, 0.176, 0.144, 0.090), so this arm is no more converged than its
+parent, and the contract explicitly defers the duration continuation.  And the
+comparison confounds three things at once --- the chronological protocol, the
+23.2\% change of training period, and the extra 1,170 days of distance between
+the end of training and the test block --- so it bounds prospective skill rather
+than isolating a single cause.
+
 \subsection{Standing comparison on the held S0 suite}
 
 All packages share the same 15 starts, the same day-2,000 truth from evaluation-only job
@@ -2425,6 +2518,8 @@ Faithfulness bundle & \(+0.26/+0.20/+0.59\) & 3.01/3.07/3.92 &
 3.93/4.63/4.50 & 7.72 \\
 \textbf{Loss recovery} & \(\mathbf{+0.48/+0.42/+0.85}\) &
 \textbf{1.84/2.20/1.14} & 3.30/4.28/6.47 & \textbf{7.13} \\
+Chronological split & \(+0.26/+0.11/+0.66\) & 3.25/3.26/5.68 &
+3.33/3.81/5.62 & 7.24 \\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -2439,6 +2534,7 @@ Single-position LayerNorm & \textbf{0.230} & \textbf{0.165} & 0.415 \\
 Bire-aligned \(5\times10^{-4}\) & 0.560 & 0.734 & 2.072 \\
 Faithfulness bundle & 0.569 & 0.552 & 1.792 \\
 \textbf{Loss recovery} & 0.436 & 0.395 & \textbf{0.398} \\
+Chronological split & 1.175 & 1.161 & 6.202 \\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -2573,6 +2669,7 @@ Model C Bire-aligned learning-rate diagnostic / job 311783 & Zero-contract 600-s
 Model C Bire-aligned \(5\times10^{-4}\) control / jobs 311831, 312242 & One-factor learning-rate control; the loader asserts every other quantity equal to the parent field by field.  Training completed in 31m34s.  Fine-tuned worst primary 0.9518 beats persistence on all three fields; held S0 day-2,000 error saturates at 3.28/4.72/3.93 times climatology with per-call gain 1.0011/1.0002/1.0000.  Contract/report-content SHA-256 \texttt{b00f741562fc...2633b3}/\texttt{016058fdfc18...84556a}; stage checkpoints \texttt{6c2c15ccec5f...a0c25b} (3,840) and \texttt{c5ae5a41328f...05b5df} (7,680).  Training package under \path{outputs/af_fno/C/bire_aligned_full_state_lr5e4_v1/}; per-stage figure packages under \path{outputs/af_fno/C/bire_aligned_full_state_lr5e4_bire_s0_inference_v1/}, figure contract SHA-256 \texttt{fb8f748c6706...5b0c61} \\
 Model C Bire protocol-faithfulness bundle / jobs 314709, 314719 & MAE weight 0.05, cosine annealing \(T_{\max}=3\)/\(\eta_{\min}=10^{-5}\), and validation-based per-stage selection corrected together on the \(5\times10^{-4}\) base; dropout deliberately left at zero.  Training completed in 20m43s.  Gate worst primary improves 0.9518 to 0.8926, but held S0 day-200 surface-U ACC falls \(+0.402\) to \(+0.261\) and the day-2,000 tail does not move.  Validation selection was a no-op: it chose epochs 2 and 4, exactly the earlier fixed steps.  Contract/report-content SHA-256 \texttt{7c3e012dae74...a9729a}/\texttt{19d42d8cbc9d...8dc095}; stage checkpoints \texttt{a21cbce6dff7...bf4a93} (3,840) and \texttt{6a8a70ee100f...74a347} (7,680).  Training package under \path{outputs/af_fno/C/bire_aligned_faithful_v1/}; per-stage figure packages under \path{outputs/af_fno/C/bire_aligned_faithful_bire_s0_inference_v1/}, figure contract SHA-256 \texttt{06994151d4ca...34fad4} \\
 Model C Bire-aligned loss-recovery control / jobs 314770, 314821 & Architecture-fixed control: the Bire-aligned three-block map at Adam \(5\times10^{-4}\), batch 8, 7,680 steps, with only the objective and rollout exposure restored to the incumbent group-balanced Model C loss v1 over a three-step rollout.  Training completed in 39m00s and selected step 7,680.  Gate worst primary falls 0.9518 to 0.4532, driven almost entirely by surface pressure; held S0 10--90-day ratios to persistence are 0.436/0.395/0.398 so all three primary fields beat persistence, day-200 ACC is \(+0.48/+0.53/+0.85/+0.42\), and the day-2,000 tail stays flat at per-call gain 1.0001/1.0008/1.0000 with amplitude 7.1.  Day-2,000 pressure worsens to 6.47 times climatology.  Contract/report-content SHA-256 \texttt{4932821d0b46...f8c570}/\texttt{9f1e7ffc0ebe...a2c32d}; selected checkpoint \texttt{c0bbde9e72cd...f778fa}.  Training package under \path{outputs/af_fno/C/bire_aligned_loss_recovery_v1/}; six-figure package under \path{outputs/af_fno/C/bire_aligned_loss_recovery_bire_s0_inference_v1/selected/}, figure contract SHA-256 \texttt{afc4df5cce40...d1111e} \\
+Model C chronological-split arm / jobs 317084, 317123, 317167 & Loss-recovery model retrained from scratch under train 0--5039 / validation 5130--5759 / test 5850--7199 with 90-day buffers, all train-derived statistics recomputed from 0--5039, and checkpoint selection on 90 held 360-day validation rollouts.  First submission 317084 trained fully then failed in validation on the NumPy~2 removal of \texttt{np.trapz}; job 317123 completed in 47m19s and selected step 7,680.  Validation 10--90-day AUC to persistence is 0.480/0.472/0.560, but held S0 10--90-day error is 1.175/1.161/6.202, and day-2,000 error is 3.33/3.81/5.62 times climatology with per-call gain 1.0009/1.0002/1.0000.  Contract/report-content SHA-256 \texttt{276830e38ac3...8a7ae6}/\texttt{8e5da2daa3e3...1eb9c2}; checkpoint \texttt{55d2fe2f3cc2...12a1c2}; train-only normalizer \texttt{36ecce4ece94...8ca5c1}.  Training package under \path{outputs/af_fno/C/bire_aligned_loss_recovery_chronological_v1/}; six-figure package under \path{outputs/af_fno/C/bire_aligned_chronological_bire_s0_inference_v1/selected/}, figure contract SHA-256 \texttt{33e670547f4c...5395ef} \\
 Models C and D outputs & Planned versioned roots \path{outputs/af_fno/C/} and \path{outputs/af_fno/D/} \\
 Frozen criteria & \path{docs/AF_FNO_Project_Plan.tex} \\
 \bottomrule
@@ -2706,6 +2803,10 @@ Frozen criteria & \path{docs/AF_FNO_Project_Plan.tex} \\
 2026-07-30 & Freeze the loss-recovery control & Contract SHA-256 \texttt{4932821d0b46...f8c570} keeps every architectural and optimizer choice of the working \(5\times10^{-4}\) Bire-aligned arm and restores only the objective and the rollout exposure: the incumbent group-balanced Model C loss v1, \(\mathcal L_{\mathrm{state}}=\frac14(\mathcal L_U+\mathcal L_V+\mathcal L_\Theta+\mathcal L_\eta)\) with its increment, rollout, spectral, and western-boundary terms over a three-step unrolled rollout.  The motivation is that Bire's channel-averaged \(\mathrm{MSE}+w\,\mathrm{MAE}\) gives the groups effective multiplicities \(15{:}15{:}15{:}1\), leaving the free surface, barotropic circulation, hydrostatic pressure, and slow basin modes weakly constrained.  The loader reloads the parent contract and asserts the architecture and every frozen training field equal, that the objective actually differs, and that no stage objective string still describes the Bire loss.  All four decision branches are recorded before any metric is read. \\
 2026-07-30 & Complete the loss-recovery control; attribute the skill loss to the objective & Job 314770 completed in 39m00s and selected step 7,680.  The gate worst primary falls 0.9518 to 0.4532, with surface pressure more than halving while speed and SST barely move --- the field starved by the channel weighting is the field that recovers.  Job 314821 published the six figures: held S0 10--90-day ratios to persistence are 0.436/0.395/0.398, so all three primary fields beat persistence and pressure at 0.398 is better than the incumbent's 0.415; day-200 ACC rises to \(+0.48/+0.53/+0.85/+0.42\); and the tail stays bounded with per-call gain 1.0001/1.0008/1.0000 at amplitude 7.1.  This is the first predeclared branch --- short-term skill recovers while day-2,000 stays flat --- so the Bire-aligned architecture is useful and the Bire objective was the problem.  Qualifications: the gate still fails the source-relative clause at 2.008 against 2.0; day-2,000 pressure worsens 3.93 to 6.47 times climatology, so reweighting alone does not fix the invariant distribution; and the training window was still falling at the final checkpoint, so the arm is not converged. \\
 2026-07-30 & Record an erratum in the faithfulness contract & Its authoritative \texttt{loss.mae\_weight} is 0.05 and the runner reads that field, so job 314709 is numerically correct, but both stage objective strings still read \(\mathrm{MSE}+0.01\,\mathrm{MAE}\).  The cause was the single-change assertion requiring \texttt{stages} to equal the parent block verbatim, which forced the stale prose through.  The completed contract is left byte-identical because its SHA-256 is recorded in the run's report; the mechanism is fixed instead, and the loss-recovery loader now rejects any stage objective string that contradicts the authoritative numeric fields. \\
+2026-07-30 & Freeze the strictly chronological split & Contract SHA-256 \texttt{276830e38ac3...8a7ae6} declares train 0--5039, validation 5130--5759, and test 5850--7199 with 90-day buffers, retrains the loss-recovery model from scratch on the same seed with no architectural or optimizer change, recomputes the pointwise mean, pointwise scale, channel floors, per-regime climatology, and increment scale from 0--5039 alone, and moves checkpoint selection to 90 held 360-day validation rollouts under a declared rule minimising the worst 90--360-day climatology ratio subject to a 5\% short-skill guard.  Wind normalization is left unchanged because \texttt{static\_features} has no time axis.  Recorded before any metric: the split is not a reordering --- both training sets hold 5,040 days but only 3,870 overlap, so 23.2\% of training snapshots change --- and all four outcome branches are declared. \\
+2026-07-30 & Preserve a failed chronological job & Job 317084 trained all 7,680 steps and wrote every checkpoint, then exited 1 in the validation stage because \texttt{np.trapz} was removed in NumPy~2 and this environment carries 2.5.1.  The AUC helper was a closure inside the validation function and therefore unreachable from the suite, so 26 passing tests did not cover it.  Record an operational failure, make no scientific claim, hoist the helper to module level with a direct test, and rerun.  The unpublished 334~MB temporary tree was removed because the run is seeded and reproduces it. \\
+2026-07-30 & Complete the chronological arm; weaker prospective skill, unchanged attractor & Job 317123 completed in 47m19s and validation selected step 7,680, which dominated every field and both windows so the short-skill guard never bound.  The same checkpoint scores 0.480/0.472/0.560 of persistence on validation and 1.175/1.161/6.202 on the held S0 block, with day-200 ACC falling from \(+0.63/+0.64/+0.93/+0.56\) to \(+0.26/+0.09/+0.66/+0.11\).  Apply the second declared outcome: part of the earlier result depended on temporally interleaved training coverage.  The mechanism is decorrelation distance rather than drift --- S0 wet-cell means move only \(-0.0045\,^\circ\mathrm{C}\) in SST between blocks, while validation starts sit 91--352 days beyond training and S0 test starts 1,623--2,160 days beyond it, against a measured S0 SSH \(e\)-folding of 248 days.  Day-2,000 error is nevertheless 3.33/3.81/5.62 times climatology against 3.30/4.28/6.47, with per-call gain 1.0009/1.0002/1.0000, so apply the fourth declared outcome as well: the displaced attractor is intrinsic to the map and objective, not to the split or the normalizer. \\
+2026-07-30 & Record a validation-block design defect & The 90-day buffer was sized for a ten-day pair horizon, not for slow-field decorrelation.  A 630-day validation block placed immediately after training lies inside the measured 248-day S0 SSH correlation window, so validation over-estimates prospective skill by a wide margin.  Any future validation-based selection must either place the block beyond the slow-field decorrelation time or report the validation-to-test gap explicitly. \\
 2026-07-30 & Freeze single-position LayerNorm arm and correct two gate clauses & Contract \path{config/model_c_anomaly_direct_single_position_layernorm_v1.json} returns to the full 46-channel state and changes only the duplicated positional encoding and the Bire pointwise LayerNorm.  The source-relative veto moves 1.1\(\rightarrow\)2.0 because the requirement is beating persistence and climatology, which the LayerNorm checkpoint does at 0.278/0.248/0.368 and 0.413/0.363/0.189 on day 90 while being 1.05/1.17/1.82 times the incumbent.  The deep-pressure mode-wise ratio becomes reported-not-a-veto because its denominator is about \(2\times10^{-6}\) of the field, with the day-360 integrated energy bound retained; the principled 99\%-energy restriction is deferred to a declared code change.  The architecture validator now accepts \texttt{positional\_embedding} in \{grid, null\}, an additive change that re-records the \path{af_model_c_successor.py} hash.  Not validated or submitted: the \path{/sw} mount was repointed, \path{/sw/anaconda/anaconda-3.12} is gone, and \path{.venv/bin/python} is a dangling symlink, so tests, preflight, and submission are blocked. \\
 \bottomrule
 \end{longtable}
