@@ -1,0 +1,229 @@
+{
+  "artifacts": {
+    "comparator_checkpoint": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/bire_protocol_pooled_v1/training_checkpoints/model_c_bire_protocol_step_01920.pt",
+      "sha256": "c957de029ffd28d3f478dcf89714d785880b929108fbc3ee7a7254e77a9e070d"
+    },
+    "dataset_metadata": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/trajectories_v3.zarr/.zmetadata",
+      "sha256": "766cae89359311775c79103f44dc74630630ba6b7a0a8c6e9d26f73487512136"
+    },
+    "selected_checkpoint": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/bire_protocol_pooled_v1/selected.pt",
+      "sha256": "2b1d44c03f1a0be2f39d30b34f8912c4848d0506ba97c8070ad212e1157ea484"
+    },
+    "selected_normalization": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/bire_protocol_pooled_v1/model_c_bire_protocol_train_only_normalization.npz",
+      "sha256": "ad7cc8584788ccdd4e8beaae3e606b9423230552af7079f15667b93bd1abaf2f"
+    },
+    "selected_report": {
+      "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/bire_protocol_pooled_v1/bire_aligned_chronological_report.json",
+      "sha256": "c128646f6cb194d11732dec34277aa29e664fd86a3318b1a00debaf247bd7567"
+    }
+  },
+  "baselines": {
+    "climatology": "pointwise_S0_mean_over_the_bire_training_block_0_5999_only",
+    "ensemble_summary": "mean_and_10th_90th_percentiles_across_15_member_metrics",
+    "persistence": "each_members_initial_physical_field_held_fixed_at_every_lead",
+    "rmse": "square_root_of_mean_squared_error_over_wet_cells_for_each_member"
+  },
+  "comparability": {
+    "byte_comparable_with_earlier_packages": false,
+    "level": "protocol_comparable_only",
+    "reason": "different_split_starts_and_record_indexing"
+  },
+  "contract_status": "frozen_after_the_bire_protocol_training_and_validation_and_before_any_inference_metric",
+  "dataset": {
+    "evaluation_truth_note": "never_trained_on_validated_on_or_used_as_an_inference_start_bire_figure_7_carries_a_ground_truth_column_at_the_2000th_day_obtained_because_their_simulations_2_and_4_are_entirely_held_out_we_obtain_the_same_separation_along_time",
+    "evaluation_truth_only_days": [
+      7200,
+      8999
+    ],
+    "inference": [
+      6200,
+      7200
+    ],
+    "metadata_sha256": "766cae89359311775c79103f44dc74630630ba6b7a0a8c6e9d26f73487512136",
+    "model_visible_days": [
+      0,
+      7199
+    ],
+    "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/trajectories_v3.zarr",
+    "tau0_n_m2": {
+      "S0": 0.1
+    },
+    "train": [
+      0,
+      6000
+    ],
+    "validation": [
+      6000,
+      7200
+    ],
+    "version": "trajectories_v3"
+  },
+  "figure6": {
+    "black": "this_runs_own_step_1920_checkpoint",
+    "comparator_optimizer_step": 1920,
+    "literal_pretrain_finetune_pair": false,
+    "reason": "the_prior_residual_model_c_belongs_to_a_different_dataset_and_normalizer",
+    "red": "the_selected_step_7680_checkpoint",
+    "required_label": "training_progress_comparison_on_identical_data"
+  },
+  "output": {
+    "one_folder_per_regime": true,
+    "overwrite": false,
+    "project_root": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/bire_protocol_s0_figures_v1",
+    "required": [
+      "model_c_bire_figure3_streamfunction_1deg_s0_dt10.png",
+      "model_c_bire_figure4_dt10_rmse_0_200_days_s0.png",
+      "model_c_bire_figure5_dt10_single_member_rmse_s0.png",
+      "model_c_bire_figure6_dt10_acc_0_200_days_s0.png",
+      "model_c_bire_figure7_dt10_streamfunction_day060_day2000_s0.png",
+      "model_c_bire_figure8_dt10_rmse_0_2000_days_s0.png",
+      "model_c_bire_s0_figures_report.json",
+      "model_c_bire_s0_figures_arrays.npz",
+      "model_c_bire_s0_figures_summary.json",
+      "model_c_bire_s0_ensemble_curves.csv",
+      "manifest.json",
+      "README.md"
+    ],
+    "scratch_root": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/bire_protocol_s0_figures_v1"
+  },
+  "protocol": {
+    "acc_fields": [
+      "surface_u",
+      "surface_v",
+      "phihyd_surface",
+      "sst"
+    ],
+    "figure3_lead_days": [
+      0,
+      10,
+      20,
+      30,
+      40
+    ],
+    "figure7_lead_days": [
+      60,
+      2000
+    ],
+    "figure_names": [
+      "model_c_bire_figure3_streamfunction_1deg_s0_dt10.png",
+      "model_c_bire_figure4_dt10_rmse_0_200_days_s0.png",
+      "model_c_bire_figure5_dt10_single_member_rmse_s0.png",
+      "model_c_bire_figure6_dt10_acc_0_200_days_s0.png",
+      "model_c_bire_figure7_dt10_streamfunction_day060_day2000_s0.png",
+      "model_c_bire_figure8_dt10_rmse_0_2000_days_s0.png"
+    ],
+    "inference_set": [
+      6200,
+      7200
+    ],
+    "long_lead_days": "0_to_2000_inclusive_by_10",
+    "maximum_lead_days": 2000,
+    "member_count": 15,
+    "prediction_interval_days": 10,
+    "primary_regime": "S0",
+    "regimes": [
+      "S0"
+    ],
+    "rmse_fields": [
+      "surface_speed",
+      "phihyd_surface",
+      "sst"
+    ],
+    "short_lead_days": "0_to_200_inclusive_by_10",
+    "start_draw_order": [
+      6263,
+      6293,
+      6331,
+      6389,
+      6579,
+      6593,
+      6598,
+      6601,
+      6651,
+      6661,
+      6694,
+      6707,
+      6711,
+      6968,
+      6979
+    ],
+    "start_seed": 20260802,
+    "start_selection": "numpy_default_rng_seed_20260802_choice_without_replacement_from_6200_6999_then_sorted",
+    "start_window": [
+      6200,
+      7000
+    ],
+    "start_window_reason": "every_member_completes_a_2000_day_rollout_with_lead_matched_truth_6999_plus_2000_equals_8999"
+  },
+  "purpose": "Publish the six Bire-style Figure 3-8 plots for the pooled Bire-protocol model on S0's inference set, with lead-matched truth through day 2000.",
+  "read_contract": {
+    "adjoint_state": false,
+    "inference_state": true,
+    "intermediate_wind_state": false,
+    "promotes_no_checkpoint": true,
+    "response_state": false,
+    "training_state": false,
+    "validation_state": false
+  },
+  "selected_model": {
+    "architecture": {
+      "channel_mlp_dropout": 0.0,
+      "channel_mlp_expansion": 4.0,
+      "domain_padding": 0.1,
+      "factorization": null,
+      "fno_block_precision": "full",
+      "grid_shape": [
+        62,
+        62
+      ],
+      "hidden_channels": 128,
+      "in_channels": 49,
+      "lifting_channel_ratio": 2,
+      "lifting_in_channels": 51,
+      "local_kernel_size": null,
+      "n_layers": 3,
+      "n_modes": [
+        24,
+        16
+      ],
+      "out_channels": 46,
+      "pointwise_layer_norm": true,
+      "positional_channels": 2,
+      "positional_embedding": null,
+      "projection_channel_ratio": 2,
+      "use_channel_mlp": true
+    },
+    "base_loss_contract_sha256": "19000a1426ea928db7799c82a73ce071a874911eb7e1df50bd276582ec30b5f9",
+    "name": "bire_protocol_pooled_Model_C",
+    "objective": "incumbent_group_balanced_model_c_loss_v1",
+    "optimizer_step": 7680,
+    "rollout_steps": 3,
+    "seed": 20260724,
+    "selected_by": "pooled_bire_protocol_validation_6000_6199_min_worst_long_climatology_ratio_subject_to_short_guard",
+    "training_contract": "/home/mjalabert314/bire_james25_repro/config/model_c_bire_protocol_pooled_v1.json"
+  },
+  "source_hashes": {
+    "slurm/models/c/af_model_c_bire_protocol_figures.sbatch": "5eda50c3d8b1b31129d94441473d0cd55684c5fb35053124326f71ccab8dcf6a",
+    "src/bire_repro/af_bire_protocol_split.py": "959a56b718360d3388ba97d4ee71c1ad54963a7d63b6eea4a5096caa0d13251f",
+    "src/bire_repro/af_data_v3.py": "a33774b36fc1790c98fd41699ed8afa171ce0d02349267484710081412b95cc9",
+    "src/bire_repro/af_forward_complete.py": "18914b77058bfe1abeab3c98ec711ac8fb970deb76507b095ee376a0de447612",
+    "src/bire_repro/af_model_c.py": "ac81165ceb7e68eafc6cac237fe0e4cd2dafa2c67bf204db41b5dba86551493b",
+    "src/bire_repro/af_model_c_bire_aligned_full_state.py": "6ae2756577946c934b246bd49ac8ace625835c2970d9d4e43cf147268c1f23de",
+    "src/bire_repro/af_model_c_bire_aligned_v3_figures.py": "399403b4672122a80e3d4ed0ce60a7b09018416982cfd1f74c82bc07de4a4625",
+    "src/bire_repro/af_model_c_bire_protocol.py": "8228f7e223c36c46b480a6c0be3f9f67b8443dba2a0f43a2d48be384f43e5f72",
+    "src/bire_repro/af_model_c_bire_protocol_figures.py": "d303a35a6e53c9e543adf51527b8661b57bb00113dbbc2d631b5a21a1898a13b",
+    "src/bire_repro/af_model_c_bire_s0_figures.py": "48636fe7daca00958414207c3bb15fc8ad16545fbd0ff08704a0de68ad7598e6",
+    "src/bire_repro/af_pressure.py": "1939645d807ec0281624d4146cadc51b3e9f382c540a56d7ed5afdca4b2c7c6c",
+    "src/bire_repro/mds.py": "4098c294a35a1fdcd0521e1eedc6495608ba96fd074dd509347f3efeb788d212"
+  },
+  "truth": {
+    "continuation_required": false,
+    "lead_matched_to_day": 2000,
+    "source": "trajectory_v3_store"
+  },
+  "version": "model_c_bire_protocol_s0_figures_v1"
+}
