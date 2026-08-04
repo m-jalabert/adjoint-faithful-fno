@@ -1,0 +1,215 @@
+{
+  "artifacts": {
+    "comparator_checkpoint": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/bire_aligned_v3_pooled_v1/training_checkpoints/model_c_v3_step_01920.pt",
+      "sha256": "c2b6a17f2e3932e0104e1857586578008a1625926040214f759d196066179726"
+    },
+    "dataset_metadata": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/trajectories_v3.zarr/.zmetadata",
+      "sha256": "766cae89359311775c79103f44dc74630630ba6b7a0a8c6e9d26f73487512136"
+    },
+    "selected_checkpoint": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/bire_aligned_v3_pooled_v1/selected.pt",
+      "sha256": "9271d64b8786a2ff70f8247029fc0a42bc491c65612b1c6ac785a3ab131b9b44"
+    },
+    "selected_normalization": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/bire_aligned_v3_pooled_v1/model_c_v3_train_only_normalization.npz",
+      "sha256": "917a51ca9fae165aad1eb2e3dc9f7eb160df8b4521120f3e39934a18a24c4cbf"
+    },
+    "selected_report": {
+      "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/bire_aligned_v3_pooled_v1/bire_aligned_chronological_report.json",
+      "sha256": "db29df7799e9ac272b1661d33f66d418cb42a13f770e03b9bdab57bed9bc7f48"
+    }
+  },
+  "baselines": {
+    "climatology": "pointwise_per_regime_mean_over_the_v3_training_block_0_5039_only",
+    "ensemble_summary": "mean_and_10th_90th_percentiles_across_15_member_metrics",
+    "persistence": "each_members_initial_physical_field_held_fixed_at_every_lead",
+    "rmse": "square_root_of_mean_squared_error_over_wet_cells_for_each_member"
+  },
+  "comparability": {
+    "byte_comparable_with_v2_packages": false,
+    "level": "protocol_comparable_only",
+    "reason": "the_v2_suite_starts_6660_7199_index_a_different_record_and_land_in_validation_under_v3"
+  },
+  "contract_status": "frozen_after_the_v3_training_and_validation_and_before_any_test_metric",
+  "dataset": {
+    "metadata_sha256": "766cae89359311775c79103f44dc74630630ba6b7a0a8c6e9d26f73487512136",
+    "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/trajectories_v3.zarr",
+    "tau0_n_m2": {
+      "S0": 0.1,
+      "S1": 0.075,
+      "S2": 0.125
+    },
+    "test": [
+      6480,
+      9000
+    ],
+    "test_days": 2520,
+    "version": "trajectories_v3"
+  },
+  "figure6": {
+    "black": "this_runs_own_step_1920_checkpoint",
+    "comparator_optimizer_step": 1920,
+    "literal_pretrain_finetune_pair": false,
+    "reason": "the_prior_residual_Model_C_was_trained_on_trajectory_v2_with_a_v2_normalizer_and_branch_based_S1_S2_so_running_it_on_v3_would_compare_two_different_data_worlds",
+    "red": "the_selected_step_7680_checkpoint",
+    "required_label": "training_progress_comparison_on_identical_data_not_the_frozen_architecture_pairing"
+  },
+  "output": {
+    "one_folder_per_regime": true,
+    "overwrite": false,
+    "project_root": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/bire_aligned_v3_bire_figures_v1",
+    "required": [
+      "model_c_bire_figure3_streamfunction_1deg_s0_dt10.png",
+      "model_c_bire_figure4_dt10_rmse_0_200_days_s0.png",
+      "model_c_bire_figure5_dt10_single_member_rmse_s0.png",
+      "model_c_bire_figure6_dt10_acc_0_200_days_s0.png",
+      "model_c_bire_figure7_dt10_streamfunction_day060_day2000_s0.png",
+      "model_c_bire_figure8_dt10_rmse_0_2000_days_s0.png",
+      "model_c_bire_s0_figures_report.json",
+      "model_c_bire_s0_figures_arrays.npz",
+      "model_c_bire_s0_figures_summary.json",
+      "model_c_bire_s0_ensemble_curves.csv",
+      "manifest.json",
+      "README.md"
+    ],
+    "scratch_root": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/bire_aligned_v3_bire_figures_v1"
+  },
+  "protocol": {
+    "acc_fields": [
+      "surface_u",
+      "surface_v",
+      "phihyd_surface",
+      "sst"
+    ],
+    "figure3_lead_days": [
+      0,
+      10,
+      20,
+      30,
+      40
+    ],
+    "figure7_lead_days": [
+      60,
+      2000
+    ],
+    "figure_names": [
+      "model_c_bire_figure3_streamfunction_1deg_s0_dt10.png",
+      "model_c_bire_figure4_dt10_rmse_0_200_days_s0.png",
+      "model_c_bire_figure5_dt10_single_member_rmse_s0.png",
+      "model_c_bire_figure6_dt10_acc_0_200_days_s0.png",
+      "model_c_bire_figure7_dt10_streamfunction_day060_day2000_s0.png",
+      "model_c_bire_figure8_dt10_rmse_0_2000_days_s0.png"
+    ],
+    "long_lead_days": "0_to_2000_inclusive_by_10",
+    "maximum_lead_days": 2000,
+    "member_count": 15,
+    "prediction_interval_days": 10,
+    "primary_regime": "S0",
+    "regimes": [
+      "S0",
+      "S1",
+      "S2"
+    ],
+    "rmse_fields": [
+      "surface_speed",
+      "phihyd_surface",
+      "sst"
+    ],
+    "short_lead_days": "0_to_200_inclusive_by_10",
+    "start_draw_order": [
+      6494,
+      6598,
+      6610,
+      6625,
+      6654,
+      6674,
+      6695,
+      6724,
+      6731,
+      6778,
+      6838,
+      6860,
+      6923,
+      6924,
+      6966
+    ],
+    "start_seed": 20260801,
+    "start_selection": "numpy_default_rng_seed_20260801_choice_without_replacement_from_the_test_start_window_6480_6999_then_sorted",
+    "start_window": [
+      6480,
+      7000
+    ],
+    "start_window_reason": "a_2520_day_test_block_admits_a_complete_2000_day_rollout_only_from_its_first_520_days"
+  },
+  "purpose": "Publish the six Bire-style Figure 3-8 plots for the pooled trajectory-v3 model on each regime's held test block, with S0 as the primary comparison and S1/S2 as wind-regime robustness.",
+  "read_contract": {
+    "adjoint_state": false,
+    "authorized_by": "architecture_optimizer_normalization_checkpoint_rule_and_validation_metrics_were_frozen_before_training_and_the_validation_selection_is_complete",
+    "intermediate_wind_state": false,
+    "promotes_no_checkpoint": true,
+    "response_state": false,
+    "test_state": true,
+    "training_state": false,
+    "validation_state": false
+  },
+  "selected_model": {
+    "architecture": {
+      "channel_mlp_dropout": 0.0,
+      "channel_mlp_expansion": 4.0,
+      "domain_padding": 0.1,
+      "factorization": null,
+      "fno_block_precision": "full",
+      "grid_shape": [
+        62,
+        62
+      ],
+      "hidden_channels": 128,
+      "in_channels": 49,
+      "lifting_channel_ratio": 2,
+      "lifting_in_channels": 51,
+      "local_kernel_size": null,
+      "n_layers": 3,
+      "n_modes": [
+        24,
+        16
+      ],
+      "out_channels": 46,
+      "pointwise_layer_norm": true,
+      "positional_channels": 2,
+      "positional_embedding": null,
+      "projection_channel_ratio": 2,
+      "use_channel_mlp": true
+    },
+    "base_loss_contract_sha256": "19000a1426ea928db7799c82a73ce071a874911eb7e1df50bd276582ec30b5f9",
+    "name": "bire_aligned_v3_pooled_Model_C",
+    "objective": "incumbent_group_balanced_model_c_loss_v1",
+    "optimizer_step": 7680,
+    "rollout_steps": 3,
+    "seed": 20260724,
+    "selected_by": "pooled_v3_validation_block_5130_6389_min_worst_long_climatology_ratio_subject_to_short_guard",
+    "training_contract": "/home/mjalabert314/bire_james25_repro/config/model_c_bire_aligned_v3_pooled_v1.json"
+  },
+  "source_hashes": {
+    "slurm/models/c/af_model_c_bire_aligned_v3_figures.sbatch": "32d91773b568a1e7dda1008a4c5e44a020fa5cbd198318833c4d99567b03f7c2",
+    "src/bire_repro/af_data.py": "421a0e80feb8e2ae2ee588cc8debaf315927319d2bfb856056294397bf1f65a6",
+    "src/bire_repro/af_data_v3.py": "a33774b36fc1790c98fd41699ed8afa171ce0d02349267484710081412b95cc9",
+    "src/bire_repro/af_forward_complete.py": "18914b77058bfe1abeab3c98ec711ac8fb970deb76507b095ee376a0de447612",
+    "src/bire_repro/af_model_c.py": "ac81165ceb7e68eafc6cac237fe0e4cd2dafa2c67bf204db41b5dba86551493b",
+    "src/bire_repro/af_model_c_bire_aligned_chronological.py": "678c5748ef37ef1d73d98efab68adb4ef351ea164b22da14f2004e70cc3bbbd6",
+    "src/bire_repro/af_model_c_bire_aligned_full_state.py": "6ae2756577946c934b246bd49ac8ace625835c2970d9d4e43cf147268c1f23de",
+    "src/bire_repro/af_model_c_bire_aligned_v3.py": "fd74307dcf112942ae3adb87ce0a40d95e912db466f38b2041ad7a0e02861121",
+    "src/bire_repro/af_model_c_bire_aligned_v3_figures.py": "399403b4672122a80e3d4ed0ce60a7b09018416982cfd1f74c82bc07de4a4625",
+    "src/bire_repro/af_model_c_bire_s0_figures.py": "48636fe7daca00958414207c3bb15fc8ad16545fbd0ff08704a0de68ad7598e6",
+    "src/bire_repro/af_pressure.py": "1939645d807ec0281624d4146cadc51b3e9f382c540a56d7ed5afdca4b2c7c6c",
+    "src/bire_repro/mds.py": "4098c294a35a1fdcd0521e1eedc6495608ba96fd074dd509347f3efeb788d212",
+    "tests/model_c/test_af_model_c_bire_aligned_v3_figures.py": "1b6275f8b8c06bdb596844c10bd5f9a7c601a45479bc4ba64296043e76d1b925"
+  },
+  "truth": {
+    "continuation_required": false,
+    "reason": "the_2520_day_test_block_covers_every_lead_so_no_evaluation_only_continuation_is_needed",
+    "source": "trajectory_v3_store_only"
+  },
+  "version": "model_c_bire_aligned_v3_figures_v1"
+}

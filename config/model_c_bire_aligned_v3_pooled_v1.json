@@ -1,0 +1,346 @@
+{
+  "version": "model_c_bire_aligned_v3_pooled_v1",
+  "contract_status": "frozen_before_any_trajectory_v3_metric",
+  "freeze_date": "2026-07-30",
+  "purpose": "retrain_the_loss_recovery_model_unchanged_on_trajectory_v3_whose_three_regimes_were_equilibrated_independently_for_100_years_under_their_own_wind_with_pooled_training_and_pooled_validation",
+  "scientific_motivation": {
+    "question": "do_the_loss_recovery_conclusions_hold_on_independently_equilibrated_regimes_under_a_clean_chronological_protocol",
+    "kind": "data_regeneration_plus_protocol_not_a_model_change",
+    "parent_arm": "model_c_bire_aligned_loss_recovery_v1",
+    "what_changed_in_the_data": "trajectory_v2_S1_and_S2_branch_from_the_S0_year_100_state_with_only_a_five_year_adjustment_so_their_slow_fields_carry_the_S0_equilibrium_whereas_v3_equilibrates_each_regime_independently_for_100_years_from_the_tutorial_initial_condition_under_its_own_wind",
+    "production_extended": "every_regime_now_has_25_production_years_9000_daily_records_against_20_years_in_v2",
+    "pooling": "one_FNO_is_trained_on_all_three_training_blocks_and_selected_on_all_three_validation_blocks",
+    "model_unchanged": "same_seed_architecture_objective_optimizer_and_budget_as_the_parent",
+    "no_claim_before_result": "the_arm_is_declared_before_any_metric_is_read"
+  },
+  "retained_from_the_incumbent": {
+    "horizontal_grid": [
+      62,
+      62
+    ],
+    "prediction_interval_days": 10,
+    "prognostic_state": "15U_15V_15Theta_eta_equals_46_channels",
+    "output_channels": 46,
+    "fourier_modes": [
+      24,
+      16
+    ],
+    "hidden_channels": 128,
+    "lifting_hidden_width": 256,
+    "projection_hidden_width": 256,
+    "channel_mlp_width": 512,
+    "domain_padding": 0.1,
+    "numerical_precision": "float32",
+    "factorization": null,
+    "dataset_and_chronological_splits": "unchanged",
+    "pointwise_anomaly_normalization": "unchanged",
+    "evaluation_suite": "same_15_S0_starts_and_day2000_truth"
+  },
+  "sources": {
+    "dataset": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/trajectories_v3.zarr",
+      "metadata_sha256": "766cae89359311775c79103f44dc74630630ba6b7a0a8c6e9d26f73487512136",
+      "role": "the_immutable_trajectory_v3_store_on_independent_equilibria"
+    },
+    "dataset_manifest": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/trajectories_v3.manifest.json",
+      "sha256": "cf4b531a13a38b888d1e5f8c0817a26b9ec0b8946cc7b976847a9c64c22b0498"
+    },
+    "parent_contract": {
+      "path": "/home/mjalabert314/bire_james25_repro/config/model_c_bire_aligned_loss_recovery_v1.json",
+      "sha256": "4932821d0b46aa8472f54a64593c6e95cc2999f537f9b051695f52dfa5f8c570",
+      "role": "the_v2_arm_whose_model_this_reproduces_exactly"
+    }
+  },
+  "input_channels": {
+    "state": 46,
+    "retained_static": [
+      "wind_stress_x",
+      "wet_mask",
+      "distance_to_wall_normalized"
+    ],
+    "removed_static": [
+      "longitude_normalized",
+      "latitude_normalized"
+    ],
+    "removal_reason": "position_must_enter_exactly_once_and_it_enters_through_the_Bire_positional_encoder_immediately_before_lifting",
+    "retention_reason": "the_wet_mask_and_the_distance_to_wall_field_encode_basin_geometry_rather_than_generic_absolute_coordinates",
+    "external_inputs": 49,
+    "appended_positional_channels": 2,
+    "lifting_inputs": 51,
+    "outputs": 46,
+    "rejected_alternative": "keeping_all_51_current_inputs_and_adding_the_two_Bire_channels_would_recreate_the_duplicated_position_problem_and_give_53_lifting_inputs"
+  },
+  "positional_encoding": {
+    "source": "oceanfourcast_PosEmbed",
+    "construction": "p(j)_equals_sin(pi_over_2N_times_j)_for_even_j_and_cos(pi_over_2N_times_j)_for_odd_j_in_each_direction",
+    "concatenation_order": "external_inputs_then_p_x_then_p_y",
+    "enters": [
+      "the_lifting_network",
+      "the_subsequent_latent_FNO_representation"
+    ],
+    "does_not_enter": [
+      "a_separate_raw_input_output_branch",
+      "the_dataset_as_linear_longitude_and_latitude_channels"
+    ],
+    "not_used": "neuraloperator_GridEmbeddingND"
+  },
+  "architecture": {
+    "in_channels": 49,
+    "out_channels": 46,
+    "positional_channels": 2,
+    "lifting_in_channels": 51,
+    "grid_shape": [
+      62,
+      62
+    ],
+    "n_modes": [
+      24,
+      16
+    ],
+    "hidden_channels": 128,
+    "n_layers": 3,
+    "lifting_channel_ratio": 2,
+    "projection_channel_ratio": 2,
+    "channel_mlp_expansion": 4.0,
+    "channel_mlp_dropout": 0.0,
+    "domain_padding": 0.1,
+    "positional_embedding": null,
+    "use_channel_mlp": true,
+    "pointwise_layer_norm": true,
+    "local_kernel_size": null,
+    "fno_block_precision": "full",
+    "factorization": null
+  },
+  "architecture_notes": {
+    "map": "49_append_position_51_lift_256_to_128_three_FNO_blocks_project_256_to_46",
+    "lifting": "two_layer_pointwise_51_to_256_to_128_with_GELU_between",
+    "projection": "two_layer_pointwise_128_to_256_to_46_with_GELU_after_the_first",
+    "block": "spectral_conv_plus_pointwise_residual_then_LayerNorm_then_ChannelMLP_128_512_128_then_LayerNorm",
+    "retained_residual": "the_pointwise_W_h_path_inside_each_spectral_block_is_neuraloperator_fno_skip_linear_and_is_kept",
+    "removed_residual": "only_the_external_raw_input_51_to_46_convolution_around_the_whole_FNO_is_removed",
+    "layer_norm": "channel_wise_at_every_grid_point_over_the_128_hidden_channels_with_epsilon_1e_minus_5_after_spectral_mixing_and_after_channel_mixing",
+    "layer_norm_modules": 6,
+    "non_linearity": "neuraloperator_applies_GELU_between_blocks_and_not_after_the_final_block_which_is_unchanged_from_every_earlier_arm_in_this_project",
+    "prediction": "direct_normalized_future_state_not_an_increment"
+  },
+  "loss": {
+    "objective": "incumbent_group_balanced_model_c_loss_v1",
+    "contract_sha256": "19000a1426ea928db7799c82a73ce071a874911eb7e1df50bd276582ec30b5f9",
+    "state": "one_quarter_each_for_U_V_Theta_and_eta",
+    "components": [
+      "state",
+      "increment",
+      "rollout",
+      "spectral",
+      "western_boundary"
+    ],
+    "coefficients": {
+      "increment": 0.001,
+      "rollout": 0.15,
+      "spectral": 1e-05,
+      "boundary": 0.065
+    },
+    "rollout_steps": 3,
+    "spectral_bins": 12,
+    "western_boundary_width": 4,
+    "restores": "the_exact_loss_v1_used_by_every_successful_model_c_arm_including_the_incumbent"
+  },
+  "stages": [
+    {
+      "stage_id": "three_step",
+      "rollout_steps": 3,
+      "first_optimizer_step": 1,
+      "last_optimizer_step": 7680,
+      "objective": "group-balanced Model C loss v1 over a three-step unrolled rollout",
+      "inputs": "self_generated_inputs_at_steps_two_and_three"
+    }
+  ],
+  "training": {
+    "seed": 20260724,
+    "optimizer": "adam",
+    "batch_size": 8,
+    "initial_learning_rate": 0.0005,
+    "adam_betas": [
+      0.9,
+      0.95
+    ],
+    "weight_decay": 0.0,
+    "gradient_clipping": false,
+    "gradient_clipping_reason": "adding_a_clip_would_introduce_another_untested_stabilizing_mechanism_into_a_composite_test",
+    "on_non_finite": "fail_fast_and_report",
+    "maximum_steps": 7680,
+    "checkpoint_steps": [
+      1920,
+      3840,
+      5760,
+      7680
+    ],
+    "decay_fraction": 0.75,
+    "decay_factor": 0.2,
+    "records": "unchanged_split1_complete_three_step_rollout_starts_read_two_steps_deep",
+    "exposure_budget": {
+      "this_arm_steps_times_batch": "7680_times_8",
+      "parent_steps_times_batch": "7680_times_8",
+      "basis": "identical_optimizer_step_and_sequence_exposure_budget_to_every_bire_aligned_arm"
+    },
+    "schedule_status": "the_decay_schedule_is_a_separately_declared_control_not_a_claim_about_the_published_Bire_configuration",
+    "dropout_status": "frozen_at_zero_because_the_successful_incumbent_uses_zero_and_the_requested_changes_do_not_include_dropout_and_the_paper_does_not_establish_the_repository_default_of_0p5",
+    "rollout_steps": 3,
+    "from_scratch": true
+  },
+  "held_evaluation": {
+    "protocol": "reuse_the_frozen_S0_figure_contract_with_the_same_15_starts_and_the_same_six_filenames_once_per_stage",
+    "figures": [
+      "model_c_bire_figure3_streamfunction_1deg_s0_dt10.png",
+      "model_c_bire_figure4_dt10_rmse_0_200_days_s0.png",
+      "model_c_bire_figure5_dt10_single_member_rmse_s0.png",
+      "model_c_bire_figure6_dt10_acc_0_200_days_s0.png",
+      "model_c_bire_figure7_dt10_streamfunction_day060_day2000_s0.png",
+      "model_c_bire_figure8_dt10_rmse_0_2000_days_s0.png"
+    ],
+    "long_term_success_criterion": "per_step_gain_at_or_below_one_and_day2000_spatial_std_ratio_within_0p8_to_1p25",
+    "short_term_success_criterion": "every_primary_field_10_to_90_day_RMSE_below_both_persistence_and_climatology"
+  },
+  "read_contract": {
+    "training_state": true,
+    "validation_state": true,
+    "test_state": false,
+    "intermediate_wind_state": false,
+    "response_state": false,
+    "adjoint_state": false
+  },
+  "output": {
+    "scratch_root": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/bire_aligned_v3_pooled_v1",
+    "project_root": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/bire_aligned_v3_pooled_v1",
+    "artifacts": [
+      "bire_aligned_chronological_report.json",
+      "bire_aligned_chronological_arrays.npz",
+      "model_c_bire_aligned_chronological_selection.png",
+      "README.md",
+      "manifest.json"
+    ]
+  },
+  "implementation": {
+    "runner_module": "src/bire_repro/af_model_c_bire_aligned_v3.py",
+    "dataset_module": "src/bire_repro/af_data_v3.py",
+    "simulation_module": "src/bire_repro/af_independent_wind_trajectories.py",
+    "no_certified_source_modified": true,
+    "reused_unchanged": [
+      "BireAlignedArchitecture_and_build_bire_aligned_model",
+      "retained_features",
+      "model_c_loss_terms_and_model_c_loss_config_v1",
+      "training_pointwise_normalizers",
+      "validate_checkpoint_and_select_by_validation_from_the_chronological_arm"
+    ],
+    "single_change_enforcement": "the_loader_reloads_the_parent_contract_and_asserts_the_architecture_the_objective_and_every_frozen_training_field_are_equal_so_only_the_data_and_split_move"
+  },
+  "source_hashes": {
+    "src/bire_repro/af_model_c_bire_aligned_v3.py": "fd74307dcf112942ae3adb87ce0a40d95e912db466f38b2041ad7a0e02861121",
+    "src/bire_repro/af_data_v3.py": "a33774b36fc1790c98fd41699ed8afa171ce0d02349267484710081412b95cc9",
+    "src/bire_repro/af_independent_wind_trajectories.py": "5b9d4efaec666e2080ffc6a2623b409649c72abf3df3987dd1f40afc06589cc9",
+    "src/bire_repro/af_model_c_bire_aligned_chronological.py": "678c5748ef37ef1d73d98efab68adb4ef351ea164b22da14f2004e70cc3bbbd6",
+    "src/bire_repro/af_model_c_bire_aligned_full_state.py": "6ae2756577946c934b246bd49ac8ace625835c2970d9d4e43cf147268c1f23de",
+    "src/bire_repro/af_model_c.py": "ac81165ceb7e68eafc6cac237fe0e4cd2dafa2c67bf204db41b5dba86551493b",
+    "src/bire_repro/af_model_c_anomaly_direct.py": "c7f5d24530f501ee1f2ac8e719ecb73715de34c7441c08600a985f51e1860d89",
+    "src/bire_repro/af_forward_complete.py": "18914b77058bfe1abeab3c98ec711ac8fb970deb76507b095ee376a0de447612",
+    "src/bire_repro/af_data.py": "421a0e80feb8e2ae2ee588cc8debaf315927319d2bfb856056294397bf1f65a6",
+    "src/bire_repro/af_model_c_successor.py": "62a5a3f91b21137bcaf4b8ed39a4bf3a4f35d1357cf7ab83947bd7dbbbe236e6",
+    "slurm/models/c/af_model_c_bire_aligned_v3.sbatch": "b36ee8c87aa532333f4ad1dcbc91e141168cf65e1ce506889a35192d7a50595e",
+    "slurm/mitgcm/af_independent_wind_segment.sbatch": "ea4f6ba67da5c0e7fab64b7dba9554fc330a62dc110fd87ec23de9bb66903a8d",
+    "slurm/data/af_data_v3_build.sbatch": "a29569916e524e5220011eed2792ec469fc98503dbd651e028925b468f167ae2"
+  },
+  "login_node_note": "the_slash_sw_mount_is_repointed_on_the_login_node_so_dot_venv_slash_bin_slash_python_is_a_dangling_symlink_there_but_compute_nodes_still_see_slash_sw_anaconda_and_the_interpreter_works_under_srun_and_sbatch",
+  "dataset": {
+    "version": "trajectories_v3",
+    "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/trajectories_v3.zarr",
+    "metadata_sha256": "766cae89359311775c79103f44dc74630630ba6b7a0a8c6e9d26f73487512136",
+    "production_days": 9000,
+    "regimes": [
+      "S0",
+      "S1",
+      "S2"
+    ],
+    "tau0_n_m2": {
+      "S0": 0.1,
+      "S1": 0.075,
+      "S2": 0.125
+    },
+    "equilibration": "independent_100_year_spin_up_per_regime_from_the_tutorial_initial_condition",
+    "train": [
+      0,
+      5040
+    ],
+    "validation": [
+      5130,
+      6390
+    ],
+    "test": [
+      6480,
+      9000
+    ],
+    "buffers": [
+      [
+        5040,
+        5130
+      ],
+      [
+        6390,
+        6480
+      ]
+    ],
+    "buffer_days": 90,
+    "pooled_regimes": true,
+    "test_start_window": [
+      6480,
+      7000
+    ],
+    "maximum_test_rollout_days": 2000,
+    "test_start_window_reason": "a_2520_day_test_block_admits_a_complete_2000_day_rollout_only_from_starts_in_its_first_520_days"
+  },
+  "normalization": {
+    "recomputed_from": "v3_train_only_0_5039",
+    "reason": "v2_statistics_describe_a_different_training_interval_and_different_S1_S2_physics",
+    "construction": "unchanged_pointwise_mean_and_population_std_with_a_per_channel_fifth_percentile_wet_cell_floor",
+    "recomputed_quantities": [
+      "pointwise_mean",
+      "pointwise_scale",
+      "channel_scale_floors",
+      "per_regime_pointwise_climatology",
+      "pointwise_increment_scale"
+    ],
+    "not_recomputed": {
+      "wind_stress_normalization": "static_features_has_no_time_axis_but_v3_does_carry_each_regimes_own_scaled_wind_field"
+    },
+    "artifact": "model_c_v3_train_only_normalization.npz"
+  },
+  "checkpoint_selection": {
+    "rule": "min_worst_long_climatology_ratio_subject_to_short_guard",
+    "evaluated_on": "pooled_v3_validation_block_5130_6389",
+    "objective": "minimise over checkpoints the maximum over speed, SST and surface pressure of AUC_90:360(RMSE) / AUC_90:360(RMSE_climatology)",
+    "constraint": "AUC_10:90(RMSE_q) <= 1.05 * min over checkpoints of AUC_10:90(RMSE_q), for every primary field",
+    "short_skill_tolerance": 1.05,
+    "validation_rollout_days": 360,
+    "validation_start_stride": 30,
+    "fallback": "if_no_checkpoint_satisfies_the_guard_select_the_one_minimising_the_worst_short_skill_ratio_and_record_which_branch_fired"
+  },
+  "changed_relative_to_the_parent": {
+    "dataset": {
+      "was": "trajectories_v2_with_branched_S1_S2_and_20_production_years",
+      "now": "trajectories_v3_with_independent_100_year_equilibria_and_25_production_years"
+    },
+    "split": {
+      "was": "stored_interleaved_train",
+      "now": "chronological_5040_train_1260_validation_2520_test_with_90_day_buffers"
+    },
+    "normalization": {
+      "was": "shared_seed_20260724_v2_normalizer",
+      "now": "recomputed_from_the_v3_training_block"
+    },
+    "checkpoint_selection": {
+      "was": "360_day_gate_over_training_records",
+      "now": "pooled_v3_validation_block"
+    },
+    "model": "identical_including_seed_architecture_objective_optimizer_and_budget"
+  }
+}
