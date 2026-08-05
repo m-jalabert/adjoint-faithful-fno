@@ -238,7 +238,7 @@
     "split_module": "src/bire_repro/af_bire_protocol_split.py"
   },
   "source_hashes": {
-    "src/bire_repro/af_model_c_bire_protocol.py": "587d0a1ba3ef80728a159002fc97928256a7aba39c155014b6db9060457fead1",
+    "src/bire_repro/af_model_c_bire_protocol.py": "e7de5aacaa4a181f07e96a415eace3d3ccedcbeddd840ac42bf7329dafe1c26a",
     "src/bire_repro/af_bire_protocol_split.py": "8e95fa597c1aac301f77284e0b514c362e5f5a92a55443660a2d549e67204616",
     "src/bire_repro/af_model_c_bire_aligned_v3.py": "fd74307dcf112942ae3adb87ce0a40d95e912db466f38b2041ad7a0e02861121",
     "src/bire_repro/af_data_v3.py": "a33774b36fc1790c98fd41699ed8afa171ce0d02349267484710081412b95cc9",

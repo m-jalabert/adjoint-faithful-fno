@@ -142,7 +142,7 @@ def test_artifact_names_do_not_collide_with_the_parents() -> None:
     from bire_repro import af_model_c_bire_protocol_duration as arm
 
     for name in ("REPORT_NAME", "ARRAYS_NAME", "FIGURE_NAME",
-                 "NORMALIZATION_NAME", "DIVERGENCE_NAME"):
+                 "NORMALIZATION_NAME", "DIVERGENCE_NAME", "CHECKPOINT_STEM"):
         assert getattr(arm, name) != getattr(protocol, name)
         assert "duration" in getattr(arm, name)
 
@@ -192,3 +192,39 @@ def test_readme_rejects_a_report_missing_the_selection_block() -> None:
 
     with pytest.raises(KeyError):
         _readme({"validation_summaries": [], "optimizer": {"decay_step": 11520}})
+
+
+def test_checkpoint_stems_cannot_collide_between_arms() -> None:
+    """Regression: both arms wrote `model_c_bire_protocol_step_07680.pt`.
+
+    Same filename, different weights -- this run's step 7,680 is still at 5e-4
+    where the parent's had already decayed to 1e-4.  Anything that copies
+    checkpoints out of their directories would silently confuse the two.
+    """
+
+    from bire_repro import af_model_c_bire_protocol_duration as arm
+
+    assert arm.CHECKPOINT_STEM != protocol.CHECKPOINT_STEM
+    assert "duration" in arm.CHECKPOINT_STEM
+    names = {f"{arm.CHECKPOINT_STEM}_{s:05d}.pt" for s in CHECKPOINT_STEPS}
+    theirs = {f"{protocol.CHECKPOINT_STEM}_{s:05d}.pt" for s in protocol.CHECKPOINT_STEPS}
+    assert names.isdisjoint(theirs)
+    assert "CHECKPOINT_STEM" in PARENT_BINDINGS
+
+
+@pytest.mark.skipif(
+    not (ROOT / "outputs/af_fno/C/bire_protocol_duration_v1/bire_protocol_duration_report.json").is_file(),
+    reason="the run has not completed",
+)
+def test_published_checkpoint_names_match_the_files_on_disk() -> None:
+    from bire_repro.af_model_c_overfit import _file_sha256
+
+    report = json.loads(
+        (ROOT / "outputs/af_fno/C/bire_protocol_duration_v1/bire_protocol_duration_report.json").read_text()
+    )
+    directory = Path(report["published_checkpoint"]["checkpoint"]).parent / "training_checkpoints"
+    for entry in report["checkpoints"]:
+        path = directory / entry["checkpoint"]
+        assert path.is_file(), f"{entry['checkpoint']} is not on disk"
+        assert _file_sha256(path) == entry["checkpoint_sha256"]
+        assert "duration" in entry["checkpoint"]

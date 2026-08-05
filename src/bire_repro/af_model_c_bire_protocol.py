@@ -126,6 +126,10 @@ DIVERGENCE_NAME = "bire_protocol_divergence.json"
 # used elsewhere in this project -- is safe because `_plot` takes an explicit
 # path and every write below goes through these names, so the published package
 # is named after the arm that produced it.
+# Derived arms rebind this so their checkpoints cannot share a filename with
+# this arm's.  Two arms wrote `model_c_bire_protocol_step_07680.pt` with
+# different weights before it was made rebindable.
+CHECKPOINT_STEM = "model_c_bire_protocol_step"
 REPORT_NAME = "bire_protocol_report.json"
 ARRAYS_NAME = "bire_protocol_arrays.npz"
 FIGURE_NAME = "model_c_bire_protocol_selection.png"
@@ -481,7 +485,7 @@ def run(contract_path: str | Path, *, device_name: str = "auto") -> dict[str, An
             "training_window": window,
         }
         history.append(history_record)
-        path = checkpoint_directory / f"model_c_bire_protocol_step_{step:05d}.pt"
+        path = checkpoint_directory / f"{CHECKPOINT_STEM}_{step:05d}.pt"
         torch.save(
             {
                 "version": VERSION,

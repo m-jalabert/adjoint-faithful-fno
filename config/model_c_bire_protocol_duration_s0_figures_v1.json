@@ -5,7 +5,7 @@
       "sha256": "65c523743f06369e98f3902110dc818e8e5967861e9a1cf979277862c1ad2ab0"
     },
     "comparator_checkpoint": {
-      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/bire_protocol_duration_v1/training_checkpoints/model_c_bire_protocol_step_07680.pt",
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/bire_protocol_duration_v1/training_checkpoints/model_c_bire_protocol_duration_step_07680.pt",
       "sha256": "4da65a5c86722c724e7aa8fe5a9d5d678a04f1f8743d88a64d734a9d643382e1"
     },
     "selected_normalization": {
@@ -14,7 +14,7 @@
     },
     "selected_report": {
       "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/bire_protocol_duration_v1/bire_protocol_duration_report.json",
-      "sha256": "3a4509d8e445c6d5d0a5beed81645df9dc045e5a724754e5cf77cef0a2204dad"
+      "sha256": "0804d987e026cf7bd88d4ba823539cbf8738088d2ceba767466210dcf19b5188"
     },
     "dataset_metadata": {
       "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/trajectories_v3.zarr/.zmetadata",
@@ -208,10 +208,10 @@
     "training_contract": "/home/mjalabert314/bire_james25_repro/config/model_c_bire_protocol_pooled_v1.json"
   },
   "source_hashes": {
-    "src/bire_repro/af_model_c_bire_protocol_duration_figures.py": "f4a9325d2ae7a4f4b8f5843730b63b9520b51a7f022e1968405f0375661c5797",
-    "src/bire_repro/af_model_c_bire_protocol_figures.py": "10f612a0aba9b799f3135fd3737b5b797282fca17b381aae646c83e2ae23860d",
-    "src/bire_repro/af_model_c_bire_protocol_duration.py": "538519b29e1790a484865e855707770a54054c3ca03ab1787ad6ac184e5a02cc",
-    "src/bire_repro/af_model_c_bire_protocol.py": "587d0a1ba3ef80728a159002fc97928256a7aba39c155014b6db9060457fead1",
+    "src/bire_repro/af_model_c_bire_protocol_duration_figures.py": "bb834ce59f282f0a27de31ba1a1696da8dc6e0f3c24666e67b87fdc4cb6878ce",
+    "src/bire_repro/af_model_c_bire_protocol_figures.py": "beef8aa2f7e06b92fcebe421d4160f352c9c94e019df615ac9c2773932c7c1ef",
+    "src/bire_repro/af_model_c_bire_protocol_duration.py": "2aa2aa6f546f9187c4184b156f7dc4a917f4aee31985525ddeff01999107a469",
+    "src/bire_repro/af_model_c_bire_protocol.py": "e7de5aacaa4a181f07e96a415eace3d3ccedcbeddd840ac42bf7329dafe1c26a",
     "src/bire_repro/af_bire_protocol_split.py": "8e95fa597c1aac301f77284e0b514c362e5f5a92a55443660a2d549e67204616",
     "src/bire_repro/af_model_c_bire_aligned_full_state.py": "6ae2756577946c934b246bd49ac8ace625835c2970d9d4e43cf147268c1f23de"
   },

@@ -53,7 +53,7 @@
     },
     "parent_contract": {
       "path": "/home/mjalabert314/bire_james25_repro/config/model_c_bire_protocol_pooled_v1.json",
-      "sha256": "4df238b688f6510bde6a4c7e14ee61e3e3e4a3f87e4bd12638b2b70f22834382",
+      "sha256": "763d329735ca299e07f17325aa39cb8c22a718f512f31e2442a2f812d542471f",
       "role": "the_bire_protocol_arm_whose_every_model_quantity_but_the_budget_this_reproduces"
     }
   },
@@ -242,8 +242,8 @@
     "split_module": "src/bire_repro/af_bire_protocol_split.py"
   },
   "source_hashes": {
-    "src/bire_repro/af_model_c_bire_protocol_duration.py": "bca58837ab879bfa23e3f94c6317d026d0b5f318fb085aaf26d5fe81020d792f",
-    "src/bire_repro/af_model_c_bire_protocol.py": "587d0a1ba3ef80728a159002fc97928256a7aba39c155014b6db9060457fead1",
+    "src/bire_repro/af_model_c_bire_protocol_duration.py": "2aa2aa6f546f9187c4184b156f7dc4a917f4aee31985525ddeff01999107a469",
+    "src/bire_repro/af_model_c_bire_protocol.py": "e7de5aacaa4a181f07e96a415eace3d3ccedcbeddd840ac42bf7329dafe1c26a",
     "src/bire_repro/af_bire_protocol_split.py": "8e95fa597c1aac301f77284e0b514c362e5f5a92a55443660a2d549e67204616",
     "src/bire_repro/af_model_c_bire_aligned_full_state.py": "6ae2756577946c934b246bd49ac8ace625835c2970d9d4e43cf147268c1f23de",
     "src/bire_repro/af_model_c_bire_aligned_chronological.py": "678c5748ef37ef1d73d98efab68adb4ef351ea164b22da14f2004e70cc3bbbd6",

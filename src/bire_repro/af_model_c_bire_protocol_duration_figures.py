@@ -43,6 +43,8 @@ START_SEED = suite.START_SEED
 #: The parent arm's entire budget, used here as this run's own comparator.
 COMPARATOR_STEP = 7680
 SELECTED_STEP = 15360
+#: Distinguishes this package's red curve from the parent's in side-by-side reading.
+MODEL_LABEL = "Bire-protocol Model C (15,360 steps)"
 REGIMES = suite.REGIMES
 
 
@@ -131,7 +133,8 @@ Report content SHA-256: `{report['report_content_sha256']}`.
 """
 
 
-PARENT_BINDINGS = ("VERSION", "CONTRACT_STATUS", "COMPARATOR_STEP", "load_contract", "_readme")
+PARENT_BINDINGS = ("VERSION", "CONTRACT_STATUS", "COMPARATOR_STEP", "MODEL_LABEL",
+                   "load_contract", "_readme")
 
 
 class _SuiteBinding:

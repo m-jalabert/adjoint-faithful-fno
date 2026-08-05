@@ -176,6 +176,10 @@ def _stepper(
     )
 
 
+#: Red-curve legend name.  Derived arms rebind this so two packages meant to
+#: be compared side by side do not label their model curve identically.
+MODEL_LABEL = "Bire-protocol Model C"
+
 #: Wind label per regime, for titles the frozen plotters hard-code as S0's.
 REGIME_WIND_LABEL = {"S0": "Control wind", "S1": "Low wind", "S2": "High wind"}
 
@@ -262,7 +266,7 @@ class RegimeLabels:
         matplotlib.axes.Axes.plot = patched_plot
         figures.METHOD_LABELS = {
             **self._method_labels,
-            "model": "Bire-protocol Model C",
+            "model": MODEL_LABEL,
         }
         return self
 

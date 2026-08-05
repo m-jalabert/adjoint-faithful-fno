@@ -135,3 +135,19 @@ def test_launcher_invokes_its_own_module_and_contract() -> None:
     }
     assert invoked == {"bire_repro.af_model_c_bire_protocol_duration_figures"}
     assert "model_c_bire_protocol_duration_s0_figures_v1.json" in text
+
+
+def test_the_red_curve_is_labelled_distinctly_from_the_parent() -> None:
+    """Two packages built to be compared must not name their model curve alike."""
+
+    from bire_repro import af_model_c_bire_s0_figures as figures
+    from bire_repro.af_model_c_bire_protocol_duration_figures import MODEL_LABEL
+
+    assert MODEL_LABEL != suite.MODEL_LABEL
+    assert "15,360" in MODEL_LABEL
+    assert "MODEL_LABEL" in PARENT_BINDINGS
+    with _SuiteBinding():
+        with suite.RegimeLabels("S0", 0.1, SELECTED_STEP):
+            assert figures.METHOD_LABELS["model"] == MODEL_LABEL
+    with suite.RegimeLabels("S0", 0.1, 7680):
+        assert figures.METHOD_LABELS["model"] == suite.MODEL_LABEL

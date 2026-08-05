@@ -214,8 +214,8 @@
     "src/bire_repro/af_model_c.py": "ac81165ceb7e68eafc6cac237fe0e4cd2dafa2c67bf204db41b5dba86551493b",
     "src/bire_repro/af_model_c_bire_aligned_full_state.py": "6ae2756577946c934b246bd49ac8ace625835c2970d9d4e43cf147268c1f23de",
     "src/bire_repro/af_model_c_bire_aligned_v3_figures.py": "399403b4672122a80e3d4ed0ce60a7b09018416982cfd1f74c82bc07de4a4625",
-    "src/bire_repro/af_model_c_bire_protocol.py": "587d0a1ba3ef80728a159002fc97928256a7aba39c155014b6db9060457fead1",
-    "src/bire_repro/af_model_c_bire_protocol_figures.py": "10f612a0aba9b799f3135fd3737b5b797282fca17b381aae646c83e2ae23860d",
+    "src/bire_repro/af_model_c_bire_protocol.py": "e7de5aacaa4a181f07e96a415eace3d3ccedcbeddd840ac42bf7329dafe1c26a",
+    "src/bire_repro/af_model_c_bire_protocol_figures.py": "beef8aa2f7e06b92fcebe421d4160f352c9c94e019df615ac9c2773932c7c1ef",
     "src/bire_repro/af_model_c_bire_s0_figures.py": "48636fe7daca00958414207c3bb15fc8ad16545fbd0ff08704a0de68ad7598e6",
     "src/bire_repro/af_pressure.py": "1939645d807ec0281624d4146cadc51b3e9f382c540a56d7ed5afdca4b2c7c6c",
     "src/bire_repro/mds.py": "4098c294a35a1fdcd0521e1eedc6495608ba96fd074dd509347f3efeb788d212"

@@ -103,6 +103,7 @@ DECLARED_CHANGE = "maximum_steps"
 
 NORMALIZATION_NAME = "model_c_bire_protocol_duration_train_only_normalization.npz"
 DIVERGENCE_NAME = "bire_protocol_duration_divergence.json"
+CHECKPOINT_STEM = "model_c_bire_protocol_duration_step"
 REPORT_NAME = "bire_protocol_duration_report.json"
 ARRAYS_NAME = "bire_protocol_duration_arrays.npz"
 FIGURE_NAME = "model_c_bire_protocol_duration_selection.png"
@@ -253,6 +254,7 @@ Report content SHA-256: `{report['content_sha256']}`.
 #: Globals the parent's ``preflight`` and ``run`` resolve at call time.
 PARENT_BINDINGS = (
     "VERSION",
+    "CHECKPOINT_STEM",
     "CONTRACT_STATUS",
     "CHECKPOINT_STEPS",
     "MAXIMUM_STEPS",
