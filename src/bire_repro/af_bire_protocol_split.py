@@ -220,8 +220,10 @@ def verify(record_days: int = RECORD_DAYS) -> dict[str, Any]:
         "short_term_lead_days": int(SHORT_TERM_LEAD_DAYS),
         "long_term_lead_days": int(MAXIMUM_INFERENCE_ROLLOUT_DAYS),
         "long_term_reference": (
-            "no lead-matched truth exists past the record, so the 2,000-day curve "
-            "is scored against climatology and persistence as in the paper"
+            "lead-matched MITgcm truth covers the whole 2,000-day rollout: starts "
+            "are drawn from 6200-6999 and the store runs to 8999, so every member "
+            "is scored against truth at every lead, with climatology and "
+            "persistence as the two reference curves"
         ),
         "unused_within_record": int(unused.size),
         "inference_nested_in_validation": True,

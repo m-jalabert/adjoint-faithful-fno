@@ -1,18 +1,22 @@
 {
-  "version": "model_c_bire_protocol_pooled_v1",
-  "contract_status": "frozen_before_any_bire_protocol_metric",
-  "freeze_date": "2026-07-30",
-  "purpose": "retrain_the_pooled_loss_recovery_model_unchanged_under_the_bire_et_al_section_3p2_data_arrangement_6000_training_1200_validation_with_the_final_1000_validation_days_as_the_inference_set",
+  "version": "model_c_bire_protocol_duration_v1",
+  "contract_status": "frozen_before_any_bire_protocol_duration_metric",
+  "freeze_date": "2026-08-04",
+  "purpose": "matched_budget_duration_control_the_parent_training_window_was_still_falling_monotonically_at_its_final_checkpoint_and_validation_selected_that_checkpoint_so_the_optimum_sat_at_the_edge_of_the_budget",
   "scientific_motivation": {
-    "question": "how_does_the_model_behave_under_the_papers_own_data_arrangement_rather_than_this_projects_stricter_three_block_split",
-    "kind": "data_arrangement_change_not_a_model_change",
-    "parent_arm": "model_c_bire_aligned_v3_pooled_v1",
-    "paper_quote": "Final 6000 timesteps from simulations 1, 3, and 5 are allocated for training. The next 1200 timesteps are allocated for validation. The final 1000 timesteps are for inference (testing set).",
-    "paper_second_quote": "We do not use a third held-out test data set.",
-    "reading": "6000_plus_1200_equals_7200_which_is_the_papers_entire_record_so_the_1000_inference_timesteps_are_the_final_1000_of_validation_not_a_third_block",
-    "buffers": "dropped_because_the_paper_has_none_leakage_prevented_by_requiring_the_whole_three_step_target_sequence_to_stay_inside_training",
-    "no_claim_before_result": "the_arm_is_declared_before_any_metric_is_read",
-    "strictness": "the_model_sees_only_bires_7200_days_evaluation_truth_extends_to_day_2000_exactly_as_the_papers_figure_7_ground_truth_column_does"
+    "parent_training_window_totals": {
+      "1920": 0.3343,
+      "3840": 0.1805,
+      "5760": 0.1437,
+      "7680": 0.0915
+    },
+    "observation": "monotonically_falling_with_no_flattening_and_validation_selected_the_final_checkpoint",
+    "context": "every_bire_aligned_arm_used_7680_steps_against_the_incumbent_residual_models_15360",
+    "predeclared_outcomes": {
+      "budget_was_binding": "validation_selects_a_step_beyond_7680_and_the_worst_long_ratio_to_climatology_improves",
+      "budget_was_not_binding": "validation_selects_7680_or_the_long_ratio_does_not_improve_and_duration_is_closed",
+      "tail_degrades": "long_horizon_per_call_gain_or_amplitude_worsens_while_the_training_window_keeps_falling"
+    }
   },
   "retained_from_the_incumbent": {
     "horizontal_grid": [
@@ -48,9 +52,9 @@
       "sha256": "cf4b531a13a38b888d1e5f8c0817a26b9ec0b8946cc7b976847a9c64c22b0498"
     },
     "parent_contract": {
-      "path": "/home/mjalabert314/bire_james25_repro/config/model_c_bire_aligned_v3_pooled_v1.json",
-      "sha256": "1df2abfa9d665029fe0c09fbb961842a5564815a3104a50e0beb17b5954b0e2e",
-      "role": "the_three_block_arm_whose_model_this_reproduces_exactly"
+      "path": "/home/mjalabert314/bire_james25_repro/config/model_c_bire_protocol_pooled_v1.json",
+      "sha256": "4df238b688f6510bde6a4c7e14ee61e3e3e4a3f87e4bd12638b2b70f22834382",
+      "role": "the_bire_protocol_arm_whose_every_model_quantity_but_the_budget_this_reproduces"
     }
   },
   "input_channels": {
@@ -170,20 +174,20 @@
     "gradient_clipping": false,
     "gradient_clipping_reason": "adding_a_clip_would_introduce_another_untested_stabilizing_mechanism_into_a_composite_test",
     "on_non_finite": "fail_fast_and_report",
-    "maximum_steps": 7680,
+    "maximum_steps": 15360,
     "checkpoint_steps": [
-      1920,
       3840,
-      5760,
-      7680
+      7680,
+      11520,
+      15360
     ],
     "decay_fraction": 0.75,
     "decay_factor": 0.2,
     "records": "unchanged_split1_complete_three_step_rollout_starts_read_two_steps_deep",
     "exposure_budget": {
-      "this_arm_steps_times_batch": "7680_times_8",
+      "this_arm_steps_times_batch": "15360_times_8",
       "parent_steps_times_batch": "7680_times_8",
-      "basis": "identical_optimizer_step_and_sequence_exposure_budget_to_every_bire_aligned_arm"
+      "basis": "doubled_budget_matching_the_incumbent_residual_model_so_architecture_comparisons_can_be_made_at_matched_exposure"
     },
     "schedule_status": "the_decay_schedule_is_a_separately_declared_control_not_a_claim_about_the_published_Bire_configuration",
     "dropout_status": "frozen_at_zero_because_the_successful_incumbent_uses_zero_and_the_requested_changes_do_not_include_dropout_and_the_paper_does_not_establish_the_repository_default_of_0p5",
@@ -212,12 +216,12 @@
     "adjoint_state": false
   },
   "output": {
-    "scratch_root": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/bire_protocol_pooled_v1",
-    "project_root": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/bire_protocol_pooled_v1",
+    "scratch_root": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/bire_protocol_duration_v1",
+    "project_root": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/bire_protocol_duration_v1",
     "artifacts": [
-      "bire_protocol_report.json",
-      "bire_protocol_arrays.npz",
-      "model_c_bire_protocol_selection.png",
+      "bire_protocol_duration_report.json",
+      "bire_protocol_duration_arrays.npz",
+      "model_c_bire_protocol_duration_selection.png",
       "README.md",
       "manifest.json"
     ]
@@ -238,17 +242,12 @@
     "split_module": "src/bire_repro/af_bire_protocol_split.py"
   },
   "source_hashes": {
+    "src/bire_repro/af_model_c_bire_protocol_duration.py": "bca58837ab879bfa23e3f94c6317d026d0b5f318fb085aaf26d5fe81020d792f",
     "src/bire_repro/af_model_c_bire_protocol.py": "587d0a1ba3ef80728a159002fc97928256a7aba39c155014b6db9060457fead1",
     "src/bire_repro/af_bire_protocol_split.py": "8e95fa597c1aac301f77284e0b514c362e5f5a92a55443660a2d549e67204616",
-    "src/bire_repro/af_model_c_bire_aligned_v3.py": "fd74307dcf112942ae3adb87ce0a40d95e912db466f38b2041ad7a0e02861121",
-    "src/bire_repro/af_data_v3.py": "a33774b36fc1790c98fd41699ed8afa171ce0d02349267484710081412b95cc9",
-    "src/bire_repro/af_model_c_bire_aligned_chronological.py": "678c5748ef37ef1d73d98efab68adb4ef351ea164b22da14f2004e70cc3bbbd6",
     "src/bire_repro/af_model_c_bire_aligned_full_state.py": "6ae2756577946c934b246bd49ac8ace625835c2970d9d4e43cf147268c1f23de",
-    "src/bire_repro/af_model_c.py": "ac81165ceb7e68eafc6cac237fe0e4cd2dafa2c67bf204db41b5dba86551493b",
-    "src/bire_repro/af_model_c_anomaly_direct.py": "c7f5d24530f501ee1f2ac8e719ecb73715de34c7441c08600a985f51e1860d89",
-    "src/bire_repro/af_forward_complete.py": "18914b77058bfe1abeab3c98ec711ac8fb970deb76507b095ee376a0de447612",
-    "src/bire_repro/af_model_c_successor.py": "62a5a3f91b21137bcaf4b8ed39a4bf3a4f35d1357cf7ab83947bd7dbbbe236e6",
-    "slurm/models/c/af_model_c_bire_protocol.sbatch": "8d6dff045824b3087adf222dcb621a853e9782b390b6fee547129794432fb7bb"
+    "src/bire_repro/af_model_c_bire_aligned_chronological.py": "678c5748ef37ef1d73d98efab68adb4ef351ea164b22da14f2004e70cc3bbbd6",
+    "src/bire_repro/af_data_v3.py": "a33774b36fc1790c98fd41699ed8afa171ce0d02349267484710081412b95cc9"
   },
   "login_node_note": "the_slash_sw_mount_is_repointed_on_the_login_node_so_dot_venv_slash_bin_slash_python_is_a_dangling_symlink_there_but_compute_nodes_still_see_slash_sw_anaconda_and_the_interpreter_works_under_srun_and_sbatch",
   "dataset": {
@@ -330,23 +329,30 @@
     "start_choice_reason": "selection_starts_are_drawn_from_the_200_validation_days_outside_the_inference_set_so_no_selection_start_coincides_with_an_inference_start_their_360_day_rollouts_still_traverse_the_inference_window_which_is_inherited_from_the_papers_nested_design"
   },
   "changed_relative_to_the_parent": {
-    "split": {
-      "was": "project_three_block_5040_train_1260_validation_2520_test_with_90_day_buffers",
-      "now": "bire_section_3p2_6000_train_1200_validation_final_1000_validation_days_as_inference_no_buffers"
+    "single_declared_change": "maximum_steps",
+    "maximum_steps": {
+      "parent": 7680,
+      "this_arm": 15360
     },
-    "training_days_per_regime": {
-      "was": 5040,
-      "now": 6000
+    "checkpoint_steps": {
+      "parent": [
+        1920,
+        3840,
+        5760,
+        7680
+      ],
+      "this_arm": [
+        3840,
+        7680,
+        11520,
+        15360
+      ]
     },
-    "pooled_training_records": {
-      "was": 15030,
-      "now": 17910
+    "decay_step_consequence": {
+      "parent": 5760,
+      "this_arm": 11520,
+      "note": "decay_fraction_is_held_at_0.75_so_the_schedule_shape_is_preserved_and_this_runs_step_7680_checkpoint_is_not_comparable_to_the_parents_final_checkpoint"
     },
-    "normalization": {
-      "was": "recomputed_from_0_5039",
-      "now": "recomputed_from_0_5999"
-    },
-    "model": "identical_including_seed_architecture_objective_optimizer_and_budget",
-    "not_a_controlled_comparison": "the_training_set_grows_by_960_days_per_regime_so_this_is_a_new_baseline_not_a_split_order_ablation"
+    "everything_else": "asserted_field_by_field_against_the_parent_contract_at_load_time"
   }
 }

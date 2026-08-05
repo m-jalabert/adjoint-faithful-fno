@@ -311,6 +311,55 @@ initial/final states, configuration hash, and perturbation definition. A 46-chan
 \(62\times62\) float32 snapshot is about \(0.7\,\mathrm{MB}\); 30 daily production years are of
 order \(8\,\mathrm{GB}\) before compression.
 
+\subsection{Realised splits, and Bire's own arrangement}
+
+The plan above predates the evidence and is retained as the original design.  Three
+arrangements have since been run on the pooled S0--S2 regimes, and they differ enough
+that any reported skill must name the one it was measured under.
+
+\begin{table}[htbp]\centering\small
+\caption{Split arrangements actually run, on 9,000-day trajectory-v3 regimes.}
+\label{tab:realised-splits}
+\begin{tabularx}{\textwidth}{@{}p{0.20\textwidth}p{0.15\textwidth}p{0.15\textwidth}p{0.16\textwidth}Y@{}}
+\toprule
+\textbf{Arrangement} & \textbf{Train} & \textbf{Validation} &
+\textbf{Inference} & \textbf{Notes} \\
+\midrule
+Stored (interleaved) & 0--2519, 3690--6209 & interior & 6660--7199 &
+Training surrounds validation in time; supports an interpolation claim only \\
+Chronological & 0--5039 & 5130--6389 & 6480--8999 &
+180-day buffers; evaluation 1,441--1,961 days past training \\
+\textbf{Bire \S3.2} & 0--5999 & 6000--7199 & 6200--7199 &
+No buffers; inference nested in validation; evaluation 264--980 days past training \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+Bire's arrangement is quoted directly: \emph{``Final 6000 timesteps \(\ldots\) for
+training.  The next 1200 \(\ldots\) for validation.  The final 1000 timesteps are for
+inference (testing set),''} with \emph{``We do not use a third held-out test data
+set.''}  Since \(6000+1200=7200\) is the whole record, the inference block is the last
+1,000 days of validation, not a third partition, and there are no buffers.  Leakage is
+prevented structurally: a three-step training rollout qualifies only if \(t\), \(t+10\)
+and \(t+20\) all lie inside training, so the latest start is 5,969 and its last target
+lands on 5,999.
+
+Two consequences should be carried forward.  First, the arrangement is the dominant
+control on measured skill: with architecture, objective, optimizer, seed and dataset
+held fixed, short-lead error against persistence moves from 0.686/0.659/0.623 under
+the chronological split to 0.435/0.378/0.296 under Bire's.  The operative variable is
+how far the evaluation block sits beyond the end of training, measured against this
+project's 248-day S0 SSH \(e\)-folding scale.  Second, a nested inference block gives a
+weaker independence guarantee than a disjoint one, so results under Bire's protocol
+replicate the paper's setting rather than establishing prospective skill.
+
+Model visibility and evaluation truth are tracked separately.  Under Bire's protocol
+the model sees strictly the 7,200-day record, enforced in code on training targets,
+validation rollouts and inference starts; days 7200--8999 carry no split code and are
+used only as lead-matched truth, which is what reproduces the day-2,000 ground-truth
+column of the paper's Figure~7.  Bire obtain the same separation across simulations,
+holding two of five entirely out; we obtain it along time.
+
 \subsection{Eight directions per response anchor}
 \begin{table}[htbp]\centering\small
 \caption{Minimum smooth perturbation basis.}
@@ -1999,6 +2048,34 @@ be accompanied by evidence that the model retains skill: one-step error compared
 the zero-anomaly baseline, which equals 1.0 by construction in normalized units, and
 anomaly correlation at the evaluated leads.  Stability statistics alone are not
 sufficient evidence of a better emulator.
+
+\subsubsection*{Their split protocol, unlike their hyperparameters, does transfer}
+
+Bire's Section~3.2 arrangement was replicated exactly --- 6,000 training, 1,200
+validation, 1,000 inference timesteps from a 7,200-day record, inference nested as the
+final 1,000 days of validation, no buffers --- and, unlike their learning rate, it
+carries over to this configuration without modification.  Under it the pooled
+loss-recovery model beats persistence on all three primary fields at short lead
+(0.435/0.378/0.296) and holds surface pressure below climatology at every lead out to
+day 2,000, with day-200 anomaly correlation \(+0.66/+0.74/+0.71/+0.97\).  That is the
+evidence pattern predeclared above: skill against both baselines at useful short leads,
+velocity losing deterministic skill first, pressure persisting longest, and a bounded
+non-diverging tail.
+
+The pattern holds only at short lead, and the criteria above should be read as
+requiring that.  The model exceeds persistence from roughly 170 days and persistence is
+better at every lead from 700 to 2,000 days on all three fields.  Surface pressure stays
+under climatology throughout, but the pressure climatology degrades by a factor 1.73
+across the evaluation window while speed and SST degrade by 1.12 and 1.22, so a
+\(\times\)climatology score at long lead partly measures the baseline rather than the
+model.  Long-horizon claims should quote persistence as well as climatology.
+
+Two cautions attach to it.  The inference block is nested inside validation, so it is a
+replication of the paper's setting rather than a demonstration of prospective skill on
+disjoint data; the same model under a strictly chronological split with a larger
+training-to-evaluation gap scores 0.686/0.659/0.623.  And the arrangement should be
+reported alongside any skill number, because with everything else held fixed it moves
+day-200 error from \(2.76/2.27/0.73\) to \(1.08/0.86/0.24\) times climatology.
 
 \subsection{Frozen forward evaluation package}
 

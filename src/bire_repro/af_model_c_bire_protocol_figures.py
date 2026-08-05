@@ -79,7 +79,7 @@ ACC_FIELDS = figures.ACC_FIELDS
 
 
 class BireProtocolFigureError(RuntimeError):
-    """Raised when the trajectory-v3 figure contract is violated."""
+    """Raised when the Bire-protocol figure contract is violated."""
 
 
 #: S0 is the primary Bire-style comparison; this suite publishes it alone.
@@ -104,7 +104,7 @@ def load_contract(
     *,
     verify_sources: bool = True,
 ) -> tuple[dict[str, Any], Path, str]:
-    """Load the figure contract frozen before any v3 test metric."""
+    """Load the figure contract frozen before any Bire-protocol inference metric."""
 
     resolved = Path(path).resolve()
     contract = json.loads(resolved.read_text())
@@ -127,7 +127,7 @@ def load_contract(
         or int(contract.get("figure6", {}).get("comparator_optimizer_step", -1))
         != COMPARATOR_STEP
     ):
-        raise BireProtocolFigureError("trajectory-v3 figure contract changed")
+        raise BireProtocolFigureError("Bire-protocol figure contract changed")
     if verify_sources:
         for label, specification in contract["artifacts"].items():
             figures._verify_file(specification, label)
@@ -147,7 +147,7 @@ def _stepper(
     wind_mean: float,
     wind_scale: float,
 ) -> BireAlignedStepper:
-    """Build one v3 checkpoint's stepper and verify its identity."""
+    """Build one Bire-protocol checkpoint's stepper and verify its identity."""
 
     record = contract["artifacts"][key]
     payload = torch.load(Path(record["path"]), map_location=device, weights_only=False)
@@ -207,12 +207,14 @@ class RegimeLabels:
                 rf"{wind} $\tau_0={tau}$ N m$^{{-2}}$",
             ),
             (r"$\tau_0=0.1$ N m$^{-2}$", rf"$\tau_0={tau}$ N m$^{{-2}}$"),
-            ("One S0 inference member", f"One {regime} test member"),
+            # "inference" is Bire's own word for this block, so unlike the v3
+            # chronological arm -- which called it the test block -- the captions
+            # keep it; only the regime name is substituted.
+            ("One S0 inference member", f"One {regime} inference member"),
             (
                 "S0 architecture-direction comparison",
                 f"{regime} training-progress comparison",
             ),
-            ("15 inference initial conditions", "15 test initial conditions"),
             ("Prior residual Model C", f"Step {COMPARATOR_STEP:,} checkpoint"),
             (
                 "Selected anomaly-direct Model C",
@@ -260,7 +262,7 @@ class RegimeLabels:
         matplotlib.axes.Axes.plot = patched_plot
         figures.METHOD_LABELS = {
             **self._method_labels,
-            "model": "Pooled v3 Model C",
+            "model": "Bire-protocol Model C",
         }
         return self
 
@@ -381,40 +383,55 @@ def evaluate_regime(
 
 def _readme(regime: str, report: Mapping[str, Any]) -> str:
     role = "primary Bire-style comparison" if regime == "S0" else "wind-regime robustness"
-    return f"""# Trajectory-v3 pooled model, {regime}: S0-style Figures 3--8
+    starts = declared_inference_starts()
+    return f"""# Bire Section 3.2 protocol, {regime}: Figures 3--8
 
 This package evaluates the seed-20260724, step-{report['selected_optimizer_step']:,}
-checkpoint of the pooled trajectory-v3 model on the **{regime}** held test block
-(indices 6480--8999), tau0 = {report['tau0_n_m2']} N m-2. {regime} is the {role}.
+checkpoint of the pooled Bire-protocol model on the **{regime}** inference set
+(indices {INFERENCE_RANGE[0]}--{INFERENCE_RANGE[1] - 1}), tau0 = {report['tau0_n_m2']} N m-2.
+{regime} is the {role}.
 
 The model is the loss-recovery architecture and objective, unchanged: three FNO
 blocks, six pointwise LayerNorms, modes 24x16, width 128, Bire positional
 encoding, 10% padding, no external local branch, Model C loss v1 over a
 three-step rollout, Adam 5e-4 decaying to 1e-4 at 75%, batch 8, 7,680 steps. One
-FNO was trained on the pooled S0+S1+S2 training blocks (0--5039) and selected on
-the pooled validation blocks (5130--6389).
+FNO was trained on the pooled S0+S1+S2 training blocks (0--5999) and selected on
+the pooled validation blocks (6000--7199).
 
-Trajectory-v3 differs from v2 in the physics, not only the split: S1 and S2 were
-equilibrated independently for 100 years from the tutorial initial condition
-under their own wind, rather than branching from the S0 year-100 state with a
-five-year adjustment.
+**The split is Bire's, not a chronological variant.** 6,000 training + 1,200
+validation is the paper's entire 7,200-day record, and the 1,000 inference days
+are the final 1,000 of validation rather than a third block -- the paper states
+it uses no third held-out set. There are no buffers, because the paper has none.
+The inference set is therefore nested in validation; selection starts are drawn
+from the 200 validation days outside it, so no selection start is also a member
+start.
 
-**Not comparable byte-for-byte with the v2 packages.** The 15 starts are a new
-fixed draw from 6480--6999, the only window admitting a complete 2,000-day
-rollout inside a 2,520-day test block. The v2 suite's starts (6660--7199) index a
-different record and would land in validation here. Comparison with earlier
-packages is protocol-level only.
+**Model visibility.** The model saw nothing at or beyond index 7200. Days
+7200--8999 of trajectory-v3 carry no split code and are used only as evaluation
+truth. That is what makes the day-2,000 ground-truth column of the paper's
+Figure 7 reproducible here: the 15 starts are drawn from
+{INFERENCE_START_RANGE[0]}--{INFERENCE_START_RANGE[1] - 1}, the part of the inference set that admits a
+complete 2,000-day rollout inside the store, and this draw spans
+{int(starts.min())}--{int(starts.max())}. Every member therefore has lead-matched MITgcm truth at
+every lead out to day 2,000 ({int(starts.max())} + 2000 = {int(starts.max()) + 2000} < {STORE_DAYS}). Bire obtain the
+same separation across simulations -- runs 2 and 4 are entirely held out -- and
+we obtain it along time.
+
+**Not comparable byte-for-byte with the v2 or v3 chronological packages.** The
+15 starts are a new fixed draw under a different record indexing, and the
+training and validation blocks differ, so comparison with earlier packages is
+protocol-level only.
 
 **Figure 6 comparator.** The prior residual Model C was trained on v2 with a v2
-normalizer and branch-based S1/S2, so it cannot be run meaningfully on v3. The
+normalizer and branch-based S1/S2, so it cannot be run meaningfully here. The
 black curve is instead this run's own step-{COMPARATOR_STEP:,} checkpoint against the
 selected step-{report['selected_optimizer_step']:,} checkpoint: a training-progress
 comparison on identical data, not the frozen architecture pairing.
 
-Climatology is the pointwise {regime} mean over the v3 training block only.
-Persistence holds each member's initial physical field fixed. RMSE is computed
-over wet cells per member; lines and bands are the mean and 10th/90th
-percentiles across the 15 members.
+Climatology is the pointwise {regime} mean over the Bire training block
+(0--5999) only. Persistence holds each member's initial physical field fixed.
+RMSE is computed over wet cells per member; lines and bands are the mean and
+10th/90th percentiles across the 15 members.
 
 This is a held-evaluation package. It performs no training, no checkpoint
 selection, and promotes nothing.

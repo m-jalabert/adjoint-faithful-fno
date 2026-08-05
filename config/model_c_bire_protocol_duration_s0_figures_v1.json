@@ -1,24 +1,24 @@
 {
   "artifacts": {
+    "selected_checkpoint": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/bire_protocol_duration_v1/selected.pt",
+      "sha256": "65c523743f06369e98f3902110dc818e8e5967861e9a1cf979277862c1ad2ab0"
+    },
     "comparator_checkpoint": {
-      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/bire_protocol_pooled_v1/training_checkpoints/model_c_bire_protocol_step_01920.pt",
-      "sha256": "c957de029ffd28d3f478dcf89714d785880b929108fbc3ee7a7254e77a9e070d"
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/bire_protocol_duration_v1/training_checkpoints/model_c_bire_protocol_step_07680.pt",
+      "sha256": "4da65a5c86722c724e7aa8fe5a9d5d678a04f1f8743d88a64d734a9d643382e1"
+    },
+    "selected_normalization": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/bire_protocol_duration_v1/model_c_bire_protocol_duration_train_only_normalization.npz",
+      "sha256": "ad7cc8584788ccdd4e8beaae3e606b9423230552af7079f15667b93bd1abaf2f"
+    },
+    "selected_report": {
+      "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/bire_protocol_duration_v1/bire_protocol_duration_report.json",
+      "sha256": "3a4509d8e445c6d5d0a5beed81645df9dc045e5a724754e5cf77cef0a2204dad"
     },
     "dataset_metadata": {
       "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/trajectories_v3.zarr/.zmetadata",
       "sha256": "766cae89359311775c79103f44dc74630630ba6b7a0a8c6e9d26f73487512136"
-    },
-    "selected_checkpoint": {
-      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/bire_protocol_pooled_v1/selected.pt",
-      "sha256": "2b1d44c03f1a0be2f39d30b34f8912c4848d0506ba97c8070ad212e1157ea484"
-    },
-    "selected_normalization": {
-      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/bire_protocol_pooled_v1/model_c_bire_protocol_train_only_normalization.npz",
-      "sha256": "ad7cc8584788ccdd4e8beaae3e606b9423230552af7079f15667b93bd1abaf2f"
-    },
-    "selected_report": {
-      "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/bire_protocol_pooled_v1/bire_aligned_chronological_report.json",
-      "sha256": "c128646f6cb194d11732dec34277aa29e664fd86a3318b1a00debaf247bd7567"
     }
   },
   "baselines": {
@@ -28,11 +28,11 @@
     "rmse": "square_root_of_mean_squared_error_over_wet_cells_for_each_member"
   },
   "comparability": {
-    "byte_comparable_with_earlier_packages": false,
-    "level": "protocol_comparable_only",
-    "reason": "different_split_starts_and_record_indexing"
+    "byte_comparable_with_the_parent_figure_package": true,
+    "basis": "same_15_starts_same_seed_same_lead_grid_same_truth_window_same_baselines_only_the_checkpoint_differs",
+    "parent_package": "outputs/af_fno/C/bire_protocol_s0_figures_v1/S0"
   },
-  "contract_status": "frozen_after_the_bire_protocol_training_and_validation_and_before_any_inference_metric",
+  "contract_status": "frozen_after_the_bire_protocol_duration_training_and_validation_and_before_any_inference_metric",
   "dataset": {
     "evaluation_truth_note": "never_trained_on_validated_on_or_used_as_an_inference_start_bire_figure_7_carries_a_ground_truth_column_at_the_2000th_day_obtained_because_their_simulations_2_and_4_are_entirely_held_out_we_obtain_the_same_separation_along_time",
     "evaluation_truth_only_days": [
@@ -63,17 +63,18 @@
     "version": "trajectories_v3"
   },
   "figure6": {
-    "black": "this_runs_own_step_1920_checkpoint",
-    "comparator_optimizer_step": 1920,
+    "black": "this_runs_own_step_7680_checkpoint",
+    "comparator_optimizer_step": 7680,
     "literal_pretrain_finetune_pair": false,
-    "reason": "the_prior_residual_model_c_belongs_to_a_different_dataset_and_normalizer",
-    "red": "the_selected_step_7680_checkpoint",
-    "required_label": "training_progress_comparison_on_identical_data"
+    "reason": "step_7680_is_the_parent_arms_entire_budget_so_the_gap_is_what_doubling_bought_within_one_run",
+    "red": "the_selected_step_15360_checkpoint",
+    "required_label": "training_progress_comparison_on_identical_data",
+    "not_the_parents_checkpoint": "this_runs_decay_falls_at_11520_so_at_step_7680_it_is_still_at_5e-4"
   },
   "output": {
     "one_folder_per_regime": true,
     "overwrite": false,
-    "project_root": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/bire_protocol_s0_figures_v1",
+    "project_root": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/bire_protocol_duration_s0_figures_v1",
     "required": [
       "model_c_bire_figure3_streamfunction_1deg_s0_dt10.png",
       "model_c_bire_figure4_dt10_rmse_0_200_days_s0.png",
@@ -88,7 +89,7 @@
       "manifest.json",
       "README.md"
     ],
-    "scratch_root": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/bire_protocol_s0_figures_v1"
+    "scratch_root": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/bire_protocol_duration_s0_figures_v1"
   },
   "protocol": {
     "acc_fields": [
@@ -159,7 +160,7 @@
     ],
     "start_window_reason": "every_member_completes_a_2000_day_rollout_with_lead_matched_truth_6999_plus_2000_equals_8999"
   },
-  "purpose": "Publish the six Bire-style Figure 3-8 plots for the pooled Bire-protocol model on S0's inference set, with lead-matched truth through day 2000.",
+  "purpose": "s0_bire_style_figures_for_the_matched_budget_15360_step_checkpoint_directly_comparable_with_the_7680_step_parent_package",
   "read_contract": {
     "adjoint_state": false,
     "inference_state": true,
@@ -200,30 +201,24 @@
     "base_loss_contract_sha256": "19000a1426ea928db7799c82a73ce071a874911eb7e1df50bd276582ec30b5f9",
     "name": "bire_protocol_pooled_Model_C",
     "objective": "incumbent_group_balanced_model_c_loss_v1",
-    "optimizer_step": 7680,
+    "optimizer_step": 15360,
     "rollout_steps": 3,
     "seed": 20260724,
     "selected_by": "pooled_bire_protocol_validation_6000_6199_min_worst_long_climatology_ratio_subject_to_short_guard",
     "training_contract": "/home/mjalabert314/bire_james25_repro/config/model_c_bire_protocol_pooled_v1.json"
   },
   "source_hashes": {
-    "slurm/models/c/af_model_c_bire_protocol_figures.sbatch": "5eda50c3d8b1b31129d94441473d0cd55684c5fb35053124326f71ccab8dcf6a",
-    "src/bire_repro/af_bire_protocol_split.py": "8e95fa597c1aac301f77284e0b514c362e5f5a92a55443660a2d549e67204616",
-    "src/bire_repro/af_data_v3.py": "a33774b36fc1790c98fd41699ed8afa171ce0d02349267484710081412b95cc9",
-    "src/bire_repro/af_forward_complete.py": "18914b77058bfe1abeab3c98ec711ac8fb970deb76507b095ee376a0de447612",
-    "src/bire_repro/af_model_c.py": "ac81165ceb7e68eafc6cac237fe0e4cd2dafa2c67bf204db41b5dba86551493b",
-    "src/bire_repro/af_model_c_bire_aligned_full_state.py": "6ae2756577946c934b246bd49ac8ace625835c2970d9d4e43cf147268c1f23de",
-    "src/bire_repro/af_model_c_bire_aligned_v3_figures.py": "399403b4672122a80e3d4ed0ce60a7b09018416982cfd1f74c82bc07de4a4625",
-    "src/bire_repro/af_model_c_bire_protocol.py": "587d0a1ba3ef80728a159002fc97928256a7aba39c155014b6db9060457fead1",
+    "src/bire_repro/af_model_c_bire_protocol_duration_figures.py": "f4a9325d2ae7a4f4b8f5843730b63b9520b51a7f022e1968405f0375661c5797",
     "src/bire_repro/af_model_c_bire_protocol_figures.py": "10f612a0aba9b799f3135fd3737b5b797282fca17b381aae646c83e2ae23860d",
-    "src/bire_repro/af_model_c_bire_s0_figures.py": "48636fe7daca00958414207c3bb15fc8ad16545fbd0ff08704a0de68ad7598e6",
-    "src/bire_repro/af_pressure.py": "1939645d807ec0281624d4146cadc51b3e9f382c540a56d7ed5afdca4b2c7c6c",
-    "src/bire_repro/mds.py": "4098c294a35a1fdcd0521e1eedc6495608ba96fd074dd509347f3efeb788d212"
+    "src/bire_repro/af_model_c_bire_protocol_duration.py": "538519b29e1790a484865e855707770a54054c3ca03ab1787ad6ac184e5a02cc",
+    "src/bire_repro/af_model_c_bire_protocol.py": "587d0a1ba3ef80728a159002fc97928256a7aba39c155014b6db9060457fead1",
+    "src/bire_repro/af_bire_protocol_split.py": "8e95fa597c1aac301f77284e0b514c362e5f5a92a55443660a2d549e67204616",
+    "src/bire_repro/af_model_c_bire_aligned_full_state.py": "6ae2756577946c934b246bd49ac8ace625835c2970d9d4e43cf147268c1f23de"
   },
   "truth": {
     "continuation_required": false,
     "lead_matched_to_day": 2000,
     "source": "trajectory_v3_store"
   },
-  "version": "model_c_bire_protocol_s0_figures_v1"
+  "version": "model_c_bire_protocol_duration_s0_figures_v1"
 }

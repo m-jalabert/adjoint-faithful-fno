@@ -121,6 +121,15 @@ VALIDATION_START_STRIDE = 30
 NORMALIZATION_NAME = "model_c_bire_protocol_train_only_normalization.npz"
 DIVERGENCE_NAME = "bire_protocol_divergence.json"
 
+# The chronological parent is a certified source and cannot be edited, but its
+# artifact stems name *its* arm.  Rebinding them here -- the module-global idiom
+# used elsewhere in this project -- is safe because `_plot` takes an explicit
+# path and every write below goes through these names, so the published package
+# is named after the arm that produced it.
+REPORT_NAME = "bire_protocol_report.json"
+ARRAYS_NAME = "bire_protocol_arrays.npz"
+FIGURE_NAME = "model_c_bire_protocol_selection.png"
+
 FROZEN_TRAINING_FIELDS = (
     "seed",
     "optimizer",

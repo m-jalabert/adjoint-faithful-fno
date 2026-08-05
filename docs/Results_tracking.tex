@@ -2495,11 +2495,248 @@ comparison confounds three things at once --- the chronological protocol, the
 the end of training and the test block --- so it bounds prospective skill rather
 than isolating a single cause.
 
+\subsection{Independent-wind trajectory-v3 simulations}
+
+Every arm above trained on trajectory-v2, in which S1 and S2 were branched from
+the S0 year-100 state and given a five-year adjustment under their own wind.
+That construction makes the three regimes share a common history, so a
+wind-regime comparison partly measures how far each branch has travelled from a
+single state rather than how the circulation differs between winds.
+Trajectory-v3 removes the shared history: each regime is a 125-year integration
+started from the same \MITgcm{} double-gyre tutorial initial condition under its
+own wind --- 100 years of equilibration followed by 25 years of daily production
+output --- with no branching between regimes.  S0 is the original control
+lineage, whose spin-up was already independent by construction; S1 and S2 were
+newly integrated for this dataset under \path{mitgcm_independent_v1}.
+
+\begin{center}\small
+\begin{tabular}{@{}lrrl@{}}
+\toprule
+\textbf{Regime} & \(\tau_0\) \textbf{(N m\(^{-2}\))} &
+\textbf{Wind scale} & \textbf{Construction} \\
+\midrule
+S0 & 0.100 & \(1.00\times\) & Independent 100-y spin-up, then 25 y daily \\
+S1 & 0.075 & \(0.75\times\) & Independent 100-y spin-up, then 25 y daily \\
+S2 & 0.125 & \(1.25\times\) & Independent 100-y spin-up, then 25 y daily \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The regimes differ in zonal wind amplitude and in nothing else: bathymetry, the
+SST relaxation, the executable, the 1{,}200\,s timestep, and the 360-day year are
+identical, and the wind fields were verified to be exactly \(1.00/0.75/1.25\)
+times the tutorial field.  The new runs were carried out on CPU with pickup chaining, every join
+hash-verified.  All three regimes span iterations \(2{,}592{,}000\)--\(3{,}239{,}928\),
+model years \(100.000\)--\(124.997\), with gaps of exactly 72 steps (one model
+day) throughout, so each is one continuous 125-year integration rather than a
+concatenation of independent restarts.  The realised wind maxima are
+\(0.099863\), \(0.074897\) and \(0.124829\) N m\(^{-2}\), matching the declared
+\(1.00/0.75/1.25\) scaling.
+
+The resulting store holds \(3\times9000\times46\times62\times62\) values, 13\,GB,
+with train-block-only normalizers accumulated by the builder.  It supplies 9{,}000
+days per regime against Bire's 7{,}200, and that surplus is what later makes the
+paper's day-2{,}000 ground-truth column reproducible.
+
+\subsection{Pooled trajectory-v3 arm: the chronological verdict survives an
+independent-wind dataset}
+
+The contract
+\begin{quote}
+\path{config/model_c_bire_aligned_v3_pooled_v1.json}\\
+SHA-256 \texttt{1df2abfa9d66...}
+\end{quote}
+retrains the loss-recovery model, architecture and objective unchanged and from
+scratch on the same seed 20260724, on the pooled trajectory-v3 regimes under a
+chronological split: train 0--5039, validation 5130--6389, test 6480--8999, with
+180-day buffers.  Training draws 15{,}030 three-step records (5{,}010 per regime)
+and selection uses 90 held 360-day rollouts.  Job 317422 completed in 40m12s and
+selected step 7{,}680 under \texttt{primary\_rule}, the only feasible step.
+
+\resultbox{amber}{lightamber}{\textbf{Replacing the branched regimes with
+independently equilibrated ones does not rescue prospective skill.}  On the held
+S0 block the arm reaches 0.686/0.659/0.623 of persistence over 10--90 days and
+day-200 errors of \(2.76/2.27/0.73\) times climatology, with day-200 ACC
+\(+0.37/+0.32/+0.83\).  The shared-history construction of trajectory-v2 was
+therefore not the reason the chronological arm underperformed; the gap between
+the end of training and the evaluation block remains the operative variable.}
+
+Day-2{,}000 error is \(3.51/2.97/1.20\) times climatology at amplitude 7.62, all
+states finite --- the same bounded, displaced attractor every Bire-aligned arm
+shows.  Consistent with the decorrelation-distance mechanism, this arm's test
+starts sit 1{,}441--1{,}961 days beyond the end of training, well outside the
+248-day S0 SSH \(e\)-folding scale measured by this project's slow-field audit.
+
+\subsection{Bire Section 3.2 protocol: the paper's own arrangement}
+
+The arms above all impose splits of our own design.  The paper's Section 3.2
+states its arrangement directly: \emph{``Overall, 7{,}200 snapshots from each
+simulation are saved.  Final 6000 timesteps from simulations 1, 3, and 5 are
+allocated for training.  The next 1200 timesteps are allocated for validation.
+The final 1000 timesteps are for inference (testing set).''}  Two paragraphs
+later: \emph{``We do not use a third held-out test data set.''}  Since
+\(6000+1200=7200\) is the entire record, the 1{,}000 inference timesteps are the
+\textbf{last 1{,}000 of the validation block}, not a third partition.  The
+contract
+\begin{quote}
+\path{config/model_c_bire_protocol_pooled_v1.json}\\
+run-time SHA-256 \texttt{7ff347c1ef3f...}
+\end{quote}
+reproduces that arrangement exactly, with training and validation pooled across
+S0, S1 and S2 and figures published for S0 alone.
+
+\begin{center}\small
+\begin{tabular}{@{}llrl@{}}
+\toprule
+\textbf{Split} & \textbf{Indices} & \textbf{Days/regime} & \textbf{Role} \\
+\midrule
+Train & 0--5999 & 6{,}000 & Bire's ``final 6000 timesteps'' \\
+Validation & 6000--7199 & 1{,}200 & Bire's ``next 1200'' \\
+Inference & 6200--7199 & 1{,}000 & Bire's ``final 1000'', nested in validation \\
+\midrule
+Evaluation truth only & 7200--8999 & 1{,}800 & Never seen by the model \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+There are \textbf{no buffers}, because the paper has none.  Leakage is prevented
+structurally instead: a training rollout qualifies only if \(t\), \(t+10\) and
+\(t+20\) all lie inside the training block, so the latest training start is
+5{,}969 and its last target lands on 5{,}999, the final training index.  Pooling
+gives 17{,}910 three-step training records (5{,}970 per regime) and 102 validation
+rollouts of 360 days (34 starts per regime, 6000--6198 at stride 6).  Every
+train-derived statistic --- pointwise mean and scale, the per-channel
+5th-percentile wet-cell floors, per-regime climatology over 6{,}000 days, and the
+pointwise increment scale --- is rebuilt from 0--5999 alone across 18{,}000 pooled
+snapshots.
+
+Two properties of the arrangement deserve emphasis because they were each
+mis-stated once during its construction.  First, \textbf{what the model sees} is
+strictly Bire's 7{,}200-day record: \path{assert_model_visible} caps training
+targets at 5{,}999, validation rollouts at 6{,}558, and inference starts at 6{,}979,
+and nothing at or beyond index 7{,}200 is ever trained on, validated on, or used
+as a start.  Second, \textbf{evaluation truth is a separate matter and the paper
+has some}: its Figure 7 caption reads \emph{``Streamfunction \(\ldots\) on the
+60th day (top row) and 2000th day for the ground truth (first column)''}.  Bire
+obtain that column because two of their five simulations are entirely held out;
+we obtain it along the time axis, from days 7200--8999, which carry no split code
+at all.  Inference starts are therefore drawn from 6200--6999 --- the part of the
+inference set admitting a complete 2{,}000-day rollout inside the 9{,}000-day store
+--- and this draw spans 6263--6979, so \(6979+2000=8979<9000\) and every member
+has lead-matched \MITgcm{} truth at every lead.
+
+Checkpoint selection minimises the worst 90--360-day RMSE-AUC relative to
+climatology subject to each field's 10--90-day AUC staying within 5\% of the
+best checkpoint.  Selection starts come from the 200 validation days
+\emph{outside} the inference set, so no selection start is also a member start.
+Job 318414 completed training and validation in 40m24s and selected step 7{,}680
+under \texttt{primary\_rule}; it dominated every field and both lead windows, so
+the short-skill guard never bound.
+
+\begin{center}\small
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+\textbf{Step} & \textbf{Short AUC / persistence} &
+\textbf{Long AUC / climatology} & \textbf{Day-200 ACC (U/SST/\(P/\rho\))} \\
+\midrule
+1{,}920 & 0.719/0.693/1.172 & 1.928/2.119/1.921 & \(+0.332/+0.249/+0.642\) \\
+3{,}840 & 0.622/0.560/1.610 & 1.594/1.493/1.428 & \(+0.494/+0.462/+0.424\) \\
+5{,}760 & 0.480/0.552/1.249 & 1.305/1.554/1.769 & \(+0.606/+0.503/+0.568\) \\
+\textbf{7{,}680} & \textbf{0.345/0.371/0.407} & \textbf{0.978/1.081/0.591} &
+\(\mathbf{+0.718/+0.656/+0.837}\) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The S0 inference package (job 318459, 1m44s, all states finite, maximum
+normalized amplitude 6.70) is the strongest result this project has produced on
+the two properties it has been tracking jointly.
+
+\begin{center}\small
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+\textbf{S0 inference set, 15 members} & \textbf{Speed} & \textbf{SST} &
+\textbf{\(P/\rho\)} \\
+\midrule
+10--90-day RMSE-AUC / persistence & 0.435 & 0.378 & \textbf{0.296} \\
+Day-200 ACC & \(+0.66\) (U), \(+0.74\) (V) & \(+0.71\) & \(\mathbf{+0.97}\) \\
+\midrule
+Day 200, \(\times\) climatology & 1.08 & 0.86 & \textbf{0.24} \\
+Day 500, \(\times\) climatology & 2.10 & 1.96 & 0.47 \\
+Day 1{,}000, \(\times\) climatology & 2.52 & 2.41 & 0.57 \\
+Day 2{,}000, \(\times\) climatology & 2.47 & 2.61 & \textbf{0.64} \\
+\midrule
+Per-call gain, 1{,}700--2{,}000 days & 1.0007 & 1.0008 & 1.0024 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\resultbox{green}{lightteal}{\textbf{Under the paper's own arrangement the model
+beats both baselines on all three primary fields at short lead.}  Over 10--90
+days it reaches 0.435/0.378/0.296 of persistence, and day-200 anomaly
+correlation is \(+0.66/+0.74/+0.71/+0.97\).  The per-call gain sits at or just
+above unity across the final 300 days and the maximum normalized amplitude is
+6.70, so the long rollout is bounded and flat rather than diverging.}
+
+\resultbox{red}{lightred}{\textbf{Beyond roughly 170 days the model loses to
+persistence, and from 700 to 2{,}000 days persistence is better at every single
+lead on all three fields.}  The model first exceeds persistence at 170/160/170
+days for speed/SST/pressure and never recovers; at day 2{,}000 it is
+\(1.74/1.77/1.37\) times persistence.  Any statement that this arm ``beats the
+baselines'' must be restricted to short lead.}
+
+The surface-pressure result needs one further qualification, because it is the
+only field where the model stays under climatology at every lead and it is easy
+to over-read.  The pressure climatology is a \emph{degrading} baseline over this
+evaluation window: the distance from truth to the training-block pointwise mean
+grows by a factor 1.73 between absolute day 6{,}200 and day 8{,}960
+(\(+0.0129\) per 1{,}000 days), against 1.12 for speed and 1.22 for SST, while
+the domain-mean SSH and SST are stationary to \(+1.0\times10^{-4}\) and
+\(-1.0\times10^{-3}\) per 1{,}000 days.  Because lead and absolute time are
+locked together in a rollout, part of the apparent improvement against
+climatology at long lead is the baseline getting worse, not the model getting
+better.  The model-versus-climatology comparison is still like for like --- both
+are scored against the same truth at the same absolute times, and 0.0524 against
+0.0825 at day 2{,}000 is a real margin --- but persistence, the stronger
+baseline, beats the model on pressure from about 320 days onward.  Reporting
+\(\times\)climatology alone would overstate this arm.
+
+Two limits qualify the numbers.  The training window was still falling
+monotonically at step 7{,}680 (0.334, 0.181, 0.144, 0.091), so this arm is no more
+converged than its predecessors.  And validation did not over-promise here ---
+predicted 0.345/0.371/0.407 against a delivered 0.435/0.378/0.296 --- but that is
+expected rather than reassuring: under Bire's nested design the inference set
+\emph{is} the final 1{,}000 days of the validation block, so the two are drawn from
+nearly the same regime.  It is a weaker independence guarantee than a disjoint
+held-out block, and the strong prospective result should be read in that light
+rather than as a refutation of the chronological finding.
+
+\resultbox{amber}{lightamber}{\textbf{The protocol, not the model, explains most
+of the gap to the chronological arms.}  Architecture, objective, optimizer,
+seed, and dataset are identical between this arm and the pooled trajectory-v3
+arm; only the arrangement differs.  Short-lead skill improves from
+0.686/0.659/0.623 to 0.435/0.378/0.296 and day-200 error from
+\(2.76/2.27/0.73\) to \(1.08/0.86/0.24\) times climatology.  The controlling
+variable is how far the evaluation block sits beyond the end of training ---
+1{,}441--1{,}961 days there against 264--980 days here, against a 248-day S0 SSH
+\(e\)-folding scale.  Bire's arrangement evaluates inside the slow-field
+correlation window, which is why it reports the skill it does.}
+
+Because the split, the start draw, and the record indexing all differ, this
+package is \textbf{not byte-comparable} with any earlier arm; comparison with
+them is protocol-level only.
+
 \subsection{Standing comparison on the held S0 suite}
 
-All packages share the same 15 starts, the same day-2,000 truth from evaluation-only job
-304735, the same baselines, reductions, and six filenames, so they are comparable field
-for field.
+The first six rows share the same 15 starts, the same day-2,000 truth from
+evaluation-only job 304735, the same baselines, reductions, and six filenames, so they
+are comparable field for field.
+
+The last two rows are \emph{not} in that family and are shown for orientation only.
+The pooled trajectory-v3 and Bire-protocol arms index a different dataset, a different
+split, and a different start draw, so their columns are computed the same way but on
+different data; only the protocol-level comparison between them is meaningful, and it
+is made in the two subsections above.
 
 \begin{center}\small
 \begin{tabular}{@{}lrrrr@{}}
@@ -2520,6 +2757,10 @@ Faithfulness bundle & \(+0.26/+0.20/+0.59\) & 3.01/3.07/3.92 &
 \textbf{1.84/2.20/1.14} & 3.30/4.28/6.47 & \textbf{7.13} \\
 Chronological split & \(+0.26/+0.11/+0.66\) & 3.25/3.26/5.68 &
 3.33/3.81/5.62 & 7.24 \\
+Pooled trajectory-v3 & \(+0.37/+0.32/+0.83\) & 2.76/2.27/0.73 &
+3.51/2.97/1.20 & 7.62 \\
+\textbf{Bire protocol} & \(\mathbf{+0.66/+0.71/+0.97}\) &
+\textbf{1.08/0.86/0.24} & \textbf{2.47/2.61/0.64} & \textbf{6.70} \\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -2535,6 +2776,8 @@ Bire-aligned \(5\times10^{-4}\) & 0.560 & 0.734 & 2.072 \\
 Faithfulness bundle & 0.569 & 0.552 & 1.792 \\
 \textbf{Loss recovery} & 0.436 & 0.395 & \textbf{0.398} \\
 Chronological split & 1.175 & 1.161 & 6.202 \\
+Pooled trajectory-v3 & 0.686 & 0.659 & 0.623 \\
+\textbf{Bire protocol} & 0.435 & 0.378 & \textbf{0.296} \\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -2547,6 +2790,13 @@ the incumbent's 1.0082/1.0019/1.0011 at amplitude 76.7 with day-2,000 error 8--1
 climatology and still growing.  It remains roughly a factor of two behind the incumbent
 on short-lead speed and SST, and its day-2,000 pressure attractor is worse, so it does
 not yet dominate.}
+
+\resultbox{blue}{lightblue}{\textbf{Superseded as the leading result by the
+Bire-protocol arm}, which reaches 0.435/0.378/0.296 of persistence at short lead and
+holds surface pressure below climatology at every lead out to day 2,000.  That arm is
+evaluated under the paper's own arrangement rather than this suite's, so it replaces
+the loss-recovery arm as the reference point without being a like-for-like win on these
+15 starts.}
 
 Two caveats still qualify the whole family.  Every Bire-aligned arm trains 7,680
 optimizer steps against the incumbent's 15,360, and the loss-recovery training window was
@@ -2670,6 +2920,9 @@ Model C Bire-aligned \(5\times10^{-4}\) control / jobs 311831, 312242 & One-fact
 Model C Bire protocol-faithfulness bundle / jobs 314709, 314719 & MAE weight 0.05, cosine annealing \(T_{\max}=3\)/\(\eta_{\min}=10^{-5}\), and validation-based per-stage selection corrected together on the \(5\times10^{-4}\) base; dropout deliberately left at zero.  Training completed in 20m43s.  Gate worst primary improves 0.9518 to 0.8926, but held S0 day-200 surface-U ACC falls \(+0.402\) to \(+0.261\) and the day-2,000 tail does not move.  Validation selection was a no-op: it chose epochs 2 and 4, exactly the earlier fixed steps.  Contract/report-content SHA-256 \texttt{7c3e012dae74...a9729a}/\texttt{19d42d8cbc9d...8dc095}; stage checkpoints \texttt{a21cbce6dff7...bf4a93} (3,840) and \texttt{6a8a70ee100f...74a347} (7,680).  Training package under \path{outputs/af_fno/C/bire_aligned_faithful_v1/}; per-stage figure packages under \path{outputs/af_fno/C/bire_aligned_faithful_bire_s0_inference_v1/}, figure contract SHA-256 \texttt{06994151d4ca...34fad4} \\
 Model C Bire-aligned loss-recovery control / jobs 314770, 314821 & Architecture-fixed control: the Bire-aligned three-block map at Adam \(5\times10^{-4}\), batch 8, 7,680 steps, with only the objective and rollout exposure restored to the incumbent group-balanced Model C loss v1 over a three-step rollout.  Training completed in 39m00s and selected step 7,680.  Gate worst primary falls 0.9518 to 0.4532, driven almost entirely by surface pressure; held S0 10--90-day ratios to persistence are 0.436/0.395/0.398 so all three primary fields beat persistence, day-200 ACC is \(+0.48/+0.53/+0.85/+0.42\), and the day-2,000 tail stays flat at per-call gain 1.0001/1.0008/1.0000 with amplitude 7.1.  Day-2,000 pressure worsens to 6.47 times climatology.  Contract/report-content SHA-256 \texttt{4932821d0b46...f8c570}/\texttt{9f1e7ffc0ebe...a2c32d}; selected checkpoint \texttt{c0bbde9e72cd...f778fa}.  Training package under \path{outputs/af_fno/C/bire_aligned_loss_recovery_v1/}; six-figure package under \path{outputs/af_fno/C/bire_aligned_loss_recovery_bire_s0_inference_v1/selected/}, figure contract SHA-256 \texttt{afc4df5cce40...d1111e} \\
 Model C chronological-split arm / jobs 317084, 317123, 317167 & Loss-recovery model retrained from scratch under train 0--5039 / validation 5130--5759 / test 5850--7199 with 90-day buffers, all train-derived statistics recomputed from 0--5039, and checkpoint selection on 90 held 360-day validation rollouts.  First submission 317084 trained fully then failed in validation on the NumPy~2 removal of \texttt{np.trapz}; job 317123 completed in 47m19s and selected step 7,680.  Validation 10--90-day AUC to persistence is 0.480/0.472/0.560, but held S0 10--90-day error is 1.175/1.161/6.202, and day-2,000 error is 3.33/3.81/5.62 times climatology with per-call gain 1.0009/1.0002/1.0000.  Contract/report-content SHA-256 \texttt{276830e38ac3...8a7ae6}/\texttt{8e5da2daa3e3...1eb9c2}; checkpoint \texttt{55d2fe2f3cc2...12a1c2}; train-only normalizer \texttt{36ecce4ece94...8ca5c1}.  Training package under \path{outputs/af_fno/C/bire_aligned_loss_recovery_chronological_v1/}; six-figure package under \path{outputs/af_fno/C/bire_aligned_chronological_bire_s0_inference_v1/selected/}, figure contract SHA-256 \texttt{33e670547f4c...5395ef} \\
+Trajectory-v3 independent-wind simulations & Three continuous 125-year \MITgcm{} double-gyre integrations, each cold-started from the tutorial initial condition under its own wind (S0/S1/S2 at $1.00/0.75/1.25\times$, $\tau_0=0.100/0.075/0.125$ N m$^{-2}$), 100 years of equilibration then 25 years of daily output.  Every pickup join hash-verified; model years $100.000$--$124.997$ with gaps of exactly 72 steps throughout.  Store $3\times9000\times46\times62\times62$, 13\,GB, at \path{/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/trajectories_v3.zarr}; metadata SHA-256 \texttt{766cae893593...}.  Builder \path{src/bire_repro/af_data_v3.py}, simulation driver \path{src/bire_repro/af_independent_wind_trajectories.py} \\
+Model C pooled trajectory-v3 arm / job 317422 & Loss-recovery model retrained from scratch on the pooled independent-wind regimes under train 0--5039 / validation 5130--6389 / test 6480--8999 with 180-day buffers; 15,030 three-step training records and 90 held validation rollouts.  Completed in 40m12s and selected step 7,680 under \texttt{primary\_rule}.  Held S0 10--90-day ratios to persistence 0.686/0.659/0.623, day-200 error $2.76/2.27/0.73$ times climatology, day-200 ACC $+0.37/+0.32/+0.83$, day-2,000 error $3.51/2.97/1.20$ times climatology at amplitude 7.62.  Contract/report-content SHA-256 \texttt{1df2abfa9d66...}/\texttt{9aeaaa7fea85...}.  Training package under \path{outputs/af_fno/C/bire_aligned_v3_pooled_v1/}; three-regime figure packages under \path{outputs/af_fno/C/bire_aligned_v3_bire_figures_v1/} \\
+\textbf{Model C Bire Section 3.2 protocol arm} / jobs 318414, 318459, 318600 & The paper's own arrangement: train 0--5999, validation 6000--7199, inference 6200--7199 nested in validation, no buffers, training and validation pooled across S0/S1/S2, figures for S0 only.  Days 7200--8999 carry no split code and serve only as lead-matched evaluation truth, which is what makes the paper's day-2,000 ground-truth column reproducible.  17,910 pooled three-step training records, 102 validation rollouts, 18,000 normalizer snapshots.  Training and validation completed in 40m24s, selecting step 7,680; S0 inference completed in 1m44s with all states finite at amplitude 6.70.  Short-lead ratios to persistence 0.435/0.378/0.296; day-200 ACC $+0.66/+0.74/+0.71/+0.97$; error against climatology 1.08/0.86/0.24 at day 200 and 2.47/2.61/0.64 at day 2,000; per-call gain 1.0007/1.0008/1.0024 over the final 300 days.  Run-time contract/report-content SHA-256 \texttt{7ff347c1ef3f...}/\texttt{59864c259047...}; selected checkpoint \texttt{2b1d44c03f1a...}; train-only normalizer \texttt{ad7cc8584788...}.  Figure contract/report-content SHA-256 \texttt{b6ab98eef053...}/\texttt{c6b60dba4e5f...}.  Split module \path{src/bire_repro/af_bire_protocol_split.py}.  Training package under \path{outputs/af_fno/C/bire_protocol_pooled_v1/}; S0 figure package under \path{outputs/af_fno/C/bire_protocol_s0_figures_v1/S0/} \\
 Models C and D outputs & Planned versioned roots \path{outputs/af_fno/C/} and \path{outputs/af_fno/D/} \\
 Frozen criteria & \path{docs/AF_FNO_Project_Plan.tex} \\
 \bottomrule
@@ -2808,6 +3061,10 @@ Frozen criteria & \path{docs/AF_FNO_Project_Plan.tex} \\
 2026-07-30 & Complete the chronological arm; weaker prospective skill, unchanged attractor & Job 317123 completed in 47m19s and validation selected step 7,680, which dominated every field and both windows so the short-skill guard never bound.  The same checkpoint scores 0.480/0.472/0.560 of persistence on validation and 1.175/1.161/6.202 on the held S0 block, with day-200 ACC falling from \(+0.63/+0.64/+0.93/+0.56\) to \(+0.26/+0.09/+0.66/+0.11\).  Apply the second declared outcome: part of the earlier result depended on temporally interleaved training coverage.  The mechanism is decorrelation distance rather than drift --- S0 wet-cell means move only \(-0.0045\,^\circ\mathrm{C}\) in SST between blocks, while validation starts sit 91--352 days beyond training and S0 test starts 1,623--2,160 days beyond it, against a measured S0 SSH \(e\)-folding of 248 days.  Day-2,000 error is nevertheless 3.33/3.81/5.62 times climatology against 3.30/4.28/6.47, with per-call gain 1.0009/1.0002/1.0000, so apply the fourth declared outcome as well: the displaced attractor is intrinsic to the map and objective, not to the split or the normalizer. \\
 2026-07-30 & Record a validation-block design defect & The 90-day buffer was sized for a ten-day pair horizon, not for slow-field decorrelation.  A 630-day validation block placed immediately after training lies inside the measured 248-day S0 SSH correlation window, so validation over-estimates prospective skill by a wide margin.  Any future validation-based selection must either place the block beyond the slow-field decorrelation time or report the validation-to-test gap explicitly. \\
 2026-07-30 & Freeze single-position LayerNorm arm and correct two gate clauses & Contract \path{config/model_c_anomaly_direct_single_position_layernorm_v1.json} returns to the full 46-channel state and changes only the duplicated positional encoding and the Bire pointwise LayerNorm.  The source-relative veto moves 1.1\(\rightarrow\)2.0 because the requirement is beating persistence and climatology, which the LayerNorm checkpoint does at 0.278/0.248/0.368 and 0.413/0.363/0.189 on day 90 while being 1.05/1.17/1.82 times the incumbent.  The deep-pressure mode-wise ratio becomes reported-not-a-veto because its denominator is about \(2\times10^{-6}\) of the field, with the day-360 integrated energy bound retained; the principled 99\%-energy restriction is deferred to a declared code change.  The architecture validator now accepts \texttt{positional\_embedding} in \{grid, null\}, an additive change that re-records the \path{af_model_c_successor.py} hash.  Not validated or submitted: the \path{/sw} mount was repointed, \path{/sw/anaconda/anaconda-3.12} is gone, and \path{.venv/bin/python} is a dangling symlink, so tests, preflight, and submission are blocked. \\
+2026-08-02 & Rebuild the wind regimes without shared history & Trajectory-v2 branched S1 and S2 from the S0 year-100 state, so a wind comparison partly measured distance from a common state.  Trajectory-v3 integrates each regime independently for 125 years from the tutorial initial condition under its own wind.  The pooled v3 arm reproduces the chronological verdict (0.686/0.659/0.623 of persistence at short lead), which removes the branched construction as an explanation and leaves the training-to-evaluation gap as the operative variable. \\
+2026-08-03 & Adopt Bire's Section 3.2 arrangement verbatim & The paper allocates 6,000 training, 1,200 validation and 1,000 inference timesteps out of a 7,200-day record and states it uses no third held-out set, so the inference block is the final 1,000 days of validation rather than a separate partition, and there are no buffers.  Reproducing it exactly gives the project's strongest joint result: 0.435/0.378/0.296 of persistence at short lead and surface pressure below climatology at every lead to day 2,000.  The nesting is recorded as a weaker independence guarantee than a disjoint block, so the result is read as a protocol replication and not as a refutation of the chronological finding. \\
+2026-08-04 & Separate model visibility from evaluation truth & The arrangement was mis-stated twice during construction, first by using data past index 7,199 and then by forbidding it entirely.  The settled rule: the model sees strictly Bire's 7,200-day record, enforced by \path{assert_model_visible} on training targets, validation rollouts and inference starts, while days 7200--8999 carry no split code and serve only as lead-matched truth.  This mirrors the paper, whose Figure 7 shows a day-2,000 ground-truth column obtained because two of its five simulations are entirely held out; we obtain the same separation along time. \\
+2026-08-04 & Withdraw and regenerate a mislabelled Bire-protocol figure package & The figure package published by job 318459 carried a README inherited from the trajectory-v3 arm, describing training 0--5039, validation 5130--6389 and a held test block 6480--8999 --- none of which is this model --- together with a \texttt{Pooled v3 Model C} legend and captions renaming Bire's own inference block the test block.  The emitted split description also asserted that no lead-matched truth existed past the record, contradicting the code that draws the starts.  The package was withdrawn to \path{outputs/af_fno/C/withdrawn/}, the descriptions corrected at source, the two contracts re-hashed, and job 318600 regenerated the package with bitwise-identical numerical artifacts.  A new regression suite, \path{tests/model_c/test_af_model_c_bire_protocol.py}, asserts that the split description never denies the truth window, that the README names the Bire blocks and not the chronological ones, that artifact stems do not inherit the parent arm's name, and that each launcher invokes its own module. \\
 \bottomrule
 \end{longtable}
 
