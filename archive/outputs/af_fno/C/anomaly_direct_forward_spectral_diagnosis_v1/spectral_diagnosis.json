@@ -1,0 +1,583 @@
+{
+  "classification": "localized_small_amplitude_high_wavenumber_tail",
+  "complete_adjoint_campaign_may_open": false,
+  "content_sha256": "d44da39696a34d5c2fadd3625ac9c020fd1616ee6e3d36fc5003f57ae34d7a05",
+  "contract": "/home/mjalabert314/bire_james25_repro/config/model_c_anomaly_direct_spectral_diagnosis_v1.json",
+  "contract_sha256": "8a6bcab5ad4f8b15bd7fb10f779bc4958a23becf2bd2c8c3ca1c86edee25d823",
+  "field_diagnosis": {
+    "phihyd_bottom": {
+      "frozen_factor_four_pass": false,
+      "frozen_median_modewise_energy_ratio": 9.634477108277352,
+      "integrated_energy_ratio": 0.9473009235824424,
+      "large_scale_k1_to_k5": {
+        "integrated_energy_ratio": 0.9466072981252718,
+        "median_modewise_energy_ratio": 1.4315278387713464,
+        "model_fraction_of_valid_energy": 0.9990883260583496,
+        "truth_fraction_of_valid_energy": 0.9998204069310499
+      },
+      "per_mode": [
+        {
+          "band": "large_k1_to_k5",
+          "frozen_valid": true,
+          "mode": 1,
+          "model_energy": 23042.83871527778,
+          "model_over_truth": 0.9314283282874556,
+          "truth_energy": 24739.250477430556
+        },
+        {
+          "band": "large_k1_to_k5",
+          "frozen_valid": true,
+          "mode": 2,
+          "model_energy": 1419.9629204644098,
+          "model_over_truth": 1.206432941153743,
+          "truth_energy": 1176.992829047309
+        },
+        {
+          "band": "large_k1_to_k5",
+          "frozen_valid": true,
+          "mode": 3,
+          "model_energy": 125.0721812778049,
+          "model_over_truth": 1.4315278387713464,
+          "truth_energy": 87.36971638997396
+        },
+        {
+          "band": "large_k1_to_k5",
+          "frozen_valid": true,
+          "mode": 4,
+          "model_energy": 31.89742965698242,
+          "model_over_truth": 2.1441991505953855,
+          "truth_energy": 14.876150682237412
+        },
+        {
+          "band": "large_k1_to_k5",
+          "frozen_valid": true,
+          "mode": 5,
+          "model_energy": 13.449692429436578,
+          "model_over_truth": 3.240245603176661,
+          "truth_energy": 4.150824991861979
+        },
+        {
+          "band": "intermediate_or_invalid",
+          "frozen_valid": true,
+          "mode": 6,
+          "model_energy": 6.05134949684143,
+          "model_over_truth": 2.3934983773970053,
+          "truth_energy": 2.528244662284851
+        },
+        {
+          "band": "intermediate_or_invalid",
+          "frozen_valid": true,
+          "mode": 7,
+          "model_energy": 5.814398463567098,
+          "model_over_truth": 4.6868556924364855,
+          "truth_energy": 1.2405755254957411
+        },
+        {
+          "band": "intermediate_or_invalid",
+          "frozen_valid": true,
+          "mode": 8,
+          "model_energy": 3.611161216100057,
+          "model_over_truth": 6.739889151808915,
+          "truth_energy": 0.5357894076241387
+        },
+        {
+          "band": "intermediate_or_invalid",
+          "frozen_valid": true,
+          "mode": 9,
+          "model_energy": 2.2439874635802375,
+          "model_over_truth": 9.634477108277352,
+          "truth_energy": 0.23291222121980454
+        },
+        {
+          "band": "tail_k10_plus",
+          "frozen_valid": true,
+          "mode": 10,
+          "model_energy": 1.412054631445143,
+          "model_over_truth": 18.82459671385682,
+          "truth_energy": 0.07501114913158946
+        },
+        {
+          "band": "tail_k10_plus",
+          "frozen_valid": true,
+          "mode": 11,
+          "model_energy": 0.8543025573094686,
+          "model_over_truth": 23.898632836899797,
+          "truth_energy": 0.035746921723087625
+        },
+        {
+          "band": "tail_k10_plus",
+          "frozen_valid": true,
+          "mode": 12,
+          "model_energy": 0.722680057419671,
+          "model_over_truth": 52.55047882795653,
+          "truth_energy": 0.013752111751172278
+        },
+        {
+          "band": "tail_k10_plus",
+          "frozen_valid": true,
+          "mode": 13,
+          "model_energy": 0.5173788126971987,
+          "model_over_truth": 84.64536673568364,
+          "truth_energy": 0.006112311076786783
+        },
+        {
+          "band": "tail_k10_plus",
+          "frozen_valid": true,
+          "mode": 14,
+          "model_energy": 0.39657322085565994,
+          "model_over_truth": 120.33289513654569,
+          "truth_energy": 0.0032956343351138962
+        },
+        {
+          "band": "tail_k10_plus",
+          "frozen_valid": true,
+          "mode": 15,
+          "model_energy": 0.36036400579743916,
+          "model_over_truth": 224.11344593627777,
+          "truth_energy": 0.0016079535268040167
+        },
+        {
+          "band": "tail_k10_plus",
+          "frozen_valid": true,
+          "mode": 16,
+          "model_energy": 0.3012682176712487,
+          "model_over_truth": 345.2082774561551,
+          "truth_energy": 0.0008727143505691654
+        },
+        {
+          "band": "tail_k10_plus",
+          "frozen_valid": true,
+          "mode": 17,
+          "model_energy": 0.1924400545656681,
+          "model_over_truth": 475.57934820214155,
+          "truth_energy": 0.0004046434213200377
+        },
+        {
+          "band": "intermediate_or_invalid",
+          "frozen_valid": false,
+          "mode": 18,
+          "model_energy": 0.12790509681734774,
+          "model_over_truth": 613.7869190695226,
+          "truth_energy": 0.0002083868079353124
+        },
+        {
+          "band": "intermediate_or_invalid",
+          "frozen_valid": false,
+          "mode": 19,
+          "model_energy": 0.09296607344100873,
+          "model_over_truth": 820.3835759158188,
+          "truth_energy": 0.00011332025185563705
+        },
+        {
+          "band": "intermediate_or_invalid",
+          "frozen_valid": false,
+          "mode": 20,
+          "model_energy": 0.10468652205955652,
+          "model_over_truth": 1510.5914345194678,
+          "truth_energy": 6.930167857919717e-05
+        },
+        {
+          "band": "intermediate_or_invalid",
+          "frozen_valid": false,
+          "mode": 21,
+          "model_energy": 0.09846041179779504,
+          "model_over_truth": 1906.7381487855885,
+          "truth_energy": 5.163814017174041e-05
+        },
+        {
+          "band": "intermediate_or_invalid",
+          "frozen_valid": false,
+          "mode": 22,
+          "model_energy": 0.07534947416020764,
+          "model_over_truth": 1267.4886871176598,
+          "truth_energy": 5.94478474845851e-05
+        },
+        {
+          "band": "intermediate_or_invalid",
+          "frozen_valid": false,
+          "mode": 23,
+          "model_energy": 0.04648536215018895,
+          "model_over_truth": 711.7082148816114,
+          "truth_energy": 6.5315196843585e-05
+        },
+        {
+          "band": "intermediate_or_invalid",
+          "frozen_valid": false,
+          "mode": 24,
+          "model_energy": 0.03758745264882843,
+          "model_over_truth": 567.0908843511507,
+          "truth_energy": 6.628117941242332e-05
+        },
+        {
+          "band": "intermediate_or_invalid",
+          "frozen_valid": false,
+          "mode": 25,
+          "model_energy": 0.042122973108457196,
+          "model_over_truth": 621.8929054442247,
+          "truth_energy": 6.773348391612268e-05
+        },
+        {
+          "band": "intermediate_or_invalid",
+          "frozen_valid": false,
+          "mode": 26,
+          "model_energy": 0.038680317552967206,
+          "model_over_truth": 500.44229196698734,
+          "truth_energy": 7.72922636113233e-05
+        },
+        {
+          "band": "intermediate_or_invalid",
+          "frozen_valid": false,
+          "mode": 27,
+          "model_energy": 0.037291127163916825,
+          "model_over_truth": 352.9056143240047,
+          "truth_energy": 0.00010566884076171037
+        },
+        {
+          "band": "intermediate_or_invalid",
+          "frozen_valid": false,
+          "mode": 28,
+          "model_energy": 0.03801900340865056,
+          "model_over_truth": 274.7162732921655,
+          "truth_energy": 0.0001383937069072595
+        },
+        {
+          "band": "intermediate_or_invalid",
+          "frozen_valid": false,
+          "mode": 29,
+          "model_energy": 0.026735997738109696,
+          "model_over_truth": 169.60012526952272,
+          "truth_energy": 0.00015764137966066806
+        },
+        {
+          "band": "intermediate_or_invalid",
+          "frozen_valid": false,
+          "mode": 30,
+          "model_energy": 0.02270799884055224,
+          "model_over_truth": 211.58744880341706,
+          "truth_energy": 0.0001073220503814001
+        }
+      ],
+      "tail_k10_plus": {
+        "integrated_energy_ratio": 34.7729675622981,
+        "median_modewise_energy_ratio": 102.48913093611466,
+        "model_fraction_of_valid_energy": 0.00019293963548044514,
+        "truth_fraction_of_valid_energy": 5.256148890911809e-06
+      },
+      "valid_mode_count": 17,
+      "valid_modes": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17
+      ]
+    },
+    "phihyd_mid": {
+      "frozen_factor_four_pass": false,
+      "frozen_median_modewise_energy_ratio": 22.28879160345309,
+      "integrated_energy_ratio": 1.0292416455769704,
+      "large_scale_k1_to_k5": {
+        "integrated_energy_ratio": 1.0286350778306912,
+        "median_modewise_energy_ratio": 2.013765439415721,
+        "model_fraction_of_valid_energy": 0.9993639289651467,
+        "truth_fraction_of_valid_energy": 0.9999532360373724
+      },
+      "per_mode": [
+        {
+          "band": "large_k1_to_k5",
+          "frozen_valid": true,
+          "mode": 1,
+          "model_energy": 23442.66694878472,
+          "model_over_truth": 1.0164402414001281,
+          "truth_energy": 23063.49748263889
+        },
+        {
+          "band": "large_k1_to_k5",
+          "frozen_valid": true,
+          "mode": 2,
+          "model_energy": 4236.831510416667,
+          "model_over_truth": 1.081008711126199,
+          "truth_energy": 3919.3315158420137
+        },
+        {
+          "band": "large_k1_to_k5",
+          "frozen_valid": true,
+          "mode": 3,
+          "model_energy": 107.97468049791124,
+          "model_over_truth": 2.139757213441127,
+          "truth_energy": 50.461183081732855
+        },
+        {
+          "band": "large_k1_to_k5",
+          "frozen_valid": true,
+          "mode": 4,
+          "model_energy": 20.135339291890464,
+          "model_over_truth": 2.013765439415721,
+          "truth_energy": 9.998850361506145
+        },
+        {
+          "band": "large_k1_to_k5",
+          "frozen_valid": true,
+          "mode": 5,
+          "model_energy": 10.704649204678006,
+          "model_over_truth": 17.274873151730596,
+          "truth_energy": 0.6196658644411299
+        },
+        {
+          "band": "intermediate_or_invalid",
+          "frozen_valid": true,
+          "mode": 6,
+          "model_energy": 3.6803019205729166,
+          "model_over_truth": 6.252769567143598,
+          "truth_energy": 0.5885874860816531
+        },
+        {
+          "band": "intermediate_or_invalid",
+          "frozen_valid": true,
+          "mode": 7,
+          "model_energy": 4.510706355836656,
+          "model_over_truth": 13.654590261437692,
+          "truth_energy": 0.3303435891866684
+        },
+        {
+          "band": "intermediate_or_invalid",
+          "frozen_valid": true,
+          "mode": 8,
+          "model_energy": 2.9422357108857895,
+          "model_over_truth": 15.569982793523623,
+          "truth_energy": 0.18896846257978014
+        },
+        {
+          "band": "intermediate_or_invalid",
+          "frozen_valid": true,
+          "mode": 9,
+          "model_energy": 2.1431713183720906,
+          "model_over_truth": 22.28879160345309,
+          "truth_energy": 0.09615466627809736
+        },
+        {
+          "band": "tail_k10_plus",
+          "frozen_valid": true,
+          "mode": 10,
+          "model_energy": 1.2211392442385356,
+          "model_over_truth": 37.68130033084048,
+          "truth_energy": 0.03240703567862511
+        },
+        {
+          "band": "tail_k10_plus",
+          "frozen_valid": true,
+          "mode": 11,
+          "model_energy": 0.8767003834247589,
+          "model_over_truth": 57.65237371044233,
+          "truth_energy": 0.015206665866490868
+        },
+        {
+          "band": "tail_k10_plus",
+          "frozen_valid": true,
+          "mode": 12,
+          "model_energy": 0.6566615031825171,
+          "model_over_truth": 106.59715210745661,
+          "truth_energy": 0.006160216199027168
+        },
+        {
+          "band": "tail_k10_plus",
+          "frozen_valid": true,
+          "mode": 13,
+          "model_energy": 0.4762258556154039,
+          "model_over_truth": 152.47882382679543,
+          "truth_energy": 0.0031232261875023446
+        },
+        {
+          "band": "tail_k10_plus",
+          "frozen_valid": true,
+          "mode": 14,
+          "model_energy": 0.36835285027821857,
+          "model_over_truth": 193.20510561834462,
+          "truth_energy": 0.001906537868651665
+        },
+        {
+          "band": "tail_k10_plus",
+          "frozen_valid": true,
+          "mode": 15,
+          "model_energy": 0.37184609009159936,
+          "model_over_truth": 364.7069714334177,
+          "truth_energy": 0.0010195749443179618
+        },
+        {
+          "band": "tail_k10_plus",
+          "frozen_valid": true,
+          "mode": 16,
+          "model_energy": 0.27827901736729677,
+          "model_over_truth": 479.29889211161424,
+          "truth_energy": 0.0005805959954159334
+        },
+        {
+          "band": "tail_k10_plus",
+          "frozen_valid": true,
+          "mode": 17,
+          "model_energy": 0.18006504302223522,
+          "model_over_truth": 639.8376660181541,
+          "truth_energy": 0.0002814230117817513
+        },
+        {
+          "band": "intermediate_or_invalid",
+          "frozen_valid": false,
+          "mode": 18,
+          "model_energy": 0.12245787423517969,
+          "model_over_truth": 764.947136408007,
+          "truth_energy": 0.00016008671502479248
+        },
+        {
+          "band": "intermediate_or_invalid",
+          "frozen_valid": false,
+          "mode": 19,
+          "model_energy": 0.09135048867513736,
+          "model_over_truth": 917.0478251641426,
+          "truth_energy": 9.961365827216973e-05
+        },
+        {
+          "band": "intermediate_or_invalid",
+          "frozen_valid": false,
+          "mode": 20,
+          "model_energy": 0.08833131391762031,
+          "model_over_truth": 1354.8692238361095,
+          "truth_energy": 6.519545382212123e-05
+        },
+        {
+          "band": "intermediate_or_invalid",
+          "frozen_valid": false,
+          "mode": 21,
+          "model_energy": 0.08718512331446011,
+          "model_over_truth": 2079.4093312819996,
+          "truth_energy": 4.192783114073488e-05
+        },
+        {
+          "band": "intermediate_or_invalid",
+          "frozen_valid": false,
+          "mode": 22,
+          "model_energy": 0.07025128540893395,
+          "model_over_truth": 1864.301728518777,
+          "truth_energy": 3.768235813671102e-05
+        },
+        {
+          "band": "intermediate_or_invalid",
+          "frozen_valid": false,
+          "mode": 23,
+          "model_energy": 0.04562570855228437,
+          "model_over_truth": 1305.1942225369444,
+          "truth_energy": 3.495702613791865e-05
+        },
+        {
+          "band": "intermediate_or_invalid",
+          "frozen_valid": false,
+          "mode": 24,
+          "model_energy": 0.035890382818049855,
+          "model_over_truth": 990.6555043715463,
+          "truth_energy": 3.6228923838482134e-05
+        },
+        {
+          "band": "intermediate_or_invalid",
+          "frozen_valid": false,
+          "mode": 25,
+          "model_energy": 0.040667668936981094,
+          "model_over_truth": 927.145518612413,
+          "truth_energy": 4.3863307453446196e-05
+        },
+        {
+          "band": "intermediate_or_invalid",
+          "frozen_valid": false,
+          "mode": 26,
+          "model_energy": 0.03724553393613961,
+          "model_over_truth": 598.1428623401772,
+          "truth_energy": 6.22686255762043e-05
+        },
+        {
+          "band": "intermediate_or_invalid",
+          "frozen_valid": false,
+          "mode": 27,
+          "model_energy": 0.03684641498451432,
+          "model_over_truth": 386.41137952503766,
+          "truth_energy": 9.53554086057314e-05
+        },
+        {
+          "band": "intermediate_or_invalid",
+          "frozen_valid": false,
+          "mode": 28,
+          "model_energy": 0.036241740992085804,
+          "model_over_truth": 295.15573062706954,
+          "truth_energy": 0.0001227885391724865
+        },
+        {
+          "band": "intermediate_or_invalid",
+          "frozen_valid": false,
+          "mode": 29,
+          "model_energy": 0.026291956566274165,
+          "model_over_truth": 243.0739673668168,
+          "truth_energy": 0.0001081644276887851
+        },
+        {
+          "band": "intermediate_or_invalid",
+          "frozen_valid": false,
+          "mode": 30,
+          "model_energy": 0.02242697721036772,
+          "model_over_truth": 353.1825235578672,
+          "truth_energy": 6.34996799514435e-05
+        }
+      ],
+      "tail_k10_plus": {
+        "integrated_energy_ratio": 72.98755641047332,
+        "median_modewise_energy_ratio": 172.84196472257003,
+        "model_fraction_of_valid_energy": 0.00015912009604887294,
+        "truth_fraction_of_valid_energy": 2.2438486442903717e-06
+      },
+      "valid_mode_count": 17,
+      "valid_modes": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17
+      ]
+    }
+  },
+  "frozen_gate_reinterpreted": false,
+  "next_action": "freeze_one_prospective_training_only_regularization_test_targeting_deep_high_wavenumber_energy_without_using_inference_for_selection",
+  "source_forward_gate": {
+    "complete_adjoint_campaign_may_open": false,
+    "spectral_energy_ratio_model_over_truth": {
+      "phihyd_bottom": 9.634477108277352,
+      "phihyd_mid": 22.28879160345309,
+      "phihyd_surface": 1.558629608351238,
+      "ssh": 1.3354862122504374,
+      "sst": 1.303981749794347,
+      "streamfunction": 1.847169174431963,
+      "surface_speed": 2.504353965980136
+    },
+    "status": "fail"
+  },
+  "version": "model_c_anomaly_direct_spectral_diagnosis_v1"
+}

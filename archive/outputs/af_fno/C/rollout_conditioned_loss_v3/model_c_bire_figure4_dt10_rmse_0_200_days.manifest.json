@@ -1,0 +1,17 @@
+{
+  "checkpoint_sha256": "e9f962878cb51bfe7dc498b07173f499d982a7f3c31e23afd8036b17afad970b",
+  "contract": "/home/mjalabert314/bire_james25_repro/config/model_c_rollout_conditioned_loss_v3_bire_figure4_v1.json",
+  "contract_sha256": "35947881ecb0a41deaf855b00f9abddaeb74791d2448372a22f4fd88e2cbe548",
+  "figure": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/rollout_conditioned_loss_v3/model_c_bire_figure4_dt10_rmse_0_200_days.png",
+  "figure_sha256": "c272247556ce633835b07e25adb42bbbf3e26a167babe420349e790734cfa60d",
+  "inference_state_opened": false,
+  "manifest_content_sha256": "9770006664639655bae2a0b9a0791cdca3fec8e3a7ede70b43271414deb018e6",
+  "scratch_arrays": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/rollout_conditioned_loss_v3/bire_figure4_current_model_v1/model_c_rollout_conditioned_loss_v3_bire_figure4_arrays.npz",
+  "scratch_arrays_sha256": "9d9778645eabfbb33ede900378639636387b16da11c384eaf3e297d04551f074",
+  "scratch_report": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/rollout_conditioned_loss_v3/bire_figure4_current_model_v1/model_c_rollout_conditioned_loss_v3_bire_figure4_report.json",
+  "scratch_report_content_sha256": "1a12549dc95557b98378eee3dd60cb689833668a96380d899ad81321bfb177f1",
+  "scratch_report_sha256": "80e36db14a49c97f3224bee52d462546a20b7b3f62d102f4876c4138665712ba",
+  "status": "complete",
+  "validation_state_opened": true,
+  "version": "model_c_rollout_conditioned_loss_v3_bire_figure4_v1"
+}

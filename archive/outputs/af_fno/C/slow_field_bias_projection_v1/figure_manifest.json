@@ -1,0 +1,34 @@
+{
+  "contract_sha256": "fd7d39f5c6a4babdf5fa830cc3e0b89234138d5f805d73b523b1fb1fef405428",
+  "files": {
+    "README.md": {
+      "bytes": 319,
+      "sha256": "2e9f8b6e30fbfd968a52097824f5eeae108624c7d26276a1099b4b2984656d85"
+    },
+    "model_c_bias_vs_day90_error_maps.png": {
+      "bytes": 138212,
+      "sha256": "73214bbbb00b9ce458bec9dae1b257dea7643db6624335a121d493c4cbe89bfa"
+    },
+    "model_c_frozen_projection_rmse_ratios.png": {
+      "bytes": 195288,
+      "sha256": "e8b3b6c1d5c78f3caeddec56c5af2fb477042038b714d936dc8b717f05543d3c"
+    },
+    "model_c_slow_field_projection_rmse_ratios.csv": {
+      "bytes": 7492,
+      "sha256": "c46d48ff15813a2ac82058bb46f40047e92adf2b5a66ba09d1c7e61b11c83162"
+    },
+    "model_c_temperature_bias_by_level.png": {
+      "bytes": 64174,
+      "sha256": "b304ffbe2fa8b305174a90d0d9f841eb94820c9ab35505feb64a571cbf1e4a84"
+    },
+    "model_c_training_slow_field_decorrelation.png": {
+      "bytes": 270296,
+      "sha256": "b7dadc217e0b9b6cdedbd71439abe7c9edf372163af046ffc1599c05d47aaaec"
+    },
+    "slow_field_bias_projection_summary.json": {
+      "bytes": 9758,
+      "sha256": "a97326ce1505ed95dfc38aef45004109a6818bb13b0aa145de5fdd9f4858b8ba"
+    }
+  },
+  "version": "model_c_slow_field_bias_projection_v1"
+}

@@ -1,0 +1,238 @@
+{
+  "arrays": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/anomaly_direct_reduced_channel_bire_s0_inference_v1/model_c_bire_s0_figures_arrays.npz",
+  "arrays_sha256": "7c43e0ec2f347ea87c9602323739b33653538dd6c4c8df2406f93764be41284c",
+  "baselines": {
+    "climatology": "pointwise S0 temporal mean over split-1 training snapshots only, with surface speed averaged after derivation",
+    "persistence": "each member's initial physical reduced field held fixed",
+    "rmse": "wet-cell RMSE per member followed by ensemble mean and p10/p90"
+  },
+  "contract": "/home/mjalabert314/bire_james25_repro/config/model_c_reduced_channel_control_v1.json",
+  "contract_sha256": "a1b8ce50d1b0f0385c7799db4b7920cc0f61b98a53de4053e246d559d125a6c5",
+  "dataset": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/trajectories_v2.zarr",
+  "deterministic_gate": {
+    "fields": {
+      "phihyd_surface": {
+        "climatology": {
+          "passed": true,
+          "rmse_auc_ratio_10_90": 0.06099109180962008
+        },
+        "persistence": {
+          "passed": true,
+          "rmse_auc_ratio_10_90": 0.15038284530263182
+        }
+      },
+      "sst": {
+        "climatology": {
+          "passed": true,
+          "rmse_auc_ratio_10_90": 0.16118541356816596
+        },
+        "persistence": {
+          "passed": true,
+          "rmse_auc_ratio_10_90": 0.11951524446847203
+        }
+      },
+      "surface_speed": {
+        "climatology": {
+          "passed": true,
+          "rmse_auc_ratio_10_90": 0.21175724333655122
+        },
+        "persistence": {
+          "passed": true,
+          "rmse_auc_ratio_10_90": 0.1650532575540523
+        }
+      }
+    },
+    "passed": true,
+    "requirement": "each_primary_field_10_90_day_rmse_auc_below_persistence_and_S0_training_climatology"
+  },
+  "device": "cuda",
+  "elapsed_seconds": 32.00019294116646,
+  "ensemble": {
+    "acc_fields": [
+      "surface_u",
+      "surface_v",
+      "phihyd_surface",
+      "sst"
+    ],
+    "experiment": "S0",
+    "figure_names": [
+      "model_c_bire_figure3_streamfunction_1deg_s0_dt10.png",
+      "model_c_bire_figure4_dt10_rmse_0_200_days_s0.png",
+      "model_c_bire_figure5_dt10_single_member_rmse_s0.png",
+      "model_c_bire_figure6_dt10_acc_0_200_days_s0.png",
+      "model_c_bire_figure7_dt10_streamfunction_day060_day2000_s0.png",
+      "model_c_bire_figure8_dt10_rmse_0_2000_days_s0.png"
+    ],
+    "maximum_lead_days": 2000,
+    "member_count": 15,
+    "metric_and_member_contract": "identical starts, leads, wet-cell reductions, ensemble mean/p10/p90, and filenames as anomaly_direct_bire_s0_inference_v1",
+    "prediction_interval_days": 10,
+    "regime_index": 0,
+    "rmse_fields": [
+      "surface_speed",
+      "phihyd_surface",
+      "sst"
+    ],
+    "single_member_start": 6913,
+    "start_draw_order": [
+      6913,
+      6689,
+      7174,
+      6962,
+      6781,
+      7155,
+      6676,
+      7019,
+      7199,
+      6733,
+      6969,
+      6662,
+      6986,
+      7068,
+      6885
+    ],
+    "tau0_n_m2": 0.1
+  },
+  "figure6": {
+    "black": "retained 46-channel seed-20260724 step-13440 source Model C",
+    "interpretation": "direct channel-count causal comparison on identical starts and truth, not pretraining or fine-tuning",
+    "red": "Arm R ten-channel training-selected Model C"
+  },
+  "figures": [
+    "model_c_bire_figure3_streamfunction_1deg_s0_dt10.png",
+    "model_c_bire_figure4_dt10_rmse_0_200_days_s0.png",
+    "model_c_bire_figure5_dt10_single_member_rmse_s0.png",
+    "model_c_bire_figure6_dt10_acc_0_200_days_s0.png",
+    "model_c_bire_figure7_dt10_streamfunction_day060_day2000_s0.png",
+    "model_c_bire_figure8_dt10_rmse_0_2000_days_s0.png"
+  ],
+  "long_truth_job": "304735",
+  "reduced_dataset": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/model_c_reduced_bire_channels_v1.zarr",
+  "report_content_sha256": "e4b8bb1316d39a7acb346d357cec8890366dab013e9689e8054ffcea6e8d05c1",
+  "selected_checkpoint": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/anomaly_direct_reduced_channel_control_v1/model_c_reduced_channel_control_v1_best.pt",
+  "selected_checkpoint_sha256": "ea8fbb3edadf6f11e9c873681d3982d14790e893e244ce133cc8ce201d7c11f6",
+  "selected_optimizer_step": 13440,
+  "slurm_job_id": "304756",
+  "source_checkpoint": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/anomaly_direct_replication_v1/seeds/seed_20260724/model_c_anomaly_direct_v1_best.pt",
+  "source_checkpoint_sha256": "28b4809089a2a61b6a6be8bd82f9ab72751a1e625b8accbaec8474f073bd1a23",
+  "status": "complete",
+  "summary": {
+    "acc": {
+      "phihyd_surface": {
+        "prior": {
+          "day200_mean": 0.972448988755544,
+          "minimum_mean_0_200": 0.972448988755544
+        },
+        "selected": {
+          "day200_mean": 0.9849487503369649,
+          "minimum_mean_0_200": 0.9849487503369649
+        }
+      },
+      "sst": {
+        "prior": {
+          "day200_mean": 0.8327094276746114,
+          "minimum_mean_0_200": 0.8327094276746114
+        },
+        "selected": {
+          "day200_mean": 0.8621947407722473,
+          "minimum_mean_0_200": 0.8621947407722473
+        }
+      },
+      "surface_u": {
+        "prior": {
+          "day200_mean": 0.7841777165730794,
+          "minimum_mean_0_200": 0.7841777165730794
+        },
+        "selected": {
+          "day200_mean": 0.764801029364268,
+          "minimum_mean_0_200": 0.764801029364268
+        }
+      },
+      "surface_v": {
+        "prior": {
+          "day200_mean": 0.8874761700630188,
+          "minimum_mean_0_200": 0.8874761700630188
+        },
+        "selected": {
+          "day200_mean": 0.9288682381312052,
+          "minimum_mean_0_200": 0.9288682381312052
+        }
+      }
+    },
+    "all_selected_states_finite": true,
+    "lead_days": {
+      "interval": 10,
+      "long": 2000,
+      "short": 200
+    },
+    "maximum_selected_normalized_abs": 652.676025390625,
+    "member_count": 15,
+    "rmse": {
+      "phihyd_surface": {
+        "climatology": {
+          "day2000_mean": 0.08520227620999019,
+          "day2000_p10": 0.08189353793859482,
+          "day2000_p90": 0.08812665939331055,
+          "day200_mean": 0.062499555697043734
+        },
+        "model": {
+          "day2000_mean": 11.500365861256917,
+          "day2000_p10": 8.245818519592286,
+          "day2000_p90": 15.736411094665527,
+          "day200_mean": 0.011337782815098762
+        },
+        "persistence": {
+          "day2000_mean": 0.038319241752227146,
+          "day2000_p10": 0.035539577901363376,
+          "day2000_p90": 0.041151534765958786,
+          "day200_mean": 0.019848499322930972
+        }
+      },
+      "sst": {
+        "climatology": {
+          "day2000_mean": 0.04167828361193339,
+          "day2000_p10": 0.03930864557623863,
+          "day2000_p90": 0.043147407472133636,
+          "day200_mean": 0.0391374833881855
+        },
+        "model": {
+          "day2000_mean": 2.1492973883946735,
+          "day2000_p10": 1.6367650747299194,
+          "day2000_p90": 2.770523977279663,
+          "day200_mean": 0.022550260399778685
+        },
+        "persistence": {
+          "day2000_mean": 0.06128479888041814,
+          "day2000_p10": 0.058351154625415805,
+          "day2000_p90": 0.0647919699549675,
+          "day200_mean": 0.048792302856842676
+        }
+      },
+      "surface_speed": {
+        "climatology": {
+          "day2000_mean": 0.003912205342203379,
+          "day2000_p10": 0.0032144306227564813,
+          "day2000_p90": 0.0060101737268269066,
+          "day200_mean": 0.003511474762732784
+        },
+        "model": {
+          "day2000_mean": 0.24166754484176636,
+          "day2000_p10": 0.18789564967155456,
+          "day2000_p90": 0.30191075205802914,
+          "day200_mean": 0.002604115397358934
+        },
+        "persistence": {
+          "day2000_mean": 0.005199551892777284,
+          "day2000_p10": 0.004577580373734236,
+          "day2000_p90": 0.005877254530787468,
+          "day200_mean": 0.004568165245776375
+        }
+      }
+    },
+    "status": "complete"
+  },
+  "training_report": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/anomaly_direct_reduced_channel_control_v1/model_c_reduced_channel_control_v1_report.json",
+  "training_report_content_sha256": "c608b326a798f5b1ebedf0976beadb3c77aa8f184ad8a8cc8b7d3adce8aaa634",
+  "training_selection_passed": true,
+  "version": "model_c_reduced_channel_s0_figures_v1"
+}

@@ -1,0 +1,115 @@
+{
+  "arm_order": [
+    "layernorm",
+    "dropout",
+    "layernorm_dropout"
+  ],
+  "arm_summaries": [
+    {
+      "arm_id": "layernorm",
+      "day360_bottom_modewise_ratio": 4.917463002924068,
+      "day360_mid_modewise_ratio": 9.736772886157324,
+      "first_bottom_factor_four_failure_day": 310,
+      "first_mid_factor_four_failure_day": 180,
+      "gate_passed": false,
+      "optimizer_step": 14400,
+      "worst_mid_bottom_modewise_ratio_all_leads": 9.736772886157324,
+      "worst_primary_10_to_90_ratio": 0.40423150953999376,
+      "worst_primary_relative_to_source": 1.1861855736305613
+    },
+    {
+      "arm_id": "dropout",
+      "day360_bottom_modewise_ratio": 15.036341564667358,
+      "day360_mid_modewise_ratio": 37.58884073625702,
+      "first_bottom_factor_four_failure_day": 240,
+      "first_mid_factor_four_failure_day": 110,
+      "gate_passed": false,
+      "optimizer_step": 14400,
+      "worst_mid_bottom_modewise_ratio_all_leads": 37.58884073625702,
+      "worst_primary_10_to_90_ratio": 0.5365558161749712,
+      "worst_primary_relative_to_source": 1.5744808446986065
+    },
+    {
+      "arm_id": "layernorm_dropout",
+      "day360_bottom_modewise_ratio": 8.266898109287972,
+      "day360_mid_modewise_ratio": 19.51056597713623,
+      "first_bottom_factor_four_failure_day": 230,
+      "first_mid_factor_four_failure_day": 140,
+      "gate_passed": false,
+      "optimizer_step": 14880,
+      "worst_mid_bottom_modewise_ratio_all_leads": 19.51056597713623,
+      "worst_primary_10_to_90_ratio": 0.4817946886937643,
+      "worst_primary_relative_to_source": 1.6322325501613748
+    }
+  ],
+  "content_sha256": "9f7b7cbbf5dc696c13288eae02dd3d2ed033f3afdc8996347698c901bd435527",
+  "contract": "/home/mjalabert314/bire_james25_repro/config/model_c_anomaly_direct_bire_regularization_aggregate_v1.json",
+  "contract_sha256": "c977c196b4872a63309644959b7815c27ee5dd02f3e40c90e6bf26500607eaea",
+  "factorial_contract_sha256": "dd9089e9675a70b0ff329e95f3212a21c3900607dceaf8817fa7e7eb4500f827",
+  "inference_state_opened": false,
+  "long_term_state_opened": false,
+  "read_contract": {
+    "adjoint_state": false,
+    "inference_state": false,
+    "intermediate_wind_state": false,
+    "long_term_state": false,
+    "prior_training_metadata": true,
+    "response_state": false,
+    "training_state": true,
+    "validation_state": false
+  },
+  "response_or_adjoint_state_opened": false,
+  "scheduler_job": {
+    "job_id": 304376,
+    "state": "COMPLETED",
+    "tasks": {
+      "0": {
+        "arm_id": "layernorm",
+        "elapsed": "01:09:29",
+        "exit_code": "0:0",
+        "state": "COMPLETED"
+      },
+      "1": {
+        "arm_id": "dropout",
+        "elapsed": "01:17:44",
+        "exit_code": "0:0",
+        "state": "COMPLETED"
+      },
+      "2": {
+        "arm_id": "layernorm_dropout",
+        "elapsed": "01:23:33",
+        "exit_code": "0:0",
+        "state": "COMPLETED"
+      }
+    }
+  },
+  "selection_decision": {
+    "at_least_one_arm_passed": false,
+    "best_diagnostic_arm": "layernorm",
+    "best_diagnostic_optimizer_step": 14400,
+    "next_action": "freeze_three_layer_no_padding_training_only_control",
+    "retain_original_model": true,
+    "selected_arm": null,
+    "selected_optimizer_step": null,
+    "status": "no_regularization_arm_passed"
+  },
+  "source_summary": {
+    "day360_bottom_integrated_energy_ratio": 1.0174416303634644,
+    "day360_bottom_modewise_ratio": 5.566149711608887,
+    "day360_mid_integrated_energy_ratio": 1.0323991775512695,
+    "day360_mid_modewise_ratio": 13.371350288391113,
+    "first_bottom_factor_four_failure_day": 310,
+    "first_mid_factor_four_failure_day": 180,
+    "optimizer_step": 13440,
+    "primary_10_to_90_rmse_ratio_to_persistence": {
+      "phihyd_surface": 0.34078268908865694,
+      "sst": 0.2126208766039029,
+      "surface_speed": 0.22184549746182078
+    },
+    "worst_mid_bottom_modewise_ratio_all_leads": 13.371350288391113,
+    "worst_primary_10_to_90_ratio": 0.34078268908865694
+  },
+  "status": "complete",
+  "validation_state_opened": false,
+  "version": "model_c_anomaly_direct_bire_regularization_aggregate_v1"
+}

@@ -1,0 +1,21 @@
+{
+  "artifacts": {
+    "README.md": "9d970accddc33fc682819990d61b9416e24be0641c095a66916adbb93c4080f1",
+    "model_c_day360_deep_pressure_spectral_diagnosis.png": "dd042641586d33463242cc325547cee0b7bcfff0b267d5cb38fda91350613437",
+    "spectral_diagnosis.json": "9b60f7825bebcd153976a6c5dd86c0386efebf87cac8fe80e91d61bb459a9e18",
+    "spectral_modes.csv": "ee1203bb90cb3c3f48b025b59549c147fab0435dbd02ef895dea8f43214fac5f"
+  },
+  "content_sha256": "f3eea78f9867bc90cbe4aa9702128e82941e453c71a1f0d8918ac692a9581892",
+  "contract": "/home/mjalabert314/bire_james25_repro/config/model_c_anomaly_direct_spectral_diagnosis_v1.json",
+  "contract_sha256": "8a6bcab5ad4f8b15bd7fb10f779bc4958a23becf2bd2c8c3ca1c86edee25d823",
+  "frozen_gate_reinterpreted": false,
+  "inference_state_opened": false,
+  "source": {
+    "arrays_sha256": "445f4a10f03306edca97373dd4110430687978b31d24ffeb65b4c962fbf943bb",
+    "manifest_sha256": "02a800c7f7f3cab2d74924f2c7b4029a52cab1b0ef3b2942c284481fa1f87590",
+    "metrics_sha256": "baa1613fb7101f9f47e857a268344a69bbfb9dcc2f38479327d93c0ff5593c7d"
+  },
+  "source_inference_outputs_read": true,
+  "status": "complete",
+  "version": "model_c_anomaly_direct_spectral_diagnosis_v1"
+}

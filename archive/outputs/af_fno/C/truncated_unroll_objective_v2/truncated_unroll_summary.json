@@ -1,0 +1,88 @@
+{
+  "arrays_sha256": "0c5222cd69381e1e209f46387863b7dbb6a4fb98111061fecbd4ffa47a22d716",
+  "checkpoints": [
+    {
+      "day90_ratios": {
+        "phihyd_surface": {
+          "climatology": 1.7318939121623755,
+          "persistence": 2.929224813180803
+        },
+        "sst": {
+          "climatology": 3.8837663401899376,
+          "persistence": 2.584934900041527
+        }
+      },
+      "passed": false,
+      "ten_day_worst_regime_group_ratio": 0.5613848068766948,
+      "total_fine_tune_step": 6240,
+      "truncated_fine_tune_step": 480,
+      "worst_primary_rmse_auc_ratio": 1.8577050966942552,
+      "worst_slow_field_lead_ratio": 3.8837663401899376
+    },
+    {
+      "day90_ratios": {
+        "phihyd_surface": {
+          "climatology": 1.7980861524375258,
+          "persistence": 3.0411785254101567
+        },
+        "sst": {
+          "climatology": 3.9956263292107295,
+          "persistence": 2.659386029231747
+        }
+      },
+      "passed": false,
+      "ten_day_worst_regime_group_ratio": 0.6586052385729824,
+      "total_fine_tune_step": 6720,
+      "truncated_fine_tune_step": 960,
+      "worst_primary_rmse_auc_ratio": 2.1838352257052596,
+      "worst_slow_field_lead_ratio": 3.9956263292107295
+    },
+    {
+      "day90_ratios": {
+        "phihyd_surface": {
+          "climatology": 1.7513926171241105,
+          "persistence": 2.9622037907022913
+        },
+        "sst": {
+          "climatology": 3.827541739150918,
+          "persistence": 2.5475132529247326
+        }
+      },
+      "passed": false,
+      "ten_day_worst_regime_group_ratio": 0.5564372055930648,
+      "total_fine_tune_step": 7200,
+      "truncated_fine_tune_step": 1440,
+      "worst_primary_rmse_auc_ratio": 1.891356478129891,
+      "worst_slow_field_lead_ratio": 3.827541739150918
+    },
+    {
+      "day90_ratios": {
+        "phihyd_surface": {
+          "climatology": 1.6812429198236838,
+          "persistence": 2.843556665421406
+        },
+        "sst": {
+          "climatology": 3.700693369882788,
+          "persistence": 2.4630862436730614
+        }
+      },
+      "passed": false,
+      "ten_day_worst_regime_group_ratio": 0.5618028486244532,
+      "total_fine_tune_step": 7680,
+      "truncated_fine_tune_step": 1920,
+      "worst_primary_rmse_auc_ratio": 1.9325451884722644,
+      "worst_slow_field_lead_ratio": 3.700693369882788
+    }
+  ],
+  "classification": "training_only_pushforward_gate_not_yet_passed",
+  "inference_opened": false,
+  "passed": false,
+  "report_sha256": "86f7981e7a0ab695048677e5581adb25412e3cd5d9cd1b2c042a9b5232b5b830",
+  "save_reload_nine_step_bitwise_exact": true,
+  "selected_for": "diagnostic_only_no_validation_authorized",
+  "selected_total_fine_tune_step": 7680,
+  "selected_truncated_fine_tune_step": 1920,
+  "status": "complete",
+  "summary_content_sha256": "d4e38df2172968f30a89216af31e619007e3d5cc5e9fd298d1c021cda9467501",
+  "validation_state_opened": false
+}

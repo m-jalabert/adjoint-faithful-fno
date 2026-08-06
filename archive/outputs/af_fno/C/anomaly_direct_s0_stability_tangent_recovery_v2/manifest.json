@@ -1,0 +1,48 @@
+{
+  "artifacts": {
+    "README.md": {
+      "bytes": 396,
+      "sha256": "169802a31c3de05759575e3af4b8b40f62d2e194749cfd4d7201ee1c80a36a00"
+    },
+    "model_c_s0_first_nonfinite_lead.png": {
+      "bytes": 43094,
+      "sha256": "bd9a88358ebc433771a228f77b85233b9273eedd9e15618532c9f445d5ebdaaf"
+    },
+    "model_c_s0_stability_day2000_spectra.png": {
+      "bytes": 177174,
+      "sha256": "f5675df5029d2bddbc58d99ecff9ed27ecab2b8d176216639b54e7f9678ae727"
+    },
+    "model_c_s0_stability_models_log_rmse.png": {
+      "bytes": 144625,
+      "sha256": "2332cf01b335931fe54344c5e046a02e3a1044075564cf2515792740d382223f"
+    },
+    "model_c_s0_stability_normalized_envelope.png": {
+      "bytes": 81290,
+      "sha256": "3fc7cf11b0b0f4a931faa6c48bd54897afab580f498862580aac3640fa24f3a5"
+    },
+    "model_c_s0_stability_tangent_recovery_arrays.npz": {
+      "bytes": 1381812,
+      "sha256": "95e0a42bc4375e39af4c36dfed87a72360c98adc6ed2c33a158ea3c93f901175"
+    },
+    "model_c_s0_stability_tangent_recovery_curves.csv": {
+      "bytes": 232294,
+      "sha256": "674bd6e8a74c4427efefb6aa1cbd04d066f69df1f6d595ff856c0e97d2761624"
+    },
+    "model_c_s0_stability_tangent_recovery_report.json": {
+      "bytes": 71847,
+      "sha256": "684815b7882b8e184fa0a36f9fb10a452bd563671f31dab70ba216f482447b84"
+    },
+    "model_c_s0_stability_tangent_recovery_summary.json": {
+      "bytes": 66101,
+      "sha256": "bdd7c1a06c0d7b20d1985d7e94ad4b6bf31bd6e47d5d744a40dfe032fefccc25"
+    },
+    "model_c_s0_tangent_gain_comparison.png": {
+      "bytes": 133518,
+      "sha256": "f2523c192958f3532ad4b5b74d8bb41d99dba8dd368ea890ab67734f573957db"
+    }
+  },
+  "contract_sha256": "8bc5c0937d0e1b213e1161c99d81bfee209e62319f66d3ab836b90aa61dae1ac",
+  "manifest_content_sha256": "30a5288053ef1fc8c4f03e8a2e1544971d00402fd41c0de2e2fc12b47c24c4e5",
+  "report_content_sha256": "05e92283b2a067ac703da089dc49b9332f4d8769a14ab0230352e28b674700dd",
+  "version": "model_c_s0_stability_tangent_recovery_v2"
+}

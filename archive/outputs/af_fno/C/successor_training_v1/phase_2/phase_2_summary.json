@@ -1,0 +1,129 @@
+{
+  "version": "model_c_successor_training_v1_phase_2_summary",
+  "created_utc": "2026-07-27T19:59:33Z",
+  "contract": {
+    "path": "config/model_c_successor_training_v1.json",
+    "sha256": "3e0a300e73ec4044705e29190473d0aee7308fb6ea7d12485346d1fe14159285"
+  },
+  "dataset": {
+    "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/trajectories_v2.zarr",
+    "metadata_sha256": "ae7be47c456962f411acb0d8e217dcb7fa6e24c59e5a8f3133f93032e378b8cc",
+    "quality_report_sha256": "a6f7e5234acec1ba29a323d5bc570e8b9e1ece2bfdaa627753609f71f97cf752",
+    "coverage_report_sha256": "7758cfb64e737e6f3ab91e9c919dd492fd92a5ff8409ac8146cf995e6f2918e5",
+    "training_one_step_pairs": 15060,
+    "training_rollouts": 14940
+  },
+  "scheduler": {
+    "job_id": 290597,
+    "array_task": 0,
+    "state": "COMPLETED",
+    "exit_code": "0:0",
+    "elapsed": "01:20:22",
+    "node": "node115",
+    "reported_training_elapsed_seconds": 4735.70009095408
+  },
+  "candidate": {
+    "candidate_id": "v2_bireprop_w128_mlp4",
+    "scientific_change": "restore_bire_latent_lifting_projection_and_channel_mixing_proportions",
+    "architecture": {
+      "in_channels": 51,
+      "out_channels": 46,
+      "hidden_channels": 128,
+      "lifting_channel_ratio": 2,
+      "projection_channel_ratio": 2,
+      "channel_mlp_expansion": 4.0,
+      "n_modes": [
+        24,
+        16
+      ],
+      "n_layers": 4,
+      "domain_padding": 0.1,
+      "local_kernel_size": 3,
+      "parameter_count": 14861910
+    },
+    "seed": 20260723,
+    "selected_optimizer_step": 14880,
+    "training_gate": {
+      "status": "eligible_for_fresh_v2_validation",
+      "passed": true,
+      "ten_day_every_regime_and_group_passed": true,
+      "long_rollout_finite": true,
+      "long_rollout_amplitude_passed": true,
+      "three_step_reload_bitwise_exact": true
+    },
+    "full_training_aggregate_ratio_to_persistence": {
+      "u": 0.049040476283009594,
+      "v": 0.1212788942230447,
+      "temperature": 0.3848163597849984,
+      "ssh": 0.5224133134431005
+    },
+    "full_training_by_regime_ratio_to_persistence": {
+      "S0": {
+        "u": 0.04454381640641701,
+        "v": 0.10582252313593918,
+        "temperature": 0.3793060177191076,
+        "ssh": 0.48578711276204817
+      },
+      "S1": {
+        "u": 0.07440306148556475,
+        "v": 0.1755533359250415,
+        "temperature": 0.5712685905809616,
+        "ssh": 0.7626825892837984
+      },
+      "S2": {
+        "u": 0.044813001205707526,
+        "v": 0.11923880037909033,
+        "temperature": 0.33698504802564705,
+        "ssh": 0.4852648426233494
+      }
+    },
+    "day_180_amplitude_ratio": {
+      "u": 1.090673832019288,
+      "v": 1.0954044253550368,
+      "temperature": 1.1042233179688796,
+      "ssh": 1.0857347779865012
+    }
+  },
+  "comparison_to_width64_4c_percent_reduction_in_ratio": {
+    "aggregate_u": 34.471157564442485,
+    "aggregate_v": 38.26953377474076,
+    "aggregate_temperature": 16.534051546644804,
+    "aggregate_ssh": 18.467602422988737,
+    "full_training_s1_ssh": 24.003258263081847
+  },
+  "provenance": {
+    "source_sha256": "8dd319301e2bdbd89c3c937ede3c3f6d4992e9299e0d6b4b3eb0a002aa1bd5ea",
+    "slurm_wrapper_sha256": "38642cfd25d469b50d20d2ed262fdd06e53154eea7193636ea118c35ddfa8566",
+    "diagnostic_records_sha256": "6617f2957f6efae036ada64a907c192ad6dac5d029b05af62b116aa86db60bc4",
+    "long_rollout_records_sha256": "8d686ece7062fc832dc98f16db0c175120f52bc1597460d5b74ab95b3dfc5a58",
+    "increment_scale_sha256": "05fdb1955e6532fd7223af16b3ad9d102eb11c2492d9062ee855140a372dd7fa",
+    "loss_contract_sha256": "19000a1426ea928db7799c82a73ce071a874911eb7e1df50bd276582ec30b5f9",
+    "read_contract": {
+      "training_pair_code": 1,
+      "validation_read": false,
+      "inference_read": false,
+      "intermediate_wind_read": false,
+      "response_read": false,
+      "adjoint_read": false
+    }
+  },
+  "artifacts": {
+    "report": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/successor_training_v1/phase_2/v2_bireprop_w128_mlp4/model_c_successor_training_report.json",
+    "report_sha256": "5946515ea81ab1cb32e4ccf9f75c9f57cadb3afc2d4d3854732f41457e68433c",
+    "report_content_sha256": "7c6b13c8d1bbe483d889369bf8f20d3c0d479cbb0d7ea9341f3976feefec2456",
+    "checkpoint": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/successor_training_v1/phase_2/v2_bireprop_w128_mlp4/model_c_successor_training_best.pt",
+    "checkpoint_sha256": "2d10e48adc5e2e8c9f8478fd2d885fe7edc427248c97c4589bd510de0f360060"
+  },
+  "decision": {
+    "operational": "completed_successfully",
+    "scientific": "passed_prospective_training_only_capacity_gate",
+    "interpretation": "The combined data, channel-mixing, and bounded latent-width correction resolves the localized S1 SSH training failure while improving every aggregate group.",
+    "authorization": "freeze_and_execute_a_fresh_v2_validation_contract",
+    "not_authorized": [
+      "inference",
+      "intermediate_wind",
+      "response",
+      "adjoint"
+    ]
+  }
+}

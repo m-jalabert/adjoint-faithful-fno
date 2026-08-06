@@ -1,0 +1,146 @@
+{
+  "version": "model_c_successor_training_v1_phase_1_summary",
+  "created_utc": "2026-07-27T18:36:00Z",
+  "contract": {
+    "path": "config/model_c_successor_training_v1.json",
+    "sha256": "3e0a300e73ec4044705e29190473d0aee7308fb6ea7d12485346d1fe14159285"
+  },
+  "dataset": {
+    "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/trajectories_v2.zarr",
+    "metadata_sha256": "ae7be47c456962f411acb0d8e217dcb7fa6e24c59e5a8f3133f93032e378b8cc",
+    "training_one_step_pairs": 15060,
+    "training_rollouts": 14940
+  },
+  "scheduler": {
+    "array_job_id": 290448,
+    "tasks": [
+      {
+        "array_task": 0,
+        "candidate_id": "v2_control_w64_mlp05",
+        "state": "COMPLETED",
+        "exit_code": "0:0",
+        "elapsed": "00:41:53",
+        "node": "node123"
+      },
+      {
+        "array_task": 1,
+        "candidate_id": "v2_mix_w64_mlp4",
+        "state": "COMPLETED",
+        "exit_code": "0:0",
+        "elapsed": "00:57:49",
+        "node": "node115"
+      }
+    ]
+  },
+  "shared_provenance": {
+    "diagnostic_records_sha256": "6617f2957f6efae036ada64a907c192ad6dac5d029b05af62b116aa86db60bc4",
+    "long_rollout_records_sha256": "8d686ece7062fc832dc98f16db0c175120f52bc1597460d5b74ab95b3dfc5a58",
+    "increment_scale_sha256": "05fdb1955e6532fd7223af16b3ad9d102eb11c2492d9062ee855140a372dd7fa",
+    "loss_contract_sha256": "19000a1426ea928db7799c82a73ce071a874911eb7e1df50bd276582ec30b5f9",
+    "read_contract": {
+      "training_pair_code": 1,
+      "validation_read": false,
+      "inference_read": false,
+      "intermediate_wind_read": false,
+      "response_read": false,
+      "adjoint_read": false
+    }
+  },
+  "candidates": [
+    {
+      "candidate_id": "v2_control_w64_mlp05",
+      "scientific_change": "data_only_control",
+      "architecture": {
+        "hidden_channels": 64,
+        "lifting_channel_ratio": 2,
+        "projection_channel_ratio": 2,
+        "channel_mlp_expansion": 0.5,
+        "parameter_count": 3623190
+      },
+      "selected_optimizer_step": 15120,
+      "training_gate": {
+        "status": "training_only_gate_rejected",
+        "passed": false,
+        "only_failing_regime_group": "S1/ssh",
+        "diagnostic_96_s1_ssh_ratio_to_persistence": 1.1092488010831594,
+        "full_training_s1_ssh_ratio_to_persistence": 1.1034351501114705,
+        "long_rollout_finite": true,
+        "long_rollout_amplitude_passed": true,
+        "three_step_reload_bitwise_exact": true
+      },
+      "full_training_aggregate_ratio_to_persistence": {
+        "u": 0.09797239665011025,
+        "v": 0.2526251758992353,
+        "temperature": 0.5091436723704472,
+        "ssh": 0.6953338924377619
+      },
+      "day_180_amplitude_ratio": {
+        "u": 1.0860848974715063,
+        "v": 1.0968594605754893,
+        "temperature": 1.0869146572963795,
+        "ssh": 1.0444209122137407
+      },
+      "artifacts": {
+        "report": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/successor_training_v1/phase_1/v2_control_w64_mlp05/model_c_successor_training_report.json",
+        "report_sha256": "d636675d08220e3085145770ffead45dc12de921d3b251f7418aafadf28dd904",
+        "report_content_sha256": "b12e859e31017c87073c48f695ae26497297ed8dcf7715f50ff786a885f73792",
+        "checkpoint": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/successor_training_v1/phase_1/v2_control_w64_mlp05/model_c_successor_training_best.pt",
+        "checkpoint_sha256": "0388ac3c3a6a3f3f12b0bb638506aaa26d70804d0dae20dc0bdca0240cde4e15"
+      }
+    },
+    {
+      "candidate_id": "v2_mix_w64_mlp4",
+      "scientific_change": "restore_bire_relative_channel_mixing_only",
+      "architecture": {
+        "hidden_channels": 64,
+        "lifting_channel_ratio": 2,
+        "projection_channel_ratio": 2,
+        "channel_mlp_expansion": 4.0,
+        "parameter_count": 3738774
+      },
+      "selected_optimizer_step": 15120,
+      "training_gate": {
+        "status": "training_only_gate_rejected",
+        "passed": false,
+        "only_failing_regime_group": "S1/ssh",
+        "diagnostic_96_s1_ssh_ratio_to_persistence": 1.004296595056667,
+        "full_training_s1_ssh_ratio_to_persistence": 1.0035727477949201,
+        "long_rollout_finite": true,
+        "long_rollout_amplitude_passed": true,
+        "three_step_reload_bitwise_exact": true
+      },
+      "full_training_aggregate_ratio_to_persistence": {
+        "u": 0.07483800180239268,
+        "v": 0.19646521667354439,
+        "temperature": 0.4610459318030183,
+        "ssh": 0.6407432247403936
+      },
+      "day_180_amplitude_ratio": {
+        "u": 1.0775902389344651,
+        "v": 1.1080916051913203,
+        "temperature": 1.0770938375940082,
+        "ssh": 1.0643288933449526
+      },
+      "artifacts": {
+        "report": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/successor_training_v1/phase_1/v2_mix_w64_mlp4/model_c_successor_training_report.json",
+        "report_sha256": "8e160d3f81e538ec4efa9f6832ce2e2d8461f12ef18c89a69119138dc3aae180",
+        "report_content_sha256": "0a2cac261191da1248dda19fbcc25d2522f2eb176b8803fd3339536afd54913f",
+        "checkpoint": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/successor_training_v1/phase_1/v2_mix_w64_mlp4/model_c_successor_training_best.pt",
+        "checkpoint_sha256": "950784334902b97da7250608d1333365e954444a2d49504bde91f92183ed7ad7"
+      }
+    }
+  ],
+  "isolated_channel_mixing_effect_percent_reduction_in_ratio": {
+    "aggregate_u": 23.613176403490108,
+    "aggregate_v": 22.230547302257573,
+    "aggregate_temperature": 9.446791382773693,
+    "aggregate_ssh": 7.851000546799122,
+    "full_training_s1_ssh": 9.050137863241186
+  },
+  "decision": {
+    "operational": "both_completed_successfully",
+    "scientific": "both_rejected_by_training_only_gate",
+    "interpretation": "Bire-style 4C pointwise channel mixing materially improves every aggregate group and nearly closes the localized S1 SSH gap, but the exact prospective per-regime gate still fails.",
+    "next_action": "Run the predeclared phase-2 width-128, lift-256, projection-256, 4C candidate without opening validation."
+  }
+}

@@ -1,0 +1,49 @@
+{
+  "checkpoint_steps": [
+    480,
+    960,
+    1440,
+    1920,
+    2400,
+    2880
+  ],
+  "csv": {
+    "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/rollout_conditioned_loss_v3/model_c_loss_v3_rmse_ratios.csv",
+    "sha256": "eaac3d0d008104f97c4b606d1d19b798e3225b177f696c12e4bb165ed9971f70"
+  },
+  "figures": {
+    "model_c_loss_v3_checkpoint_selection.png": {
+      "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/rollout_conditioned_loss_v3/model_c_loss_v3_checkpoint_selection.png",
+      "sha256": "00142b0012a715dc771fa98b0f531aea4ac0692003b596f9dd5aaaa2ed12f0c0"
+    },
+    "model_c_loss_v3_rmse_ratios.png": {
+      "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/rollout_conditioned_loss_v3/model_c_loss_v3_rmse_ratios.png",
+      "sha256": "1458bd9a685d9ab103d4bb06e50844c5a6252ad9f96721d97bc6c2a13ab41289"
+    }
+  },
+  "inference_opened": false,
+  "lead_days": [
+    10,
+    20,
+    30,
+    40,
+    50,
+    60,
+    70,
+    80,
+    90
+  ],
+  "manifest_content_sha256": "c323a18285f13a2a54a34eefad2903785eeaaa1b2aa04d2e2ae3508f61590a6d",
+  "source_arrays": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/rollout_conditioned_loss_v3/model_c_rollout_conditioned_loss_v3_arrays.npz",
+  "source_arrays_sha256": "522fe6145735f1ad8d58456671bc1efe34be8608f8944360afd6b12e9577edff",
+  "source_report": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/rollout_conditioned_loss_v3/model_c_rollout_conditioned_loss_v3_report.json",
+  "source_report_content_sha256": "aa7278668552911cb87788951353ad897c66061c129faa0ff14bb08e067227f8",
+  "source_report_sha256": "e9af34326c3656cccf78990b6a21202a22adf99163fcfd1a07338c9fa6c7ba11",
+  "status": "complete",
+  "summary": {
+    "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/rollout_conditioned_loss_v3/rollout_conditioned_loss_v3_summary.json",
+    "sha256": "befba2cb20ecc2ca6f0812bd415f13719d803f6c52d628709546ac0f59b4ae9a"
+  },
+  "validation_state_opened": false,
+  "version": "model_c_rollout_conditioned_loss_v3_plots_v1"
+}

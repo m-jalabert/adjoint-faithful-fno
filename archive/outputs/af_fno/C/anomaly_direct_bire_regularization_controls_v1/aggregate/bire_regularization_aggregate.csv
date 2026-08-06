@@ -1,0 +1,4 @@
+arm_id,optimizer_step,gate_passed,day360_mid_modewise_ratio,day360_bottom_modewise_ratio,worst_mid_bottom_modewise_ratio_all_leads,worst_primary_10_to_90_ratio,worst_primary_relative_to_source,first_mid_factor_four_failure_day,first_bottom_factor_four_failure_day
+layernorm,14400,False,9.736772886157324,4.917463002924068,9.736772886157324,0.40423150953999376,1.1861855736305613,180,310
+dropout,14400,False,37.58884073625702,15.036341564667358,37.58884073625702,0.5365558161749712,1.5744808446986065,110,240
+layernorm_dropout,14880,False,19.51056597713623,8.266898109287972,19.51056597713623,0.4817946886937643,1.6322325501613748,140,230

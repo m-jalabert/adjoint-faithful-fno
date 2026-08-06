@@ -1,0 +1,15 @@
+{
+  "arm": "group_specific_heads",
+  "artifacts": {
+    "README.md": "18b34c769874c1a85be46ee7a03dd4b1b41d5593167372719614f40aac6e0c42",
+    "group_heads_arrays.npz": "4e12c9a4ca9bb72fbceb73145b93817826240a0deb5e7ba4f6f902eb3bc87bca",
+    "group_heads_report.json": "4f458148167c622c6a3fe0e645328dbbbd832a51063a41cde675cfba79b5f80d",
+    "model_c_group_heads_selection.png": "c3c5ba19bf46b9a1c0d90baa60036906e9b1fcbd0285a35ddac578788cdc73c3"
+  },
+  "content_sha256": "8e9c6a86772700ff9dcd63c144906288bafffcf12912712aa1af8278d7f5488e",
+  "contract_sha256": "932afdd1b6b5de2c3cc495cc8f3bb12669580ccc6e687896b791081a6923b1c6",
+  "inference_state_opened": false,
+  "response_or_adjoint_state_opened": false,
+  "status": "complete",
+  "version": "model_c_anomaly_direct_group_heads_v1"
+}

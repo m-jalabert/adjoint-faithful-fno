@@ -1,0 +1,52 @@
+{
+  "artifacts": {
+    "README.md": {
+      "bytes": 2314,
+      "sha256": "6512e23897d5e1ad21ec6551184b592fb30c523987e2879431df66dfa2112395"
+    },
+    "model_c_bire_figure3_streamfunction_1deg_s0_dt10.png": {
+      "bytes": 177000,
+      "sha256": "675b8c0ba63ceccef0da271607ccbc6dea77383b837002c0638adf1aeea6fb32"
+    },
+    "model_c_bire_figure4_dt10_rmse_0_200_days_s0.png": {
+      "bytes": 177361,
+      "sha256": "6c862098e865ae842d2d6a79b4222a7625c097445db3453fd5dea0d47d84d2cb"
+    },
+    "model_c_bire_figure5_dt10_single_member_rmse_s0.png": {
+      "bytes": 76409,
+      "sha256": "66be9b33a0d94c7594056ff1e800dc811e5e0e222fd9fefba8b539da34e79b2b"
+    },
+    "model_c_bire_figure6_dt10_acc_0_200_days_s0.png": {
+      "bytes": 202960,
+      "sha256": "349bea0243a804610e2dbfbe48d4833c29432cea402aac80693090de8778ba4e"
+    },
+    "model_c_bire_figure7_dt10_streamfunction_day060_day2000_s0.png": {
+      "bytes": 112090,
+      "sha256": "501c6f78606528bb2ef609c5ef2e4339b5a7bc9d67d22c0b59809139353a2e7a"
+    },
+    "model_c_bire_figure8_dt10_rmse_0_2000_days_s0.png": {
+      "bytes": 250267,
+      "sha256": "ed0928320dcd2f7e2673c331d695628eae1bae66597ab5c10224a59d00185f00"
+    },
+    "model_c_bire_s0_ensemble_curves.csv": {
+      "bytes": 180771,
+      "sha256": "cad31e9e0016b8cdc74fddd611a299cf934bb6656acaf0ac0d865353f953b22e"
+    },
+    "model_c_bire_s0_figures_arrays.npz": {
+      "bytes": 297214,
+      "sha256": "2126ae4f4d54c785485954f17e5cf8c3a33eb6be85a59f7ab969a777c076de96"
+    },
+    "model_c_bire_s0_figures_report.json": {
+      "bytes": 8060,
+      "sha256": "1ba565b2c92b17ca71d5ec9c440adf3c75c2034cd6f0cdf7e20f586d3f646463"
+    },
+    "model_c_bire_s0_figures_summary.json": {
+      "bytes": 3269,
+      "sha256": "0a0f37d5abfd55ba6f5639d06973839c8b85e42845280b639f8e7d6c0525cb37"
+    }
+  },
+  "contract_sha256": "afc4df5cce40dbfa34fd79e2e3adeee7901c8bc205d5b18ce833b858ecd1111e",
+  "manifest_content_sha256": "0588348cf1e87a7e41c90f830e613924873a5ab113b69d89adee50310339b249",
+  "report_content_sha256": "6e6d64bbb1169d52d66cc31b43e52412c309f72b339d113118b7f3ebe0fa5a6f",
+  "version": "model_c_bire_aligned_loss_recovery_s0_figures_v1"
+}

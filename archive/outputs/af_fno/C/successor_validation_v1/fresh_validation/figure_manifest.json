@@ -1,0 +1,102 @@
+{
+  "all_field_rmse_auc_ratios": {
+    "phihyd_bottom": {
+      "a0": 0.17000233850746277,
+      "climatology": 0.24353342872383754,
+      "persistence": 3.5208258848299705
+    },
+    "phihyd_mid": {
+      "a0": 0.2135648310699974,
+      "climatology": 0.4548570243347272,
+      "persistence": 3.6457742339386443
+    },
+    "phihyd_surface": {
+      "a0": 0.16533243936047717,
+      "climatology": 0.6823340521582401,
+      "persistence": 2.1975974144742447
+    },
+    "ssh": {
+      "a0": 0.15865203267516365,
+      "climatology": 0.6765848887919783,
+      "persistence": 2.1620835631341517
+    },
+    "sst": {
+      "a0": 0.2199458985129926,
+      "climatology": 2.824190694982711,
+      "persistence": 2.3128076425864528
+    },
+    "streamfunction": {
+      "a0": 0.09496287077927029,
+      "climatology": 0.5881653429603378,
+      "persistence": 0.40797992829527246
+    },
+    "surface_speed": {
+      "a0": 0.17547439950831747,
+      "climatology": 0.27507789110080955,
+      "persistence": 0.2450885255728831
+    },
+    "temperature": {
+      "a0": 0.1791137863490397,
+      "climatology": 0.3909619931879079,
+      "persistence": 1.1096197387418516
+    },
+    "u": {
+      "a0": 0.19290292846590731,
+      "climatology": 0.1070068591500667,
+      "persistence": 0.0824149734006527
+    },
+    "v": {
+      "a0": 0.19956948588283596,
+      "climatology": 0.2712376775375317,
+      "persistence": 0.19838176256681914
+    }
+  },
+  "figures": {
+    "model_c_all_field_rmse_auc_ratios.png": {
+      "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/successor_validation_v1/fresh_validation/model_c_all_field_rmse_auc_ratios.png",
+      "sha256": "bc7dad6594f98d1e8d724385dc4bcff8cc7c4533759c65248107e206ed6e412b"
+    },
+    "model_c_primary_acc_vs_lead.png": {
+      "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/successor_validation_v1/fresh_validation/model_c_primary_acc_vs_lead.png",
+      "sha256": "5c3b76f4e2200752a7d35c84576ac3022134762fcda5c3853507a2161345a794"
+    },
+    "model_c_primary_regime_rmse_ratio.png": {
+      "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/successor_validation_v1/fresh_validation/model_c_primary_regime_rmse_ratio.png",
+      "sha256": "f88e7fe5ebd2aa857eaffb25bcd30b10c52dfa040639c49abc54996af2a777e2"
+    },
+    "model_c_primary_rmse_ratio_vs_persistence.png": {
+      "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/successor_validation_v1/fresh_validation/model_c_primary_rmse_ratio_vs_persistence.png",
+      "sha256": "81dcc58fb4bdf324641542c992ca24d20f4b42fa69401d9f2fdec1d8ae1714cd"
+    },
+    "model_c_primary_rmse_vs_lead.png": {
+      "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/successor_validation_v1/fresh_validation/model_c_primary_rmse_vs_lead.png",
+      "sha256": "8d4923240d4af00bed1027fcb6b5428ffbbdc255c639b54a2fa80c6df9b0fb07"
+    }
+  },
+  "inference_opened": false,
+  "lead_days": [
+    10,
+    20,
+    30,
+    40,
+    50,
+    60,
+    70,
+    80,
+    90
+  ],
+  "manifest_content_sha256": "8b24b6af068601b79fb8e7fda22009e3b6aa4c42f4e8b1d76360386101a0845f",
+  "record_count": 540,
+  "seeds": [
+    20260723,
+    20260724,
+    20260725
+  ],
+  "status": "complete",
+  "validation_arrays": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/successor_validation_v1/fresh_validation/model_c_successor_validation_arrays.npz",
+  "validation_arrays_sha256": "fd84199b585e539dcadf05e41685c3a6845e8574dc7af596bfd487334e19dccc",
+  "validation_report": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/successor_validation_v1/fresh_validation/model_c_successor_validation_report.json",
+  "validation_report_content_sha256": "5537401af56d922b7a74c7bb33ffb2c741678275c39f2c1d3ce5ae66fefe394d",
+  "validation_report_sha256": "9853ea7aff210ae880b4463583f5aae34a1d11508d98b72eb9fab93f582663fb",
+  "version": "model_c_successor_validation_plots_v1"
+}

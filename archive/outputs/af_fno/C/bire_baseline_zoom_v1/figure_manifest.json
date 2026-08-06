@@ -1,0 +1,12 @@
+{
+  "artifacts": {
+    "model_c_bire_figure4_dt10_sst_phihyd_full_and_zoom.png": "1f1ea2c6f76af517b2496759e162a0935d74e7fe87335ab9bf5c81476fe6643f",
+    "model_c_bire_figure4_dt10_sst_phihyd_rmse.csv": "542e74c02b59ec03bf2f80dd7456394c8c035528b2cd3c174147c8be38a068ce"
+  },
+  "contract": "/home/mjalabert314/bire_james25_repro/config/model_c_bire_baseline_zoom_v1.json",
+  "contract_sha256": "2a2324090b83f9c2f3becb40a8bee85e6012adb6dd34c18bf159b559044b2a4a",
+  "manifest_content_sha256": "01433936e406dc9e699c9751a47091168599472fcb6c7b5d164db4aa7da99063",
+  "source_arrays": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/bire_figures_v1/model_c_bire_figures_arrays.npz",
+  "source_arrays_sha256": "a73ac9bf2cc96d764885bf51d3822052970dae3e61cfdc637c2c2982a51720b1",
+  "version": "model_c_bire_baseline_zoom_v1"
+}

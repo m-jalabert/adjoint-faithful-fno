@@ -1,0 +1,311 @@
+{
+  "all_three_seeds_passed": true,
+  "classification": "three_seed_replication_gate_passed",
+  "inference_state_opened": false,
+  "intermediate_wind_state_opened": false,
+  "median_ranking": [
+    {
+      "score": 0.23184085880910835,
+      "seed": 20260725
+    },
+    {
+      "score": 0.2471736861213271,
+      "seed": 20260724
+    },
+    {
+      "score": 0.30227193154283233,
+      "seed": 20260723
+    }
+  ],
+  "next_decision": "freeze_the_complete_three_seed_10_to_360_day_forward_evaluation_and_horizon_matched_adjoint_readiness_contract_before_any_inference_or_response_archive_is_opened",
+  "per_seed": [
+    {
+      "arrays_sha256": "d012c28512463392e4e68b22942224988cc97a537a7fc2c31f0bda6a1b185270",
+      "bounded_checks": {
+        "phihyd_surface": true,
+        "sst": true,
+        "surface_speed": true
+      },
+      "checks": {
+        "all_curves_bounded": true,
+        "all_day200_below_climatology": true,
+        "all_primary_auc": true,
+        "exact_reload": true,
+        "inference_sealed": true,
+        "speed_and_sst_day200_below_persistence": true,
+        "training_gate": true,
+        "zero_land": true
+      },
+      "day200_climatology_checks": {
+        "phihyd_surface": true,
+        "sst": true,
+        "surface_speed": true
+      },
+      "day200_persistence_checks": {
+        "sst": true,
+        "surface_speed": true
+      },
+      "fixed_S2_auc_checks": {
+        "phihyd_surface": {
+          "climatology": true,
+          "persistence": true
+        },
+        "sst": {
+          "climatology": true,
+          "persistence": true
+        },
+        "surface_speed": {
+          "climatology": true,
+          "persistence": true
+        }
+      },
+      "fixed_S2_auc_ratio": {
+        "phihyd_surface": {
+          "climatology": 0.21443793248408663,
+          "persistence": 0.6006620348536086
+        },
+        "sst": {
+          "climatology": 0.257591895795517,
+          "persistence": 0.20637047669147088
+        },
+        "surface_speed": {
+          "climatology": 0.3129009672818764,
+          "persistence": 0.22166828215043424
+        }
+      },
+      "fixed_S2_day200_rmse": {
+        "phihyd_surface": {
+          "climatology": 0.07187305092811584,
+          "model": 0.05518824035922686,
+          "persistence": 0.025312833239634833
+        },
+        "sst": {
+          "climatology": 0.03646741236249606,
+          "model": 0.028797152762611706,
+          "persistence": 0.05048264563083649
+        },
+        "surface_speed": {
+          "climatology": 0.0031839954822013776,
+          "model": 0.0021196244129290183,
+          "persistence": 0.00479537012676398
+        }
+      },
+      "median_ranking_score": 0.30227193154283233,
+      "passed": true,
+      "report_content_sha256": "4d5dd3d54a677678ba3f837961d0aac04758b88e7686cf0129d11372bfee0302",
+      "seed": 20260723,
+      "selected_checkpoint": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/anomaly_direct_v1/model_c_anomaly_direct_v1_best.pt",
+      "selected_checkpoint_sha256": "1d4b7cae82496a478eaed0687b3807feec068c9a4e0a40c1cff330ad0e2c362e",
+      "selected_optimizer_step": 14400,
+      "training_worst_primary_auc_ratio": 0.39395962130846207,
+      "training_worst_slow_field_lead_ratio": 0.5191066000808978
+    },
+    {
+      "arrays_sha256": "1059667024db7cbb38c6bd7d0e377618f178ccd4cb088fa712ef907ce1732250",
+      "bounded_checks": {
+        "phihyd_surface": true,
+        "sst": true,
+        "surface_speed": true
+      },
+      "checks": {
+        "all_curves_bounded": true,
+        "all_day200_below_climatology": true,
+        "all_primary_auc": true,
+        "exact_reload": true,
+        "inference_sealed": true,
+        "speed_and_sst_day200_below_persistence": true,
+        "training_gate": true,
+        "zero_land": true
+      },
+      "day200_climatology_checks": {
+        "phihyd_surface": true,
+        "sst": true,
+        "surface_speed": true
+      },
+      "day200_persistence_checks": {
+        "sst": true,
+        "surface_speed": true
+      },
+      "fixed_S2_auc_checks": {
+        "phihyd_surface": {
+          "climatology": true,
+          "persistence": true
+        },
+        "sst": {
+          "climatology": true,
+          "persistence": true
+        },
+        "surface_speed": {
+          "climatology": true,
+          "persistence": true
+        }
+      },
+      "fixed_S2_auc_ratio": {
+        "phihyd_surface": {
+          "climatology": 0.11809762201124485,
+          "persistence": 0.3308032171682631
+        },
+        "sst": {
+          "climatology": 0.28008408120456046,
+          "persistence": 0.22439015471884935
+        },
+        "surface_speed": {
+          "climatology": 0.31003154378559566,
+          "persistence": 0.21963549783944916
+        }
+      },
+      "fixed_S2_day200_rmse": {
+        "phihyd_surface": {
+          "climatology": 0.07187305092811584,
+          "model": 0.022319338470697402,
+          "persistence": 0.025312833239634833
+        },
+        "sst": {
+          "climatology": 0.03646741236249606,
+          "model": 0.02622483472029368,
+          "persistence": 0.05048264563083649
+        },
+        "surface_speed": {
+          "climatology": 0.0031839954822013776,
+          "model": 0.0024212411449601253,
+          "persistence": 0.00479537012676398
+        }
+      },
+      "median_ranking_score": 0.2471736861213271,
+      "passed": true,
+      "report_content_sha256": "ddfddfeccc98f43e58b2d79b31c0a85890aa5fec2c8e082ed1a3b689fb29df33",
+      "seed": 20260724,
+      "selected_checkpoint": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/anomaly_direct_replication_v1/seeds/seed_20260724/model_c_anomaly_direct_v1_best.pt",
+      "selected_checkpoint_sha256": "28b4809089a2a61b6a6be8bd82f9ab72751a1e625b8accbaec8474f073bd1a23",
+      "selected_optimizer_step": 13440,
+      "training_worst_primary_auc_ratio": 0.3177804101777957,
+      "training_worst_slow_field_lead_ratio": 0.3813535784385081
+    },
+    {
+      "arrays_sha256": "0258c21ae2996c811ea40cd8cb8b3674e099e610c3519d1cd7f1dc3afd6a8336",
+      "bounded_checks": {
+        "phihyd_surface": true,
+        "sst": true,
+        "surface_speed": true
+      },
+      "checks": {
+        "all_curves_bounded": true,
+        "all_day200_below_climatology": true,
+        "all_primary_auc": true,
+        "exact_reload": true,
+        "inference_sealed": true,
+        "speed_and_sst_day200_below_persistence": true,
+        "training_gate": true,
+        "zero_land": true
+      },
+      "day200_climatology_checks": {
+        "phihyd_surface": true,
+        "sst": true,
+        "surface_speed": true
+      },
+      "day200_persistence_checks": {
+        "sst": true,
+        "surface_speed": true
+      },
+      "fixed_S2_auc_checks": {
+        "phihyd_surface": {
+          "climatology": true,
+          "persistence": true
+        },
+        "sst": {
+          "climatology": true,
+          "persistence": true
+        },
+        "surface_speed": {
+          "climatology": true,
+          "persistence": true
+        }
+      },
+      "fixed_S2_auc_ratio": {
+        "phihyd_surface": {
+          "climatology": 0.10952619309768626,
+          "persistence": 0.30679378994995493
+        },
+        "sst": {
+          "climatology": 0.2697045311162357,
+          "persistence": 0.2160745487757533
+        },
+        "surface_speed": {
+          "climatology": 0.28619623116288784,
+          "persistence": 0.202749858752132
+        }
+      },
+      "fixed_S2_day200_rmse": {
+        "phihyd_surface": {
+          "climatology": 0.07187305092811584,
+          "model": 0.026706735168894134,
+          "persistence": 0.025312833239634833
+        },
+        "sst": {
+          "climatology": 0.03646741236249606,
+          "model": 0.027203533301750817,
+          "persistence": 0.05048264563083649
+        },
+        "surface_speed": {
+          "climatology": 0.0031839954822013776,
+          "model": 0.001882586635959645,
+          "persistence": 0.00479537012676398
+        }
+      },
+      "median_ranking_score": 0.23184085880910835,
+      "passed": true,
+      "report_content_sha256": "93e3a21bd81d31b35b263b9da215163a2521c4643e3a800134825e9a5fc98a5a",
+      "seed": 20260725,
+      "selected_checkpoint": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/anomaly_direct_replication_v1/seeds/seed_20260725/model_c_anomaly_direct_v1_best.pt",
+      "selected_checkpoint_sha256": "a44193bd030d8f054b6083b8826f93c2d4ce86c49a4244fef05ce7e30d03147c",
+      "selected_optimizer_step": 14400,
+      "training_worst_primary_auc_ratio": 0.35179940026253803,
+      "training_worst_slow_field_lead_ratio": 0.46185380161972617
+    }
+  ],
+  "replication_contract": "/home/mjalabert314/bire_james25_repro/config/model_c_anomaly_direct_replication_v1.json",
+  "replication_contract_sha256": "dd7e0f92ef5033659fa4607c843a8c64cecb6db319cdd529d96bd95754d8325f",
+  "response_or_adjoint_state_opened": false,
+  "selected_checkpoint": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/anomaly_direct_replication_v1/seeds/seed_20260724/model_c_anomaly_direct_v1_best.pt",
+  "selected_checkpoint_sha256": "28b4809089a2a61b6a6be8bd82f9ab72751a1e625b8accbaec8474f073bd1a23",
+  "selected_median_seed": 20260724,
+  "selected_optimizer_step": 13440,
+  "source_artifacts": {
+    "20260723": {
+      "arrays_sha256": "d012c28512463392e4e68b22942224988cc97a537a7fc2c31f0bda6a1b185270",
+      "csv": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/anomaly_direct_v1/model_c_anomaly_direct_rmse_curves.csv",
+      "csv_sha256": "3ce796a7ce520c680ce9109c23c206e74cef431620841fcf5a31070c82dcd7c2",
+      "figure_manifest": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/anomaly_direct_v1/figure_manifest.json",
+      "figure_manifest_content_sha256": "4137cc82b3502e74196b614e0554ba425a986cb063d838e3a1132deb53dadb95",
+      "figure_manifest_sha256": "761734e538700b822ab56615b91f5d27609c2cb2a350ca7f0000d158ee2c81c6",
+      "report": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/anomaly_direct_v1/model_c_anomaly_direct_v1_report.json",
+      "report_content_sha256": "4d5dd3d54a677678ba3f837961d0aac04758b88e7686cf0129d11372bfee0302",
+      "report_sha256": "2d840fb91682fe6c1c37a117f891bf8ed90d92c40711ab757084c0fa89feb6d5"
+    },
+    "20260724": {
+      "arrays_sha256": "1059667024db7cbb38c6bd7d0e377618f178ccd4cb088fa712ef907ce1732250",
+      "csv": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/anomaly_direct_replication_v1/seed_20260724/model_c_anomaly_direct_rmse_curves.csv",
+      "csv_sha256": "00bdbd4499369cc6fbe4865b311111cb0e82c6b8ae051a6bf375d9b9f9e8ae70",
+      "figure_manifest": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/anomaly_direct_replication_v1/seed_20260724/figure_manifest.json",
+      "figure_manifest_content_sha256": "e8df3aa13e9ecd6558795f1d651225b3d64d51c70af7d44e31835acd8fcbd2ef",
+      "figure_manifest_sha256": "88e65bdea020988452bf4e017e9c899da40efdaf67c76b44da6bcc0164a516ad",
+      "report": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/anomaly_direct_replication_v1/seeds/seed_20260724/model_c_anomaly_direct_v1_report.json",
+      "report_content_sha256": "ddfddfeccc98f43e58b2d79b31c0a85890aa5fec2c8e082ed1a3b689fb29df33",
+      "report_sha256": "fd300f04a1dd4cea8b239a4100c333ee17788cbc59681469c832604f8110eb44"
+    },
+    "20260725": {
+      "arrays_sha256": "0258c21ae2996c811ea40cd8cb8b3674e099e610c3519d1cd7f1dc3afd6a8336",
+      "csv": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/anomaly_direct_replication_v1/seed_20260725/model_c_anomaly_direct_rmse_curves.csv",
+      "csv_sha256": "2e37044aaef95853582460de3ee4761dad637b983b722af5ca4075c81ea9b31e",
+      "figure_manifest": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/anomaly_direct_replication_v1/seed_20260725/figure_manifest.json",
+      "figure_manifest_content_sha256": "841d32c7101955a14160d931b8ea667f93d23066d5359ea913a8cb23f298a52d",
+      "figure_manifest_sha256": "c85bc540b4d3916606954df992ecf9d09612b19948087980992112ca3105f6a3",
+      "report": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/anomaly_direct_replication_v1/seeds/seed_20260725/model_c_anomaly_direct_v1_report.json",
+      "report_content_sha256": "93e3a21bd81d31b35b263b9da215163a2521c4643e3a800134825e9a5fc98a5a",
+      "report_sha256": "9db8fe52b6feae7da4e56a8cf9d1059850a8e8814c71c3538a901c705297e2fb"
+    }
+  },
+  "status": "complete",
+  "summary_content_sha256": "c69e009abb834650bb5a62111c1cea3e5ce2f6d67fa22b7445e96700fd4bdb18",
+  "version": "model_c_anomaly_direct_replication_summary_v1"
+}

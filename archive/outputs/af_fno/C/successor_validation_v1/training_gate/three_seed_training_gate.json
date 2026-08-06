@@ -1,0 +1,145 @@
+{
+  "version": "model_c_successor_validation_v1_three_seed_training_gate",
+  "created_utc": "2026-07-27T23:55:39Z",
+  "status": "complete",
+  "scheduler": {
+    "job_id": 290673,
+    "state": "COMPLETED",
+    "tasks": [
+      {
+        "array_task": 0,
+        "seed": 20260724,
+        "state": "COMPLETED",
+        "exit_code": "0:0",
+        "elapsed": "01:08:03",
+        "node": "node117",
+        "slurm_log_sha256": "cad3d2df71b1f8313643c6154b2f56c07f17321d5e80ca679ae263bc294a0cdf"
+      },
+      {
+        "array_task": 1,
+        "seed": 20260725,
+        "state": "COMPLETED",
+        "exit_code": "0:0",
+        "elapsed": "01:09:54",
+        "node": "node125",
+        "slurm_log_sha256": "b28e0909c9e5588ea95dc3c0d8b90c3432d20c6b1de18636d5c868bb3f8a96e4"
+      }
+    ]
+  },
+  "contract": {
+    "path": "config/model_c_successor_validation_v2.json",
+    "sha256": "56bb6ec597993b0689ab699a452ed189392f98806bf95b7add79062b070cf27b"
+  },
+  "architecture": {
+    "candidate_id": "v2_bireprop_w128_mlp4",
+    "in_channels": 51,
+    "out_channels": 46,
+    "hidden_channels": 128,
+    "lifting_channels": 256,
+    "projection_channels": 256,
+    "channel_mlp_expansion": 4.0,
+    "n_modes": [
+      24,
+      16
+    ],
+    "n_layers": 4,
+    "domain_padding": 0.1,
+    "local_kernel_size": 3,
+    "parameter_count": 14861910
+  },
+  "seeds": [
+    {
+      "seed": 20260723,
+      "source_job": 290597,
+      "selected_optimizer_step": 14880,
+      "aggregate_ratio_to_persistence": {
+        "u": 0.049040476283009594,
+        "v": 0.1212788942230447,
+        "temperature": 0.3848163597849984,
+        "ssh": 0.5224133134431005
+      },
+      "worst_regime_group": {
+        "regime": "S1",
+        "group": "ssh",
+        "ratio_to_persistence": 0.7626825892837984
+      },
+      "day_180_amplitude_ratio": {
+        "u": 1.090673832019288,
+        "v": 1.0954044253550368,
+        "temperature": 1.1042233179688796,
+        "ssh": 1.0857347779865012
+      },
+      "report": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/successor_training_v1/phase_2/v2_bireprop_w128_mlp4/model_c_successor_training_report.json",
+      "report_sha256": "5946515ea81ab1cb32e4ccf9f75c9f57cadb3afc2d4d3854732f41457e68433c",
+      "checkpoint": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/successor_training_v1/phase_2/v2_bireprop_w128_mlp4/model_c_successor_training_best.pt",
+      "checkpoint_sha256": "2d10e48adc5e2e8c9f8478fd2d885fe7edc427248c97c4589bd510de0f360060"
+    },
+    {
+      "seed": 20260724,
+      "source_job": "290673_0",
+      "selected_optimizer_step": 14880,
+      "aggregate_ratio_to_persistence": {
+        "u": 0.04720102108316228,
+        "v": 0.11934263840660181,
+        "temperature": 0.32789820230091876,
+        "ssh": 0.4589835378005945
+      },
+      "worst_regime_group": {
+        "regime": "S1",
+        "group": "ssh",
+        "ratio_to_persistence": 0.7322697448565659
+      },
+      "day_180_amplitude_ratio": {
+        "u": 1.0792083269772041,
+        "v": 1.0753385935781001,
+        "temperature": 1.0831252280508996,
+        "ssh": 1.0862833488750914
+      },
+      "report": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/successor_validation_v1/training/seed_20260724/model_c_successor_training_report.json",
+      "report_sha256": "b64c6691f0269d9242f75886211aaf4a8b9d8b461e6faf671171e5beee8e5d87",
+      "checkpoint": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/successor_validation_v1/training/seed_20260724/model_c_successor_training_best.pt",
+      "checkpoint_sha256": "d68f5d978e682270605c47ff82e7a5e0130510d04a7713c894b3d6b197c24772"
+    },
+    {
+      "seed": 20260725,
+      "source_job": "290673_1",
+      "selected_optimizer_step": 15360,
+      "aggregate_ratio_to_persistence": {
+        "u": 0.045950504219086565,
+        "v": 0.11741645133721249,
+        "temperature": 0.3668307166574433,
+        "ssh": 0.5376498521232967
+      },
+      "worst_regime_group": {
+        "regime": "S1",
+        "group": "ssh",
+        "ratio_to_persistence": 0.8395065647050153
+      },
+      "day_180_amplitude_ratio": {
+        "u": 1.1355329368555667,
+        "v": 1.1514257331939137,
+        "temperature": 1.16702984018733,
+        "ssh": 1.0906316676465317
+      },
+      "report": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/successor_validation_v1/training/seed_20260725/model_c_successor_training_report.json",
+      "report_sha256": "b4818df98a6e5f8574ba33c6cedecde1e4c75c66fd9c925faca7438abff6495d",
+      "checkpoint": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/successor_validation_v1/training/seed_20260725/model_c_successor_training_best.pt",
+      "checkpoint_sha256": "e61ee9d375be8a511c54cb856cbbc371a33cccfe17450f50f012641e1b026185"
+    }
+  ],
+  "gate": {
+    "every_seed_training_gate_passed": true,
+    "every_seed_every_regime_and_group_beats_persistence": true,
+    "every_seed_long_rollout_finite": true,
+    "every_seed_long_rollout_amplitude_passed": true,
+    "every_seed_three_step_reload_bitwise_exact": true,
+    "scientific_status": "passed_prospective_three_seed_training_gate",
+    "authorization": "execute_frozen_fresh_v2_validation_once",
+    "not_authorized": [
+      "inference",
+      "intermediate_wind",
+      "response",
+      "adjoint"
+    ]
+  }
+}

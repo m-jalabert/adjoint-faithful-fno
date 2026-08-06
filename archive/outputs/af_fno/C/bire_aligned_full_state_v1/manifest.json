@@ -1,0 +1,15 @@
+{
+  "artifacts": {
+    "README.md": "24a4275b0909763ac356965920402d6287d83fcb15079df7d0c647344e9cdbb8",
+    "bire_aligned_full_state_arrays.npz": "7c389c77fd0394f8d5188a077ea783376a3f9c2f74d7a06ae207ac5d92b9642c",
+    "bire_aligned_full_state_report.json": "3e8df7f5cd255df702e98d0a7e73b27336ee3987f24945d229f41edd24d4ce13",
+    "model_c_bire_aligned_full_state_selection.png": "af28bd88dbdb2ec0db34f96ce047c04837ba5e8d8d2631cadd36224a632bda77"
+  },
+  "content_sha256": "17bb55658d592f9db744ecbb46d2aa55bcd91e66f0223b03d9660fd297cdab5d",
+  "contract_sha256": "62aed544703f1c3689ad01a9843b781d75c9e784063d39fb2606cca064a71363",
+  "held_s0_state_opened": false,
+  "inference_state_opened": false,
+  "response_or_adjoint_state_opened": false,
+  "status": "complete",
+  "version": "model_c_bire_aligned_full_state_v1"
+}

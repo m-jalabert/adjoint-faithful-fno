@@ -1,0 +1,41 @@
+{
+  "csv": {
+    "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/pushforward_objective_v1/model_c_pushforward_sst_phihyd_rmse.csv",
+    "sha256": "2dd82f4b3d64af3a270557004a856d30d2793cb762971a41167a982a6f4bd23d"
+  },
+  "figure": {
+    "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/pushforward_objective_v1/model_c_pushforward_sst_phihyd_rmse.png",
+    "sha256": "5ce0f60432069120968e6c433eb9978ec14c9e4ad667ca38a2282d124acb0ccd"
+  },
+  "fine_tune_steps": [
+    480,
+    960,
+    1440,
+    1920
+  ],
+  "inference_opened": false,
+  "lead_days": [
+    10,
+    20,
+    30,
+    40,
+    50,
+    60,
+    70,
+    80,
+    90
+  ],
+  "manifest_content_sha256": "2b7cc78262e65aeb0da96fe093f2e10f1bb10c7eb3f30e358321d6fe5f2fa272",
+  "source_arrays": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/pushforward_objective_v1/model_c_pushforward_objective_arrays.npz",
+  "source_arrays_sha256": "a4469e3c2d3daa5b22efdaaea087bf6b3f36bca97dd189174cf1646eff5b0855",
+  "source_report": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/pushforward_objective_v1/model_c_pushforward_objective_report.json",
+  "source_report_content_sha256": "85344a9df79379422833724fa598558c33fa5796ed436acd7eea99b496a0e96d",
+  "source_report_sha256": "631cec8e5f49f2fd393d698083ad3ea124dd688a0e2b5d75de62fad2cbeebd07",
+  "status": "complete",
+  "summary": {
+    "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/pushforward_objective_v1/pushforward_objective_summary.json",
+    "sha256": "cb1feae8f03659e81cbd0fd27234d4afcc178dfd7c4ab7570a41452ebaa0e7ea"
+  },
+  "validation_state_opened": false,
+  "version": "model_c_pushforward_objective_plots_v1"
+}

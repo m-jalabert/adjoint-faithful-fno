@@ -1,0 +1,251 @@
+{
+  "checkpoint_optimizer_steps": [
+    14400,
+    13440,
+    14400
+  ],
+  "classification": "seed_consistent_training_split_tail",
+  "content_sha256": "f3cb1bd6de11f7d47e6d65db8f0fdd9f1444ebde1cbd990a232b18c027141927",
+  "contract": "/home/mjalabert314/bire_james25_repro/config/model_c_anomaly_direct_training_spectral_attribution_v2.json",
+  "contract_sha256": "29c344310e5058a67d36a470eb92d9a37a89e64ab3082e25fc856c3085ba3de1",
+  "dataset": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/trajectories_v2.zarr",
+  "dataset_metadata_sha256": "ae7be47c456962f411acb0d8e217dcb7fa6e24c59e5a8f3133f93032e378b8cc",
+  "device": "cuda",
+  "inference_state_opened": false,
+  "next_decision": "freeze_one_single_candidate_training_only_direct_state_deep_pressure_spectral_regularization_fine_tune_with_split1_selection_and_no_inference_read",
+  "purpose": "corrected_ten_day_stride_training_only_spectral_attribution",
+  "read_contract": {
+    "held_inference_diagnosis_file": false,
+    "inference_state": false,
+    "intermediate_wind_state": false,
+    "response_or_adjoint_state": false,
+    "training_state": true,
+    "validation_state": false
+  },
+  "rejected_v1": {
+    "artifacts_retained": "rejected_provenance_only",
+    "correct_target_offset": "t_plus_10_times_model_step",
+    "detection": "the_reported_10_to_90_day_primary_RMSE_ratios_to_persistence_were_3p48_to_4p48_despite_the_accepted_training_and_inference_results",
+    "error": "each_ten_day_model_call_was_compared_to_the_next_daily_snapshot_instead_of_the_snapshot_ten_days_later",
+    "incorrect_target_offset": "t_plus_model_step",
+    "job_id": 304125,
+    "scheduler_status": "completed_but_scientifically_invalid",
+    "scientific_use": "none"
+  },
+  "response_or_adjoint_state_opened": false,
+  "seed_attribution": {
+    "20260723": {
+      "phihyd_bottom": {
+        "day360_frozen_median_modewise_ratio": 5.692878360909365,
+        "day360_integrated_energy_ratio": 1.0338984362192092,
+        "day360_tail_model_fraction": 0.00011088733698782863,
+        "day360_tail_truth_fraction": 5.092928263274111e-06,
+        "first_factor_four_failure_day": 310
+      },
+      "phihyd_mid": {
+        "day360_frozen_median_modewise_ratio": 13.54435678783102,
+        "day360_integrated_energy_ratio": 1.0701544868483464,
+        "day360_tail_model_fraction": 9.87958374784058e-05,
+        "day360_tail_truth_fraction": 2.167223148923924e-06,
+        "first_factor_four_failure_day": 190
+      },
+      "primary_10_to_90_rmse_ratio_to_persistence": {
+        "phihyd_surface": 0.35747937663715745,
+        "sst": 0.19762277135420386,
+        "surface_speed": 0.20824225911260635
+      }
+    },
+    "20260724": {
+      "phihyd_bottom": {
+        "day360_frozen_median_modewise_ratio": 5.566149836029515,
+        "day360_integrated_energy_ratio": 1.0174415852931222,
+        "day360_tail_model_fraction": 0.00013562275930184298,
+        "day360_tail_truth_fraction": 5.092928263274111e-06,
+        "first_factor_four_failure_day": 310
+      },
+      "phihyd_mid": {
+        "day360_frozen_median_modewise_ratio": 13.371349975097633,
+        "day360_integrated_energy_ratio": 1.0323991376419164,
+        "day360_tail_model_fraction": 0.00012608924807207045,
+        "day360_tail_truth_fraction": 2.167223148923924e-06,
+        "first_factor_four_failure_day": 180
+      },
+      "primary_10_to_90_rmse_ratio_to_persistence": {
+        "phihyd_surface": 0.3407826930775808,
+        "sst": 0.21262087984916384,
+        "surface_speed": 0.22184548981002322
+      }
+    },
+    "20260725": {
+      "phihyd_bottom": {
+        "day360_frozen_median_modewise_ratio": 4.956213776325048,
+        "day360_integrated_energy_ratio": 1.0590039798463513,
+        "day360_tail_model_fraction": 0.00010400932223361728,
+        "day360_tail_truth_fraction": 5.092928263274111e-06,
+        "first_factor_four_failure_day": 330
+      },
+      "phihyd_mid": {
+        "day360_frozen_median_modewise_ratio": 12.247611049960103,
+        "day360_integrated_energy_ratio": 1.0602824318394963,
+        "day360_tail_model_fraction": 9.688958897480282e-05,
+        "day360_tail_truth_fraction": 2.167223148923924e-06,
+        "first_factor_four_failure_day": 170
+      },
+      "primary_10_to_90_rmse_ratio_to_persistence": {
+        "phihyd_surface": 0.37313282016895843,
+        "sst": 0.19486676976302855,
+        "surface_speed": 0.20122053109548022
+      }
+    }
+  },
+  "snapshot_stride_per_model_call": 10,
+  "status": "complete",
+  "training_records": [
+    [
+      0,
+      0
+    ],
+    [
+      0,
+      431
+    ],
+    [
+      0,
+      863
+    ],
+    [
+      0,
+      1295
+    ],
+    [
+      0,
+      1727
+    ],
+    [
+      0,
+      2159
+    ],
+    [
+      0,
+      3690
+    ],
+    [
+      0,
+      4121
+    ],
+    [
+      0,
+      4553
+    ],
+    [
+      0,
+      4985
+    ],
+    [
+      0,
+      5417
+    ],
+    [
+      0,
+      5849
+    ],
+    [
+      1,
+      0
+    ],
+    [
+      1,
+      431
+    ],
+    [
+      1,
+      863
+    ],
+    [
+      1,
+      1295
+    ],
+    [
+      1,
+      1727
+    ],
+    [
+      1,
+      2159
+    ],
+    [
+      1,
+      3690
+    ],
+    [
+      1,
+      4121
+    ],
+    [
+      1,
+      4553
+    ],
+    [
+      1,
+      4985
+    ],
+    [
+      1,
+      5417
+    ],
+    [
+      1,
+      5849
+    ],
+    [
+      2,
+      0
+    ],
+    [
+      2,
+      431
+    ],
+    [
+      2,
+      863
+    ],
+    [
+      2,
+      1295
+    ],
+    [
+      2,
+      1727
+    ],
+    [
+      2,
+      2159
+    ],
+    [
+      2,
+      3690
+    ],
+    [
+      2,
+      4121
+    ],
+    [
+      2,
+      4553
+    ],
+    [
+      2,
+      4985
+    ],
+    [
+      2,
+      5417
+    ],
+    [
+      2,
+      5849
+    ]
+  ],
+  "training_records_sha256": "f571f4479e09a031e74a6ba1909ea491b2ca3684b33b384b1f7aefe88fac49e5",
+  "version": "model_c_anomaly_direct_training_spectral_attribution_v2"
+}

@@ -1,0 +1,15 @@
+{
+  "artifacts": {
+    "README.md": "cf8cf8079566cb8e0bbf433b7c922cc0b407ddf4b756a121a7d0f3e686fbbe05",
+    "bire_aligned_full_state_arrays.npz": "1fa3273f699b3a04b9731511d80876f93196a4d004131836a36198035735d1fc",
+    "bire_aligned_loss_recovery_report.json": "c5f7c5e7c7d6d342d4f28f28950a4e412635b3d12cd00c31092e49d93ac04c46",
+    "model_c_bire_aligned_loss_recovery_selection.png": "f880f2b551731a789c149d111230ed256bb55c73e322ca94ce37f30197e4745c"
+  },
+  "content_sha256": "3db4ba6ad105915fec758a3be5771e3aa5ac516fbec55ff69d9a4e2212d8859c",
+  "contract_sha256": "4932821d0b46aa8472f54a64593c6e95cc2999f537f9b051695f52dfa5f8c570",
+  "held_s0_state_opened": false,
+  "inference_state_opened": false,
+  "response_or_adjoint_state_opened": false,
+  "status": "complete",
+  "version": "model_c_bire_aligned_loss_recovery_v1"
+}

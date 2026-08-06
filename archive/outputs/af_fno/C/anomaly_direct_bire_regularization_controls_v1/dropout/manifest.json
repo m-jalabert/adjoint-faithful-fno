@@ -1,0 +1,15 @@
+{
+  "arm": "dropout",
+  "artifacts": {
+    "README.md": "e6b6e410accc14dcd2df436c0f73f546b2843bda8d0fe187934a94622c7c8531",
+    "bire_regularization_control_arrays.npz": "071da9b72014bf1cce20ddfe7f2562b80be73bfd9f9f79dca419686a506a2ff4",
+    "bire_regularization_control_report.json": "2a051e2316c089546037c3254bde7ac4b1ad214657857523db75f818581671fd",
+    "model_c_bire_regularization_control_selection.png": "94c851c070289840c1c9625258cdb1e0de1a403b3726a3e3905efd73f8c9594b"
+  },
+  "content_sha256": "99af1637b27f21e51530e5eccfad44f5575f898e4683b394177b73e7d02f903e",
+  "contract_sha256": "dd9089e9675a70b0ff329e95f3212a21c3900607dceaf8817fa7e7eb4500f827",
+  "inference_state_opened": false,
+  "response_or_adjoint_state_opened": false,
+  "status": "complete",
+  "version": "model_c_anomaly_direct_bire_regularization_controls_v1"
+}

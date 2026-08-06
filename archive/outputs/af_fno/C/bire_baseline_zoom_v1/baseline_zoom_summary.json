@@ -1,0 +1,124 @@
+{
+  "artifacts": {
+    "model_c_bire_figure4_dt10_sst_phihyd_full_and_zoom.png": "1f1ea2c6f76af517b2496759e162a0935d74e7fe87335ab9bf5c81476fe6643f",
+    "model_c_bire_figure4_dt10_sst_phihyd_rmse.csv": "542e74c02b59ec03bf2f80dd7456394c8c035528b2cd3c174147c8be38a068ce"
+  },
+  "contract_sha256": "2a2324090b83f9c2f3becb40a8bee85e6012adb6dd34c18bf159b559044b2a4a",
+  "curve_summary": {
+    "phihyd_surface": {
+      "crossings": {
+        "climatology": 70,
+        "persistence": 30
+      },
+      "selected_leads": {
+        "10": {
+          "climatology": 0.07063298672437668,
+          "model": 0.006713574752211571,
+          "persistence": 0.012871918268501759
+        },
+        "100": {
+          "climatology": 0.07185892760753632,
+          "model": 0.18235360085964203,
+          "persistence": 0.03177172318100929
+        },
+        "160": {
+          "climatology": 0.07190970331430435,
+          "model": 1.0380276441574097,
+          "persistence": 0.010200128890573978
+        },
+        "20": {
+          "climatology": 0.07066518813371658,
+          "model": 0.013556603342294693,
+          "persistence": 0.016797108575701714
+        },
+        "200": {
+          "climatology": 0.07187305390834808,
+          "model": 3.7469494342803955,
+          "persistence": 0.02531283348798752
+        },
+        "30": {
+          "climatology": 0.07109464704990387,
+          "model": 0.02243194915354252,
+          "persistence": 0.021547390148043633
+        },
+        "60": {
+          "climatology": 0.07152201980352402,
+          "model": 0.06153841316699982,
+          "persistence": 0.02983062155544758
+        },
+        "70": {
+          "climatology": 0.07155723124742508,
+          "model": 0.08116975426673889,
+          "persistence": 0.03177366033196449
+        },
+        "90": {
+          "climatology": 0.07156715542078018,
+          "model": 0.13894620537757874,
+          "persistence": 0.03154550865292549
+        }
+      }
+    },
+    "sst": {
+      "crossings": {
+        "climatology": 20,
+        "persistence": 20
+      },
+      "selected_leads": {
+        "10": {
+          "climatology": 0.03649947792291641,
+          "model": 0.021039362996816635,
+          "persistence": 0.023507704958319664
+        },
+        "100": {
+          "climatology": 0.03828037902712822,
+          "model": 0.3317303955554962,
+          "persistence": 0.05324694886803627
+        },
+        "160": {
+          "climatology": 0.0368398018181324,
+          "model": 1.7402148246765137,
+          "persistence": 0.017931316047906876
+        },
+        "20": {
+          "climatology": 0.036352675408124924,
+          "model": 0.036806099116802216,
+          "persistence": 0.03641907498240471
+        },
+        "200": {
+          "climatology": 0.03646741434931755,
+          "model": 5.981215000152588,
+          "persistence": 0.05048264563083649
+        },
+        "30": {
+          "climatology": 0.037390902638435364,
+          "model": 0.054303981363773346,
+          "persistence": 0.044283587485551834
+        },
+        "60": {
+          "climatology": 0.03751426562666893,
+          "model": 0.12421001493930817,
+          "persistence": 0.050957150757312775
+        },
+        "70": {
+          "climatology": 0.03816156089305878,
+          "model": 0.158327117562294,
+          "persistence": 0.05054182559251785
+        },
+        "90": {
+          "climatology": 0.03652624040842056,
+          "model": 0.2574431896209717,
+          "persistence": 0.050563208758831024
+        }
+      }
+    }
+  },
+  "descriptive_only": true,
+  "inference_opened": false,
+  "manifest_content_sha256": "01433936e406dc9e699c9751a47091168599472fcb6c7b5d164db4aa7da99063",
+  "source_arrays_sha256": "a73ac9bf2cc96d764885bf51d3822052970dae3e61cfdc637c2c2982a51720b1",
+  "source_report_sha256": "b704b921444dc4093e0af70f68307d63cea44e4893bd526bbdacf4c65e300ac5",
+  "status": "complete",
+  "summary_content_sha256": "5256058a71d7524d2fdd5b554315c993286e886049fd63d1370e01cfaae1e0c7",
+  "tuning_authorized": false,
+  "version": "model_c_bire_baseline_zoom_v1"
+}

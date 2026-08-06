@@ -1,0 +1,47 @@
+{
+  "csv": {
+    "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/anomaly_direct_v1/model_c_anomaly_direct_rmse_curves.csv",
+    "sha256": "3ce796a7ce520c680ce9109c23c206e74cef431620841fcf5a31070c82dcd7c2"
+  },
+  "figures": {
+    "model_c_anomaly_direct_checkpoint_selection.png": {
+      "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/anomaly_direct_v1/model_c_anomaly_direct_checkpoint_selection.png",
+      "sha256": "8fadf855ea6e8b85611e34e46043a9f5a624790aace74b0be36f80af67078875"
+    },
+    "model_c_anomaly_direct_normalization_scales.png": {
+      "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/anomaly_direct_v1/model_c_anomaly_direct_normalization_scales.png",
+      "sha256": "01eba33a9ba1be62ab3afe767ffb2b38ffe32513b84270a81008ac7c8f876abd"
+    },
+    "model_c_anomaly_direct_rmse_0_200_days_full_scale.png": {
+      "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/anomaly_direct_v1/model_c_anomaly_direct_rmse_0_200_days_full_scale.png",
+      "sha256": "48d7c13823d8e56375a903234d40583510e803d2ac7ab917adc4fce74b6d773d"
+    },
+    "model_c_anomaly_direct_training_rmse_ratios.png": {
+      "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/anomaly_direct_v1/model_c_anomaly_direct_training_rmse_ratios.png",
+      "sha256": "b74e2cb6a7e515524a7efa6a0e853866337e02a331e433bbd3d479e17cc8573e"
+    },
+    "model_c_bire_figure3_streamfunction_1deg.png": {
+      "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/anomaly_direct_v1/model_c_bire_figure3_streamfunction_1deg.png",
+      "sha256": "a77ada7c3755727b1dd1cdf39b2f92d17b2f6392b036bccfca22286d77eb68a7"
+    },
+    "model_c_bire_figure4_dt10_rmse_0_200_days.png": {
+      "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/anomaly_direct_v1/model_c_bire_figure4_dt10_rmse_0_200_days.png",
+      "sha256": "6505916691c6a112ed13061eb42177a4f147dd2c7d349197f4ce5ca2c7fb48e1"
+    }
+  },
+  "inference_state_opened": false,
+  "manifest_content_sha256": "4137cc82b3502e74196b614e0554ba425a986cb063d838e3a1132deb53dadb95",
+  "selected_optimizer_step": 14400,
+  "source_arrays": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/anomaly_direct_v1/model_c_anomaly_direct_v1_arrays.npz",
+  "source_arrays_sha256": "d012c28512463392e4e68b22942224988cc97a537a7fc2c31f0bda6a1b185270",
+  "source_report": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/anomaly_direct_v1/model_c_anomaly_direct_v1_report.json",
+  "source_report_content_sha256": "4d5dd3d54a677678ba3f837961d0aac04758b88e7686cf0129d11372bfee0302",
+  "source_report_sha256": "2d840fb91682fe6c1c37a117f891bf8ed90d92c40711ab757084c0fa89feb6d5",
+  "status": "complete",
+  "summary": {
+    "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/anomaly_direct_v1/anomaly_direct_summary.json",
+    "sha256": "8c86c6e4c2450ac6804f4c19cf8ed8b674f7dd86c2fbd823152c18c8b8eca631"
+  },
+  "validation_state_opened": true,
+  "version": "model_c_anomaly_direct_plots_v1"
+}

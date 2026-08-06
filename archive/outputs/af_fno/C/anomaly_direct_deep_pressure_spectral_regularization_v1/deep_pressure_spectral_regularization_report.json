@@ -1,0 +1,451 @@
+{
+  "architecture": {
+    "channel_mlp_expansion": 4.0,
+    "domain_padding": 0.1,
+    "factorization": null,
+    "fno_block_precision": "full",
+    "hidden_channels": 128,
+    "in_channels": 51,
+    "lifting_channel_ratio": 2,
+    "local_kernel_size": 3,
+    "n_layers": 4,
+    "n_modes": [
+      24,
+      16
+    ],
+    "out_channels": 46,
+    "positional_embedding": "grid",
+    "projection_channel_ratio": 2,
+    "use_channel_mlp": true
+  },
+  "arrays": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/anomaly_direct_deep_pressure_spectral_regularization_v1/deep_pressure_spectral_regularization_arrays.npz",
+  "arrays_sha256": "8aeeed3de08549fb8f0b8494162532ffc9baeec7ac8387ec689d97b60a7325a2",
+  "base_loss_contract_sha256": "19000a1426ea928db7799c82a73ce071a874911eb7e1df50bd276582ec30b5f9",
+  "checkpoints": [
+    {
+      "checkpoint": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/anomaly_direct_deep_pressure_spectral_regularization_v1/fine_tune_checkpoints/model_c_anomaly_direct_deep_pressure_spectral_step_0240.pt",
+      "checkpoint_sha256": "ebd12c1b123ecca2bb79907d9e9ae4a52c1bc8db7d8d901ba2654d79554324bd",
+      "fine_tune_step": 240,
+      "optimizer_step": 13680
+    },
+    {
+      "checkpoint": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/anomaly_direct_deep_pressure_spectral_regularization_v1/fine_tune_checkpoints/model_c_anomaly_direct_deep_pressure_spectral_step_0480.pt",
+      "checkpoint_sha256": "2d805d8eb4552424291cda8fdd42eebc58e9093b5e976e239694b002fd024664",
+      "fine_tune_step": 480,
+      "optimizer_step": 13920
+    },
+    {
+      "checkpoint": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/anomaly_direct_deep_pressure_spectral_regularization_v1/fine_tune_checkpoints/model_c_anomaly_direct_deep_pressure_spectral_step_0960.pt",
+      "checkpoint_sha256": "61aee2f0399d7e25ec9f45f9dee9ef25e28b57d147869332c8358a86402ea2de",
+      "fine_tune_step": 960,
+      "optimizer_step": 14400
+    },
+    {
+      "checkpoint": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/anomaly_direct_deep_pressure_spectral_regularization_v1/fine_tune_checkpoints/model_c_anomaly_direct_deep_pressure_spectral_step_1440.pt",
+      "checkpoint_sha256": "8615e2d82da69bdea4d1f97b18be6dd9792041fe43ea011375f2093f97367949",
+      "fine_tune_step": 1440,
+      "optimizer_step": 14880
+    },
+    {
+      "checkpoint": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/anomaly_direct_deep_pressure_spectral_regularization_v1/fine_tune_checkpoints/model_c_anomaly_direct_deep_pressure_spectral_step_1920.pt",
+      "checkpoint_sha256": "e45b46a33f59af93547fbd760f1c76a37eaabb68800f49e7bab8aecd02e5d6ec",
+      "fine_tune_step": 1920,
+      "optimizer_step": 15360
+    }
+  ],
+  "content_sha256": "8065faafeecf74bb221c3e25bd6880e180d44e0d0347aafa4f08ee7d8d6ddb75",
+  "contract": "/home/mjalabert314/bire_james25_repro/config/model_c_anomaly_direct_deep_pressure_spectral_regularization_v1.json",
+  "contract_sha256": "4f3377382dc0c57cc340afa548af85606ca48f902d48cf3b65795e2a70acef37",
+  "dataset": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/trajectories_v2.zarr",
+  "dataset_metadata_sha256": "ae7be47c456962f411acb0d8e217dcb7fa6e24c59e5a8f3133f93032e378b8cc",
+  "device": "cuda",
+  "elapsed_seconds": 610.8586944676936,
+  "evaluation_summaries": [
+    {
+      "day360_bottom_integrated_energy_ratio": 1.0174415852931222,
+      "day360_bottom_modewise_ratio": 5.566149836029515,
+      "day360_mid_integrated_energy_ratio": 1.0323991376419164,
+      "day360_mid_modewise_ratio": 13.371349975097633,
+      "fine_tune_step": 0,
+      "first_bottom_factor_four_failure_day": 310,
+      "first_mid_factor_four_failure_day": 180,
+      "gate": {
+        "day360_integrated_energy_bounded": true,
+        "mid_bottom_factor_four_all_leads": false,
+        "pass": false,
+        "primary_below_persistence": true,
+        "primary_degradation_bounded": true
+      },
+      "optimizer_step": 13440,
+      "primary_10_to_90_rmse_ratio_to_persistence": {
+        "phihyd_surface": 0.3407826930775808,
+        "sst": 0.21262087984916384,
+        "surface_speed": 0.22184548981002322
+      },
+      "primary_ratio_relative_to_source": {
+        "phihyd_surface": 1.0,
+        "sst": 1.0,
+        "surface_speed": 1.0
+      },
+      "worst_mid_bottom_modewise_ratio_all_leads": 13.371349975097633,
+      "worst_primary_10_to_90_ratio": 0.3407826930775808,
+      "worst_primary_relative_to_source": 1.0
+    },
+    {
+      "day360_bottom_integrated_energy_ratio": 1.0126978277652807,
+      "day360_bottom_modewise_ratio": 3.5555292605156628,
+      "day360_mid_integrated_energy_ratio": 1.0403663461091222,
+      "day360_mid_modewise_ratio": 8.298026486919868,
+      "fine_tune_step": 240,
+      "first_bottom_factor_four_failure_day": null,
+      "first_mid_factor_four_failure_day": 240,
+      "gate": {
+        "day360_integrated_energy_bounded": true,
+        "mid_bottom_factor_four_all_leads": false,
+        "pass": false,
+        "primary_below_persistence": true,
+        "primary_degradation_bounded": true
+      },
+      "optimizer_step": 13680,
+      "primary_10_to_90_rmse_ratio_to_persistence": {
+        "phihyd_surface": 0.2323340087871691,
+        "sst": 0.1981382046932075,
+        "surface_speed": 0.2087480060776098
+      },
+      "primary_ratio_relative_to_source": {
+        "phihyd_surface": 0.6817658687094099,
+        "sst": 0.9318849815397691,
+        "surface_speed": 0.9409612350306088
+      },
+      "worst_mid_bottom_modewise_ratio_all_leads": 8.298026486919868,
+      "worst_primary_10_to_90_ratio": 0.2323340087871691,
+      "worst_primary_relative_to_source": 0.9409612350306088
+    },
+    {
+      "day360_bottom_integrated_energy_ratio": 0.9979660696699514,
+      "day360_bottom_modewise_ratio": 3.6186735598514366,
+      "day360_mid_integrated_energy_ratio": 0.9897632579311582,
+      "day360_mid_modewise_ratio": 8.069322126581964,
+      "fine_tune_step": 480,
+      "first_bottom_factor_four_failure_day": null,
+      "first_mid_factor_four_failure_day": 240,
+      "gate": {
+        "day360_integrated_energy_bounded": true,
+        "mid_bottom_factor_four_all_leads": false,
+        "pass": false,
+        "primary_below_persistence": true,
+        "primary_degradation_bounded": true
+      },
+      "optimizer_step": 13920,
+      "primary_10_to_90_rmse_ratio_to_persistence": {
+        "phihyd_surface": 0.18491420835108882,
+        "sst": 0.1939941996780313,
+        "surface_speed": 0.2104404752145488
+      },
+      "primary_ratio_relative_to_source": {
+        "phihyd_surface": 0.5426161953271266,
+        "sst": 0.9123948683480825,
+        "surface_speed": 0.9485902796345282
+      },
+      "worst_mid_bottom_modewise_ratio_all_leads": 8.069322126581964,
+      "worst_primary_10_to_90_ratio": 0.2104404752145488,
+      "worst_primary_relative_to_source": 0.9485902796345282
+    },
+    {
+      "day360_bottom_integrated_energy_ratio": 1.013150881864432,
+      "day360_bottom_modewise_ratio": 3.540164747218872,
+      "day360_mid_integrated_energy_ratio": 1.031099117644032,
+      "day360_mid_modewise_ratio": 7.313765672300238,
+      "fine_tune_step": 960,
+      "first_bottom_factor_four_failure_day": null,
+      "first_mid_factor_four_failure_day": 250,
+      "gate": {
+        "day360_integrated_energy_bounded": true,
+        "mid_bottom_factor_four_all_leads": false,
+        "pass": false,
+        "primary_below_persistence": true,
+        "primary_degradation_bounded": true
+      },
+      "optimizer_step": 14400,
+      "primary_10_to_90_rmse_ratio_to_persistence": {
+        "phihyd_surface": 0.19503625074279074,
+        "sst": 0.19127584978805723,
+        "surface_speed": 0.2114461109652296
+      },
+      "primary_ratio_relative_to_source": {
+        "phihyd_surface": 0.5723185323216805,
+        "sst": 0.8996099062507451,
+        "surface_speed": 0.9531233253662308
+      },
+      "worst_mid_bottom_modewise_ratio_all_leads": 7.313765672300238,
+      "worst_primary_10_to_90_ratio": 0.2114461109652296,
+      "worst_primary_relative_to_source": 0.9531233253662308
+    },
+    {
+      "day360_bottom_integrated_energy_ratio": 1.001054718929737,
+      "day360_bottom_modewise_ratio": 3.029874964728642,
+      "day360_mid_integrated_energy_ratio": 1.0225479513321747,
+      "day360_mid_modewise_ratio": 6.670368716903944,
+      "fine_tune_step": 1440,
+      "first_bottom_factor_four_failure_day": null,
+      "first_mid_factor_four_failure_day": 270,
+      "gate": {
+        "day360_integrated_energy_bounded": true,
+        "mid_bottom_factor_four_all_leads": false,
+        "pass": false,
+        "primary_below_persistence": true,
+        "primary_degradation_bounded": true
+      },
+      "optimizer_step": 14880,
+      "primary_10_to_90_rmse_ratio_to_persistence": {
+        "phihyd_surface": 0.21355220423644017,
+        "sst": 0.19222653683003507,
+        "surface_speed": 0.20681818914875003
+      },
+      "primary_ratio_relative_to_source": {
+        "phihyd_surface": 0.6266521410106469,
+        "sst": 0.9040811841546476,
+        "surface_speed": 0.9322623116019091
+      },
+      "worst_mid_bottom_modewise_ratio_all_leads": 6.670368716903944,
+      "worst_primary_10_to_90_ratio": 0.21355220423644017,
+      "worst_primary_relative_to_source": 0.9322623116019091
+    },
+    {
+      "day360_bottom_integrated_energy_ratio": 0.9796275593086984,
+      "day360_bottom_modewise_ratio": 2.9660766273725425,
+      "day360_mid_integrated_energy_ratio": 1.006105972626143,
+      "day360_mid_modewise_ratio": 6.191657928774596,
+      "fine_tune_step": 1920,
+      "first_bottom_factor_four_failure_day": null,
+      "first_mid_factor_four_failure_day": 280,
+      "gate": {
+        "day360_integrated_energy_bounded": true,
+        "mid_bottom_factor_four_all_leads": false,
+        "pass": false,
+        "primary_below_persistence": true,
+        "primary_degradation_bounded": true
+      },
+      "optimizer_step": 15360,
+      "primary_10_to_90_rmse_ratio_to_persistence": {
+        "phihyd_surface": 0.18001970590444902,
+        "sst": 0.19234693575918702,
+        "surface_speed": 0.21176086211381778
+      },
+      "primary_ratio_relative_to_source": {
+        "phihyd_surface": 0.5282536629976883,
+        "sst": 0.9046474452351084,
+        "surface_speed": 0.9545421107959355
+      },
+      "worst_mid_bottom_modewise_ratio_all_leads": 6.191657928774596,
+      "worst_primary_10_to_90_ratio": 0.21176086211381778,
+      "worst_primary_relative_to_source": 0.9545421107959355
+    }
+  ],
+  "fine_tune": {
+    "adam_betas": [
+      0.9,
+      0.95
+    ],
+    "architecture": "unchanged_width128_four_layer_modes24x16_padding0p1",
+    "batch_order_seed": 20260729,
+    "batch_size": 4,
+    "checkpoint_steps": [
+      240,
+      480,
+      960,
+      1440,
+      1920
+    ],
+    "effective_batch_size": 4,
+    "learning_rate": 2e-05,
+    "learning_rate_schedule": "constant",
+    "maximum_steps": 1920,
+    "optimizer_state": "fresh_AdamW",
+    "source_optimizer_step": 13440,
+    "source_seed": 20260724,
+    "training_records": "all_complete_three_step_pair_split1_rollouts",
+    "weight_decay": 1e-05
+  },
+  "inference_state_opened": false,
+  "intermediate_wind_state_opened": false,
+  "objective": {
+    "added_term": "mean_complex_Fourier_RMSE_of_physical_PHIHYD_over_truth_tail_energy",
+    "base_loss_contract_sha256": "19000a1426ea928db7799c82a73ce071a874911eb7e1df50bd276582ec30b5f9",
+    "base_loss_version": "v1",
+    "no_power_ratio_targeting": "loss_matches_complex_pressure_coefficients_and_does_not_train_on_the_factor_four_decision_statistic",
+    "pressure_levels": [
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14
+    ],
+    "pressure_reconstruction": "differentiable_MITgcm_linear_EOS_finite_difference_hydrostatic_integration_plus_g_times_ETA",
+    "radial_modes": [
+      10,
+      30
+    ],
+    "rollout_target_days": [
+      10,
+      20,
+      30
+    ],
+    "spatial_processing": "crop_exact_rectangular_wet_basin_subtract_member_mean_and_apply_nonperiodic_Hann_window",
+    "total": "unchanged_loss_v1_total_plus_0p001_times_deep_pressure_high_mode_relative_RMSE",
+    "truth_tail_floor_fraction_of_total": 1e-08,
+    "weight": 0.001
+  },
+  "purpose": "single_candidate_training_only_deep_pressure_spectral_regularization",
+  "read_contract": {
+    "adjoint_state": false,
+    "inference_state": false,
+    "intermediate_wind_state": false,
+    "prior_training_metadata": true,
+    "response_state": false,
+    "training_state": true,
+    "validation_state": false
+  },
+  "response_or_adjoint_state_opened": false,
+  "selected_checkpoint": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/anomaly_direct_deep_pressure_spectral_regularization_v1/model_c_anomaly_direct_deep_pressure_spectral_best.pt",
+  "selected_checkpoint_sha256": "28b4809089a2a61b6a6be8bd82f9ab72751a1e625b8accbaec8474f073bd1a23",
+  "selection_decision": {
+    "candidate_training_gate_passed": false,
+    "next_action": "retain_original_anomaly_direct_model_and_do_not_open_new_held_or_physics_archives",
+    "selected_fine_tune_step": 0,
+    "selected_optimizer_step": 13440,
+    "status": "no_fine_tune_checkpoint_passed"
+  },
+  "selection_records_sha256": "f571f4479e09a031e74a6ba1909ea491b2ca3684b33b384b1f7aefe88fac49e5",
+  "source": {
+    "checkpoint": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/anomaly_direct_replication_v1/seeds/seed_20260724/model_c_anomaly_direct_v1_best.pt",
+    "checkpoint_sha256": "28b4809089a2a61b6a6be8bd82f9ab72751a1e625b8accbaec8474f073bd1a23",
+    "normalization": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/anomaly_direct_replication_v1/seeds/seed_20260724/model_c_anomaly_direct_v1_normalization.npz",
+    "normalization_sha256": "a81a27ce86b0d0b296d0d960bb5856cbcf2f3d88b21e7ffa398ae4983a30ebd1",
+    "optimizer_step": 13440,
+    "seed": 20260724
+  },
+  "status": "complete",
+  "training_history": [
+    {
+      "fine_tune_step": 240,
+      "learning_rate": 2e-05,
+      "optimizer_step": 13680,
+      "training_window": {
+        "base_total": 0.03338141910887013,
+        "boundary": 0.04738838959795733,
+        "deep_pressure_tail": 0.7555128475030263,
+        "increment": 0.22253336406623322,
+        "increment_ssh": 0.15878843576647342,
+        "increment_temperature": 0.3718030421684186,
+        "increment_u": 0.1640695975162089,
+        "increment_v": 0.19547238281617563,
+        "rollout": 0.04068895071589698,
+        "spectral": 0.5502121243625879,
+        "state": 0.023969795543234796,
+        "state_ssh": 0.008668635624538486,
+        "state_temperature": 0.016411496652290226,
+        "state_u": 0.03185253279904524,
+        "state_v": 0.038946517083483435,
+        "total": 0.03413693191638837
+      }
+    },
+    {
+      "fine_tune_step": 480,
+      "learning_rate": 2e-05,
+      "optimizer_step": 13920,
+      "training_window": {
+        "base_total": 0.032137870749769114,
+        "boundary": 0.046555370138958094,
+        "deep_pressure_tail": 0.6573763743042946,
+        "increment": 0.22751594251021742,
+        "increment_ssh": 0.159372338016207,
+        "increment_temperature": 0.3779596126948794,
+        "increment_u": 0.1692371596582234,
+        "increment_v": 0.20349465999752284,
+        "rollout": 0.03895243757870048,
+        "spectral": 0.5567296375830968,
+        "state": 0.02303582268068567,
+        "state_ssh": 0.007845289923716336,
+        "state_temperature": 0.015610350520970921,
+        "state_u": 0.0307105761875088,
+        "state_v": 0.037977074226364496,
+        "total": 0.03279524698543052
+      }
+    },
+    {
+      "fine_tune_step": 960,
+      "learning_rate": 2e-05,
+      "optimizer_step": 14400,
+      "training_window": {
+        "base_total": 0.03307540441552798,
+        "boundary": 0.04719470004395892,
+        "deep_pressure_tail": 0.5708145853752892,
+        "increment": 0.22259475553097824,
+        "increment_ssh": 0.1548198588580514,
+        "increment_temperature": 0.3729385931044817,
+        "increment_u": 0.1642074889348199,
+        "increment_v": 0.19841308128088714,
+        "rollout": 0.04026414913047726,
+        "spectral": 0.5432997527221839,
+        "state": 0.023740098759299146,
+        "state_ssh": 0.008315849794113699,
+        "state_temperature": 0.01577144395754052,
+        "state_u": 0.03181536845707645,
+        "state_v": 0.039057732718841484,
+        "total": 0.03364621901419014
+      }
+    },
+    {
+      "fine_tune_step": 1440,
+      "learning_rate": 2e-05,
+      "optimizer_step": 14880,
+      "training_window": {
+        "base_total": 0.032612726107860604,
+        "boundary": 0.04743701993720606,
+        "deep_pressure_tail": 0.5265581837544838,
+        "increment": 0.2261753449526926,
+        "increment_ssh": 0.15528143391323587,
+        "increment_temperature": 0.37280233052248757,
+        "increment_u": 0.1701660548026363,
+        "increment_v": 0.2064515623729676,
+        "rollout": 0.03938225014911344,
+        "spectral": 0.4980935816342632,
+        "state": 0.02339082595620615,
+        "state_ssh": 0.007778488012748616,
+        "state_temperature": 0.016127997386502103,
+        "state_u": 0.03106320706040909,
+        "state_v": 0.038593611225951466,
+        "total": 0.033139284246135506
+      }
+    },
+    {
+      "fine_tune_step": 1920,
+      "learning_rate": 2e-05,
+      "optimizer_step": 15360,
+      "training_window": {
+        "base_total": 0.0302903924176159,
+        "boundary": 0.045466310305831335,
+        "deep_pressure_tail": 0.5038055030008157,
+        "increment": 0.2265578433095167,
+        "increment_ssh": 0.15933824975509198,
+        "increment_temperature": 0.371866339755555,
+        "increment_u": 0.16983888725129268,
+        "increment_v": 0.2051878948075076,
+        "rollout": 0.03662078773292402,
+        "spectral": 0.513603659781317,
+        "state": 0.021610270095213005,
+        "state_ssh": 0.006820501127125075,
+        "state_temperature": 0.01505984142034625,
+        "state_u": 0.028903117442193132,
+        "state_v": 0.035657620360143485,
+        "total": 0.030794197972863913
+      }
+    }
+  ],
+  "validation_state_opened": false,
+  "version": "model_c_anomaly_direct_deep_pressure_spectral_regularization_v1"
+}

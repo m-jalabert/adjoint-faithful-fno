@@ -1,0 +1,81 @@
+{
+  "version": "model_c_truncated_unroll_submission_v2",
+  "status": "submitted_and_started",
+  "job_id": 291778,
+  "job_name": "af-c-trunc3-v2",
+  "submit_date": "2026-07-28",
+  "start_time": "2026-07-28T11:33:18-07:00",
+  "partition": "gpu",
+  "node": "node112",
+  "resources": {
+    "nodes": 1,
+    "cpus": 4,
+    "gpus": 1,
+    "gpu_type": "v100",
+    "time_limit": "02:00:00"
+  },
+  "contract": "config/model_c_truncated_unroll_objective_v2.json",
+  "contract_sha256": "0c5aabadbe51f4814a0c5dd3fc331484105abd6d814c13974b535dd9a0792e3c",
+  "module": "src/bire_repro/af_model_c_truncated_unroll_objective.py",
+  "module_sha256": "c57fa2a6b7a202737b9b9385e279ed1dabf5c21578d4c1b08450dac9fb087e08",
+  "slurm_entry_point": "slurm/af_model_c_truncated_unroll_objective_v2.sbatch",
+  "slurm_entry_point_sha256": "f090e992738e164895a4acf0c08e5380bad235230af05c586fd60671f0476703",
+  "scratch_output": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/truncated_unroll_objective_v2",
+  "project_output_after_completion": "outputs/af_fno/C/truncated_unroll_objective_v2",
+  "supersedes": {
+    "job_id": 291769,
+    "contract": "config/model_c_truncated_unroll_objective_v1.json",
+    "failure_stage": "source_checkpoint_schema_check_before_training",
+    "training_started": false,
+    "scientific_metrics_computed": false,
+    "scientific_objective_change": false
+  },
+  "source": {
+    "duration_selected_fine_tune_step": 5760,
+    "duration_checkpoint_step_field": "total_fine_tune_step",
+    "duration_selected_checkpoint_sha256": "fe9b186d574cf1786cc67b93cd4b752d88d9080a75882eea60fb4896c16b4c64",
+    "duration_report_content_sha256": "cef1b7565120562d9b20a5b6935aca37bbce55892caf7749ab1214c13f9ada57"
+  },
+  "objective": {
+    "supervised_windows_days": [
+      [
+        40,
+        50,
+        60
+      ],
+      [
+        70,
+        80,
+        90
+      ]
+    ],
+    "differentiable_model_calls": 3,
+    "correction_weight": 0.0025,
+    "base_loss_change": false,
+    "architecture_change": false,
+    "data_change": false
+  },
+  "fine_tune": {
+    "maximum_steps": 1920,
+    "checkpoint_steps": [
+      480,
+      960,
+      1440,
+      1920
+    ],
+    "learning_rate": 0.00002,
+    "batch_size": 4,
+    "batch_order_seed": 20260728
+  },
+  "read_contract": {
+    "training_pair_code": 1,
+    "training_state_read": true,
+    "prior_report_metadata_read": true,
+    "validation_state_read": false,
+    "inference_read": false,
+    "intermediate_wind_read": false,
+    "response_read": false,
+    "adjoint_read": false
+  },
+  "replication_or_validation_jobs_submitted": false
+}

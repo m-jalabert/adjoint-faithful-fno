@@ -1,0 +1,110 @@
+{
+  "arrays_sha256": "7983cb5e0c74a5bd340d1ace55d82bf883dbc6f69e567984ed41c6c7c5ee9227",
+  "checkpoints": [
+    {
+      "day90_ratios": {
+        "phihyd_surface": {
+          "climatology": 4.42694515381843,
+          "persistence": 7.487478014727075
+        },
+        "sst": {
+          "climatology": 17.631730893798224,
+          "persistence": 11.735226206551461
+        }
+      },
+      "optimizer_step": 11520,
+      "passed": false,
+      "worst_primary_rmse_auc_ratio": 9.25873691452883,
+      "worst_slow_field_lead_ratio": 17.631730893798224
+    },
+    {
+      "day90_ratios": {
+        "phihyd_surface": {
+          "climatology": 2.5601078481615525,
+          "persistence": 4.330017780298451
+        },
+        "sst": {
+          "climatology": 5.599919382536141,
+          "persistence": 3.7271621877820644
+        }
+      },
+      "optimizer_step": 13440,
+      "passed": false,
+      "worst_primary_rmse_auc_ratio": 2.3967067986128496,
+      "worst_slow_field_lead_ratio": 5.599919382536141
+    },
+    {
+      "day90_ratios": {
+        "phihyd_surface": {
+          "climatology": 2.2466934426411713,
+          "persistence": 3.799926850934103
+        },
+        "sst": {
+          "climatology": 5.512652612364049,
+          "persistence": 3.6690796719784204
+        }
+      },
+      "optimizer_step": 14400,
+      "passed": false,
+      "worst_primary_rmse_auc_ratio": 2.3656528206928984,
+      "worst_slow_field_lead_ratio": 5.512652612364049
+    },
+    {
+      "day90_ratios": {
+        "phihyd_surface": {
+          "climatology": 2.2299051529127887,
+          "persistence": 3.7715321123777175
+        },
+        "sst": {
+          "climatology": 5.824515532729748,
+          "persistence": 3.8766476037924495
+        }
+      },
+      "optimizer_step": 14880,
+      "passed": false,
+      "worst_primary_rmse_auc_ratio": 2.593631607233697,
+      "worst_slow_field_lead_ratio": 5.824515532729748
+    },
+    {
+      "day90_ratios": {
+        "phihyd_surface": {
+          "climatology": 2.1515211027301624,
+          "persistence": 3.638957880699818
+        },
+        "sst": {
+          "climatology": 5.532556709185304,
+          "persistence": 3.6823273264509986
+        }
+      },
+      "optimizer_step": 15120,
+      "passed": false,
+      "worst_primary_rmse_auc_ratio": 2.3377380650312825,
+      "worst_slow_field_lead_ratio": 5.532556709185304
+    },
+    {
+      "day90_ratios": {
+        "phihyd_surface": {
+          "climatology": 2.4355092664379105,
+          "persistence": 4.119278973083446
+        },
+        "sst": {
+          "climatology": 6.066517562227481,
+          "persistence": 4.037717925005176
+        }
+      },
+      "optimizer_step": 15360,
+      "passed": false,
+      "worst_primary_rmse_auc_ratio": 2.511276392498094,
+      "worst_slow_field_lead_ratio": 6.066517562227481
+    }
+  ],
+  "classification": "objective_correction_required",
+  "diagnostic_best_optimizer_step": 14400,
+  "exact_replay_passed": true,
+  "inference_opened": false,
+  "report_sha256": "7fd670f482c500c9b7743eb140e08eb4bbdb4e8f3e285798e543a3a359940367",
+  "selected_optimizer_step": null,
+  "status": "complete",
+  "summary_content_sha256": "c465ca1d981fb510f43c3802311b7de99e9cbb6282c0870072f876b2de360978",
+  "validation_state_opened": false
+}

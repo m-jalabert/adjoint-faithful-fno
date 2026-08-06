@@ -1,0 +1,240 @@
+{
+  "checkpoint_optimizer_steps": [
+    14400,
+    13440,
+    14400
+  ],
+  "classification": "seed_consistent_training_split_tail",
+  "content_sha256": "f52106e8467cc399485d527fe1e51cf99a43242c221fc7ad2147fad25942a76d",
+  "contract": "/home/mjalabert314/bire_james25_repro/config/model_c_anomaly_direct_training_spectral_attribution_v1.json",
+  "contract_sha256": "afb64d5a0f3a0ac00ad7a555fde2fcaded874758489bb57b5207f57a3abd0246",
+  "dataset": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/trajectories_v2.zarr",
+  "dataset_metadata_sha256": "ae7be47c456962f411acb0d8e217dcb7fa6e24c59e5a8f3133f93032e378b8cc",
+  "device": "cuda",
+  "inference_state_opened": false,
+  "next_decision": "freeze_one_single_candidate_training_only_direct_state_deep_pressure_spectral_regularization_fine_tune_with_split1_selection_and_no_inference_read",
+  "purpose": "training_only_three_seed_deep_pressure_spectral_attribution",
+  "read_contract": {
+    "held_inference_diagnosis_file": false,
+    "inference_state": false,
+    "intermediate_wind_state": false,
+    "response_or_adjoint_state": false,
+    "training_state": true,
+    "validation_state": false
+  },
+  "response_or_adjoint_state_opened": false,
+  "seed_attribution": {
+    "20260723": {
+      "phihyd_bottom": {
+        "day360_frozen_median_modewise_ratio": 5.715185143659327,
+        "day360_integrated_energy_ratio": 1.0249423831152014,
+        "day360_tail_model_fraction": 0.00011473436033178118,
+        "day360_tail_truth_fraction": 5.0924712386769394e-06,
+        "first_factor_four_failure_day": 310
+      },
+      "phihyd_mid": {
+        "day360_frozen_median_modewise_ratio": 13.269603547290735,
+        "day360_integrated_energy_ratio": 1.067970344862219,
+        "day360_tail_model_fraction": 0.00010133707399549317,
+        "day360_tail_truth_fraction": 2.161278258388401e-06,
+        "first_factor_four_failure_day": 190
+      },
+      "primary_10_to_90_rmse_ratio_to_persistence": {
+        "phihyd_surface": 4.419333762596365,
+        "sst": 4.343335243311327,
+        "surface_speed": 3.5431429486811488
+      }
+    },
+    "20260724": {
+      "phihyd_bottom": {
+        "day360_frozen_median_modewise_ratio": 5.682819058848725,
+        "day360_integrated_energy_ratio": 1.0063883744621012,
+        "day360_tail_model_fraction": 0.00013828072698640652,
+        "day360_tail_truth_fraction": 5.0924712386769394e-06,
+        "first_factor_four_failure_day": 310
+      },
+      "phihyd_mid": {
+        "day360_frozen_median_modewise_ratio": 13.870833838980325,
+        "day360_integrated_energy_ratio": 1.0283434118481067,
+        "day360_tail_model_fraction": 0.0001285132761418526,
+        "day360_tail_truth_fraction": 2.161278258388401e-06,
+        "first_factor_four_failure_day": 180
+      },
+      "primary_10_to_90_rmse_ratio_to_persistence": {
+        "phihyd_surface": 4.362087193728464,
+        "sst": 4.332732350665765,
+        "surface_speed": 3.507182214554993
+      }
+    },
+    "20260725": {
+      "phihyd_bottom": {
+        "day360_frozen_median_modewise_ratio": 4.765850845839815,
+        "day360_integrated_energy_ratio": 1.0480477538445907,
+        "day360_tail_model_fraction": 0.0001093173343576412,
+        "day360_tail_truth_fraction": 5.0924712386769394e-06,
+        "first_factor_four_failure_day": 340
+      },
+      "phihyd_mid": {
+        "day360_frozen_median_modewise_ratio": 12.469874725282798,
+        "day360_integrated_energy_ratio": 1.052867281958425,
+        "day360_tail_model_fraction": 0.00010165796213962731,
+        "day360_tail_truth_fraction": 2.161278258388401e-06,
+        "first_factor_four_failure_day": 180
+      },
+      "primary_10_to_90_rmse_ratio_to_persistence": {
+        "phihyd_surface": 4.481534840053044,
+        "sst": 4.386151120238164,
+        "surface_speed": 3.4750685899509186
+      }
+    }
+  },
+  "status": "complete",
+  "training_records": [
+    [
+      0,
+      0
+    ],
+    [
+      0,
+      496
+    ],
+    [
+      0,
+      993
+    ],
+    [
+      0,
+      1489
+    ],
+    [
+      0,
+      1986
+    ],
+    [
+      0,
+      2483
+    ],
+    [
+      0,
+      3690
+    ],
+    [
+      0,
+      4186
+    ],
+    [
+      0,
+      4683
+    ],
+    [
+      0,
+      5179
+    ],
+    [
+      0,
+      5676
+    ],
+    [
+      0,
+      6173
+    ],
+    [
+      1,
+      0
+    ],
+    [
+      1,
+      496
+    ],
+    [
+      1,
+      993
+    ],
+    [
+      1,
+      1489
+    ],
+    [
+      1,
+      1986
+    ],
+    [
+      1,
+      2483
+    ],
+    [
+      1,
+      3690
+    ],
+    [
+      1,
+      4186
+    ],
+    [
+      1,
+      4683
+    ],
+    [
+      1,
+      5179
+    ],
+    [
+      1,
+      5676
+    ],
+    [
+      1,
+      6173
+    ],
+    [
+      2,
+      0
+    ],
+    [
+      2,
+      496
+    ],
+    [
+      2,
+      993
+    ],
+    [
+      2,
+      1489
+    ],
+    [
+      2,
+      1986
+    ],
+    [
+      2,
+      2483
+    ],
+    [
+      2,
+      3690
+    ],
+    [
+      2,
+      4186
+    ],
+    [
+      2,
+      4683
+    ],
+    [
+      2,
+      5179
+    ],
+    [
+      2,
+      5676
+    ],
+    [
+      2,
+      6173
+    ]
+  ],
+  "training_records_sha256": "dbf4f8acb04cd67ffbbd94e1fbc606aad5f49b1b94b88754c0a45baf2f87f333",
+  "version": "model_c_anomaly_direct_training_spectral_attribution_v1"
+}

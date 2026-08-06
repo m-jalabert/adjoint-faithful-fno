@@ -1,0 +1,32 @@
+{
+  "artifacts": {
+    "README.md": {
+      "bytes": 333,
+      "sha256": "1a537e09279e44388766044b891a7f20aeefadfc4c0fb00059e5f4206f08d544"
+    },
+    "model_c_s0_normalized_amplitude_log_growth.png": {
+      "bytes": 100480,
+      "sha256": "89be6dc5a6fab747ab03d95cfc41199ed23d908a9c8f24cf88a8722cf847633c"
+    },
+    "model_c_s0_rmse_log_growth.png": {
+      "bytes": 254217,
+      "sha256": "f1113b16796c5787dfcf6e8d47f5eaad46b0de396c8beadccc2d314a437ca390"
+    },
+    "model_c_s0_stability_instrument_curves.csv": {
+      "bytes": 186687,
+      "sha256": "89cd9f82799841c74bdba29940949a6848eb201311f474c75c2826c8f04aeecf"
+    },
+    "model_c_s0_stability_instrument_report.json": {
+      "bytes": 8955,
+      "sha256": "5212f3aee081bbff532d606e6883251dc7bfb8b1442c18b7a7362622ab072040"
+    },
+    "model_c_s0_windowed_rmse_gain.png": {
+      "bytes": 101863,
+      "sha256": "7dcdbc79ad39451076ef848de4cedb959a2ec58480dc4fb603df78e7e50ae0a5"
+    }
+  },
+  "contract_sha256": "ab6d597843b13e5dc71e65b9c4dcc5a5e1ff783182d2ae9ff43ae2d61bfc5be7",
+  "manifest_content_sha256": "f03aeb9487ab4eb28cf69bd883bcb9d9a9ac3160aed039650b18ac095256869a",
+  "report_content_sha256": "945495f0e096ede080f03fcb82481705b021f65059f568f0996c549f6da6cfbe",
+  "version": "model_c_s0_stability_instrument_v1"
+}

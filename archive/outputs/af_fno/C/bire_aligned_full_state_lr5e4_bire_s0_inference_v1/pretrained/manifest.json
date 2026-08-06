@@ -1,0 +1,52 @@
+{
+  "artifacts": {
+    "README.md": {
+      "bytes": 2273,
+      "sha256": "c14b54fb0925b2ef16381bd7b379c9852fcccd4f4cf154dad1c6eed1f801e043"
+    },
+    "model_c_bire_figure3_streamfunction_1deg_s0_dt10.png": {
+      "bytes": 172884,
+      "sha256": "f3a4559641be990626468b6e86d357287c4c4a936be28c80436c4754bb63d391"
+    },
+    "model_c_bire_figure4_dt10_rmse_0_200_days_s0.png": {
+      "bytes": 182020,
+      "sha256": "3c94b45c0213dbd39551e65703d047f87b3b00498b1e04db7364745f587b420a"
+    },
+    "model_c_bire_figure5_dt10_single_member_rmse_s0.png": {
+      "bytes": 80245,
+      "sha256": "302bf836c3f1e450bce766f0eeb5d225f9fe1b2acf52ddefd84bbf713b3178fd"
+    },
+    "model_c_bire_figure6_dt10_acc_0_200_days_s0.png": {
+      "bytes": 216922,
+      "sha256": "2a4d7238f8760e3f2d9f69ff01f75448ed2eef34ea0c6bbf64543d4703d70d68"
+    },
+    "model_c_bire_figure7_dt10_streamfunction_day060_day2000_s0.png": {
+      "bytes": 119694,
+      "sha256": "fa599f2f634ccc6f57f0745208e91331942b9483945f5da696a7948c78b20ea4"
+    },
+    "model_c_bire_figure8_dt10_rmse_0_2000_days_s0.png": {
+      "bytes": 238141,
+      "sha256": "f03569f40ad637a9ad4d9216746c84ae4ac8232cfc9db689fc43e43f545c4f7a"
+    },
+    "model_c_bire_s0_ensemble_curves.csv": {
+      "bytes": 181119,
+      "sha256": "fb1894e2f23401abda0942eb82b7dce3ada64b62a8073801098fadcff6c02af2"
+    },
+    "model_c_bire_s0_figures_arrays.npz": {
+      "bytes": 296461,
+      "sha256": "7ce9b1d02c5ff9d8fb04a741b7612939c471ee608e22f294f1dadcc42235119c"
+    },
+    "model_c_bire_s0_figures_report.json": {
+      "bytes": 8084,
+      "sha256": "297809e1733d70e116a05d4f63c4835723180e1bb6106b7e2dfed04bd48a39b4"
+    },
+    "model_c_bire_s0_figures_summary.json": {
+      "bytes": 3278,
+      "sha256": "3fd02fee8fc9ba99c78baa564b589f663126fe4f4213eeccdf5e9b661d888cd6"
+    }
+  },
+  "contract_sha256": "fb8f748c67061f052761dbb08c0166a06f3692d7077f303506ab62d0265b0c61",
+  "manifest_content_sha256": "462062feb597576d43be1d70c9a5d54afccb5b8f681424e842263e20f135f4de",
+  "report_content_sha256": "491ea4c9fd054701c6e9a6b79b2cdf38438105902d91744456bc6203394ee8ce",
+  "version": "model_c_bire_aligned_full_state_lr5e4_s0_figures_v1"
+}

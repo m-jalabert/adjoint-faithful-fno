@@ -1,0 +1,16 @@
+{
+  "artifacts": {
+    "README.md": "f1a638be80e2af2ceaa6dd71677461f11d7af34e528a1ec7d01fdec49ce229c8",
+    "deep_pressure_spectral_regularization_arrays.npz": "8aeeed3de08549fb8f0b8494162532ffc9baeec7ac8387ec689d97b60a7325a2",
+    "deep_pressure_spectral_regularization_report.json": "005b55b44aa5b5491378778f1b604d1f29efdcad9d9f3749cdd7a5f1d51f493a",
+    "model_c_deep_pressure_spectral_checkpoint_selection.png": "0c90b39c4bc6e002d1bc7ad1f731249b76b9567e543a0c037d2852132a2fd3cc",
+    "model_c_deep_pressure_spectral_rollout.png": "7f739b03b1d654061466b45caa4be013b51ce85d2b57f75df2b94c2f5bd51bdb"
+  },
+  "content_sha256": "280a863a58926cdfbcba2fa822e5139c74b210e112b608efec0d97816bf4f3a8",
+  "contract": "/home/mjalabert314/bire_james25_repro/config/model_c_anomaly_direct_deep_pressure_spectral_regularization_v1.json",
+  "contract_sha256": "4f3377382dc0c57cc340afa548af85606ca48f902d48cf3b65795e2a70acef37",
+  "inference_state_opened": false,
+  "response_or_adjoint_state_opened": false,
+  "status": "complete",
+  "version": "model_c_anomaly_direct_deep_pressure_spectral_regularization_v1"
+}

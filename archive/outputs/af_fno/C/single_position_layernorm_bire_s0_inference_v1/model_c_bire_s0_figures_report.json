@@ -1,0 +1,219 @@
+{
+  "arrays": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/single_position_layernorm_bire_s0_inference_v1/model_c_bire_s0_figures_arrays.npz",
+  "arrays_sha256": "199f10086107893e589c2c70412bf6c01faefc639fd286fa14c2f2ebdcaf2eb2",
+  "baselines": {
+    "climatology": "pointwise_S0_temporal_mean_over_split1_training_snapshots_only_with_nonlinear_fields_averaged_after_derivation",
+    "ensemble_summary": "mean_and_10th_90th_percentiles_across_15_member_metrics",
+    "persistence": "each_members_initial_physical_field_held_fixed_at_every_lead",
+    "rmse": "square_root_of_mean_squared_error_over_wet_cells_for_each_member",
+    "training_snapshots": 5040
+  },
+  "contract": "/home/mjalabert314/bire_james25_repro/config/model_c_single_position_layernorm_s0_figures_v1.json",
+  "contract_sha256": "3ff67296bd44405376f3a309291727972db3a027c43be472ece3e10414a24ce6",
+  "dataset": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/trajectories_v2.zarr",
+  "dataset_metadata_sha256": "ae7be47c456962f411acb0d8e217dcb7fa6e24c59e5a8f3133f93032e378b8cc",
+  "device": "cuda",
+  "elapsed_seconds": 53.513145852833986,
+  "ensemble": {
+    "acc_fields": [
+      "surface_u",
+      "surface_v",
+      "phihyd_surface",
+      "sst"
+    ],
+    "experiment": "S0",
+    "figure3_lead_days": [
+      0,
+      10,
+      20,
+      30,
+      40
+    ],
+    "figure4_lead_days": "0_to_200_inclusive_by_10",
+    "figure5_lead_days": "0_to_200_inclusive_by_10",
+    "figure6_lead_days": "0_to_200_inclusive_by_10",
+    "figure7_lead_days": [
+      60,
+      2000
+    ],
+    "figure8_lead_days": "0_to_2000_inclusive_by_10",
+    "figure_names": [
+      "model_c_bire_figure3_streamfunction_1deg_s0_dt10.png",
+      "model_c_bire_figure4_dt10_rmse_0_200_days_s0.png",
+      "model_c_bire_figure5_dt10_single_member_rmse_s0.png",
+      "model_c_bire_figure6_dt10_acc_0_200_days_s0.png",
+      "model_c_bire_figure7_dt10_streamfunction_day060_day2000_s0.png",
+      "model_c_bire_figure8_dt10_rmse_0_2000_days_s0.png"
+    ],
+    "maximum_lead_days": 2000,
+    "member_count": 15,
+    "prediction_interval_days": 10,
+    "regime_index": 0,
+    "rmse_fields": [
+      "surface_speed",
+      "phihyd_surface",
+      "sst"
+    ],
+    "single_member_start": 6913,
+    "start_draw_order": [
+      6913,
+      6689,
+      7174,
+      6962,
+      6781,
+      7155,
+      6676,
+      7019,
+      7199,
+      6733,
+      6969,
+      6662,
+      6986,
+      7068,
+      6885
+    ],
+    "start_selection": "numpy_default_rng_seed_20260729_choice_without_replacement_from_inclusive_indices_6660_7199",
+    "tau0_n_m2": 0.1
+  },
+  "figure6": {
+    "black": "prior_residual_rollout_conditioned_Model_C_v3_mean_with_dotted_p10_p90",
+    "literal_pretrain_finetune_pair": false,
+    "reason": "the selected anomaly-direct model was trained from scratch and has no scientifically valid one-step-pretrained parent checkpoint",
+    "red": "single_position_layernorm_Model_C_mean_with_shaded_p10_p90",
+    "required_label": "architecture_direction_comparison_not_literal_pretrained_to_finetuned"
+  },
+  "figures": [
+    "model_c_bire_figure3_streamfunction_1deg_s0_dt10.png",
+    "model_c_bire_figure4_dt10_rmse_0_200_days_s0.png",
+    "model_c_bire_figure5_dt10_single_member_rmse_s0.png",
+    "model_c_bire_figure6_dt10_acc_0_200_days_s0.png",
+    "model_c_bire_figure7_dt10_streamfunction_day060_day2000_s0.png",
+    "model_c_bire_figure8_dt10_rmse_0_2000_days_s0.png"
+  ],
+  "long_truth_job": "304735",
+  "long_truth_result": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/mitgcm_long_truth_v1/S0/production/years_120_126/segment_result.json",
+  "long_truth_result_sha256": "9ebd446ff6f39b86c4281d86732d54b602e265ce240718314cd4d282bc799925",
+  "prior_checkpoint": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/rollout_conditioned_loss_v3/model_c_rollout_conditioned_loss_v3_best.pt",
+  "prior_checkpoint_sha256": "e9f962878cb51bfe7dc498b07173f499d982a7f3c31e23afd8036b17afad970b",
+  "report_content_sha256": "ea987916d219dbdabe97971389fc4c46384d954b0e373e70c5c9c74456ff518e",
+  "selected_checkpoint": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/anomaly_direct_single_position_layernorm_v1/layernorm/model_c_bire_regularization_control_best_diagnostic.pt",
+  "selected_checkpoint_sha256": "f6fdeaa2cead7758999c2f61de2e37cb78c9693f24158da417c38cf71080fd14",
+  "slurm_job_id": "310508",
+  "status": "complete",
+  "summary": {
+    "acc": {
+      "phihyd_surface": {
+        "prior": {
+          "day200_mean": 0.003326413267253277,
+          "minimum_mean_0_200": 0.003326413267253277
+        },
+        "selected": {
+          "day200_mean": 0.9264782110850016,
+          "minimum_mean_0_200": 0.9264782110850016
+        }
+      },
+      "sst": {
+        "prior": {
+          "day200_mean": -0.03649974774258832,
+          "minimum_mean_0_200": -0.03649974774258832
+        },
+        "selected": {
+          "day200_mean": 0.8623145580291748,
+          "minimum_mean_0_200": 0.8623145580291748
+        }
+      },
+      "surface_u": {
+        "prior": {
+          "day200_mean": 0.10722747414062421,
+          "minimum_mean_0_200": 0.10722747414062421
+        },
+        "selected": {
+          "day200_mean": 0.8444036960601806,
+          "minimum_mean_0_200": 0.8444036960601806
+        }
+      },
+      "surface_v": {
+        "prior": {
+          "day200_mean": 0.032784234670301275,
+          "minimum_mean_0_200": 0.032784234670301275
+        },
+        "selected": {
+          "day200_mean": 0.833214795589447,
+          "minimum_mean_0_200": 0.833214795589447
+        }
+      }
+    },
+    "all_selected_states_finite": true,
+    "lead_days": {
+      "interval": 10,
+      "long": 2000,
+      "short": 200
+    },
+    "maximum_selected_normalized_abs": 76.7322006225586,
+    "member_count": 15,
+    "rmse": {
+      "phihyd_surface": {
+        "climatology": {
+          "day2000_mean": 0.08520227620999019,
+          "day2000_p10": 0.08189353793859482,
+          "day2000_p90": 0.08812665939331055,
+          "day200_mean": 0.062499555697043734
+        },
+        "model": {
+          "day2000_mean": 0.48219176530838015,
+          "day2000_p10": 0.4433925986289978,
+          "day2000_p90": 0.5316977977752686,
+          "day200_mean": 0.030529094735781352
+        },
+        "persistence": {
+          "day2000_mean": 0.038319241752227146,
+          "day2000_p10": 0.035539577901363376,
+          "day2000_p90": 0.041151534765958786,
+          "day200_mean": 0.019848499322930972
+        }
+      },
+      "sst": {
+        "climatology": {
+          "day2000_mean": 0.04167828361193339,
+          "day2000_p10": 0.03930864557623863,
+          "day2000_p90": 0.043147407472133636,
+          "day200_mean": 0.0391374833881855
+        },
+        "model": {
+          "day2000_mean": 0.41545863151550294,
+          "day2000_p10": 0.3606839895248413,
+          "day2000_p90": 0.4723863065242767,
+          "day200_mean": 0.022800847391287484
+        },
+        "persistence": {
+          "day2000_mean": 0.06128479888041814,
+          "day2000_p10": 0.058351154625415805,
+          "day2000_p90": 0.0647919699549675,
+          "day200_mean": 0.048792302856842676
+        }
+      },
+      "surface_speed": {
+        "climatology": {
+          "day2000_mean": 0.003912205450857679,
+          "day2000_p10": 0.003214430855587125,
+          "day2000_p90": 0.0060101734474301335,
+          "day200_mean": 0.0035114748403429984
+        },
+        "model": {
+          "day2000_mean": 0.03160673802097638,
+          "day2000_p10": 0.027676586434245108,
+          "day2000_p90": 0.037867444753646846,
+          "day200_mean": 0.0028040939709171654
+        },
+        "persistence": {
+          "day2000_mean": 0.005199551799645027,
+          "day2000_p10": 0.004577579721808433,
+          "day2000_p90": 0.005877254996448755,
+          "day200_mean": 0.004568165556217234
+        }
+      }
+    },
+    "status": "complete"
+  },
+  "version": "model_c_single_position_layernorm_s0_figures_v1"
+}

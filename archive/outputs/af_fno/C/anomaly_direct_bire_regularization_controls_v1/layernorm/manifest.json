@@ -1,0 +1,15 @@
+{
+  "arm": "layernorm",
+  "artifacts": {
+    "README.md": "7fc8f8d15d8a60affd3f2383950b3eebf3650de119cfbc0d56ebf71b6d9280e2",
+    "bire_regularization_control_arrays.npz": "c8e91c3fa41d68987a0f0a78b460d957b85fdc70bdbd025311fd8372d1660080",
+    "bire_regularization_control_report.json": "9cdeb828f253d85de07a3c02784c4b36534350e0baaeb218d775b9a09966e757",
+    "model_c_bire_regularization_control_selection.png": "57d527f97c61b6ba960e0096b46ef323a5bb3f872ccd84a8c2402890e91ac953"
+  },
+  "content_sha256": "4cc2cdd1f62ec716f56cecad2a9f38db16d14bdaf321e74208e708096983f353",
+  "contract_sha256": "dd9089e9675a70b0ff329e95f3212a21c3900607dceaf8817fa7e7eb4500f827",
+  "inference_state_opened": false,
+  "response_or_adjoint_state_opened": false,
+  "status": "complete",
+  "version": "model_c_anomaly_direct_bire_regularization_controls_v1"
+}

@@ -1,0 +1,30 @@
+{
+  "arrays_sha256": "445f4a10f03306edca97373dd4110430687978b31d24ffeb65b4c962fbf943bb",
+  "contract_sha256": "d11029fce3aa9fa73c808d69c147b67c5bac1a44499a7e0d6050d8f8be5c2f6c",
+  "files": {
+    "README.md": "40250a3e39b23a568bd29eb4eb14abc0c54f7875a74b3a2643f6b4447bb3aede",
+    "forward_acc_vs_lead.png": "06909717514daa149b0ad85f1360218cb019f495ff589ef8452f724f12e221a1",
+    "forward_forcing_switch_response.png": "57e85dd17b369005213802ce8cc1855cb01a8258898efc0d32d4a2eaf0fef950",
+    "forward_gate_scorecard.png": "eb517e67114f380062b3c8e89a82523c5b29ba4477286ce342c2ab72402d5966",
+    "forward_group_rmse_ratios.png": "9cd26cd8f2498f23a884d7ef12e43765ba46e0538ee31cb9c133aef3c1788df3",
+    "forward_rmse_vs_lead.png": "2a2ce0727b29a5ffd400707b08cf5355680809778982172b6c9edcc7e8cd9299",
+    "forward_snapshots_day010.png": "0c5e0d514735cc439cbf554375d0357d57d2fdcf7930e4026437fdd6a12d943e",
+    "forward_snapshots_day060.png": "ae12ebc2e71faa209877dc773ffeb570b94ee482cce8c11b13d89e973e7dbb30",
+    "forward_snapshots_day180.png": "70dc49d895b02ee4f37075351c17bf67f3d0dc01447c8b3fe8a38cedd64ce7bf",
+    "forward_snapshots_day360.png": "efa24a392013e69107f83594c8f70f04091b8c9595b5a9d3dc7bdbcdfdbc2396",
+    "forward_spatial_rmse_maps.png": "ad8fbef7b5564c23596bda168dbc759d50dd8e1914413fc5272a2393fad8fc8d",
+    "forward_spectra.png": "af6cce2573352a03224b776ce4b8e13707246f8307fb64190e0a927739c1171c",
+    "forward_ssh_hovmoller.png": "c9311fc6a379aaaa665d2b9e8a9c71f89cf0c5b04ea13284f5a13b8d93ea35ba",
+    "forward_stability_by_regime.png": "027d828e0984eb562554665866e6a3dbdc226eb50d08bad8131d896a299affe4",
+    "forward_vertical_drift.png": "18354331508de036174dd91ef1ffbf96b5c20eadc61d40b7e7f6abfbfd4be053",
+    "forward_vertical_rmse_profiles.png": "103a616c6440510c6e56b24a5be2cad35a85c0128a33cb7aa1f2d9857edf3ccb",
+    "forward_western_boundary_rmse.png": "c44a50c9ab73cd68632d92eb4eff88650901f9990e347a5d6bd62c1062878140",
+    "forward_wind_response.png": "db11e15718a7cd5f48ba300f60ce65a69d8ac1672412a7e147772fe53103587e",
+    "model_c_anomaly_direct_adjoint_readiness.png": "7e53c9018f9afc83618547a2f02bf03ffe6671ce9a84360a640ee6e351a2c98d",
+    "model_c_anomaly_direct_forward_arrays.npz": "445f4a10f03306edca97373dd4110430687978b31d24ffeb65b4c962fbf943bb",
+    "model_c_anomaly_direct_forward_metrics.json": "baa1613fb7101f9f47e857a268344a69bbfb9dcc2f38479327d93c0ff5593c7d"
+  },
+  "manifest_content_sha256": "c2c67ebc4f7b4866fa9beaa9a133d4f315c125c74de3193a816f5cfbde1c1892",
+  "metrics_sha256": "baa1613fb7101f9f47e857a268344a69bbfb9dcc2f38479327d93c0ff5593c7d",
+  "version": "model_c_anomaly_direct_forward_v1"
+}

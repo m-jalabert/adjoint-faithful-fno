@@ -1,0 +1,15 @@
+{
+  "artifacts": {
+    "README.md": "3665ff47c1d2247c036482e796bdf8eb3d8a788f27430c4bdc66ce77b4548c60",
+    "bire_regularization_aggregate.csv": "f599e89e3561c7af5f9e089f9e7944c8a70ddddc5b09aa4c84d8ac55ff279219",
+    "bire_regularization_aggregate_report.json": "4a2f0914fac7848c798e12a7b256622e0f42087e7bbd7b99c1e72513e9b6b75a",
+    "model_c_bire_regularization_cross_arm.png": "a49a12a9d12565e4756494e42ce575ad8f415f98aa75baa06d40b10f9dc31894"
+  },
+  "content_sha256": "fb6e622fef1f060ee5e0fd89b026bd2fc74dd62d17e6264e8376cbaf297453b2",
+  "contract_sha256": "c977c196b4872a63309644959b7815c27ee5dd02f3e40c90e6bf26500607eaea",
+  "inference_state_opened": false,
+  "long_term_state_opened": false,
+  "response_or_adjoint_state_opened": false,
+  "status": "complete",
+  "version": "model_c_anomaly_direct_bire_regularization_aggregate_v1"
+}

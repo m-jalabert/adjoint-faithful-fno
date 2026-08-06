@@ -1,0 +1,172 @@
+{
+  "arrays": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/bire_protocol_duration_s0_figures_v1/S0/model_c_bire_s0_figures_arrays.npz",
+  "arrays_sha256": "a2a46c144d1fec62638c3d1c12cfc488a207ccb73a500d5924d7a0a82cbf9f44",
+  "comparator_optimizer_step": 7680,
+  "contract": "/home/mjalabert314/bire_james25_repro/config/model_c_bire_protocol_duration_s0_figures_v1.json",
+  "contract_sha256": "120c2b88d45bf3e9b61cf289a433b95611d00dcbf1cfddc54377fa988dee92b4",
+  "dataset": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/trajectories_v3.zarr",
+  "dataset_version": "trajectories_v3",
+  "elapsed_seconds": 70.82540510967374,
+  "figure6": {
+    "black": "this_runs_own_step_7680_checkpoint",
+    "comparator_optimizer_step": 7680,
+    "literal_pretrain_finetune_pair": false,
+    "not_the_parents_checkpoint": "this_runs_decay_falls_at_11520_so_at_step_7680_it_is_still_at_5e-4",
+    "reason": "step_7680_is_the_parent_arms_entire_budget_so_the_gap_is_what_doubling_bought_within_one_run",
+    "red": "the_selected_step_15360_checkpoint",
+    "required_label": "training_progress_comparison_on_identical_data"
+  },
+  "figures": [
+    "model_c_bire_figure3_streamfunction_1deg_s0_dt10.png",
+    "model_c_bire_figure4_dt10_rmse_0_200_days_s0.png",
+    "model_c_bire_figure5_dt10_single_member_rmse_s0.png",
+    "model_c_bire_figure6_dt10_acc_0_200_days_s0.png",
+    "model_c_bire_figure7_dt10_streamfunction_day060_day2000_s0.png",
+    "model_c_bire_figure8_dt10_rmse_0_2000_days_s0.png"
+  ],
+  "inference_start_range": [
+    6200,
+    7000
+  ],
+  "regime": "S0",
+  "regime_captions": "frozen S0 control-wind captions rewritten for this regime",
+  "report_content_sha256": "53233fa21f127576056ae1e0ecc049e9bd94e0bcb1efc9c495a334c434f45f7d",
+  "role": "primary",
+  "selected_optimizer_step": 15360,
+  "slurm_job_id": "318893",
+  "start_draw_order": [
+    6263,
+    6293,
+    6331,
+    6389,
+    6579,
+    6593,
+    6598,
+    6601,
+    6651,
+    6661,
+    6694,
+    6707,
+    6711,
+    6968,
+    6979
+  ],
+  "status": "complete",
+  "summary": {
+    "acc": {
+      "phihyd_surface": {
+        "prior": {
+          "day200_mean": 0.906838838259379,
+          "minimum_mean_0_200": 0.906838838259379
+        },
+        "selected": {
+          "day200_mean": 0.9766671180725097,
+          "minimum_mean_0_200": 0.9766671180725097
+        }
+      },
+      "sst": {
+        "prior": {
+          "day200_mean": 0.520185383160909,
+          "minimum_mean_0_200": 0.520185383160909
+        },
+        "selected": {
+          "day200_mean": 0.7240268031756083,
+          "minimum_mean_0_200": 0.7240268031756083
+        }
+      },
+      "surface_u": {
+        "prior": {
+          "day200_mean": 0.4987863004207611,
+          "minimum_mean_0_200": 0.4987863004207611
+        },
+        "selected": {
+          "day200_mean": 0.7354028065999348,
+          "minimum_mean_0_200": 0.7336827198664347
+        }
+      },
+      "surface_v": {
+        "prior": {
+          "day200_mean": 0.6425854325294494,
+          "minimum_mean_0_200": 0.6202395915985107
+        },
+        "selected": {
+          "day200_mean": 0.8439664999643962,
+          "minimum_mean_0_200": 0.8350344737370808
+        }
+      }
+    },
+    "all_selected_states_finite": true,
+    "lead_days": {
+      "interval": 10,
+      "long": 2000,
+      "short": 200
+    },
+    "maximum_selected_normalized_abs": 7.152848243713379,
+    "member_count": 15,
+    "rmse": {
+      "phihyd_surface": {
+        "climatology": {
+          "day2000_mean": 0.0824887494246165,
+          "day2000_p10": 0.07873230576515197,
+          "day2000_p90": 0.08563082069158554,
+          "day200_mean": 0.05977260222037633
+        },
+        "model": {
+          "day2000_mean": 0.050027860204378764,
+          "day2000_p10": 0.04468875229358673,
+          "day2000_p90": 0.05351651161909103,
+          "day200_mean": 0.012916340120136737
+        },
+        "persistence": {
+          "day2000_mean": 0.038242372870445254,
+          "day2000_p10": 0.036230454593896864,
+          "day2000_p90": 0.040171122550964354,
+          "day200_mean": 0.019039624805251756
+        }
+      },
+      "sst": {
+        "climatology": {
+          "day2000_mean": 0.04045771807432175,
+          "day2000_p10": 0.03911134675145149,
+          "day2000_p90": 0.04228607416152954,
+          "day200_mean": 0.0394647940993309
+        },
+        "model": {
+          "day2000_mean": 0.1158691460887591,
+          "day2000_p10": 0.10514794439077377,
+          "day2000_p90": 0.135420885682106,
+          "day200_mean": 0.03537753745913506
+        },
+        "persistence": {
+          "day2000_mean": 0.05954834868510564,
+          "day2000_p10": 0.05638449937105179,
+          "day2000_p90": 0.06244913339614868,
+          "day200_mean": 0.04716278339425723
+        }
+      },
+      "surface_speed": {
+        "climatology": {
+          "day2000_mean": 0.003586794187625249,
+          "day2000_p10": 0.003061279933899641,
+          "day2000_p90": 0.004096773359924555,
+          "day200_mean": 0.0038475769106298685
+        },
+        "model": {
+          "day2000_mean": 0.00891869617626071,
+          "day2000_p10": 0.007955763302743436,
+          "day2000_p90": 0.010164357163012028,
+          "day200_mean": 0.0033548805862665177
+        },
+        "persistence": {
+          "day2000_mean": 0.005100472581883272,
+          "day2000_p10": 0.004923991486430168,
+          "day2000_p90": 0.005275088641792536,
+          "day200_mean": 0.004690920903036992
+        }
+      }
+    },
+    "status": "complete"
+  },
+  "tau0_n_m2": 0.1,
+  "version": "model_c_bire_protocol_duration_s0_figures_v1"
+}

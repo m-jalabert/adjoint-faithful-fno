@@ -1,0 +1,27 @@
+{
+  "csv": {
+    "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/anomaly_direct_replication_v1/replication_metrics.csv",
+    "sha256": "4e6e99c553e1909b5410e51234373f7c0fa224d2b0fdee74c8cf56118a340845"
+  },
+  "figure": {
+    "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/anomaly_direct_replication_v1/model_c_anomaly_direct_replication_summary.png",
+    "sha256": "01ce71f8936fab147a2e91939f2c0997c84664ca46541ec78db354be2ba782d7"
+  },
+  "inference_state_opened": false,
+  "manifest_content_sha256": "9781b1d617d629e9845f24d14751f5454a671c340e17e6a525a66d2aefee0daa",
+  "readme": {
+    "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/anomaly_direct_replication_v1/README.md",
+    "sha256": "e65eb60f1b38080d44ccdbaffd5996d9fafb17f844c2d0231b95bcb99105f57a"
+  },
+  "source": {
+    "path": "/home/mjalabert314/bire_james25_repro/src/bire_repro/analysis/af_model_c_anomaly_direct_replication_summary.py",
+    "sha256": "1ad10c36ec62b5da4de22765b1239c876358496ec4ab3b67937aebd9a86bfac7"
+  },
+  "status": "complete",
+  "summary": {
+    "content_sha256": "c69e009abb834650bb5a62111c1cea3e5ce2f6d67fa22b7445e96700fd4bdb18",
+    "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/anomaly_direct_replication_v1/replication_summary.json",
+    "sha256": "a1d3d1e0e332a8dad0fed8e3169bf3421676adb6579fa18743221960dd306a99"
+  },
+  "version": "model_c_anomaly_direct_replication_summary_v1"
+}

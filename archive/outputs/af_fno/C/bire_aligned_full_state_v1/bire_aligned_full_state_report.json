@@ -1,0 +1,245 @@
+{
+  "architecture": {
+    "channel_mlp_dropout": 0.0,
+    "channel_mlp_expansion": 4.0,
+    "domain_padding": 0.1,
+    "factorization": null,
+    "fno_block_precision": "full",
+    "grid_shape": [
+      62,
+      62
+    ],
+    "hidden_channels": 128,
+    "in_channels": 49,
+    "lifting_channel_ratio": 2,
+    "lifting_in_channels": 51,
+    "local_kernel_size": null,
+    "n_layers": 3,
+    "n_modes": [
+      24,
+      16
+    ],
+    "out_channels": 46,
+    "pointwise_layer_norm": true,
+    "positional_channels": 2,
+    "positional_embedding": null,
+    "projection_channel_ratio": 2,
+    "use_channel_mlp": true
+  },
+  "arrays": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/bire_aligned_full_state_v1/bire_aligned_full_state_arrays.npz",
+  "arrays_sha256": "7c389c77fd0394f8d5188a077ea783376a3f9c2f74d7a06ae207ac5d92b9642c",
+  "checkpoints": [
+    {
+      "checkpoint": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/bire_aligned_full_state_v1/training_checkpoints/model_c_bire_aligned_step_03840.pt",
+      "checkpoint_sha256": "59679d2b1b53745957b6c1c21fb36b197ad9ec05d287f524a1368835b99a655f",
+      "fine_tune_step": 3840,
+      "optimizer_step": 3840,
+      "stage_id": "pretrained"
+    },
+    {
+      "checkpoint": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/bire_aligned_full_state_v1/training_checkpoints/model_c_bire_aligned_step_07680.pt",
+      "checkpoint_sha256": "6ebe0c2fc76a4512d9252c3121a691ab630a327e57865b081134894e8d6d6fdf",
+      "fine_tune_step": 7680,
+      "optimizer_step": 7680,
+      "stage_id": "finetuned"
+    }
+  ],
+  "content_sha256": "6de25131135617392d4d182ec2d5f19368a0e87d7587481d968e2689f055dd6c",
+  "contract": "/home/mjalabert314/bire_james25_repro/config/model_c_bire_aligned_full_state_v1.json",
+  "contract_sha256": "62aed544703f1c3689ad01a9843b781d75c9e784063d39fb2606cca064a71363",
+  "elapsed_seconds": 1065.871299829334,
+  "evaluation_summaries": [
+    {
+      "day360_bottom_integrated_energy_ratio": 1.001773183176556,
+      "day360_bottom_modewise_ratio": 1.00485111821887,
+      "day360_mid_integrated_energy_ratio": 0.9427744190407568,
+      "day360_mid_modewise_ratio": 1.0312012549961185,
+      "fine_tune_step": 3840,
+      "first_bottom_factor_four_failure_day": null,
+      "first_mid_factor_four_failure_day": null,
+      "gate": {
+        "day360_integrated_energy_bounded": true,
+        "mid_bottom_factor_four_all_leads": true,
+        "pass": false,
+        "primary_below_persistence": false,
+        "primary_degradation_bounded": false
+      },
+      "optimizer_step": 3840,
+      "primary_10_to_90_rmse_ratio_to_persistence": {
+        "phihyd_surface": 19.590742246550178,
+        "sst": 3.1836624130526125,
+        "surface_speed": 2.3785498624216372
+      },
+      "primary_ratio_relative_to_source": {
+        "phihyd_surface": 57.48749239270634,
+        "sst": 14.97342341873391,
+        "surface_speed": 10.721650381166656
+      },
+      "stage_id": "pretrained",
+      "worst_mid_bottom_modewise_ratio_all_leads": 1.033358196605162,
+      "worst_primary_10_to_90_ratio": 19.590742246550178,
+      "worst_primary_relative_to_source": 57.48749239270634
+    },
+    {
+      "day360_bottom_integrated_energy_ratio": 0.9958947762336335,
+      "day360_bottom_modewise_ratio": 0.9534038612143124,
+      "day360_mid_integrated_energy_ratio": 0.9636231257169465,
+      "day360_mid_modewise_ratio": 0.9316076229942152,
+      "fine_tune_step": 7680,
+      "first_bottom_factor_four_failure_day": null,
+      "first_mid_factor_four_failure_day": null,
+      "gate": {
+        "day360_integrated_energy_bounded": true,
+        "mid_bottom_factor_four_all_leads": true,
+        "pass": false,
+        "primary_below_persistence": false,
+        "primary_degradation_bounded": false
+      },
+      "optimizer_step": 7680,
+      "primary_10_to_90_rmse_ratio_to_persistence": {
+        "phihyd_surface": 19.564388865985805,
+        "sst": 3.182140083496145,
+        "surface_speed": 2.3754364206702268
+      },
+      "primary_ratio_relative_to_source": {
+        "phihyd_surface": 57.41016047002316,
+        "sst": 14.966263587673184,
+        "surface_speed": 10.707616101512428
+      },
+      "stage_id": "finetuned",
+      "worst_mid_bottom_modewise_ratio_all_leads": 0.9537291097759388,
+      "worst_primary_10_to_90_ratio": 19.564388865985805,
+      "worst_primary_relative_to_source": 57.41016047002316
+    }
+  ],
+  "external_input_channels": 49,
+  "external_local_branch": false,
+  "gate_note": "both stage checkpoints are retained and reported; neither is promoted here and the held S0 figure suite publishes both",
+  "held_s0_state_opened": false,
+  "inference_state_opened": false,
+  "layer_norm_modules": 6,
+  "lifting_input_channels": 51,
+  "loss": {
+    "channels": "all_46_normalized_state_channels",
+    "mae_weight": 0.01,
+    "objective": "wet_cell_mse_plus_0p01_mae",
+    "reduction": "sum_of_masked_error_divided_by_batch_times_channels_times_wet_cell_count",
+    "removed_terms": [
+      "state",
+      "increment",
+      "rollout",
+      "spectral",
+      "western_boundary"
+    ],
+    "wet_mask_reason": "our_grid_contains_land_so_the_dense_grid_Bire_objective_must_be_restricted_to_wet_cells"
+  },
+  "optimizer": {
+    "adam_betas": [
+      0.9,
+      0.95
+    ],
+    "batch_size": 8,
+    "decay_factor": 0.2,
+    "decay_step": 5760,
+    "gradient_clipping": false,
+    "initial_learning_rate": 0.01,
+    "name": "adam",
+    "weight_decay": 0.0
+  },
+  "parameter_count": 11154478,
+  "positional_encoding": "oceanfourcast_PosEmbed_sine_cosine_before_lifting",
+  "published_checkpoints": {
+    "finetuned": {
+      "checkpoint": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/bire_aligned_full_state_v1/finetuned.pt",
+      "checkpoint_sha256": "6ebe0c2fc76a4512d9252c3121a691ab630a327e57865b081134894e8d6d6fdf",
+      "optimizer_step": 7680
+    },
+    "pretrained": {
+      "checkpoint": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/bire_aligned_full_state_v1/pretrained.pt",
+      "checkpoint_sha256": "59679d2b1b53745957b6c1c21fb36b197ad9ec05d287f524a1368835b99a655f",
+      "optimizer_step": 3840
+    }
+  },
+  "read_contract": {
+    "adjoint_state": false,
+    "held_s0_state": false,
+    "inference_state": false,
+    "intermediate_wind_state": false,
+    "prior_training_metadata": true,
+    "response_state": false,
+    "training_state": true,
+    "validation_state": false
+  },
+  "removed_static_features": [
+    "longitude_normalized",
+    "latitude_normalized"
+  ],
+  "response_or_adjoint_state_opened": false,
+  "retained_static_features": [
+    "wind_stress_x",
+    "wet_mask",
+    "distance_to_wall_normalized"
+  ],
+  "slurm_job_id": "311335",
+  "source_summary": {
+    "day360_bottom_integrated_energy_ratio": 1.0174416303634644,
+    "day360_bottom_modewise_ratio": 5.566149711608887,
+    "day360_mid_integrated_energy_ratio": 1.0323991775512695,
+    "day360_mid_modewise_ratio": 13.371350288391113,
+    "first_bottom_factor_four_failure_day": 310,
+    "first_mid_factor_four_failure_day": 180,
+    "optimizer_step": 13440,
+    "primary_10_to_90_rmse_ratio_to_persistence": {
+      "phihyd_surface": 0.34078268908865694,
+      "sst": 0.2126208766039029,
+      "surface_speed": 0.22184549746182078
+    },
+    "worst_mid_bottom_modewise_ratio_all_leads": 13.371350288391113,
+    "worst_primary_10_to_90_ratio": 0.34078268908865694
+  },
+  "stages": [
+    {
+      "autoregressive_steps": 1,
+      "first_optimizer_step": 1,
+      "inputs": "true_normalized_state_at_every_update",
+      "last_optimizer_step": 3840,
+      "objective": "MSE(x_hat_t10, x_t10) + 0.01 MAE(x_hat_t10, x_t10)",
+      "stage_id": "pretrained"
+    },
+    {
+      "autoregressive_steps": 2,
+      "first_optimizer_step": 3841,
+      "inputs": "one_self_generated_input_at_the_second_step",
+      "last_optimizer_step": 7680,
+      "objective": "sum over k=1,2 of MSE(x_hat_t10k, x_t10k) + 0.01 MAE(x_hat_t10k, x_t10k)",
+      "stage_id": "finetuned"
+    }
+  ],
+  "status": "complete",
+  "training_history": [
+    {
+      "autoregressive_steps": 1,
+      "learning_rate": 0.01,
+      "optimizer_step": 3840,
+      "stage_id": "pretrained",
+      "training_window": {
+        "mae": 0.8041847480409059,
+        "mse": 0.9778634122523567,
+        "total": 0.9859052593136536
+      }
+    },
+    {
+      "autoregressive_steps": 2,
+      "learning_rate": 0.002,
+      "optimizer_step": 7680,
+      "stage_id": "finetuned",
+      "training_window": {
+        "mae": 1.608271066879027,
+        "mse": 1.9551752095254162,
+        "total": 1.971257921452941
+      }
+    }
+  ],
+  "validation_state_opened": false,
+  "version": "model_c_bire_aligned_full_state_v1"
+}

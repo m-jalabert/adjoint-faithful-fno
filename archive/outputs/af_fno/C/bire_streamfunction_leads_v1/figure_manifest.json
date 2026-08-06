@@ -1,0 +1,50 @@
+{
+  "arrays": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/bire_streamfunction_leads_v1/model_c_bire_streamfunction_leads_arrays.npz",
+  "arrays_sha256": "b4126494d9c0084c446e48e386e739a431ff927ac24110f25f80cfa2083bcd48",
+  "contract": "/home/mjalabert314/bire_james25_repro/config/model_c_bire_streamfunction_leads_v1.json",
+  "contract_sha256": "ccb965e58bdc053d286b77b86fa8fa347bd2d06cfbe430f6cbdc433c5ae1934c",
+  "figures": {
+    "model_c_bire_figure3_streamfunction_1deg_day020.png": {
+      "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/bire_streamfunction_leads_v1/model_c_bire_figure3_streamfunction_1deg_day020.png",
+      "sha256": "3bf9042a1bf99cf6c69b1107ce5a2128f778c74327f5c76649764cd76235c576"
+    },
+    "model_c_bire_figure3_streamfunction_1deg_day030.png": {
+      "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/bire_streamfunction_leads_v1/model_c_bire_figure3_streamfunction_1deg_day030.png",
+      "sha256": "c19d7351cdcd97378a7e0c3c8126cfe5d290bc4034ecb7a6a39cfb7d74f94d11"
+    },
+    "model_c_bire_figure3_streamfunction_1deg_day040.png": {
+      "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/bire_streamfunction_leads_v1/model_c_bire_figure3_streamfunction_1deg_day040.png",
+      "sha256": "98906df72525c9c90c3957ef890b6556b6695fe85af48f5df9d1f9f1ef4da3c2"
+    },
+    "model_c_bire_figure3_streamfunction_1deg_day050.png": {
+      "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/bire_streamfunction_leads_v1/model_c_bire_figure3_streamfunction_1deg_day050.png",
+      "sha256": "7fdc71289628d87de11ad0fb302c3a41a588dfdce6c81bff68c11784bc52014a"
+    },
+    "model_c_bire_figure3_streamfunction_1deg_day060.png": {
+      "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/bire_streamfunction_leads_v1/model_c_bire_figure3_streamfunction_1deg_day060.png",
+      "sha256": "e01332dacb9b72b5be89e506fda1bdee5974b34df89d834b7d879e0cab9deaf6"
+    },
+    "model_c_bire_figure3_streamfunction_1deg_day070.png": {
+      "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/bire_streamfunction_leads_v1/model_c_bire_figure3_streamfunction_1deg_day070.png",
+      "sha256": "2d0e87b4500d2fc6ec047e55d1446b285e1aae39d26e1bdf053aeb1ff075664d"
+    },
+    "model_c_bire_figure3_streamfunction_1deg_day080.png": {
+      "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/bire_streamfunction_leads_v1/model_c_bire_figure3_streamfunction_1deg_day080.png",
+      "sha256": "1997d0149923e15731edb8423c29452050ab63bf0bfac67a9b61a27e19994287"
+    },
+    "model_c_bire_figure3_streamfunction_1deg_day090.png": {
+      "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/bire_streamfunction_leads_v1/model_c_bire_figure3_streamfunction_1deg_day090.png",
+      "sha256": "4aabb84339ecd77cdb9b4a3e990a58e169ca30661fd173d8fd227812fc86a485"
+    }
+  },
+  "inference_opened": false,
+  "manifest_content_sha256": "3b74d759d551588f8edf6ff944a4177344ea8a8efc81703d38719e4a95450ac7",
+  "report": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/bire_streamfunction_leads_v1/model_c_bire_streamfunction_leads_report.json",
+  "report_content_sha256": "63a5aa7bb452f5e065def0c43d8464901d51f323c029981aca71c972b2d04e28",
+  "report_sha256": "71c6e1dc1f9aea3ddcedb73e63439c42510c08ba50ad2925ab854bdbe589c206",
+  "status": "complete",
+  "summary": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/bire_streamfunction_leads_v1/streamfunction_lead_summary.json",
+  "summary_sha256": "113a3dbde6bf8f6ced995081d338d8792a416a244e339950a0c04b4d59b23063",
+  "tuning_authorized": false,
+  "version": "model_c_bire_streamfunction_leads_v1"
+}

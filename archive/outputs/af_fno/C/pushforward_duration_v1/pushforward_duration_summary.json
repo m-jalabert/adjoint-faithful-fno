@@ -1,0 +1,192 @@
+{
+  "arrays_sha256": "46129f2653b78a4b2283bde440f5db3897d05c1232680b7b993f25369ec77bfc",
+  "checkpoints": [
+    {
+      "day90_ratios": {
+        "phihyd_surface": {
+          "climatology": 1.8264095950589923,
+          "persistence": 3.0890831518649686
+        },
+        "sst": {
+          "climatology": 4.094148110940776,
+          "persistence": 2.7249595910016384
+        }
+      },
+      "fine_tune_step": 2400,
+      "passed": false,
+      "ten_day_worst_regime_group_ratio": 0.6284532201391104,
+      "training_window": {
+        "pushforward_phihyd_surface": 1.1519383057951926,
+        "pushforward_sst": 2.9616668589413164,
+        "total": 0.01002350277849473
+      },
+      "worst_primary_rmse_auc_ratio": 1.783791340751468,
+      "worst_slow_field_lead_ratio": 4.094148110940776
+    },
+    {
+      "day90_ratios": {
+        "phihyd_surface": {
+          "climatology": 1.8392501506047625,
+          "persistence": 3.1108009220214186
+        },
+        "sst": {
+          "climatology": 3.8885789254533396,
+          "persistence": 2.5881380329071835
+        }
+      },
+      "fine_tune_step": 2880,
+      "passed": false,
+      "ten_day_worst_regime_group_ratio": 0.5901509067923278,
+      "training_window": {
+        "pushforward_phihyd_surface": 1.1306101379916071,
+        "pushforward_sst": 2.8999027783672013,
+        "total": 0.009890302475347805
+      },
+      "worst_primary_rmse_auc_ratio": 1.6522037994513787,
+      "worst_slow_field_lead_ratio": 3.8885789254533396
+    },
+    {
+      "day90_ratios": {
+        "phihyd_surface": {
+          "climatology": 1.8268816516766528,
+          "persistence": 3.0898815610215387
+        },
+        "sst": {
+          "climatology": 3.8733456929209913,
+          "persistence": 2.5779991854678217
+        }
+      },
+      "fine_tune_step": 3360,
+      "passed": false,
+      "ten_day_worst_regime_group_ratio": 0.6163285019383962,
+      "training_window": {
+        "pushforward_phihyd_surface": 1.1414955110599598,
+        "pushforward_sst": 2.911216046164433,
+        "total": 0.010042456727630149
+      },
+      "worst_primary_rmse_auc_ratio": 1.6645737324559966,
+      "worst_slow_field_lead_ratio": 3.8733456929209913
+    },
+    {
+      "day90_ratios": {
+        "phihyd_surface": {
+          "climatology": 1.829292071971931,
+          "persistence": 3.0939584059654113
+        },
+        "sst": {
+          "climatology": 3.811165860494126,
+          "persistence": 2.5366138896389594
+        }
+      },
+      "fine_tune_step": 3840,
+      "passed": false,
+      "ten_day_worst_regime_group_ratio": 0.5877546833527345,
+      "training_window": {
+        "pushforward_phihyd_surface": 1.113252929598093,
+        "pushforward_sst": 2.818603949000438,
+        "total": 0.00970168150961399
+      },
+      "worst_primary_rmse_auc_ratio": 1.6597355992380203,
+      "worst_slow_field_lead_ratio": 3.811165860494126
+    },
+    {
+      "day90_ratios": {
+        "phihyd_surface": {
+          "climatology": 1.8057831849685637,
+          "persistence": 3.054196839360822
+        },
+        "sst": {
+          "climatology": 3.805046431094943,
+          "persistence": 2.532540954957334
+        }
+      },
+      "fine_tune_step": 4320,
+      "passed": false,
+      "ten_day_worst_regime_group_ratio": 0.5775378889636285,
+      "training_window": {
+        "pushforward_phihyd_surface": 1.1206890755022565,
+        "pushforward_sst": 2.798662065217892,
+        "total": 0.009704965408309363
+      },
+      "worst_primary_rmse_auc_ratio": 1.700679542273961,
+      "worst_slow_field_lead_ratio": 3.805046431094943
+    },
+    {
+      "day90_ratios": {
+        "phihyd_surface": {
+          "climatology": 1.7497227631144663,
+          "persistence": 2.9593794965783333
+        },
+        "sst": {
+          "climatology": 3.861923378631862,
+          "persistence": 2.5703967871104143
+        }
+      },
+      "fine_tune_step": 4800,
+      "passed": false,
+      "ten_day_worst_regime_group_ratio": 0.5867545185292337,
+      "training_window": {
+        "pushforward_phihyd_surface": 1.1147926424940426,
+        "pushforward_sst": 2.7560410536825657,
+        "total": 0.009604731865692884
+      },
+      "worst_primary_rmse_auc_ratio": 1.7639491549224369,
+      "worst_slow_field_lead_ratio": 3.861923378631862
+    },
+    {
+      "day90_ratios": {
+        "phihyd_surface": {
+          "climatology": 1.7708493145933866,
+          "persistence": 2.995111719189895
+        },
+        "sst": {
+          "climatology": 3.7879769800127314,
+          "persistence": 2.521179967719157
+        }
+      },
+      "fine_tune_step": 5280,
+      "passed": false,
+      "ten_day_worst_regime_group_ratio": 0.6032180770149791,
+      "training_window": {
+        "pushforward_phihyd_surface": 1.100831302938362,
+        "pushforward_sst": 2.7395348417262237,
+        "total": 0.009559532479033805
+      },
+      "worst_primary_rmse_auc_ratio": 1.718766182819963,
+      "worst_slow_field_lead_ratio": 3.7879769800127314
+    },
+    {
+      "day90_ratios": {
+        "phihyd_surface": {
+          "climatology": 1.7274164480241887,
+          "persistence": 2.9216518902889335
+        },
+        "sst": {
+          "climatology": 3.608825047095342,
+          "persistence": 2.4019410529018947
+        }
+      },
+      "fine_tune_step": 5760,
+      "passed": false,
+      "ten_day_worst_regime_group_ratio": 0.5662765638018284,
+      "training_window": {
+        "pushforward_phihyd_surface": 1.0989505721877018,
+        "pushforward_sst": 2.7083299174904822,
+        "total": 0.009573532635113225
+      },
+      "worst_primary_rmse_auc_ratio": 1.5965300708036083,
+      "worst_slow_field_lead_ratio": 3.608825047095342
+    }
+  ],
+  "classification": "training_only_pushforward_gate_not_yet_passed",
+  "inference_opened": false,
+  "passed": false,
+  "pushforward_v1_replay_bitwise_exact": true,
+  "report_sha256": "86bf00b800d68f6741c36f5a144a5e81269c520ce388dda4e6a0e75b7544e9d7",
+  "save_reload_nine_step_bitwise_exact": true,
+  "selected_fine_tune_step": 5760,
+  "selected_for": "diagnostic_only_no_validation_authorized",
+  "status": "complete",
+  "summary_content_sha256": "a88e5f23e51ddae071103ff67d9875ae46d08338d5f803208646fc78194eaac0",
+  "validation_state_opened": false
+}

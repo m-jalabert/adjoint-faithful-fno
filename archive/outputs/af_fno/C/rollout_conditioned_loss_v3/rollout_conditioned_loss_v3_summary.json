@@ -1,0 +1,36 @@
+{
+  "arrays_sha256": "522fe6145735f1ad8d58456671bc1efe34be8608f8944360afd6b12e9577edff",
+  "classification": "training_only_pushforward_gate_not_yet_passed",
+  "day90_ratios": {
+    "phihyd_surface": {
+      "climatology": 1.7847024118631907,
+      "persistence": 3.018542043632489
+    },
+    "sst": {
+      "climatology": 3.6343370910244555,
+      "persistence": 2.4189212126095803
+    }
+  },
+  "inference_opened": false,
+  "passed": false,
+  "projection_exactness": {
+    "maximum_absolute_ssh_increment_area_mean_normalized": 3.728928277269006e-11,
+    "maximum_absolute_temperature_target_residual_normalized": 1.1641532182693481e-10
+  },
+  "report_sha256": "e9af34326c3656cccf78990b6a21202a22adf99163fcfd1a07338c9fa6c7ba11",
+  "save_reload_nine_step_bitwise_exact": true,
+  "selected_checkpoint_sha256": "e9f962878cb51bfe7dc498b07173f499d982a7f3c31e23afd8036b17afad970b",
+  "selected_fine_tune_step": 960,
+  "selected_for": "diagnostic_only_no_validation_authorized",
+  "status": "complete",
+  "summary_content_sha256": "99b9ae3de9ce89295ce07525d9975dbc12de49bf19a7fd1e210952266524fee0",
+  "ten_day_ratio_to_persistence": {
+    "ssh": 0.34562982497666717,
+    "temperature": 0.2746248454669537,
+    "u": 0.03821337677204055,
+    "v": 0.1058307499885613
+  },
+  "validation_state_opened": false,
+  "worst_primary_rmse_auc_ratio": 1.4616880657999949,
+  "worst_slow_field_lead_ratio": 3.6343370910244555
+}

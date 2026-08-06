@@ -1,0 +1,71 @@
+{
+  "checkpoint_promotion": false,
+  "classification_scope": "zero_retraining_causal_filter_control_no_checkpoint_promotion",
+  "decision": "training_gate_failed_no_inference_opened",
+  "inference_characterization": null,
+  "inference_opened": false,
+  "selected_alpha": null,
+  "selection_records": {
+    "0.0": {
+      "all_states_finite": true,
+      "day1000_normalized_amplitude_relative_to_source": 1.0,
+      "day1000_normalized_amplitude_to_truth": 8.365031223354093,
+      "day1000_worst_highk_power_relative_to_source": 1.0,
+      "day1000_worst_highk_power_to_truth": 34.032359828640566,
+      "day1000_worst_rmse_climate_relative_to_source": 1.0,
+      "day1000_worst_rmse_to_climatology": 7.138615337920571,
+      "maximum_short_candidate_to_source_rmse": 1.0,
+      "passes": false
+    },
+    "0.25": {
+      "all_states_finite": true,
+      "day1000_normalized_amplitude_relative_to_source": 0.4365214712748506,
+      "day1000_normalized_amplitude_to_truth": 3.6515157368785918,
+      "day1000_worst_highk_power_relative_to_source": 0.0638025055959962,
+      "day1000_worst_highk_power_to_truth": 2.1713498284117962,
+      "day1000_worst_rmse_climate_relative_to_source": 0.6177628648217894,
+      "day1000_worst_rmse_to_climatology": 4.409971462014578,
+      "maximum_short_candidate_to_source_rmse": 6.491722187932919,
+      "passes": false
+    },
+    "0.5": {
+      "all_states_finite": true,
+      "day1000_normalized_amplitude_relative_to_source": 0.44293495105976965,
+      "day1000_normalized_amplitude_to_truth": 3.70516469552979,
+      "day1000_worst_highk_power_relative_to_source": 0.04935222445626598,
+      "day1000_worst_highk_power_to_truth": 1.679572661039479,
+      "day1000_worst_rmse_climate_relative_to_source": 0.6560302336102792,
+      "day1000_worst_rmse_to_climatology": 4.683147487789955,
+      "maximum_short_candidate_to_source_rmse": 10.44761171493549,
+      "passes": false
+    },
+    "0.75": {
+      "all_states_finite": true,
+      "day1000_normalized_amplitude_relative_to_source": 0.4707948157729407,
+      "day1000_normalized_amplitude_to_truth": 3.938213333733887,
+      "day1000_worst_highk_power_relative_to_source": 0.05109865821100992,
+      "day1000_worst_highk_power_to_truth": 1.7390079229978084,
+      "day1000_worst_rmse_climate_relative_to_source": 0.6579790481415246,
+      "day1000_worst_rmse_to_climatology": 4.697059325093465,
+      "maximum_short_candidate_to_source_rmse": 15.627830101072394,
+      "passes": false
+    },
+    "1.0": {
+      "all_states_finite": true,
+      "day1000_normalized_amplitude_relative_to_source": 0.5015853625356964,
+      "day1000_normalized_amplitude_to_truth": 4.195777218788483,
+      "day1000_worst_highk_power_relative_to_source": 0.04992742979131056,
+      "day1000_worst_highk_power_to_truth": 1.6991482559770699,
+      "day1000_worst_rmse_climate_relative_to_source": 0.6730682386395573,
+      "day1000_worst_rmse_to_climatology": 4.804775251819527,
+      "maximum_short_candidate_to_source_rmse": 20.81617157630212,
+      "passes": false
+    }
+  },
+  "training_gate": {
+    "maximum_day1000_normalized_amplitude_relative_to_source": 0.8,
+    "maximum_day1000_worst_highk_power_relative_to_source": 0.5,
+    "maximum_day1000_worst_rmse_climate_relative_to_source": 0.8,
+    "maximum_short_candidate_to_source_rmse": 1.05
+  }
+}

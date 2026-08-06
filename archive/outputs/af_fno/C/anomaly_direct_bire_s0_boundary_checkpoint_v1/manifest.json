@@ -1,0 +1,48 @@
+{
+  "artifacts": {
+    "README.md": {
+      "bytes": 803,
+      "sha256": "3bf1d0090c01904287201a3186e7fe2eff8ebaa65a1e308b5eea202e64c94675"
+    },
+    "model_c_s0_boundary_checkpoint_arrays.npz": {
+      "bytes": 6990148,
+      "sha256": "d37d570337a336a050d5bc8c5e8ff5d6c709fc209b4aacebb6b946fe9b9942ae"
+    },
+    "model_c_s0_boundary_checkpoint_curves.csv": {
+      "bytes": 3138522,
+      "sha256": "7d95e7d028c69094e6ec3cae6bfe38ddd1fbf152c906982af40dd75a11c563ab"
+    },
+    "model_c_s0_boundary_checkpoint_report.json": {
+      "bytes": 27550,
+      "sha256": "bc62501a18f73d89d2c25de40ce56fc28e9cb120479e52cca276130d96c2fc67"
+    },
+    "model_c_s0_boundary_checkpoint_summary.json": {
+      "bytes": 22098,
+      "sha256": "c6c069e52ee58ab9be2f608341fcbf94250a309ae04f8494597d1f9a2afef50e"
+    },
+    "model_c_s0_boundary_fraction_checkpoints.png": {
+      "bytes": 310385,
+      "sha256": "d5b624961dfdda60d0568812089dbc4ff8e321d9835f9a85d560e9e16775dc62"
+    },
+    "model_c_s0_boundary_transport_rmse_checkpoints.png": {
+      "bytes": 246321,
+      "sha256": "8ad9cc0352a055debce0e14faaee3387a3dadb5681dbc3d186a525bccca35568"
+    },
+    "model_c_s0_checkpoint_stability_timing.png": {
+      "bytes": 202929,
+      "sha256": "6ab27e1b2537b13c263d092ca6e2405d81ce2bec40377622ca852e3d3ffef4aa"
+    },
+    "model_c_s0_selected_boundary_growth.png": {
+      "bytes": 142087,
+      "sha256": "ad158bf648e1a0bae23b6826a9c191bea7eef9d2fe2da63dc7937d25fb2da89d"
+    },
+    "model_c_s0_selected_boundary_spatial_consistency.png": {
+      "bytes": 170280,
+      "sha256": "1849331ac35445a4703c0d7532dbcb228f5ca63638c26135070f288482f92a93"
+    }
+  },
+  "contract_sha256": "e859999279a7d773679947a933f1140d780517661561986554628f3cb935d2c0",
+  "manifest_content_sha256": "134afea7b726ad6db18eaae6da1e1b878775f949aee79517ab785471049ce562",
+  "report_content_sha256": "0a370f256a39004573ecba883dc50b82c82b363c29ee32860e929e33a7155345",
+  "version": "model_c_bire_s0_boundary_checkpoint_v1"
+}

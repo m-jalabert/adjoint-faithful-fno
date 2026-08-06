@@ -1,0 +1,17 @@
+{
+  "artifacts": {
+    "README.md": "4077eaa20d2b38d88c674cc6d0799db6a3cc10dd1e4b76877fa936aa66ef752f",
+    "training_only_day360_pressure_spectra.png": "8f9baed0e6e4e8f0bc8d440085ec5950e6f2fbb03c4b6e3062d874c1462a89e4",
+    "training_only_pressure_spectral_attribution.png": "940e023e87a59d45058ca8e63a4525f072ed4da11a94f08a7f4d88d8178e4168",
+    "training_spectral_attribution.json": "3787586c0d83c069de6099e74806b8c32e00d96ff2f4069807a5bd0ace43047b",
+    "training_spectral_attribution_arrays.npz": "aa5855c8f4c24bcfb6c9e03637b2678291515de1389bdff2a8378e12bf72ab00"
+  },
+  "content_sha256": "952eb9ee49f4118adca420249b84b135e6fd6996ff0c6a39d56ec8eec46243b8",
+  "contract": "/home/mjalabert314/bire_james25_repro/config/model_c_anomaly_direct_training_spectral_attribution_v2.json",
+  "contract_sha256": "29c344310e5058a67d36a470eb92d9a37a89e64ab3082e25fc856c3085ba3de1",
+  "inference_state_opened": false,
+  "rejected_v1_report_sha256": "ca89a35c470a1e5f8c4414cacd1aed4590664b6d7b052589a54bec26d4c44a71",
+  "response_or_adjoint_state_opened": false,
+  "status": "complete",
+  "version": "model_c_anomaly_direct_training_spectral_attribution_v2"
+}

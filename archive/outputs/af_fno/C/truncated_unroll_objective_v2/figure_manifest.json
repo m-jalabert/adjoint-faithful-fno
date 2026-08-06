@@ -1,0 +1,41 @@
+{
+  "csv": {
+    "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/truncated_unroll_objective_v2/model_c_truncated_unroll_sst_phihyd_rmse.csv",
+    "sha256": "3fc276de56507c6f5b93c64ac99b1990b35994503121f464f5616a85df935cf7"
+  },
+  "figure": {
+    "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/truncated_unroll_objective_v2/model_c_truncated_unroll_sst_phihyd_rmse.png",
+    "sha256": "5fc6f2aac21d819b91ae90db01d879fdcb4838adf5fa60c90f6acc838b0da478"
+  },
+  "inference_opened": false,
+  "lead_days": [
+    10,
+    20,
+    30,
+    40,
+    50,
+    60,
+    70,
+    80,
+    90
+  ],
+  "manifest_content_sha256": "cccd8e757495da836013e19525227283075dd9b515f780cbab2ad08648ae4c03",
+  "source_arrays": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/truncated_unroll_objective_v2/model_c_truncated_unroll_v2_arrays.npz",
+  "source_arrays_sha256": "0c5222cd69381e1e209f46387863b7dbb6a4fb98111061fecbd4ffa47a22d716",
+  "source_report": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/truncated_unroll_objective_v2/model_c_truncated_unroll_v2_report.json",
+  "source_report_content_sha256": "1d714c140263ef051b5c6b6b517a7abacdf358aa75aee86ac227c5b97d8bc22c",
+  "source_report_sha256": "86f7981e7a0ab695048677e5581adb25412e3cd5d9cd1b2c042a9b5232b5b830",
+  "status": "complete",
+  "summary": {
+    "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/truncated_unroll_objective_v2/truncated_unroll_summary.json",
+    "sha256": "5781c9eda8b969a3ef06fed8ca463c708055c826b50a6e77545cfdc70bd8d149"
+  },
+  "truncated_fine_tune_steps": [
+    480,
+    960,
+    1440,
+    1920
+  ],
+  "validation_state_opened": false,
+  "version": "model_c_truncated_unroll_plots_v1"
+}

@@ -1,0 +1,52 @@
+{
+  "artifacts": {
+    "README.md": {
+      "bytes": 1574,
+      "sha256": "6cd310bf16fce79ce0124dd428b031409320be8e1f46b2cde12d210d23bb9a20"
+    },
+    "model_c_bire_figure3_streamfunction_1deg_s0_dt10.png": {
+      "bytes": 183958,
+      "sha256": "4f1be4499379f660a4d3a5309c340c47573d0eb24038f77b9ef68be3f34f33b2"
+    },
+    "model_c_bire_figure4_dt10_rmse_0_200_days_s0.png": {
+      "bytes": 193296,
+      "sha256": "1d99b158ca3ee04c2cf09fc23b7cdadd74700c55c399bac0accfb244a094e4df"
+    },
+    "model_c_bire_figure5_dt10_single_member_rmse_s0.png": {
+      "bytes": 75904,
+      "sha256": "18c777a224180caea80a4da1e17377e2a57367ea38aa0705b803dd0438d741a9"
+    },
+    "model_c_bire_figure6_dt10_acc_0_200_days_s0.png": {
+      "bytes": 186609,
+      "sha256": "371a520be1f94cd04cc133b919f0bae833b4528d07f983ed4b67ef97c4b88991"
+    },
+    "model_c_bire_figure7_dt10_streamfunction_day060_day2000_s0.png": {
+      "bytes": 111464,
+      "sha256": "1c491f863217c34b9b1776b89dcbda20cf16bbbb24c466125e9d7b4fff302998"
+    },
+    "model_c_bire_figure8_dt10_rmse_0_2000_days_s0.png": {
+      "bytes": 192756,
+      "sha256": "b07424b72566e0696278248b76d2f84d798997f8044fc1ff7bd139b79aeef746"
+    },
+    "model_c_bire_s0_ensemble_curves.csv": {
+      "bytes": 181054,
+      "sha256": "a3d24b1d81ed18f364554df3c7d919d592e36d91733cd0fc757969b1f2cddba1"
+    },
+    "model_c_bire_s0_figures_arrays.npz": {
+      "bytes": 298883,
+      "sha256": "199f10086107893e589c2c70412bf6c01faefc639fd286fa14c2f2ebdcaf2eb2"
+    },
+    "model_c_bire_s0_figures_report.json": {
+      "bytes": 8002,
+      "sha256": "f27687984b9ebfe4620ca6c8f0f68f905ae2fdf69c916f03c3f2eca9e7950508"
+    },
+    "model_c_bire_s0_figures_summary.json": {
+      "bytes": 3267,
+      "sha256": "9e5c142d5cd7a6948ef5e1966df021402a2d28b15adeffca71c2ee0372bbbf2a"
+    }
+  },
+  "contract_sha256": "3ff67296bd44405376f3a309291727972db3a027c43be472ece3e10414a24ce6",
+  "manifest_content_sha256": "b6b733cc7be9e5b19918f7e79ff0cbbec6d7d2ca0dbbad55f9f6b3b90610cc28",
+  "report_content_sha256": "ea987916d219dbdabe97971389fc4c46384d954b0e373e70c5c9c74456ff518e",
+  "version": "model_c_single_position_layernorm_s0_figures_v1"
+}

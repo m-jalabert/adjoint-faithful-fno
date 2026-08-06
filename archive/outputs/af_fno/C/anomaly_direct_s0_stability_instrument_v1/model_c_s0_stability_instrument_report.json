@@ -1,0 +1,279 @@
+{
+  "analysis": {
+    "baseline_crossing": "first_crossing_and_first_lead_after_which_model_mean_RMSE_remains_above_baseline",
+    "bootstrap_replicates": 10000,
+    "bootstrap_seed": 20260729,
+    "fields": [
+      "surface_speed",
+      "phihyd_surface",
+      "sst"
+    ],
+    "fit": "ordinary_least_squares_of_log_ensemble_mean_RMSE_against_ten_day_call_index",
+    "fit_windows_days": [
+      [
+        30,
+        330
+      ],
+      [
+        200,
+        500
+      ],
+      [
+        300,
+        600
+      ],
+      [
+        400,
+        700
+      ],
+      [
+        700,
+        1000
+      ],
+      [
+        1700,
+        2000
+      ]
+    ],
+    "gain": "exp_fitted_slope_per_ten_day_call",
+    "lead_days": "0_to_2000_inclusive_by_10",
+    "member_count": 15,
+    "normalized_amplitude": "ensemble_mean_and_10th_90th_percentiles_of_maximum_absolute_normalized_state",
+    "plot_scale": "logarithmic_y_for_long_RMSE_and_normalized_amplitude",
+    "uncertainty": "95_percent_nonparametric_member_bootstrap_interval"
+  },
+  "contract": "/home/mjalabert314/bire_james25_repro/config/model_c_s0_stability_instrument_v1.json",
+  "contract_sha256": "ab6d597843b13e5dc71e65b9c4dcc5a5e1ff783182d2ae9ff43ae2d61bfc5be7",
+  "figures": [
+    "model_c_s0_rmse_log_growth.png",
+    "model_c_s0_windowed_rmse_gain.png",
+    "model_c_s0_normalized_amplitude_log_growth.png"
+  ],
+  "inputs": {
+    "job304736_arrays": {
+      "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/anomaly_direct_bire_s0_inference_v1/model_c_bire_s0_figures_arrays.npz",
+      "sha256": "30abd95810d3025935dc0de71e2721f5bfa7dc4291bf855b35e96894fc12c3c7"
+    },
+    "job304736_manifest": {
+      "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/anomaly_direct_bire_s0_inference_v1/manifest.json",
+      "sha256": "400763f859d6c1ab80a12f103feb176ca66a90641fa76f8aaf7805aab7eb4a80"
+    },
+    "job304736_report": {
+      "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/anomaly_direct_bire_s0_inference_v1/model_c_bire_s0_figures_report.json",
+      "sha256": "32ac2e051726ed5f3e2fb3790ca3d626f1054d85b05524e14cf7e56ce8d1bd18"
+    }
+  },
+  "report_content_sha256": "945495f0e096ede080f03fcb82481705b021f65059f568f0996c549f6da6cfbe",
+  "scope": "posthoc_instrument_correction_no_rollout_no_training_no_selection",
+  "status": "complete",
+  "summary": {
+    "classification": "sustained_supercritical_rmse_and_normalized_amplitude_growth;descriptive_gain_not_jacobian_spectral_radius",
+    "fields": {
+      "phihyd_surface": {
+        "baseline_crossing": {
+          "climatology": {
+            "first_day": 510,
+            "sustained_day": 510
+          },
+          "persistence": {
+            "first_day": 170,
+            "sustained_day": 300
+          }
+        },
+        "windowed_gain_per_10_days": {
+          "1700_2000": {
+            "bootstrap_95_percent_interval": [
+              1.022786387325582,
+              1.0251390401526526
+            ],
+            "e_folding_days_if_gain_gt_1": 422.2480736125045,
+            "gain": 1.023965424082162
+          },
+          "200_500": {
+            "bootstrap_95_percent_interval": [
+              1.048709611873455,
+              1.0505005454294225
+            ],
+            "e_folding_days_if_gain_gt_1": 206.40858902546358,
+            "gain": 1.0496403653709767
+          },
+          "300_600": {
+            "bootstrap_95_percent_interval": [
+              1.039098327163596,
+              1.0401442743078961
+            ],
+            "e_folding_days_if_gain_gt_1": 257.14066100958144,
+            "gain": 1.039655305319443
+          },
+          "30_330": {
+            "bootstrap_95_percent_interval": [
+              1.0768381639593505,
+              1.0800566796748963
+            ],
+            "e_folding_days_if_gain_gt_1": 132.41989677988508,
+            "gain": 1.0784419410310166
+          },
+          "400_700": {
+            "bootstrap_95_percent_interval": [
+              1.0326409045131633,
+              1.0333565861550114
+            ],
+            "e_folding_days_if_gain_gt_1": 307.91562105291774,
+            "gain": 1.0330095444428535
+          },
+          "700_1000": {
+            "bootstrap_95_percent_interval": [
+              1.0242504648664337,
+              1.0255036881875537
+            ],
+            "e_folding_days_if_gain_gt_1": 407.533850358114,
+            "gain": 1.0248413693281548
+          }
+        }
+      },
+      "sst": {
+        "baseline_crossing": {
+          "climatology": {
+            "first_day": 280,
+            "sustained_day": 280
+          },
+          "persistence": {
+            "first_day": 170,
+            "sustained_day": 310
+          }
+        },
+        "windowed_gain_per_10_days": {
+          "1700_2000": {
+            "bootstrap_95_percent_interval": [
+              1.0212859288057674,
+              1.0242480064226334
+            ],
+            "e_folding_days_if_gain_gt_1": 445.8700117420021,
+            "gain": 1.0226814612460746
+          },
+          "200_500": {
+            "bootstrap_95_percent_interval": [
+              1.0582568393847216,
+              1.0660413377853695
+            ],
+            "e_folding_days_if_gain_gt_1": 165.38718764486504,
+            "gain": 1.0623295398545043
+          },
+          "300_600": {
+            "bootstrap_95_percent_interval": [
+              1.0423614223241255,
+              1.048518076345379
+            ],
+            "e_folding_days_if_gain_gt_1": 224.39353584487563,
+            "gain": 1.0455724804566093
+          },
+          "30_330": {
+            "bootstrap_95_percent_interval": [
+              1.067028127078081,
+              1.073067018457546
+            ],
+            "e_folding_days_if_gain_gt_1": 148.13805427714382,
+            "gain": 1.0698351801152046
+          },
+          "400_700": {
+            "bootstrap_95_percent_interval": [
+              1.026123375983639,
+              1.0313253707632861
+            ],
+            "e_folding_days_if_gain_gt_1": 351.77261042733454,
+            "gain": 1.0288353711097193
+          },
+          "700_1000": {
+            "bootstrap_95_percent_interval": [
+              1.0220860356719075,
+              1.0258932899987911
+            ],
+            "e_folding_days_if_gain_gt_1": 418.6714724908853,
+            "gain": 1.0241726092620942
+          }
+        }
+      },
+      "surface_speed": {
+        "baseline_crossing": {
+          "climatology": {
+            "first_day": 270,
+            "sustained_day": 270
+          },
+          "persistence": {
+            "first_day": 170,
+            "sustained_day": 330
+          }
+        },
+        "windowed_gain_per_10_days": {
+          "1700_2000": {
+            "bootstrap_95_percent_interval": [
+              1.0310026851746639,
+              1.0334183667493253
+            ],
+            "e_folding_days_if_gain_gt_1": 316.02554184611745,
+            "gain": 1.0321489746880719
+          },
+          "200_500": {
+            "bootstrap_95_percent_interval": [
+              1.0323053330700835,
+              1.0411260702354042
+            ],
+            "e_folding_days_if_gain_gt_1": 279.22609612908747,
+            "gain": 1.036462291406438
+          },
+          "300_600": {
+            "bootstrap_95_percent_interval": [
+              1.0297404750229655,
+              1.036918805426858
+            ],
+            "e_folding_days_if_gain_gt_1": 306.14484330849996,
+            "gain": 1.033203610914471
+          },
+          "30_330": {
+            "bootstrap_95_percent_interval": [
+              1.0494930086869898,
+              1.0698490717840543
+            ],
+            "e_folding_days_if_gain_gt_1": 172.78187393858482,
+            "gain": 1.05958406688568
+          },
+          "400_700": {
+            "bootstrap_95_percent_interval": [
+              1.0251837317869223,
+              1.0332358428995982
+            ],
+            "e_folding_days_if_gain_gt_1": 346.52212524252724,
+            "gain": 1.029278618174914
+          },
+          "700_1000": {
+            "bootstrap_95_percent_interval": [
+              1.0190173347090175,
+              1.0240874829352422
+            ],
+            "e_folding_days_if_gain_gt_1": 470.814637083186,
+            "gain": 1.021466951112457
+          }
+        }
+      }
+    },
+    "normalized_max_abs": {
+      "day0_ensemble_mean": 3.4879751046498617,
+      "day2000_ensemble_mean": 322.3916463216146,
+      "day200_ensemble_mean": 3.7522424856821694,
+      "day300_ensemble_mean": 5.5740654786427815,
+      "gain_1700_2000": {
+        "e_folding_days_if_gain_gt_1": 336.07684444309615,
+        "gain": 1.0302022061871798
+      },
+      "gain_300_600": {
+        "e_folding_days_if_gain_gt_1": 401.28141615095393,
+        "gain": 1.025233270053698
+      },
+      "gain_700_1000": {
+        "e_folding_days_if_gain_gt_1": 657.6711008794371,
+        "gain": 1.0153213553515401
+      }
+    }
+  },
+  "version": "model_c_s0_stability_instrument_v1"
+}

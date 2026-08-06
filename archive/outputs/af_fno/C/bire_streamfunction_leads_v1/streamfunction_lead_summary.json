@@ -1,0 +1,79 @@
+{
+  "all_predictions_finite": true,
+  "inference_opened": false,
+  "lead_metrics": {
+    "20": {
+      "difference_symmetric_bound_sv": 0.7239546780183446,
+      "maximum_absolute_error_sv": 0.7239546780183446,
+      "relative_rmse": 0.007002792547236195,
+      "rmse_sv": 0.09344416583664988,
+      "truth_prediction_symmetric_bound_sv": 45.5446891784668,
+      "truth_rms_sv": 13.343843217735998
+    },
+    "30": {
+      "difference_symmetric_bound_sv": 1.1284931525588036,
+      "maximum_absolute_error_sv": 1.1284931525588036,
+      "relative_rmse": 0.011844032017240358,
+      "rmse_sv": 0.15804376118137653,
+      "truth_prediction_symmetric_bound_sv": 45.5446891784668,
+      "truth_rms_sv": 13.34374653423138
+    },
+    "40": {
+      "difference_symmetric_bound_sv": 1.075171585471253,
+      "maximum_absolute_error_sv": 1.075171585471253,
+      "relative_rmse": 0.01322681153008476,
+      "rmse_sv": 0.17649861424390453,
+      "truth_prediction_symmetric_bound_sv": 45.5446891784668,
+      "truth_rms_sv": 13.344003113861069
+    },
+    "50": {
+      "difference_symmetric_bound_sv": 0.9424324963911204,
+      "maximum_absolute_error_sv": 0.9424324963911204,
+      "relative_rmse": 0.013016551547832085,
+      "rmse_sv": 0.1737074997851868,
+      "truth_prediction_symmetric_bound_sv": 45.5446891784668,
+      "truth_rms_sv": 13.34512440924631
+    },
+    "60": {
+      "difference_symmetric_bound_sv": 0.7207966115765885,
+      "maximum_absolute_error_sv": 0.7207966115765885,
+      "relative_rmse": 0.013595503821121567,
+      "rmse_sv": 0.181427520416961,
+      "truth_prediction_symmetric_bound_sv": 45.5446891784668,
+      "truth_rms_sv": 13.344670620819558
+    },
+    "70": {
+      "difference_symmetric_bound_sv": 0.7453770637512207,
+      "maximum_absolute_error_sv": 0.7453770637512207,
+      "relative_rmse": 0.016100018784518354,
+      "rmse_sv": 0.21483495612682305,
+      "truth_prediction_symmetric_bound_sv": 45.5446891784668,
+      "truth_rms_sv": 13.343770526119297
+    },
+    "80": {
+      "difference_symmetric_bound_sv": 0.9579768180847168,
+      "maximum_absolute_error_sv": 0.9579768180847168,
+      "relative_rmse": 0.01935765260868767,
+      "rmse_sv": 0.2583196937380521,
+      "truth_prediction_symmetric_bound_sv": 45.5446891784668,
+      "truth_rms_sv": 13.344577411318912
+    },
+    "90": {
+      "difference_symmetric_bound_sv": 1.1713008880615234,
+      "maximum_absolute_error_sv": 1.1713008880615234,
+      "relative_rmse": 0.02211240827887581,
+      "rmse_sv": 0.29509619860104663,
+      "truth_prediction_symmetric_bound_sv": 45.5446891784668,
+      "truth_rms_sv": 13.345276320849898
+    }
+  },
+  "maximum_normalized_abs": 20.824722290039062,
+  "report": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/bire_streamfunction_leads_v1/model_c_bire_streamfunction_leads_report.json",
+  "report_content_sha256": "63a5aa7bb452f5e065def0c43d8464901d51f323c029981aca71c972b2d04e28",
+  "report_sha256": "71c6e1dc1f9aea3ddcedb73e63439c42510c08ba50ad2925ab854bdbe589c206",
+  "start": 6335,
+  "status": "complete",
+  "summary_content_sha256": "1c252b0ccfac1bdd9cca9d6df8eaf0a5946867b8221b77222cf76fb64b62b9f5",
+  "tuning_authorized": false,
+  "version": "model_c_bire_streamfunction_leads_v1"
+}

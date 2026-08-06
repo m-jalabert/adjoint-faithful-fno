@@ -1,0 +1,44 @@
+{
+  "artifacts": {
+    "README.md": {
+      "bytes": 349,
+      "sha256": "b2cdfd800126914ff1c75444fa2a48a05f9f7d79b8362077c864b2a19db39c08"
+    },
+    "model_c_s0_highk_damping_arrays.npz": {
+      "bytes": 267219,
+      "sha256": "88eac71633281526ba8606d9bbe78197830a452ee91c57f3db886c096aaaf89d"
+    },
+    "model_c_s0_highk_damping_curves.csv": {
+      "bytes": 137831,
+      "sha256": "9bad46928a8f584998ff71171b806992c3fd05402473d3f98bb2724b635982ae"
+    },
+    "model_c_s0_highk_damping_report.json": {
+      "bytes": 4500,
+      "sha256": "8ca08f114763106721ea9688bb83fa56be15bc3cdf76266543e90335bc927a66"
+    },
+    "model_c_s0_highk_damping_summary.json": {
+      "bytes": 3334,
+      "sha256": "3c100081bd107ed3bc5efc6589ae363b17c74c5e648e4ff5fb5d066b7ff81806"
+    },
+    "model_c_s0_highk_inference_day2000_spectra.png": {
+      "bytes": 26757,
+      "sha256": "172e700518fdb8ac3f7227defe6b9e118bdbd285752b79960c1c4d4eb72dbf80"
+    },
+    "model_c_s0_highk_inference_log_rmse.png": {
+      "bytes": 22364,
+      "sha256": "d1aec21308a170409528f9cf067e75734402b65e36a1829caa55b68479eb5b7a"
+    },
+    "model_c_s0_highk_inference_normalized_envelope.png": {
+      "bytes": 9747,
+      "sha256": "f57cf5d974f5961419ffa34f5b7151ff518db86b18fc8c817b58821f5d77b9a3"
+    },
+    "model_c_s0_highk_training_selection.png": {
+      "bytes": 163017,
+      "sha256": "28b71ba5881c5c11f3f4cd8cbd76b61dc1e276a3d1552960935a399289b76c23"
+    }
+  },
+  "contract_sha256": "cf2f1c179d3609c7093e01c0000fe6e1503de3f40cab156cbf69ea5f46bf9554",
+  "manifest_content_sha256": "248c1b2e9a8a2949103fd3854a3647409d439c39ca9e82dfae1be9d20c8cd057",
+  "report_content_sha256": "856612ebb74866ac0e48e022f28564e076e5eb6cdc82ccafcb3e51933b6a2e11",
+  "version": "model_c_s0_highk_damping_control_v1"
+}

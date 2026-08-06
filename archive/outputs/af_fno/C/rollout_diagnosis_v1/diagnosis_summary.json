@@ -1,0 +1,68 @@
+{
+  "all_field_rmse_auc_ratios": {
+    "phihyd_bottom": {
+      "climatology": 0.3983926809016163,
+      "persistence": 3.1313395944223563
+    },
+    "phihyd_mid": {
+      "climatology": 0.6697014738376597,
+      "persistence": 3.284851747806109
+    },
+    "phihyd_surface": {
+      "climatology": 0.8413001421301052,
+      "persistence": 1.8669028075441265
+    },
+    "ssh": {
+      "climatology": 0.834065147701509,
+      "persistence": 1.8440248442814384
+    },
+    "sst": {
+      "climatology": 2.639933439560218,
+      "persistence": 2.020956146889722
+    },
+    "streamfunction": {
+      "climatology": 0.519610920082257,
+      "persistence": 0.36229129001878724
+    },
+    "surface_speed": {
+      "climatology": 0.2658732155148881,
+      "persistence": 0.21677550588640515
+    },
+    "temperature": {
+      "climatology": 0.5397608845443599,
+      "persistence": 0.9987417827182351
+    },
+    "u": {
+      "climatology": 0.1012812585518274,
+      "persistence": 0.07534459710349767
+    },
+    "v": {
+      "climatology": 0.2522617543999353,
+      "persistence": 0.18218810684718867
+    }
+  },
+  "arrays_sha256": "c3c403ab81b2211b3d519a017ec3e0737da99b34611d884565d3304f3b85f255",
+  "classification": "training_objective_or_checkpoint_gate_mismatch",
+  "every_seed_reproduces_drift": true,
+  "inference_opened": false,
+  "report_sha256": "7efdb07261254d18a941e38f9e6d2f8ce8ba2835943bd544f8fbaf836f171374",
+  "slow_field_mean_ratios_to_persistence": {
+    "phihyd_surface": {
+      "day10": 0.5517179640493818,
+      "day90": 3.873414479529051,
+      "rmse_auc_10_90_day": 1.8669028075441265
+    },
+    "ssh": {
+      "day10": 0.5315273125770821,
+      "day90": 3.8345049418252444,
+      "rmse_auc_10_90_day": 1.8440248442814384
+    },
+    "sst": {
+      "day10": 0.8087182428022842,
+      "day90": 4.2212058088228614,
+      "rmse_auc_10_90_day": 2.020956146889722
+    }
+  },
+  "status": "complete",
+  "summary_content_sha256": "56dc7e567f13761e6296095f401d175ebe5472166af9d84dfb8fdcab2a39c6d8"
+}

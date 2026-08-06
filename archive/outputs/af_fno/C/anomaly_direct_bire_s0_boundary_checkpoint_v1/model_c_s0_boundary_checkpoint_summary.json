@@ -1,0 +1,766 @@
+{
+  "checkpoint_count": 7,
+  "checkpoints": {
+    "11520": {
+      "all_states_finite": true,
+      "fields": {
+        "qx": {
+          "day2000_boundary_squared_error_fraction": {
+            "mean": 0.6735866418479309,
+            "p10": 0.5815548490418292,
+            "p90": 0.7630686607056194
+          },
+          "day2000_rmse_mean": {
+            "boundary": 328.67174660661044,
+            "east": 183.4007005289308,
+            "interior": 131.5131484316232,
+            "north": 348.9136553661976,
+            "south": 133.08510582578057,
+            "west": 498.43037424724264,
+            "wet": 200.27517427876373
+          },
+          "post_day200_growth_crossing_days": {
+            "boundary": {
+              "10": 1000,
+              "2": 350,
+              "5": 650
+            },
+            "interior": {
+              "10": 960,
+              "2": 340,
+              "5": 620
+            }
+          }
+        },
+        "qy": {
+          "day2000_boundary_squared_error_fraction": {
+            "mean": 0.8153520552141469,
+            "p10": 0.7682436730449966,
+            "p90": 0.8551981891212634
+          },
+          "day2000_rmse_mean": {
+            "boundary": 225.0090027792746,
+            "east": 45.899255459031295,
+            "interior": 61.002956085475354,
+            "north": 42.220211108524396,
+            "south": 47.35590785476233,
+            "west": 429.8224631842617,
+            "wet": 124.20705265910838
+          },
+          "post_day200_growth_crossing_days": {
+            "boundary": {
+              "10": 960,
+              "2": 340,
+              "5": 700
+            },
+            "interior": {
+              "10": 780,
+              "2": 350,
+              "5": 560
+            }
+          }
+        },
+        "streamfunction": {
+          "day2000_boundary_squared_error_fraction": {
+            "mean": 0.8403236893711203,
+            "p10": 0.8020752746517176,
+            "p90": 0.8829891645744177
+          },
+          "day2000_rmse_mean": {
+            "boundary": 716.3595280637876,
+            "east": 131.89040551931842,
+            "interior": 177.96778757743647,
+            "north": 584.6267226822728,
+            "south": 24.747985380533468,
+            "west": 1329.0836680432317,
+            "wet": 389.6922266123622
+          },
+          "post_day200_growth_crossing_days": {
+            "boundary": {
+              "10": 1090,
+              "2": 320,
+              "5": 540
+            },
+            "interior": {
+              "10": 1250,
+              "2": 320,
+              "5": 870
+            }
+          }
+        }
+      },
+      "first_mean_normalized_max_crossing_days": {
+        "100": 1320,
+        "20": 780,
+        "200": 1590,
+        "40": 1040
+      },
+      "normalized_max_abs_day2000": {
+        "mean": 915.9127766927083,
+        "p10": 670.0635009765625,
+        "p90": 1071.8983154296875
+      }
+    },
+    "13440": {
+      "all_states_finite": true,
+      "fields": {
+        "qx": {
+          "day2000_boundary_squared_error_fraction": {
+            "mean": 0.7277663581539577,
+            "p10": 0.5962462294359642,
+            "p90": 0.798709821793296
+          },
+          "day2000_rmse_mean": {
+            "boundary": 147.41922662516694,
+            "east": 129.21589028242778,
+            "interior": 51.13452677418336,
+            "north": 197.91137741379376,
+            "south": 67.64249907043465,
+            "west": 174.51910383111826,
+            "wet": 86.22061614659145
+          },
+          "post_day200_growth_crossing_days": {
+            "boundary": {
+              "10": 860,
+              "2": 360,
+              "5": 620
+            },
+            "interior": {
+              "10": 840,
+              "2": 340,
+              "5": 570
+            }
+          }
+        },
+        "qy": {
+          "day2000_boundary_squared_error_fraction": {
+            "mean": 0.8523634740809161,
+            "p10": 0.8230812805379935,
+            "p90": 0.881956651843101
+          },
+          "day2000_rmse_mean": {
+            "boundary": 100.5623100381474,
+            "east": 29.282469412159312,
+            "interior": 23.825308309753048,
+            "north": 22.31774783163337,
+            "south": 25.674131858336565,
+            "west": 190.69654375815944,
+            "wet": 54.28151637591213
+          },
+          "post_day200_growth_crossing_days": {
+            "boundary": {
+              "10": 790,
+              "2": 360,
+              "5": 600
+            },
+            "interior": {
+              "10": 820,
+              "2": 340,
+              "5": 550
+            }
+          }
+        },
+        "streamfunction": {
+          "day2000_boundary_squared_error_fraction": {
+            "mean": 0.7270797376520887,
+            "p10": 0.6004381761199769,
+            "p90": 0.8706659017126575
+          },
+          "day2000_rmse_mean": {
+            "boundary": 192.7380729386088,
+            "east": 76.58709416291612,
+            "interior": 63.30939027847032,
+            "north": 197.01109878576327,
+            "south": 14.697047495935951,
+            "west": 332.8351667541336,
+            "wet": 111.66086173314736
+          },
+          "post_day200_growth_crossing_days": {
+            "boundary": {
+              "10": 1260,
+              "2": 660,
+              "5": 920
+            },
+            "interior": {
+              "10": 920,
+              "2": 320,
+              "5": 590
+            }
+          }
+        }
+      },
+      "first_mean_normalized_max_crossing_days": {
+        "100": 1610,
+        "20": 880,
+        "200": 1840,
+        "40": 1210
+      },
+      "normalized_max_abs_day2000": {
+        "mean": 322.3916463216146,
+        "p10": 260.7679809570312,
+        "p90": 393.92921752929686
+      }
+    },
+    "14400": {
+      "all_states_finite": true,
+      "fields": {
+        "qx": {
+          "day2000_boundary_squared_error_fraction": {
+            "mean": 0.8110295321998396,
+            "p10": 0.6963281560854051,
+            "p90": 0.8804261548903138
+          },
+          "day2000_rmse_mean": {
+            "boundary": 235.24004881743335,
+            "east": 129.76945039414713,
+            "interior": 63.12461853888773,
+            "north": 201.92253913179425,
+            "south": 114.33605658229023,
+            "west": 379.7176132043068,
+            "wet": 130.04108027210285
+          },
+          "post_day200_growth_crossing_days": {
+            "boundary": {
+              "10": 830,
+              "2": 370,
+              "5": 600
+            },
+            "interior": {
+              "10": 760,
+              "2": 360,
+              "5": 570
+            }
+          }
+        },
+        "qy": {
+          "day2000_boundary_squared_error_fraction": {
+            "mean": 0.8351746460654348,
+            "p10": 0.785212568862885,
+            "p90": 0.9172701486291666
+          },
+          "day2000_rmse_mean": {
+            "boundary": 230.20754778474156,
+            "east": 42.80528994641408,
+            "interior": 56.00951585958986,
+            "north": 29.211518340049984,
+            "south": 68.24810857844231,
+            "west": 439.6527698948083,
+            "wet": 125.12480987971668
+          },
+          "post_day200_growth_crossing_days": {
+            "boundary": {
+              "10": 820,
+              "2": 340,
+              "5": 620
+            },
+            "interior": {
+              "10": 790,
+              "2": 320,
+              "5": 570
+            }
+          }
+        },
+        "streamfunction": {
+          "day2000_boundary_squared_error_fraction": {
+            "mean": 0.816532284713787,
+            "p10": 0.7313628018843523,
+            "p90": 0.8894883529020938
+          },
+          "day2000_rmse_mean": {
+            "boundary": 499.24785032637027,
+            "east": 85.10121322646029,
+            "interior": 130.45330701476888,
+            "north": 389.30467901119044,
+            "south": 26.962316722021065,
+            "west": 935.430405593938,
+            "wet": 274.5500973592524
+          },
+          "post_day200_growth_crossing_days": {
+            "boundary": {
+              "10": 1080,
+              "2": 640,
+              "5": 920
+            },
+            "interior": {
+              "10": 900,
+              "2": 430,
+              "5": 690
+            }
+          }
+        }
+      },
+      "first_mean_normalized_max_crossing_days": {
+        "100": 1380,
+        "20": 800,
+        "200": 1580,
+        "40": 1100
+      },
+      "normalized_max_abs_day2000": {
+        "mean": 798.5453898111979,
+        "p10": 706.7928466796875,
+        "p90": 892.4810180664062
+      }
+    },
+    "14880": {
+      "all_states_finite": true,
+      "fields": {
+        "qx": {
+          "day2000_boundary_squared_error_fraction": {
+            "mean": 0.663165725936249,
+            "p10": 0.5586338562143752,
+            "p90": 0.7541243302170362
+          },
+          "day2000_rmse_mean": {
+            "boundary": 139.9257647007289,
+            "east": 106.60691047080839,
+            "interior": 56.52997609503343,
+            "north": 160.95242438509274,
+            "south": 84.42710034467163,
+            "west": 186.73411607093345,
+            "wet": 85.62615437590101
+          },
+          "post_day200_growth_crossing_days": {
+            "boundary": {
+              "10": 830,
+              "2": 360,
+              "5": 590
+            },
+            "interior": {
+              "10": 800,
+              "2": 360,
+              "5": 580
+            }
+          }
+        },
+        "qy": {
+          "day2000_boundary_squared_error_fraction": {
+            "mean": 0.8283460197586923,
+            "p10": 0.7711915564998967,
+            "p90": 0.8728929409643517
+          },
+          "day2000_rmse_mean": {
+            "boundary": 124.72104923610365,
+            "east": 27.567541655904176,
+            "interior": 32.60111632255933,
+            "north": 21.312661297176696,
+            "south": 29.75097913114386,
+            "west": 238.27560792945587,
+            "wet": 68.4400798196447
+          },
+          "post_day200_growth_crossing_days": {
+            "boundary": {
+              "10": 930,
+              "2": 390,
+              "5": 710
+            },
+            "interior": {
+              "10": 810,
+              "2": 330,
+              "5": 580
+            }
+          }
+        },
+        "streamfunction": {
+          "day2000_boundary_squared_error_fraction": {
+            "mean": 0.6991915249461628,
+            "p10": 0.5827780909792545,
+            "p90": 0.8299543983408346
+          },
+          "day2000_rmse_mean": {
+            "boundary": 216.98053845030947,
+            "east": 75.36838255621078,
+            "interior": 76.14261960114806,
+            "north": 200.99579977002014,
+            "south": 20.586658536854596,
+            "west": 384.87724338303906,
+            "wet": 127.5813725455112
+          },
+          "post_day200_growth_crossing_days": {
+            "boundary": {
+              "10": 820,
+              "2": 390,
+              "5": 630
+            },
+            "interior": {
+              "10": 860,
+              "2": 490,
+              "5": 680
+            }
+          }
+        }
+      },
+      "first_mean_normalized_max_crossing_days": {
+        "100": 1480,
+        "20": 730,
+        "200": 1790,
+        "40": 1070
+      },
+      "normalized_max_abs_day2000": {
+        "mean": 352.8684122721354,
+        "p10": 265.26405029296876,
+        "p90": 437.9897827148437
+      }
+    },
+    "15360": {
+      "all_states_finite": true,
+      "fields": {
+        "qx": {
+          "day2000_boundary_squared_error_fraction": {
+            "mean": 0.7208655291474436,
+            "p10": 0.6543889671657651,
+            "p90": 0.7763998423278341
+          },
+          "day2000_rmse_mean": {
+            "boundary": 128.8708238815613,
+            "east": 83.89524501160275,
+            "interior": 45.814656884600105,
+            "north": 151.61844482900486,
+            "south": 70.34890053299104,
+            "west": 174.75324665805854,
+            "wet": 75.65601742871755
+          },
+          "post_day200_growth_crossing_days": {
+            "boundary": {
+              "10": 870,
+              "2": 390,
+              "5": 640
+            },
+            "interior": {
+              "10": 770,
+              "2": 360,
+              "5": 580
+            }
+          }
+        },
+        "qy": {
+          "day2000_boundary_squared_error_fraction": {
+            "mean": 0.8112961702086504,
+            "p10": 0.7679727502479475,
+            "p90": 0.8479138905178747
+          },
+          "day2000_rmse_mean": {
+            "boundary": 87.7761864657579,
+            "east": 24.466638537339623,
+            "interior": 24.222875740567517,
+            "north": 18.439417682175623,
+            "south": 23.701666274662898,
+            "west": 166.58362582210344,
+            "wet": 48.598496036577906
+          },
+          "post_day200_growth_crossing_days": {
+            "boundary": {
+              "10": 820,
+              "2": 370,
+              "5": 620
+            },
+            "interior": {
+              "10": 810,
+              "2": 330,
+              "5": 550
+            }
+          }
+        },
+        "streamfunction": {
+          "day2000_boundary_squared_error_fraction": {
+            "mean": 0.7724151145771951,
+            "p10": 0.6130529899235592,
+            "p90": 0.8832675470151595
+          },
+          "day2000_rmse_mean": {
+            "boundary": 202.48074277390816,
+            "east": 49.710581680022514,
+            "interior": 58.467047137494546,
+            "north": 182.05736328614242,
+            "south": 16.36285943836551,
+            "west": 366.3324672851598,
+            "wet": 113.80699659884654
+          },
+          "post_day200_growth_crossing_days": {
+            "boundary": {
+              "10": 940,
+              "2": 420,
+              "5": 720
+            },
+            "interior": {
+              "10": 750,
+              "2": 380,
+              "5": 610
+            }
+          }
+        }
+      },
+      "first_mean_normalized_max_crossing_days": {
+        "100": 1570,
+        "20": 750,
+        "200": 1850,
+        "40": 1140
+      },
+      "normalized_max_abs_day2000": {
+        "mean": 309.2629140218099,
+        "p10": 200.45045471191406,
+        "p90": 385.34296264648435
+      }
+    },
+    "3840": {
+      "all_states_finite": true,
+      "fields": {
+        "qx": {
+          "day2000_boundary_squared_error_fraction": {
+            "mean": 0.6547233806063606,
+            "p10": 0.5050724153995091,
+            "p90": 0.7558272568553022
+          },
+          "day2000_rmse_mean": {
+            "boundary": 3475.4327449340917,
+            "east": 2639.374351351139,
+            "interior": 1389.3108324327504,
+            "north": 3534.2516705897024,
+            "south": 2449.281955712287,
+            "west": 4631.455365963722,
+            "wet": 2123.69590574922
+          },
+          "post_day200_growth_crossing_days": {
+            "boundary": {
+              "10": 750,
+              "2": 380,
+              "5": 610
+            },
+            "interior": {
+              "10": 730,
+              "2": 400,
+              "5": 580
+            }
+          }
+        },
+        "qy": {
+          "day2000_boundary_squared_error_fraction": {
+            "mean": 0.8980428338878387,
+            "p10": 0.8577598421065966,
+            "p90": 0.9445401081005664
+          },
+          "day2000_rmse_mean": {
+            "boundary": 4219.357250123287,
+            "east": 909.9695951310459,
+            "interior": 762.0484350331647,
+            "north": 827.0049069333523,
+            "south": 1328.8315289551667,
+            "west": 8050.390201107739,
+            "wet": 2211.0717242614437
+          },
+          "post_day200_growth_crossing_days": {
+            "boundary": {
+              "10": 660,
+              "2": 330,
+              "5": 500
+            },
+            "interior": {
+              "10": 690,
+              "2": 370,
+              "5": 530
+            }
+          }
+        },
+        "streamfunction": {
+          "day2000_boundary_squared_error_fraction": {
+            "mean": 0.5341792501462941,
+            "p10": 0.28453304475172464,
+            "p90": 0.7484330999968686
+          },
+          "day2000_rmse_mean": {
+            "boundary": 5921.719771957603,
+            "east": 820.2053872199716,
+            "interior": 2837.7595075335976,
+            "north": 4470.634443875153,
+            "south": 596.8342037028665,
+            "west": 10863.381057653072,
+            "wet": 3912.9934420878903
+          },
+          "post_day200_growth_crossing_days": {
+            "boundary": {
+              "10": 840,
+              "2": 460,
+              "5": 720
+            },
+            "interior": {
+              "10": 660,
+              "2": 340,
+              "5": 510
+            }
+          }
+        }
+      },
+      "first_mean_normalized_max_crossing_days": {
+        "100": 780,
+        "20": 410,
+        "200": 950,
+        "40": 550
+      },
+      "normalized_max_abs_day2000": {
+        "mean": 18281.230338541667,
+        "p10": 14109.4478515625,
+        "p90": 21174.68515625
+      }
+    },
+    "7680": {
+      "all_states_finite": true,
+      "fields": {
+        "qx": {
+          "day2000_boundary_squared_error_fraction": {
+            "mean": 0.643205008617365,
+            "p10": 0.5581059646432963,
+            "p90": 0.7463947620256618
+          },
+          "day2000_rmse_mean": {
+            "boundary": 1065.7120780676578,
+            "east": 383.07775742799714,
+            "interior": 455.2965485283449,
+            "north": 1027.5375031684862,
+            "south": 646.8353489005035,
+            "west": 1608.411014241617,
+            "wet": 664.1668818165451
+          },
+          "post_day200_growth_crossing_days": {
+            "boundary": {
+              "10": 990,
+              "2": 470,
+              "5": 790
+            },
+            "interior": {
+              "10": 740,
+              "2": 340,
+              "5": 560
+            }
+          }
+        },
+        "qy": {
+          "day2000_boundary_squared_error_fraction": {
+            "mean": 0.7939557260401398,
+            "p10": 0.7382778675775445,
+            "p90": 0.8525452999306276
+          },
+          "day2000_rmse_mean": {
+            "boundary": 1130.3143484845607,
+            "east": 163.98517081514586,
+            "interior": 326.65325764383596,
+            "north": 112.11394980235329,
+            "south": 180.48094144110445,
+            "west": 2170.9658994038923,
+            "wet": 632.1049485475436
+          },
+          "post_day200_growth_crossing_days": {
+            "boundary": {
+              "10": 690,
+              "2": 310,
+              "5": 500
+            },
+            "interior": {
+              "10": 830,
+              "2": 320,
+              "5": 540
+            }
+          }
+        },
+        "streamfunction": {
+          "day2000_boundary_squared_error_fraction": {
+            "mean": 0.5134385380103778,
+            "p10": 0.3045075248031087,
+            "p90": 0.7811215461723644
+          },
+          "day2000_rmse_mean": {
+            "boundary": 901.029328048859,
+            "east": 185.61737234654623,
+            "interior": 471.65499553045777,
+            "north": 930.2170019700446,
+            "south": 161.90026940464512,
+            "west": 1479.0468092841843,
+            "wet": 619.1425068410565
+          },
+          "post_day200_growth_crossing_days": {
+            "boundary": {
+              "10": 1220,
+              "2": 580,
+              "5": 1020
+            },
+            "interior": {
+              "10": 670,
+              "2": 330,
+              "5": 520
+            }
+          }
+        }
+      },
+      "first_mean_normalized_max_crossing_days": {
+        "100": 1040,
+        "20": 580,
+        "200": 1260,
+        "40": 780
+      },
+      "normalized_max_abs_day2000": {
+        "mean": 3247.628653971354,
+        "p10": 2134.0661376953126,
+        "p90": 4068.49228515625
+      }
+    }
+  },
+  "classification_scope": "zero_retraining_training_duration_and_boundary_localization_diagnosis_only",
+  "member_count": 15,
+  "regions": {
+    "boundary": 896,
+    "east": 240,
+    "interior": 2704,
+    "north": 240,
+    "south": 240,
+    "west": 240,
+    "wet": 3600
+  },
+  "selected_spatial_consistency_day2000": {
+    "qx": {
+      "hotspot_cell_count": 127,
+      "hotspot_mean_sign_agreement": 0.9322834645669292,
+      "mean_sign_agreement_boundary": 0.7697916666666667,
+      "mean_sign_agreement_interior": 0.7213264299802762,
+      "mean_sign_agreement_wet": 0.7333888888888889,
+      "member_to_ensemble_mean_spatial_cosine": {
+        "mean": 0.7825717583270341,
+        "p10": 0.6912982031494802,
+        "p90": 0.8613309653367299
+      }
+    },
+    "qy": {
+      "hotspot_cell_count": 84,
+      "hotspot_mean_sign_agreement": 0.8849206349206352,
+      "mean_sign_agreement_boundary": 0.7155505952380954,
+      "mean_sign_agreement_interior": 0.7340236686390531,
+      "mean_sign_agreement_wet": 0.7294259259259259,
+      "member_to_ensemble_mean_spatial_cosine": {
+        "mean": 0.6490665245159664,
+        "p10": 0.5126966180388663,
+        "p90": 0.7671275433358493
+      }
+    },
+    "streamfunction": {
+      "hotspot_cell_count": 324,
+      "hotspot_mean_sign_agreement": 0.9711934156378601,
+      "mean_sign_agreement_boundary": 0.8626488095238096,
+      "mean_sign_agreement_interior": 0.8320759368836292,
+      "mean_sign_agreement_wet": 0.8396851851851852,
+      "member_to_ensemble_mean_spatial_cosine": {
+        "mean": 0.902112494895271,
+        "p10": 0.7275737302392297,
+        "p90": 0.9740687356801181
+      }
+    }
+  },
+  "selected_step": 13440,
+  "status": "complete",
+  "training_duration_diagnosis": {
+    "any_earlier_checkpoint_avoids_normalized_20_through_day2000": false,
+    "descriptive_only_not_checkpoint_reselection": true,
+    "earlier_first_normalized_20_days": [
+      410,
+      580,
+      780
+    ],
+    "selected_first_normalized_20_day": 880
+  }
+}

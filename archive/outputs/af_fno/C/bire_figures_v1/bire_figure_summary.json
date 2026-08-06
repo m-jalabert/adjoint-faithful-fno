@@ -1,0 +1,101 @@
+{
+  "all_predictions_finite": true,
+  "inference_opened": false,
+  "maximum_normalized_abs": 23.969284057617188,
+  "metric_summary": {
+    "phihyd_surface": {
+      "climatology": {
+        "day200_mean": 0.07187305092811584,
+        "day200_p10": 0.07133433669805526,
+        "day200_p90": 0.0725162535905838,
+        "maximum_mean": 0.07219560742378235,
+        "maximum_p90": 0.07320736050605774,
+        "mean_curve_exceeds_requested_axis": false,
+        "p90_curve_exceeds_requested_axis": false
+      },
+      "model": {
+        "day200_mean": 3.746949561436971,
+        "day200_p10": 3.6511011123657227,
+        "day200_p90": 3.8789658069610597,
+        "maximum_mean": 3.746949561436971,
+        "maximum_p90": 3.8789658069610597,
+        "mean_curve_exceeds_requested_axis": true,
+        "p90_curve_exceeds_requested_axis": true
+      },
+      "persistence": {
+        "day200_mean": 0.025312833239634833,
+        "day200_p10": 0.022950590401887894,
+        "day200_p90": 0.028205917775630952,
+        "maximum_mean": 0.03177366033196449,
+        "maximum_p90": 0.037328460812568666,
+        "mean_curve_exceeds_requested_axis": false,
+        "p90_curve_exceeds_requested_axis": false
+      }
+    },
+    "sst": {
+      "climatology": {
+        "day200_mean": 0.03646741236249606,
+        "day200_p10": 0.033295938372612,
+        "day200_p90": 0.03878641724586487,
+        "maximum_mean": 0.038280377785364784,
+        "maximum_p90": 0.04158183932304382,
+        "mean_curve_exceeds_requested_axis": false,
+        "p90_curve_exceeds_requested_axis": false
+      },
+      "model": {
+        "day200_mean": 5.981214777628581,
+        "day200_p10": 5.8008746147155765,
+        "day200_p90": 6.110537528991699,
+        "maximum_mean": 5.981214777628581,
+        "maximum_p90": 6.110537528991699,
+        "mean_curve_exceeds_requested_axis": true,
+        "p90_curve_exceeds_requested_axis": true
+      },
+      "persistence": {
+        "day200_mean": 0.05048264563083649,
+        "day200_p10": 0.04783906638622284,
+        "day200_p90": 0.05372856855392456,
+        "maximum_mean": 0.05324694365262985,
+        "maximum_p90": 0.057048749178647995,
+        "mean_curve_exceeds_requested_axis": false,
+        "p90_curve_exceeds_requested_axis": false
+      }
+    },
+    "surface_speed": {
+      "climatology": {
+        "day200_mean": 0.0031839954822013776,
+        "day200_p10": 0.002874774718657136,
+        "day200_p90": 0.003599895816296339,
+        "maximum_mean": 0.0036458884831517937,
+        "maximum_p90": 0.003945084288716316,
+        "mean_curve_exceeds_requested_axis": false,
+        "p90_curve_exceeds_requested_axis": false
+      },
+      "model": {
+        "day200_mean": 0.07344071368376413,
+        "day200_p10": 0.0707483395934105,
+        "day200_p90": 0.07603737711906433,
+        "maximum_mean": 0.07344071368376413,
+        "maximum_p90": 0.07603737711906433,
+        "mean_curve_exceeds_requested_axis": false,
+        "p90_curve_exceeds_requested_axis": false
+      },
+      "persistence": {
+        "day200_mean": 0.00479537012676398,
+        "day200_p10": 0.004360523819923401,
+        "day200_p90": 0.00533791035413742,
+        "maximum_mean": 0.0056702135441203914,
+        "maximum_p90": 0.0064827194437384605,
+        "mean_curve_exceeds_requested_axis": false,
+        "p90_curve_exceeds_requested_axis": false
+      }
+    }
+  },
+  "report": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/bire_figures_v1/model_c_bire_figures_report.json",
+  "report_content_sha256": "d15b0808e6b556517a9b1885906a0d7ae44abd03c4dca6d6b4b0a0f4c15e3ba4",
+  "report_sha256": "b704b921444dc4093e0af70f68307d63cea44e4893bd526bbdacf4c65e300ac5",
+  "status": "complete",
+  "summary_content_sha256": "cd0d684f0f2ceade6566cb527a8a7294f0069c1d0d9fe60036968fb1fa6a8a4f",
+  "tuning_authorized": false,
+  "version": "model_c_bire_figures_v1"
+}

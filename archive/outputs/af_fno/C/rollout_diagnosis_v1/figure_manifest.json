@@ -1,0 +1,49 @@
+{
+  "diagnosis_arrays": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/rollout_diagnosis_v1/model_c_rollout_diagnosis_arrays.npz",
+  "diagnosis_arrays_sha256": "c3c403ab81b2211b3d519a017ec3e0737da99b34611d884565d3304f3b85f255",
+  "diagnosis_report": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/rollout_diagnosis_v1/model_c_rollout_diagnosis_report.json",
+  "diagnosis_report_content_sha256": "2ea8a888e58568c4c67fc7dfe7ac991bf591c08df9ea307d5b1e688715e611ad",
+  "diagnosis_report_sha256": "7efdb07261254d18a941e38f9e6d2f8ce8ba2835943bd544f8fbaf836f171374",
+  "figures": {
+    "model_c_training_all_field_rmse_auc_ratios.png": {
+      "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/rollout_diagnosis_v1/model_c_training_all_field_rmse_auc_ratios.png",
+      "sha256": "266165ae50dbb65ca1c729180a9027f9cd2510149a3611bb32476bb31863cd9f"
+    },
+    "model_c_training_primary_rmse_ratio_vs_persistence.png": {
+      "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/rollout_diagnosis_v1/model_c_training_primary_rmse_ratio_vs_persistence.png",
+      "sha256": "66d5aacbe4b1ccfb42ece983da94dfe79f095c912ec74dcce664255d476cc21f"
+    },
+    "model_c_training_vs_validation_slow_field_drift.png": {
+      "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/rollout_diagnosis_v1/model_c_training_vs_validation_slow_field_drift.png",
+      "sha256": "a8a8b69744ae3c8da3265c47b5658a20483f29c3c075142849306a38510eec17"
+    }
+  },
+  "inference_opened": false,
+  "lead_days": [
+    10,
+    20,
+    30,
+    40,
+    50,
+    60,
+    70,
+    80,
+    90
+  ],
+  "manifest_content_sha256": "664e66a0866d8af85ca33561b6892bf64e426c7049fff37691ab4094f5393671",
+  "record_count": 540,
+  "seeds": [
+    20260723,
+    20260724,
+    20260725
+  ],
+  "status": "complete",
+  "summary": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/rollout_diagnosis_v1/diagnosis_summary.json",
+  "summary_sha256": "98d53a38d3747a5a655fe9a3d1ccc74881b74d65d1477880c7d6caa4c6910ea8",
+  "validation_arrays": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/successor_validation_v1/fresh_validation/model_c_successor_validation_arrays.npz",
+  "validation_arrays_sha256": "fd84199b585e539dcadf05e41685c3a6845e8574dc7af596bfd487334e19dccc",
+  "validation_report": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/successor_validation_v1/fresh_validation/model_c_successor_validation_report.json",
+  "validation_report_content_sha256": "5537401af56d922b7a74c7bb33ffb2c741678275c39f2c1d3ce5ae66fefe394d",
+  "validation_report_sha256": "9853ea7aff210ae880b4463583f5aae34a1d11508d98b72eb9fab93f582663fb",
+  "version": "model_c_rollout_diagnosis_plots_v1"
+}

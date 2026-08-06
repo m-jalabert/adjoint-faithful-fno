@@ -1,0 +1,355 @@
+{
+  "architecture": {
+    "channel_mlp_dropout": 0.0,
+    "channel_mlp_expansion": 4.0,
+    "domain_padding": 0.1,
+    "factorization": null,
+    "fno_block_precision": "full",
+    "grid_shape": [
+      62,
+      62
+    ],
+    "hidden_channels": 128,
+    "in_channels": 49,
+    "lifting_channel_ratio": 2,
+    "lifting_in_channels": 51,
+    "local_kernel_size": null,
+    "n_layers": 3,
+    "n_modes": [
+      24,
+      16
+    ],
+    "out_channels": 46,
+    "pointwise_layer_norm": true,
+    "positional_channels": 2,
+    "positional_embedding": null,
+    "projection_channel_ratio": 2,
+    "use_channel_mlp": true
+  },
+  "arrays": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/bire_aligned_faithful_v1/bire_aligned_full_state_arrays.npz",
+  "arrays_sha256": "5c3c13cb7658de54bb7f34bda16e9268fbde9fb0738f1744599156cba7eedede",
+  "channel_mlp_dropout": 0.0,
+  "checkpoint_selection": {
+    "finetuned": {
+      "candidates": [
+        {
+          "epoch": 3,
+          "optimizer_step": 5760,
+          "validation_total": 0.017194517939245525
+        },
+        {
+          "epoch": 4,
+          "optimizer_step": 7680,
+          "validation_total": 0.014439059251862039
+        }
+      ],
+      "selected_epoch": 4,
+      "selected_optimizer_step": 7680,
+      "validation_total": 0.014439059251862039
+    },
+    "pretrained": {
+      "candidates": [
+        {
+          "epoch": 1,
+          "optimizer_step": 1920,
+          "validation_total": 0.019799158887232004
+        },
+        {
+          "epoch": 2,
+          "optimizer_step": 3840,
+          "validation_total": 0.009839794350416466
+        }
+      ],
+      "selected_epoch": 2,
+      "selected_optimizer_step": 3840,
+      "validation_total": 0.009839794350416466
+    }
+  },
+  "content_sha256": "19d42d8cbc9d0434f7137d5e207ea1ceaf7eec3b5a1bcba21534a06ad28dc095",
+  "contract": "/home/mjalabert314/bire_james25_repro/config/model_c_bire_aligned_faithful_v1.json",
+  "contract_sha256": "7c3e012dae74694e61973bbbe65dc83b994d02dda6aca2359acf8030d5a9729a",
+  "corrected_divergences": {
+    "checkpoint_selection": {
+      "now": "lowest_validation_loss_within_each_stage",
+      "was": "fixed_optimizer_steps"
+    },
+    "learning_rate_schedule": {
+      "now": "cosine_annealing_t_max_3_eta_min_1e_5",
+      "was": "step_decay_0p2_at_75_percent"
+    },
+    "mae_weight": {
+      "now": 0.05,
+      "was": 0.01
+    }
+  },
+  "dropout_note": "left at zero deliberately; the repository default of 0.5 is a regulariser the paper does not specify and belongs to its own arm",
+  "elapsed_seconds": 1218.477271888405,
+  "epoch_definition": {
+    "epoch_boundaries": [
+      1920,
+      3840,
+      5760,
+      7680
+    ],
+    "epoch_count": 4,
+    "epoch_steps": 1920,
+    "note": "a fixed 1920-step period, so the optimizer-step and sequence exposure budget matches the earlier Bire-aligned arms exactly"
+  },
+  "epoch_records": [
+    {
+      "checkpoint": "model_c_bire_faithful_epoch_1.pt",
+      "epoch": 1,
+      "learning_rate": 0.0005,
+      "optimizer_step": 1920,
+      "stage_id": "pretrained",
+      "validation_total": 0.019799158887232004
+    },
+    {
+      "checkpoint": "model_c_bire_faithful_epoch_2.pt",
+      "epoch": 2,
+      "learning_rate": 0.0003775,
+      "optimizer_step": 3840,
+      "stage_id": "pretrained",
+      "validation_total": 0.009839794350416466
+    },
+    {
+      "checkpoint": "model_c_bire_faithful_epoch_3.pt",
+      "epoch": 3,
+      "learning_rate": 0.00013250000000000005,
+      "optimizer_step": 5760,
+      "stage_id": "finetuned",
+      "validation_total": 0.017194517939245525
+    },
+    {
+      "checkpoint": "model_c_bire_faithful_epoch_4.pt",
+      "epoch": 4,
+      "learning_rate": 1e-05,
+      "optimizer_step": 7680,
+      "stage_id": "finetuned",
+      "validation_total": 0.014439059251862039
+    }
+  ],
+  "evaluation_summaries": [
+    {
+      "day360_bottom_integrated_energy_ratio": 1.0381466835955384,
+      "day360_bottom_modewise_ratio": 231.80206170599715,
+      "day360_mid_integrated_energy_ratio": 1.1039139518937158,
+      "day360_mid_modewise_ratio": 435.3466807881489,
+      "fine_tune_step": 3840,
+      "first_bottom_factor_four_failure_day": 30,
+      "first_mid_factor_four_failure_day": 10,
+      "gate": {
+        "day360_integrated_energy_bounded": true,
+        "mid_bottom_factor_four_all_leads": true,
+        "pass": false,
+        "primary_below_persistence": false,
+        "primary_degradation_bounded": false
+      },
+      "optimizer_step": 3840,
+      "primary_10_to_90_rmse_ratio_to_persistence": {
+        "phihyd_surface": 1.9591662774712615,
+        "sst": 0.696450667012504,
+        "surface_speed": 0.7183730718208727
+      },
+      "primary_ratio_relative_to_source": {
+        "phihyd_surface": 5.749019361020333,
+        "sst": 3.2755516680045513,
+        "surface_speed": 3.2381683651005964
+      },
+      "stage_id": "pretrained",
+      "worst_mid_bottom_modewise_ratio_all_leads": 435.3466807881489,
+      "worst_primary_10_to_90_ratio": 1.9591662774712615,
+      "worst_primary_relative_to_source": 5.749019361020333
+    },
+    {
+      "day360_bottom_integrated_energy_ratio": 0.9881295399002827,
+      "day360_bottom_modewise_ratio": 63.00627545468111,
+      "day360_mid_integrated_energy_ratio": 1.041210890033043,
+      "day360_mid_modewise_ratio": 133.34854673349005,
+      "fine_tune_step": 7680,
+      "first_bottom_factor_four_failure_day": 100,
+      "first_mid_factor_four_failure_day": 40,
+      "gate": {
+        "day360_integrated_energy_bounded": true,
+        "mid_bottom_factor_four_all_leads": true,
+        "pass": false,
+        "primary_below_persistence": true,
+        "primary_degradation_bounded": false
+      },
+      "optimizer_step": 7680,
+      "primary_10_to_90_rmse_ratio_to_persistence": {
+        "phihyd_surface": 0.8926013787914159,
+        "sst": 0.4485052216140559,
+        "surface_speed": 0.4711806825549779
+      },
+      "primary_ratio_relative_to_source": {
+        "phihyd_surface": 2.619268546704846,
+        "sst": 2.1094129079788733,
+        "surface_speed": 2.123913660389106
+      },
+      "stage_id": "finetuned",
+      "worst_mid_bottom_modewise_ratio_all_leads": 133.34854673349005,
+      "worst_primary_10_to_90_ratio": 0.8926013787914159,
+      "worst_primary_relative_to_source": 2.619268546704846
+    }
+  ],
+  "held_s0_state_opened": false,
+  "inference_state_opened": false,
+  "learning_rate_schedule": {
+    "eta_min": 1e-05,
+    "kind": "cosine_annealing",
+    "replaces": "the_project_specific_step_decay_of_0p2_at_75_percent_of_the_budget",
+    "stepped": "once_per_epoch_as_in_the_reference_implementation",
+    "t_max": 3
+  },
+  "loss": {
+    "channels": "all_46_normalized_state_channels",
+    "mae_weight": 0.05,
+    "objective": "wet_cell_mse_plus_0p05_mae",
+    "reduction": "sum_of_masked_error_divided_by_batch_times_channels_times_wet_cell_count",
+    "removed_terms": [
+      "state",
+      "increment",
+      "rollout",
+      "spectral",
+      "western_boundary"
+    ],
+    "wet_mask_reason": "our_grid_contains_land_so_the_dense_grid_Bire_objective_must_be_restricted_to_wet_cells"
+  },
+  "optimizer": {
+    "adam_betas": [
+      0.9,
+      0.95
+    ],
+    "batch_size": 8,
+    "gradient_clipping": false,
+    "initial_learning_rate": 0.0005,
+    "name": "adam",
+    "weight_decay": 0.0
+  },
+  "parameter_count": 11154478,
+  "published_checkpoints": {
+    "finetuned": {
+      "checkpoint": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/bire_aligned_faithful_v1/finetuned.pt",
+      "checkpoint_sha256": "6a8a70ee100f3524cfd0792f8f0372fcd60c016d51e1b073e1591b989a74a347",
+      "epoch": 4,
+      "optimizer_step": 7680
+    },
+    "pretrained": {
+      "checkpoint": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/bire_aligned_faithful_v1/pretrained.pt",
+      "checkpoint_sha256": "a21cbce6dff73c30ba6de3cd183b228c25638df69d573d611d2aa9cb3fbf4a93",
+      "epoch": 2,
+      "optimizer_step": 3840
+    }
+  },
+  "read_contract": {
+    "adjoint_state": false,
+    "held_s0_state": false,
+    "inference_state": false,
+    "intermediate_wind_state": false,
+    "prior_training_metadata": true,
+    "response_state": false,
+    "training_state": true,
+    "validation_state": false
+  },
+  "record_split": {
+    "drawn_from": "split_1_training_records_only",
+    "total_records": 14940,
+    "training_records": 13446,
+    "validation_fraction": 0.1,
+    "validation_records": 1494,
+    "validation_records_sha256": "0f0185763668ab8f902bfc3eac44bfb9a148726cbcfe7237a1371f0511fc18c3",
+    "validation_split_seed": 20260730
+  },
+  "response_or_adjoint_state_opened": false,
+  "slurm_job_id": "314709",
+  "source_summary": {
+    "day360_bottom_integrated_energy_ratio": 1.0174416303634644,
+    "day360_bottom_modewise_ratio": 5.566149711608887,
+    "day360_mid_integrated_energy_ratio": 1.0323991775512695,
+    "day360_mid_modewise_ratio": 13.371350288391113,
+    "first_bottom_factor_four_failure_day": 310,
+    "first_mid_factor_four_failure_day": 180,
+    "optimizer_step": 13440,
+    "primary_10_to_90_rmse_ratio_to_persistence": {
+      "phihyd_surface": 0.34078268908865694,
+      "sst": 0.2126208766039029,
+      "surface_speed": 0.22184549746182078
+    },
+    "worst_mid_bottom_modewise_ratio_all_leads": 13.371350288391113,
+    "worst_primary_10_to_90_ratio": 0.34078268908865694
+  },
+  "status": "complete",
+  "training_history": [
+    {
+      "autoregressive_steps": 1,
+      "epoch": 1,
+      "learning_rate": 0.0005,
+      "optimizer_step": 1920,
+      "stage_id": "pretrained",
+      "training_window": {
+        "mae": 0.13036151712151747,
+        "mse": 0.04704772224694696,
+        "total": 0.053565798236537086
+      },
+      "validation": {
+        "mae": 0.08358117099227995,
+        "mse": 0.01562010022840267,
+        "total": 0.019799158887232004
+      }
+    },
+    {
+      "autoregressive_steps": 1,
+      "epoch": 2,
+      "learning_rate": 0.0003775,
+      "optimizer_step": 3840,
+      "stage_id": "pretrained",
+      "training_window": {
+        "mae": 0.06412075602337582,
+        "mse": 0.00984324668144532,
+        "total": 0.013049284542711965
+      },
+      "validation": {
+        "mae": 0.0543887788950998,
+        "mse": 0.007120355335344751,
+        "total": 0.009839794350416466
+      }
+    },
+    {
+      "autoregressive_steps": 2,
+      "epoch": 3,
+      "learning_rate": 0.00013250000000000005,
+      "optimizer_step": 5760,
+      "stage_id": "finetuned",
+      "training_window": {
+        "mae": 0.09981197169154715,
+        "mse": 0.014497395189862301,
+        "total": 0.019487993875934764
+      },
+      "validation": {
+        "mae": 0.0910285002136805,
+        "mse": 0.01264309287170968,
+        "total": 0.017194517939245525
+      }
+    },
+    {
+      "autoregressive_steps": 2,
+      "epoch": 4,
+      "learning_rate": 1e-05,
+      "optimizer_step": 7680,
+      "stage_id": "finetuned",
+      "training_window": {
+        "mae": 0.0791819627626711,
+        "mse": 0.010592266411462901,
+        "total": 0.014551364622694662
+      },
+      "validation": {
+        "mae": 0.07841873779354325,
+        "mse": 0.010518122252470837,
+        "total": 0.014439059251862039
+      }
+    }
+  ],
+  "validation_state_opened": false,
+  "version": "model_c_bire_aligned_faithful_v1"
+}

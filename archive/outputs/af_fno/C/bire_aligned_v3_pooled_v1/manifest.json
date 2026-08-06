@@ -1,0 +1,13 @@
+{
+  "artifacts": {
+    "README.md": "5dea1cacdbf375c631063f1ef0d542e4e1fc56638496d036ae3d6c891e85e3d4",
+    "bire_aligned_chronological_arrays.npz": "2a6abbae061734853d555837c246b7053e244cca388904d4e45c17699fb0fbc3",
+    "bire_aligned_chronological_report.json": "db29df7799e9ac272b1661d33f66d418cb42a13f770e03b9bdab57bed9bc7f48",
+    "model_c_bire_aligned_chronological_selection.png": "86879a3757b0689437ed98c2a62a2c509d717292bbef7a4d236493e5f7dd0522"
+  },
+  "content_sha256": "e65cd1f1b52fb438d1ca920e28f7c2cf7fabba55b82f6551e80126b9ebe6bf8d",
+  "contract_sha256": "1df2abfa9d665029fe0c09fbb961842a5564815a3104a50e0beb17b5954b0e2e",
+  "status": "complete",
+  "test_state_opened": false,
+  "version": "model_c_bire_aligned_v3_pooled_v1"
+}

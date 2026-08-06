@@ -1,0 +1,18 @@
+{
+  "artifacts": {
+    "README.md": "3dd3cfa283e0594e4431f1c9633a5c4292e82f80ff6148a08d0cc85c44bc4db5",
+    "model_c_three_layer_no_padding_selection.png": "bb364b50f6d30a427f9416f632d260ba1f1c5ccd98d0196b4cd5d0752fc57709",
+    "three_layer_no_padding_arrays.npz": "b91a63d3ca1186d3987082f190dc415d537a3352b149220edb88f724eee6a16b",
+    "three_layer_no_padding_report.json": "7b2821d353f44982ffea87d406a84df68cb7ae252818434060a0f0a645f622cc"
+  },
+  "content_sha256": "152190e6d06fec9008fbd13b22fc86d4fe31d8e4375dbc6f4a83372d54614539",
+  "contract_sha256": "7d405cfb83074545eed818629c66d4badc3e90762e2da4281793cf121545fd20",
+  "inference_state_opened": false,
+  "long_term_state_opened": false,
+  "recovery_contract_sha256": "9232cea2ae581d87e93c915cf6d422c35279ea6c10fd5bcf2a5d139e4cb8165b",
+  "recovery_version": "model_c_anomaly_direct_three_layer_no_padding_recovery_v2",
+  "response_or_adjoint_state_opened": false,
+  "retraining_steps": 0,
+  "status": "complete",
+  "version": "model_c_anomaly_direct_three_layer_no_padding_v1"
+}

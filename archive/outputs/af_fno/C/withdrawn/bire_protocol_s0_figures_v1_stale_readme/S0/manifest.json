@@ -1,0 +1,53 @@
+{
+  "artifacts": {
+    "README.md": {
+      "bytes": 2110,
+      "sha256": "fb627191429cb497550a39f9ae34425d0109c06776f580297b2c4f4abc989535"
+    },
+    "model_c_bire_figure3_streamfunction_1deg_s0_dt10.png": {
+      "bytes": 169048,
+      "sha256": "81ecddcb696ea86784e636d2bf4095460b0e7ae4f8226f77c88b467c729b4cb6"
+    },
+    "model_c_bire_figure4_dt10_rmse_0_200_days_s0.png": {
+      "bytes": 195442,
+      "sha256": "2a1611f3cc2f5a6143178b450265252850117dfb0f1d1c21b449bf3259919054"
+    },
+    "model_c_bire_figure5_dt10_single_member_rmse_s0.png": {
+      "bytes": 79056,
+      "sha256": "e96c92d1eee3868a2ad79063a63278b1217bb8b40268c98099c4eb1e28bc4014"
+    },
+    "model_c_bire_figure6_dt10_acc_0_200_days_s0.png": {
+      "bytes": 184560,
+      "sha256": "4eeddf4b7cb736a7d6cf956e6184de62f79d46207ccd71472a3fc981716203c1"
+    },
+    "model_c_bire_figure7_dt10_streamfunction_day060_day2000_s0.png": {
+      "bytes": 116338,
+      "sha256": "296d674774fad4a26b6a5d906f589c24a4cfa85186d2453182e178427cfde70a"
+    },
+    "model_c_bire_figure8_dt10_rmse_0_2000_days_s0.png": {
+      "bytes": 311106,
+      "sha256": "13136b705112a85dcd02cc077e71a77c7588585cdace727573475c656b9adf8e"
+    },
+    "model_c_bire_s0_ensemble_curves.csv": {
+      "bytes": 181484,
+      "sha256": "bb968b92dfc1843d5c043c1a8ea9da3705aa6f64514a621fe5144ce89b49bae9"
+    },
+    "model_c_bire_s0_figures_arrays.npz": {
+      "bytes": 293324,
+      "sha256": "1acd762ae63c5aa7e33a4e6f0a70e2bd8a2e0593a9101e2ad84b0d5d88163983"
+    },
+    "model_c_bire_s0_figures_report.json": {
+      "bytes": 5480,
+      "sha256": "e621287b7269e1233941e5609d7af248e1ce9f74d44dda56f150cffc0f3e98b2"
+    },
+    "model_c_bire_s0_figures_summary.json": {
+      "bytes": 3255,
+      "sha256": "06c0f45b0dce2aca20cead57c66bcd70d11d3ee195df03b6aa152035952f29e4"
+    }
+  },
+  "contract_sha256": "e17e393fddcaa1ea8eff7e9d09b3f9b7efe73afa436a033bc964edbb3c111a06",
+  "manifest_content_sha256": "5b9de60f6794b36793ca8eb798b2be954d7df285624ac58cd86f46bfd0141e2a",
+  "regime": "S0",
+  "report_content_sha256": "c6d02e5d6899d7a191f324d3fff839153e6c6c7bac637041eeb395eac2471260",
+  "version": "model_c_bire_protocol_s0_figures_v1"
+}
