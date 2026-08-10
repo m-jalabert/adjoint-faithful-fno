@@ -1,4 +1,4 @@
-"""Tests for the canonical meridional-32 continuation of the local24 arm.
+"""Tests for the canonical 32x32 continuation of the retained Y32 arm.
 
 Three things here are worth more than the rest.
 
@@ -50,12 +50,13 @@ from oceanfno.train import (
     SPECTRAL_WEIGHT,
     TRAINING_RECORDS,
     TRAINING_STARTS_PER_REGIME,
+    TARGET_MODES,
     VERSION,
     WORST_LONG_RATIO_CEILING,
     BireProtocolRolloutFineTuneError,
     BireProtocolRolloutFineTuneLossConfig,
-    BireY32TrainingError,
-    Y32_MODES,
+    BireY32X32TrainingError,
+    _materialize,
     _readme,
     acceptance_gate,
     baseline_validation_summary,
@@ -66,9 +67,25 @@ from oceanfno.train import (
 )
 
 ROOT = Path(__file__).resolve().parents[1]
-CONTRACT = ROOT / "config/model_c_bire_protocol_rollout_ft_local24_y32_v1.json"
-PARENT = ROOT / "config/model_c_bire_protocol_rollout_ft_local24_v1.json"
+CONTRACT = ROOT / "config/model_c_bire_protocol_rollout_ft_y32_x32_v1.json"
+PARENT = ROOT / "config/model_c_bire_protocol_rollout_ft_local24_y32_v1.json"
+GRANDPARENT = ROOT / "config/model_c_bire_protocol_rollout_ft_local24_v1.json"
 SBATCH = ROOT / "slurm/models/c/train.sbatch"
+
+
+def _parent() -> dict:
+    """Resolve the Y32 parent the way its own declaration says it resolves.
+
+    The Y32 contract is compact and inherits five blocks from local24, so a
+    field-by-field comparison against the raw file would compare this arm
+    against fields that file does not contain.  Materializing here rather than
+    calling the module's own helper keeps the comparison independent of the
+    code under test.
+    """
+
+    return _materialize(
+        json.loads(PARENT.read_text()), json.loads(GRANDPARENT.read_text())
+    )
 
 torch = pytest.importorskip("torch", reason="the objective algebra needs PyTorch")
 
@@ -242,69 +259,92 @@ def test_the_rollout_term_is_not_the_three_step_one() -> None:
 
 
 # --------------------------------------------------------------------------
-# The active Y32 architecture and exact local24 warm migration
+# The active 32x32 architecture and exact Y32 warm migration
 # --------------------------------------------------------------------------
 
 
-def test_y32_has_32_meridional_modes_and_the_trained_local_branch() -> None:
+def test_the_active_model_has_32x32_modes_and_the_trained_local_branch() -> None:
     pytest.importorskip("neuralop")
-    from oceanfno.model import BireY32Architecture, build_bire_y32_model
+    from oceanfno.model import BireY32X32Architecture, build_bire_y32_x32_model
 
-    architecture = BireY32Architecture()
-    assert architecture.n_modes == Y32_MODES == (32, 24)
+    architecture = BireY32X32Architecture()
+    assert architecture.n_modes == TARGET_MODES == (32, 32)
     assert architecture.local_kernel_size == 3
-    model = build_bire_y32_model(architecture)
+    model = build_bire_y32_x32_model(architecture)
 
     convolutions = model.fno.fno_blocks.convs
     assert len(convolutions) == 3
     for index, convolution in enumerate(convolutions):
-        assert tuple(convolution.n_modes) == (32, 13), index
+        # The zonal axis is the real-transform axis: 32 requested modes are
+        # stored as 17 non-redundant coefficients, not 32.
+        assert tuple(convolution.n_modes) == (32, 17), index
         weight = model.state_dict()[
             f"fno.fno_blocks.convs.{index}.weight.tensor"
         ]
-        assert tuple(weight.shape) == (128, 128, 32, 13)
+        assert tuple(weight.shape) == (128, 128, 32, 17)
 
     local = model.local
     assert tuple(local.weight.shape) == (46, 49, 3, 3)
     assert local.padding == (1, 1)
     assert local.bias is None
+    assert sum(parameter.numel() for parameter in model.parameters()) == 27_296_620
+
+
+def test_the_retained_y32_parent_is_untouched() -> None:
+    """The comparator must still be the exact 32x24 model that was retained."""
+
+    pytest.importorskip("neuralop")
+    from oceanfno.model import BireY32Architecture, build_bire_y32_model
+
+    architecture = BireY32Architecture()
+    assert architecture.n_modes == PARENT_MODES == (32, 24)
+    assert "position_encoding" not in architecture.to_dict()
+    model = build_bire_y32_model(architecture)
+    for index in range(3):
+        weight = model.state_dict()[f"fno.fno_blocks.convs.{index}.weight.tensor"]
+        assert tuple(weight.shape) == (128, 128, 32, 13)
     assert sum(parameter.numel() for parameter in model.parameters()) == 21_005_164
 
 
-def test_y32_migration_is_centered_strict_and_bitwise_function_preserving() -> None:
+def test_x32_migration_is_strict_and_bitwise_function_preserving() -> None:
     pytest.importorskip("neuralop")
     from oceanfno.model import (
-        BireLocal24Architecture,
         BireY32Architecture,
-        build_bire_local24_model,
+        BireY32X32Architecture,
         build_bire_y32_model,
-        migrate_local24_state_dict,
+        build_bire_y32_x32_model,
+        migrate_y32_state_dict,
     )
 
     torch.manual_seed(19)
-    parent = build_bire_local24_model(BireLocal24Architecture()).eval()
+    parent = build_bire_y32_model(BireY32Architecture()).eval()
     # A real retained parent has a trained, nonzero local correction.  Seeding
     # it here catches a migration that silently re-zeroes that learned branch.
     with torch.no_grad():
         parent.local.weight.normal_(mean=0.0, std=0.02)
+        for index in range(3):
+            parent.fno.fno_blocks.convs[index].weight.tensor.normal_(
+                mean=0.0, std=0.02
+            )
     parent_state = _portable_state_dict(parent)
     parent_before = {key: value.clone() for key, value in parent_state.items()}
-    target = build_bire_y32_model(BireY32Architecture()).eval()
-    result = migrate_local24_state_dict(parent_state, target)
+    target = build_bire_y32_x32_model(BireY32X32Architecture()).eval()
+    result = migrate_y32_state_dict(parent_state, target)
     state = result["state_dict"]
     provenance = result["provenance"]
 
-    assert provenance["source_n_modes_tensor_order_y_x"] == [24, 24]
-    assert provenance["target_n_modes_tensor_order_y_x"] == [32, 24]
+    assert provenance["source_n_modes_tensor_order_y_x"] == [32, 24]
+    assert provenance["target_n_modes_tensor_order_y_x"] == [32, 32]
     assert len(provenance["spectral_expansions"]) == 3
     assert all(
-        record["copied_meridional_slice"] == [4, 28]
+        record["copied_zonal_slice"] == [0, 13]
+        and record["zero_initialized_new_zonal_coefficients"] == 4
         for record in provenance["spectral_expansions"]
     )
     assert provenance["strict_load"] is True
     assert provenance["missing_keys"] == []
     assert provenance["unexpected_keys"] == []
-    assert provenance["initial_map_preserved_by_centered_zero_extension"] is True
+    assert provenance["initial_map_preserved_by_zero_extension"] is True
 
     target_keys = {key for key in target.state_dict() if key != "_metadata"}
     assert set(state) == set(parent_state) == target_keys
@@ -315,11 +355,12 @@ def test_y32_migration_is_centered_strict_and_bitwise_function_preserving() -> N
         if key not in spectral:
             assert torch.equal(state[key], parent_value), key
     for key in spectral:
-        assert tuple(parent_state[key].shape) == (128, 128, 24, 13)
-        assert tuple(state[key].shape) == (128, 128, 32, 13)
-        assert torch.equal(state[key][..., 4:28, :], parent_state[key]), key
-        assert torch.count_nonzero(state[key][..., :4, :]).item() == 0, key
-        assert torch.count_nonzero(state[key][..., 28:, :]).item() == 0, key
+        assert tuple(parent_state[key].shape) == (128, 128, 32, 13)
+        assert tuple(state[key].shape) == (128, 128, 32, 17)
+        # The zonal axis is not fft-shifted, so the parent occupies the leading
+        # slice and the four new coefficients are the highest wavenumbers.
+        assert torch.equal(state[key][..., :13], parent_state[key]), key
+        assert torch.count_nonzero(state[key][..., 13:]).item() == 0, key
     assert torch.count_nonzero(parent_state["local.weight"]).item() > 0
     assert torch.equal(state["local.weight"], parent_state["local.weight"])
     assert all(torch.equal(parent_state[key], parent_before[key]) for key in parent_state)
@@ -332,20 +373,20 @@ def test_y32_migration_is_centered_strict_and_bitwise_function_preserving() -> N
     assert torch.equal(actual, expected)
 
 
-def test_y32_migration_rejects_missing_unexpected_and_wrong_shape_state() -> None:
+def test_x32_migration_rejects_missing_unexpected_and_wrong_shape_state() -> None:
     pytest.importorskip("neuralop")
     from oceanfno.model import (
         BireAlignedFullStateError,
-        BireLocal24Architecture,
         BireY32Architecture,
-        build_bire_local24_model,
+        BireY32X32Architecture,
         build_bire_y32_model,
-        migrate_local24_state_dict,
+        build_bire_y32_x32_model,
+        migrate_y32_state_dict,
     )
 
-    parent = build_bire_local24_model(BireLocal24Architecture())
+    parent = build_bire_y32_model(BireY32Architecture())
     state = _portable_state_dict(parent)
-    target = build_bire_y32_model(BireY32Architecture())
+    target = build_bire_y32_x32_model(BireY32X32Architecture())
     spectral = "fno.fno_blocks.convs.0.weight.tensor"
 
     missing = dict(state)
@@ -353,10 +394,28 @@ def test_y32_migration_rejects_missing_unexpected_and_wrong_shape_state() -> Non
     unexpected = dict(state)
     unexpected["undeclared.weight"] = torch.zeros(1)
     wrong_shape = dict(state)
-    wrong_shape[spectral] = state[spectral][..., :23, :]
+    wrong_shape[spectral] = state[spectral][..., :12]
     for tampered in (missing, unexpected, wrong_shape):
         with pytest.raises(BireAlignedFullStateError):
-            migrate_local24_state_dict(tampered, target)
+            migrate_y32_state_dict(tampered, target)
+
+
+def test_the_x32_builder_refuses_the_parent_architecture() -> None:
+    """A 32x24 declaration must not be buildable through the 32x32 entry point."""
+
+    pytest.importorskip("neuralop")
+    from oceanfno.model import (
+        BireAlignedFullStateError,
+        BireY32Architecture,
+        BireY32X32Architecture,
+        build_bire_y32_model,
+        build_bire_y32_x32_model,
+    )
+
+    with pytest.raises(BireAlignedFullStateError):
+        build_bire_y32_x32_model(BireY32Architecture())
+    with pytest.raises(BireAlignedFullStateError):
+        build_bire_y32_model(BireY32X32Architecture())
 
 
 # --------------------------------------------------------------------------
@@ -367,7 +426,7 @@ def test_y32_migration_rejects_missing_unexpected_and_wrong_shape_state() -> Non
 @pytest.mark.skipif(not CONTRACT.is_file(), reason="the fine-tune contract is absent")
 def test_the_contract_moves_only_the_declared_quantities() -> None:
     contract, _, _ = load_contract(CONTRACT, verify_sources=False)
-    parent = json.loads(PARENT.read_text())
+    parent = _parent()
     assert contract["version"] == VERSION != parent["version"]
     assert contract["contract_status"] == CONTRACT_STATUS
     for field in ("dataset", "normalization", "training", "loss", "checkpoint_selection"):
@@ -379,8 +438,8 @@ def test_the_contract_moves_only_the_declared_quantities() -> None:
         if contract["architecture"].get(field) != parent["architecture"].get(field)
     }
     assert architecture_changes == {"n_modes"}
-    assert tuple(parent["architecture"]["n_modes"]) == PARENT_MODES == (24, 24)
-    assert tuple(contract["architecture"]["n_modes"]) == Y32_MODES == (32, 24)
+    assert tuple(parent["architecture"]["n_modes"]) == PARENT_MODES == (32, 24)
+    assert tuple(contract["architecture"]["n_modes"]) == TARGET_MODES == (32, 32)
     assert parent["architecture"]["local_kernel_size"] == (
         contract["architecture"]["local_kernel_size"]
     ) == LOCAL_KERNEL_SIZE == 3
@@ -408,7 +467,7 @@ def test_the_optimizer_matches_the_declaration() -> None:
 
 
 @pytest.mark.skipif(not CONTRACT.is_file(), reason="the fine-tune contract is absent")
-def test_initialization_is_the_local24_checkpoint_with_centered_zero_extension() -> None:
+def test_initialization_is_the_y32_checkpoint_with_zonal_zero_extension() -> None:
     contract, _, _ = load_contract(CONTRACT, verify_sources=False)
     initialization = contract["initialization"]
     assert initialization["version"] == PARENT_VERSION
@@ -419,7 +478,7 @@ def test_initialization_is_the_local24_checkpoint_with_centered_zero_extension()
     assert contract["training"]["from_scratch"] is False
     assert contract["training"]["load_optimizer_state"] is False
     assert initialization["checkpoint"].endswith(
-        "bire_protocol_rollout_ft_local24_v1/selected.pt"
+        "bire_protocol_rollout_ft_local24_y32_v1/selected.pt"
     )
     assert initialization["mode_migration"] == MODE_MIGRATION
     assert initialization["local_branch_initialization"] == "copied_from_parent"
@@ -431,15 +490,21 @@ def test_initialization_is_the_local24_checkpoint_with_centered_zero_extension()
     assert (
         contract["sources"]["parent_normalization"]["path"]
         .endswith(
-            "model_c_bire_protocol_rollout_ft_local24_train_only_normalization.npz"
+            "model_c_bire_protocol_rollout_ft_local24_y32_train_only_normalization.npz"
         )
     )
+    # The parent is compact, so both its raw bytes and its resolved document
+    # are pinned; neither level of the inheritance can move unnoticed.
+    record = contract["sources"]["parent_contract"]
+    assert record["path"] == str(PARENT)
+    assert len(record["sha256"]) == len(record["materialized_sha256"]) == 64
+    assert record["sha256"] != record["materialized_sha256"]
 
 
 @pytest.mark.skipif(not CONTRACT.is_file(), reason="the fine-tune contract is absent")
 def test_the_loss_block_declares_the_six_step_objective() -> None:
     contract, _, _ = load_contract(CONTRACT, verify_sources=False)
-    parent = json.loads(PARENT.read_text())
+    parent = _parent()
     loss = contract["loss"]
     assert loss["contract_sha256"] == FINE_TUNE_LOSS_CONTRACT_SHA256
     assert loss["derived_from_contract_sha256"] == MODEL_C_LOSS_V1_CONTRACT_SHA256
@@ -450,15 +515,32 @@ def test_the_loss_block_declares_the_six_step_objective() -> None:
 
 
 @pytest.mark.skipif(not CONTRACT.is_file(), reason="the fine-tune contract is absent")
+def test_the_output_roots_are_this_arms_own_and_do_not_collide() -> None:
+    contract, _, _ = load_contract(CONTRACT, verify_sources=False)
+    scratch = Path(contract["output"]["scratch_root"])
+    project = Path(contract["output"]["project_root"])
+    parent = _parent()
+    assert scratch.name == project.name == "bire_protocol_rollout_ft_y32_x32_v1"
+    assert project != Path(parent["output"]["project_root"])
+    assert scratch != Path(parent["output"]["scratch_root"])
+
+
+@pytest.mark.skipif(
+    not (
+        Path(
+            "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/"
+            "bire_protocol_rollout_ft_y32_x32_v1"
+        ).exists()
+    ),
+    reason="the 32x32 arm has not been trained yet",
+)
 def test_completed_outputs_are_pinned_and_a_rerun_would_be_refused() -> None:
     contract, _, _ = load_contract(CONTRACT, verify_sources=False)
     scratch = Path(contract["output"]["scratch_root"])
     project = Path(contract["output"]["project_root"])
-    assert scratch.name == project.name == "bire_protocol_rollout_ft_local24_y32_v1"
     assert (scratch / "selected.pt").is_file()
     assert (project / "manifest.json").is_file()
     assert scratch.exists(), "the completed scratch root is the overwrite guard"
-    assert project != Path(json.loads(PARENT.read_text())["output"]["project_root"])
 
 
 
@@ -470,21 +552,31 @@ def test_completed_outputs_are_pinned_and_a_rerun_would_be_refused() -> None:
             lambda c: c["architecture"].update(hidden_channels=64), id="architecture_moved"
         ),
         pytest.param(
-            lambda c: c["architecture"].update(n_modes=[24, 24]),
-            id="meridional_modes_reverted",
+            lambda c: c["architecture"].update(n_modes=[32, 24]),
+            id="zonal_modes_reverted",
         ),
         pytest.param(
             lambda c: c["architecture"].update(n_modes=[24, 32]),
-            id="axis_order_reversed",
+            id="meridional_modes_dropped",
+        ),
+        pytest.param(
+            lambda c: c["architecture"].update(position_encoding="smooth_xy"),
+            id="position_encoding_reintroduced",
+        ),
+        pytest.param(
+            lambda c: c["sources"]["parent_contract"].update(
+                materialized_sha256="0" * 64
+            ),
+            id="resolved_parent_changed",
         ),
         pytest.param(
             lambda c: c["architecture"].update(local_kernel_size=None), id="local_removed"
         ),
         pytest.param(
             lambda c: c["initialization"].update(
-                mode_migration="prefix_copy_into_first_24_meridional_indices"
+                mode_migration="center_copy_into_zonal_indices_2_through_14"
             ),
-            id="uncentered_migration",
+            id="wrong_zonal_migration",
         ),
         pytest.param(
             lambda c: c["initialization"].update(local_branch_initialization="zeros"),
@@ -497,7 +589,7 @@ def test_completed_outputs_are_pinned_and_a_rerun_would_be_refused() -> None:
     ],
 )
 def test_a_tampered_contract_is_rejected(mutate, tmp_path) -> None:
-    with pytest.raises(BireY32TrainingError):
+    with pytest.raises(BireY32X32TrainingError):
         load_contract(_tampered(mutate, tmp_path), verify_sources=False)
 
 
@@ -587,7 +679,7 @@ def _report() -> dict:
     selected = summaries[-1]
     return {
         "content_sha256": "a" * 64,
-        "parameter_count": 21_005_164,
+        "parameter_count": 27_296_620,
         "optimizer": {"decay_step": 2880},
         "counts": {
             "training_rollout_records": TRAINING_RECORDS,
@@ -612,16 +704,15 @@ def test_the_readme_renders_before_the_job_is_ever_submitted() -> None:
     """Regression guard: the duration arm lost a finished job to a README KeyError."""
 
     text = _readme(_report())
-    assert "Canonical meridional-32" in text
+    assert "Canonical 32 x 32" in text
     assert f"{BASELINE_OPTIMIZER_STEP:,}" in text
     assert "Selected step 3,840" in text and "primary_rule" in text
-    assert "21,005,164" in text
     for step in CHECKPOINT_STEPS:
         assert f"{step:,}" in text
     flat = " ".join(text.split())
-    assert "24 x 24 to 32 x 24" in flat
-    assert "embedded in indices 4:28" in flat
-    assert "local 3 x 3 branch is copied unchanged" in flat
+    assert "32 x 24 to 32 x 32" in flat
+    assert "copied into indices [..., :13] of a zeroed 32 x 17" in flat
+    assert "local 3 x 3 branch and the deterministic sine/cosine position" in flat
     for stale in ("7,680", "from scratch", "24 x 16", "zero-initialized local"):
         assert stale not in text
 
@@ -647,7 +738,7 @@ def test_artifact_names_are_distinct_and_name_this_arm() -> None:
                                        "NORMALIZATION_NAME", "DIVERGENCE_NAME",
                                        "CHECKPOINT_STEM")]
     assert len(set(names)) == len(names)
-    assert all("rollout_ft_local24_y32" in n for n in names)
+    assert all("rollout_ft_y32_x32" in n for n in names)
     checkpoints = {f"{arm.CHECKPOINT_STEM}_{s:05d}.pt" for s in CHECKPOINT_STEPS}
     assert len(checkpoints) == len(CHECKPOINT_STEPS)
 
@@ -662,7 +753,7 @@ def test_launcher_invokes_its_own_module_and_contract() -> None:
         if " -m " in f" {line} " and "oceanfno." in line
     }
     assert invoked == {"oceanfno.train"}
-    assert "model_c_bire_protocol_rollout_ft_local24_y32_v1.json" in text
+    assert "model_c_bire_protocol_rollout_ft_y32_x32_v1.json" in text
 
 
 def test_the_package_carries_no_module_rebinding_machinery() -> None:

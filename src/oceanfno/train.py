@@ -1,9 +1,10 @@
-"""Canonical six-step fine-tuning pipeline for the 32x24 Model C.
+"""Canonical six-step fine-tuning pipeline for the 32x32 Model C.
 
-The raw Y32 contract inherits the frozen dataset, objective, schedule and
-selection fields from the retained local24 parent. This module materializes
-and audits that inheritance, performs the centered function-preserving mode
-migration, then trains and selects Y32 directly without module rebinding.
+The raw 32x32 contract inherits the frozen dataset, objective, schedule and
+selection fields from the retained Y32 parent, which is itself compact and
+inherits them from local24. This module resolves that two-level inheritance,
+audits it, performs the function-preserving zonal mode migration, then trains
+and selects the 32x32 arm directly without module rebinding.
 """
 from __future__ import annotations
 
@@ -25,14 +26,26 @@ from .runtime import DataLoader, torch
 from .runtime import AUDIT_TERMS, ChunkAwareBatchSampler, GROUP_SLICES, STATE_CHANNEL_COUNT, _checkpoint_state_dict, _device, _file_sha256, _json_sha256, require_model_a_runtime, seed_everything
 from .dataset import DATASET_VERSION, EXPERIMENTS, INFERENCE_RANGE, ModelCAnomalyRolloutDataset, TRAIN_RANGE, _normalizers, records_for_rollout_split, store_codes, validation_records, validation_starts, verify, western_boundary_mask
 from .objective import MODEL_C_LOSS_V1_CONTRACT_SHA256, ModelCLossConfig, model_c_loss_terms
-from .model import BireAlignedDivergenceError, BireAlignedStepper, BireLocal24Architecture, BireY32Architecture, CHECKPOINT_DIRECTORY, MANIFEST_NAME, README_NAME, build_bire_y32_model, direct_state_unroll, migrate_local24_state_dict, retained_features
+from .model import BireAlignedDivergenceError, BireAlignedStepper, BireY32Architecture, BireY32X32Architecture, CHECKPOINT_DIRECTORY, MANIFEST_NAME, README_NAME, build_bire_y32_x32_model, direct_state_unroll, migrate_y32_state_dict, retained_features
 from .validation import PRIMARY_FIELDS, _assert_store_is_v3, _plot, select_by_validation, train_only_climatology, validate_checkpoint
 
-VERSION = "model_c_bire_protocol_rollout_ft_local24_y32_v1"
+VERSION = "model_c_bire_protocol_rollout_ft_y32_x32_v1"
 
-CONTRACT_STATUS = "frozen_before_any_bire_protocol_rollout_ft_local24_y32_metric"
+CONTRACT_STATUS = "frozen_before_any_bire_protocol_rollout_ft_y32_x32_metric"
 
-PARENT_VERSION = "model_c_bire_protocol_rollout_ft_local24_v1"
+PARENT_VERSION = "model_c_bire_protocol_rollout_ft_local24_y32_v1"
+
+#: The Y32 declaration is compact, so its own parent must be resolved before
+#: this arm's inherited blocks can be compared against anything.
+GRANDPARENT_VERSION = "model_c_bire_protocol_rollout_ft_local24_v1"
+
+PARENT_CONTRACT_SHA256 = (
+    "a839bf25948989fd693c600f1554d42907cceb5d519a8b51f1b60adc326db277"
+)
+
+PARENT_MATERIALIZED_CONTRACT_SHA256 = (
+    "c54714f8855ad21cc9798b7a0d5d2a3dc55848bec801141f415cd11e99a418fb"
+)
 
 BASELINE_OPTIMIZER_STEP = 3840
 
@@ -70,23 +83,23 @@ WORST_LONG_RATIO_CEILING = 0.85
 
 LONG_AUC_TOLERANCE_TO_BASELINE = 1.0
 
-NORMALIZATION_NAME = (
-    "model_c_bire_protocol_rollout_ft_local24_y32_train_only_normalization.npz"
-)
+SLUG = "bire_protocol_rollout_ft_y32_x32"
 
-DIVERGENCE_NAME = "bire_protocol_rollout_ft_local24_y32_divergence.json"
+NORMALIZATION_NAME = f"model_c_{SLUG}_train_only_normalization.npz"
 
-CHECKPOINT_STEM = "model_c_bire_protocol_rollout_ft_local24_y32_step"
+DIVERGENCE_NAME = f"{SLUG}_divergence.json"
 
-REPORT_NAME = "bire_protocol_rollout_ft_local24_y32_report.json"
+CHECKPOINT_STEM = f"model_c_{SLUG}_step"
 
-ARRAYS_NAME = "bire_protocol_rollout_ft_local24_y32_arrays.npz"
+REPORT_NAME = f"{SLUG}_report.json"
 
-FIGURE_NAME = "model_c_bire_protocol_rollout_ft_local24_y32_selection.png"
+ARRAYS_NAME = f"{SLUG}_arrays.npz"
 
-PARENT_MODES = (24, 24)
+FIGURE_NAME = f"model_c_{SLUG}_selection.png"
 
-Y32_MODES = (32, 24)
+PARENT_MODES = (32, 24)
+
+TARGET_MODES = (32, 32)
 
 LOCAL_KERNEL_SIZE = 3
 
@@ -99,8 +112,8 @@ INHERITED_FIELDS = (
 )
 
 MODE_MIGRATION = (
-    "center_copy_parent_24x13_spectral_tensor_into_y_indices_4_to_27_"
-    "and_zero_four_modes_on_each_meridional_side"
+    "copy_parent_32x13_spectral_tensor_into_zonal_indices_0_to_12_"
+    "and_zero_the_four_new_zonal_half_spectrum_coefficients"
 )
 
 OUTPUT_ARTIFACTS = (
@@ -118,13 +131,13 @@ REQUIRED_SOURCE_HASHES = frozenset(
     }
 )
 
-class BireY32TrainingError(RuntimeError):
-    """Raised when the canonical local24-to-Y32 arm violates its contract."""
+class BireY32X32TrainingError(RuntimeError):
+    """Raised when the canonical Y32-to-32x32 arm violates its contract."""
 
 
 # Historical callers used the generic arm name. Keep it as an exact alias so
 # every canonical training failure is catchable through either public API.
-BireProtocolRolloutFineTuneError = BireY32TrainingError
+BireProtocolRolloutFineTuneError = BireY32X32TrainingError
 
 @dataclass(frozen=True)
 class BireProtocolRolloutFineTuneLossConfig(ModelCLossConfig):
@@ -217,22 +230,86 @@ def fine_tune_loss_config() -> BireProtocolRolloutFineTuneLossConfig:
 
 FINE_TUNE_LOSS_CONTRACT_SHA256 = fine_tune_loss_contract_sha256(fine_tune_loss_config())
 
+def _materialize(
+    raw: Mapping[str, Any],
+    parent: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Overlay a compact declaration onto its parent's resolved document.
+
+    Everything the child states explicitly wins; the five inherited blocks are
+    always taken from the parent, so a child cannot silently redefine them by
+    restating them with a different value.
+    """
+
+    contract = copy.deepcopy(dict(parent))
+    for key, value in raw.items():
+        if key not in INHERITED_FIELDS:
+            contract[key] = copy.deepcopy(value)
+    for field in INHERITED_FIELDS:
+        contract[field] = copy.deepcopy(parent[field])
+    return contract
+
+
 def _parent_contract(record: Mapping[str, Any]) -> dict[str, Any]:
-    """Load the pinned retained local24 training contract."""
+    """Resolve the retained Y32 parent, including its own inheritance.
+
+    The Y32 declaration is itself compact: it inherits the frozen dataset,
+    normalization, schedule, loss and selection blocks from the local24
+    contract it was fine-tuned from. Comparing this arm's inherited fields
+    against the raw Y32 file would compare them against fields that file does
+    not contain, so the parent is resolved one level further back. Both the raw
+    Y32 bytes and the resolved document are pinned, the second by
+    ``materialized_sha256``, so neither level can move unnoticed.
+    """
 
     path = Path(str(record.get("path", ""))).resolve()
-    if not path.is_file() or _file_sha256(path) != record.get("sha256"):
-        raise BireY32TrainingError("the selected local24 parent contract changed")
-    parent = json.loads(path.read_text())
-    if parent.get("version") != PARENT_VERSION:
-        raise BireY32TrainingError("the parent is not the retained local24 arm")
+    if (
+        not path.is_file()
+        or _file_sha256(path) != record.get("sha256")
+        or record.get("sha256") != PARENT_CONTRACT_SHA256
+    ):
+        raise BireY32X32TrainingError("the selected Y32 parent contract changed")
+    raw_parent = json.loads(path.read_text())
+    if raw_parent.get("version") != PARENT_VERSION:
+        raise BireY32X32TrainingError("the parent is not the retained Y32 arm")
+    if tuple(raw_parent.get("inherit_parent_fields", ())) != INHERITED_FIELDS:
+        raise BireY32X32TrainingError(
+            "the Y32 parent's own inherited-field declaration changed"
+        )
+
+    grandparent_record = raw_parent.get("sources", {}).get("parent_contract", {})
+    grandparent_path = Path(str(grandparent_record.get("path", ""))).resolve()
+    if not grandparent_path.is_file() or _file_sha256(
+        grandparent_path
+    ) != grandparent_record.get("sha256"):
+        raise BireY32X32TrainingError(
+            "the local24 contract the Y32 parent inherits from changed"
+        )
+    grandparent = json.loads(grandparent_path.read_text())
+    if grandparent.get("version") != GRANDPARENT_VERSION:
+        raise BireY32X32TrainingError(
+            "the Y32 parent's own parent is not the retained local24 arm"
+        )
+    for field in INHERITED_FIELDS:
+        if field in raw_parent and raw_parent[field] != grandparent[field]:
+            raise BireY32X32TrainingError(
+                f"the raw Y32 declaration overrides inherited field {field}"
+            )
+
+    parent = _materialize(raw_parent, grandparent)
+    materialized = _json_sha256(parent)
+    if (
+        materialized != PARENT_MATERIALIZED_CONTRACT_SHA256
+        or record.get("materialized_sha256") != materialized
+    ):
+        raise BireY32X32TrainingError("the resolved Y32 parent contract changed")
     return parent
 
 
 def _assert_only_the_declared_changes(
     contract: Mapping[str, Any],
 ) -> Mapping[str, Any]:
-    """Prove that meridional bandwidth is the sole scientific change."""
+    """Prove that zonal bandwidth is the sole scientific change."""
 
     parent = _parent_contract(contract["sources"]["parent_contract"])
     parent_architecture = dict(parent["architecture"])
@@ -240,20 +317,20 @@ def _assert_only_the_declared_changes(
         tuple(parent_architecture.get("n_modes", ())) != PARENT_MODES
         or parent_architecture.get("local_kernel_size") != LOCAL_KERNEL_SIZE
     ):
-        raise BireY32TrainingError(
-            "the parent is not the audited 24x24 model with a trained 3x3 branch"
+        raise BireY32X32TrainingError(
+            "the parent is not the audited 32x24 model with a trained 3x3 branch"
         )
-    BireLocal24Architecture(**parent_architecture)
+    BireY32Architecture(**parent_architecture)
     expected = dict(parent_architecture)
-    expected["n_modes"] = list(Y32_MODES)
+    expected["n_modes"] = list(TARGET_MODES)
     if contract.get("architecture") != expected:
-        raise BireY32TrainingError(
-            "only n_modes 24x24 -> 32x24 may move from the local24 parent"
+        raise BireY32X32TrainingError(
+            "only n_modes 32x24 -> 32x32 may move from the Y32 parent"
         )
     for field in INHERITED_FIELDS:
         if contract.get(field) != parent.get(field):
-            raise BireY32TrainingError(
-                f"the Y32 arm moved the parent's {field} contract"
+            raise BireY32X32TrainingError(
+                f"the 32x32 arm moved the parent's {field} contract"
             )
     return parent
 
@@ -262,26 +339,21 @@ def load_contract(
     *,
     verify_sources: bool = True,
 ) -> tuple[dict[str, Any], Path, str]:
-    """Load the canonical Y32 declaration and its pinned inherited fields."""
+    """Load the canonical 32x32 declaration and its pinned inherited fields."""
 
     resolved = Path(path).resolve()
     raw = json.loads(resolved.read_text())
     if tuple(raw.get("inherit_parent_fields", ())) != INHERITED_FIELDS:
-        raise BireY32TrainingError("the exact inherited-field declaration changed")
+        raise BireY32X32TrainingError("the exact inherited-field declaration changed")
     sources = raw.get("sources", {})
     parent = _parent_contract(sources.get("parent_contract", {}))
     for field in INHERITED_FIELDS:
         if field in raw and raw[field] != parent[field]:
-            raise BireY32TrainingError(
-                f"the raw Y32 declaration overrides inherited field {field}"
+            raise BireY32X32TrainingError(
+                f"the raw 32x32 declaration overrides inherited field {field}"
             )
 
-    contract = copy.deepcopy(parent)
-    for key, value in raw.items():
-        if key not in INHERITED_FIELDS:
-            contract[key] = copy.deepcopy(value)
-    for field in INHERITED_FIELDS:
-        contract[field] = copy.deepcopy(parent[field])
+    contract = _materialize(raw, parent)
 
     architecture = contract.get("architecture", {})
     training = contract.get("training", {})
@@ -293,7 +365,7 @@ def load_contract(
     if not report_path.is_file() or _file_sha256(report_path) != report_record.get(
         "sha256"
     ):
-        raise BireY32TrainingError("the retained local24 parent report changed")
+        raise BireY32X32TrainingError("the retained Y32 parent report changed")
     parent_report = json.loads(report_path.read_text())
     published = parent_report.get("published_checkpoint", {})
     normalization_record = sources.get("parent_normalization", {})
@@ -302,7 +374,7 @@ def load_contract(
     if (
         contract.get("version") != VERSION
         or contract.get("contract_status") != CONTRACT_STATUS
-        or tuple(architecture.get("n_modes", ())) != Y32_MODES
+        or tuple(architecture.get("n_modes", ())) != TARGET_MODES
         or architecture.get("local_kernel_size") != LOCAL_KERNEL_SIZE
         or initialization.get("load_only") != "model_state_dict"
         or int(initialization.get("optimizer_step", -1))
@@ -323,12 +395,8 @@ def load_contract(
         != FINE_TUNE_LOSS_CONTRACT_SHA256
         or read != parent.get("read_contract")
         or initialization.get("checkpoint") != checkpoint_record.get("path")
-        or not str(output.get("project_root", "")).endswith(
-            "bire_protocol_rollout_ft_local24_y32_v1"
-        )
-        or not str(output.get("scratch_root", "")).endswith(
-            "bire_protocol_rollout_ft_local24_y32_v1"
-        )
+        or not str(output.get("project_root", "")).endswith(f"{SLUG}_v1")
+        or not str(output.get("scratch_root", "")).endswith(f"{SLUG}_v1")
         or output.get("project_root") == parent.get("output", {}).get("project_root")
         or output.get("scratch_root") == parent.get("output", {}).get("scratch_root")
         or tuple(output.get("artifacts", ())) != OUTPUT_ARTIFACTS
@@ -347,16 +415,16 @@ def load_contract(
         or published.get("normalization_sha256")
         != normalization_record.get("sha256")
     ):
-        raise BireY32TrainingError("the local24-to-Y32 training contract changed")
+        raise BireY32X32TrainingError("the Y32-to-32x32 training contract changed")
 
     _assert_only_the_declared_changes(contract)
-    BireY32Architecture(**architecture)
+    BireY32X32Architecture(**architecture)
     if verify_sources:
         root = resolved.parents[1]
         for relative, expected in hashes.items():
             source = root / relative
             if not source.is_file() or _file_sha256(source) != expected:
-                raise BireY32TrainingError(f"Y32 source changed: {source}")
+                raise BireY32X32TrainingError(f"32x32 source changed: {source}")
     return contract, resolved, _file_sha256(resolved)
 
 def _verify_file(record: Mapping[str, Any], label: str) -> Path:
@@ -423,7 +491,7 @@ def load_initial_state_dict(
     device: Any,
     target_model: Any,
 ) -> dict[str, Any]:
-    """Load and audit the function-preserving local24 -> Y32 migration."""
+    """Load and audit the function-preserving Y32 -> 32x32 migration."""
 
     path = _verify_file(contract["sources"]["initialization_checkpoint"], "initialization checkpoint")
     payload = torch.load(path, map_location=device, weights_only=False)
@@ -434,7 +502,7 @@ def load_initial_state_dict(
         or payload.get("base_loss_contract_sha256") != FINE_TUNE_LOSS_CONTRACT_SHA256
     ):
         raise BireProtocolRolloutFineTuneError(
-            "the initialization checkpoint is not the retained local24 model"
+            "the initialization checkpoint is not the retained Y32 model"
         )
     if "model_state_dict" not in payload:
         raise BireProtocolRolloutFineTuneError("the initialization checkpoint has no weights")
@@ -443,7 +511,7 @@ def load_initial_state_dict(
         raise BireProtocolRolloutFineTuneError(
             "the initialization architecture does not match its archived contract"
         )
-    migration = migrate_local24_state_dict(payload["model_state_dict"], target_model)
+    migration = migrate_y32_state_dict(payload["model_state_dict"], target_model)
     return {
         "state_dict": migration["state_dict"],
         "provenance": {
@@ -548,7 +616,7 @@ def preflight(contract_path: str | Path) -> dict[str, Any]:
         )
     normalization = reused_normalization(contract)
     baseline = baseline_validation_summary(normalization["report"])
-    architecture = BireY32Architecture(**contract["architecture"])
+    architecture = BireY32X32Architecture(**contract["architecture"])
     result: dict[str, Any] = {
         "status": "ready",
         "version": VERSION,
@@ -574,7 +642,7 @@ def preflight(contract_path: str | Path) -> dict[str, Any]:
     }
     if torch is not None:
         device = _device("cpu")
-        model = build_bire_y32_model(architecture)
+        model = build_bire_y32_x32_model(architecture)
         initialization = load_initial_state_dict(contract, device, model)
         model.load_state_dict(initialization["state_dict"])
         result["parameter_count"] = int(sum(p.numel() for p in model.parameters()))
@@ -677,7 +745,7 @@ Report content SHA-256: `{report['content_sha256']}`.
 
 
 def _readme(report: Mapping[str, Any]) -> str:
-    """Describe the canonical Y32 training package."""
+    """Describe the canonical 32x32 training package."""
 
     decision = report["selection_decision"]
     gate = report["acceptance_gate"]
@@ -695,20 +763,22 @@ def _readme(report: Mapping[str, Any]) -> str:
         )
         for summary in report["validation_summaries"]
     )
-    return f"""# Canonical meridional-32 continuation of the retained local24 model
+    return f"""# Canonical 32 x 32 continuation of the retained Y32 model
 
 This model warm-starts `{PARENT_VERSION}` at optimizer step
 {BASELINE_OPTIMIZER_STEP:,}. Only the Fourier mode count in tensor order
-(Y, X) changes, from 24 x 24 to 32 x 24. The trained bias-free 49 -> 46 local
-3 x 3 branch is copied unchanged. Each 24 x 13 complex spectral tensor is
-embedded in indices 4:28 of a zeroed 32 x 13 tensor, preserving the initial
-map exactly while opening four new negative and four new positive meridional
-modes.
+(Y, X) changes, from 32 x 24 to 32 x 32. The trained bias-free 49 -> 46 local
+3 x 3 branch and the deterministic sine/cosine position encoder are copied
+unchanged. The zonal axis is the real-transform axis, so its 24 requested modes
+are stored as 13 non-redundant coefficients and its 32 as 17: each 32 x 13
+complex spectral tensor is copied into indices [..., :13] of a zeroed 32 x 17
+tensor, preserving the initial map exactly while opening four new zonal
+coefficients.
 
 Dataset, split, normalization, six-step autoregressive loss, optimizer reset,
 schedule, seed, validation starts, and checkpoint-selection rule are inherited
-byte-for-byte from the local24 parent. Zonal capacity remains fixed because the
-parent already carries excessive zonal high-wavenumber power.
+byte-for-byte from the Y32 parent, which inherits them in turn from local24.
+Meridional capacity remains at the 32 modes the Y32 arm opened.
 
 | step | short AUC 10--90 (speed / SST / pressure) | long / climatology |
 | --- | --- | --- |
@@ -725,7 +795,7 @@ Report content SHA-256: `{report['content_sha256']}`.
 """
 
 def run(contract_path: str | Path, *, device_name: str = "auto") -> dict[str, Any]:
-    """Fine-tune the function-preserving local24-to-Y32 migration and select it."""
+    """Fine-tune the function-preserving Y32-to-32x32 migration and select it."""
 
     if torch is None or DataLoader is None:  # pragma: no cover - environment dependent
         raise RuntimeError("the rollout fine-tuning arm requires PyTorch")
@@ -783,8 +853,8 @@ def run(contract_path: str | Path, *, device_name: str = "auto") -> dict[str, An
         num_workers=0,
         pin_memory=device.type == "cuda",
     )
-    architecture = BireY32Architecture(**contract["architecture"])
-    model = build_bire_y32_model(architecture).to(device)
+    architecture = BireY32X32Architecture(**contract["architecture"])
+    model = build_bire_y32_x32_model(architecture).to(device)
     initialization = load_initial_state_dict(contract, device, model)
     model.load_state_dict(initialization["state_dict"])
     parameter_count = int(sum(p.numel() for p in model.parameters()))
@@ -917,7 +987,7 @@ def run(contract_path: str | Path, *, device_name: str = "auto") -> dict[str, An
         payload = torch.load(
             checkpoint_directory / record["checkpoint"], map_location=device, weights_only=False
         )
-        probe = build_bire_y32_model(architecture).to(device)
+        probe = build_bire_y32_x32_model(architecture).to(device)
         probe.load_state_dict(payload["model_state_dict"])
         probe.eval()
         stepper = BireAlignedStepper(

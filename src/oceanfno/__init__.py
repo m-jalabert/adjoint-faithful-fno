@@ -1,10 +1,11 @@
-"""Canonical Y32 six-step FNO for the 46-channel MITgcm double gyre.
+"""Canonical 32x32 six-step FNO for the 46-channel MITgcm double gyre.
 
-A 32x24-mode Fourier Neural Operator with a bias-free local 3x3 correction
-advances a closed 46-channel ocean state by ten days. This package trains it,
-selects a checkpoint, publishes the S0 figure suite, and evaluates the
-acceptance gate. The retained 24x24 architecture is represented only where it
-is required for checkpoint migration and literal comparison.
+A 32x32-mode Fourier Neural Operator with a bias-free local 3x3 correction and
+the deterministic sine/cosine position encoder advances a closed 46-channel
+ocean state by ten days. This package trains it, selects a checkpoint,
+publishes the S0 figure suite, and evaluates the acceptance gate. The retained
+32x24 Y32 architecture is represented only where it is required for checkpoint
+migration and literal comparison.
 
 Layout, in dependency order --- each module imports only from the ones above it::
 
@@ -38,7 +39,7 @@ Entry points, each driven by a frozen contract in ``config/``::
     python -m oceanfno.anomaly  finalize|preflight|run --contract ...
 
 The frozen contracts and reports remain the provenance record of the completed
-experiments. The canonical modules consolidate their selected Y32 workflows;
+experiments. The canonical modules consolidate the selected 32x32 workflows;
 they do not rewrite those historical records.
 """
 

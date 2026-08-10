@@ -1,9 +1,10 @@
-"""S0 Figures 3--8 for the meridional-32 successor to local24.
+"""S0 Figures 3--8 for the 32x32 successor to the retained Y32 model.
 
-Publishes the frozen Bire figure suite for the selected 32x24 checkpoint and
+Publishes the frozen Bire figure suite for the selected 32x32 checkpoint and
 evaluates the 2,000-day half of the final acceptance gate. Figure 6 is the
-literal local24-parent / Y32-fine-tune pair. Each checkpoint is verified and
-built against its own architecture declaration.
+literal Y32-parent / 32x32-fine-tune pair: the two differ only in zonal
+bandwidth, and each checkpoint is verified and built against its own
+architecture declaration.
 
 Held-evaluation only: no training, no checkpoint selection, no promotion.
 """
@@ -25,9 +26,9 @@ from . import plots
 from .runtime import _device, _file_sha256, _json_sha256
 from .dataset import DATASET_VERSION, INFERENCE_START_RANGE, MAXIMUM_INFERENCE_ROLLOUT_DAYS, TRAIN_RANGE, _normalizers, assert_model_visible, assert_truth_available, inference_starts
 from .diagnostics import _member_acc, _member_rmse, derived_fields
-from .model import BireAlignedStepper, BireLocal24Architecture, BireY32Architecture, build_bire_local24_model, build_bire_y32_model
+from .model import BireAlignedStepper, BireY32Architecture, BireY32X32Architecture, build_bire_y32_model, build_bire_y32_x32_model
 from .validation import _gather, train_only_climatology
-from .train import BASELINE_OPTIMIZER_STEP, CHECKPOINT_STEPS, FINE_TUNE_LOSS_CONTRACT_SHA256, NORMALIZATION_NAME as Y32_NORMALIZATION_NAME, PARENT_VERSION as LOCAL24_TRAINING_VERSION, REPORT_NAME as TRAINING_REPORT_NAME, ROLLOUT_STEPS, VERSION as TRAINING_VERSION
+from .train import BASELINE_OPTIMIZER_STEP, CHECKPOINT_STEPS, FINE_TUNE_LOSS_CONTRACT_SHA256, NORMALIZATION_NAME as SELECTED_NORMALIZATION_NAME, PARENT_VERSION as COMPARATOR_TRAINING_VERSION, REPORT_NAME as TRAINING_REPORT_NAME, ROLLOUT_STEPS, VERSION as TRAINING_VERSION
 
 MEMBER_COUNT = 15
 
@@ -167,16 +168,16 @@ def evaluate_regime(
                 arrays["figure7_model_streamfunction"][figure7[lead]] = selected_fields["streamfunction"][0]
     return arrays
 
-VERSION = "model_c_bire_protocol_rollout_ft_local24_y32_s0_figures_v1"
+VERSION = "model_c_bire_protocol_rollout_ft_y32_x32_s0_figures_v1"
 
 CONTRACT_STATUS = (
-    "frozen_after_the_bire_protocol_rollout_ft_local24_y32_training_and_"
+    "frozen_after_the_bire_protocol_rollout_ft_y32_x32_training_and_"
     "validation_and_before_any_inference_metric"
 )
 
 COMPARATOR_STEP = BASELINE_OPTIMIZER_STEP
 
-MODEL_LABEL = "Bire-protocol Model C (local 3x3, 32x24 modes)"
+MODEL_LABEL = "Bire-protocol Model C (local 3x3, 32x32 modes)"
 
 PENDING = "PENDING_AFTER_TRAINING"
 
@@ -193,7 +194,7 @@ MINIMUM_STREAMFUNCTION_SV = -33.0
 
 DAY2000_STD_RATIO_RANGE = (0.80, 1.25)
 
-GATE_NAME = "bire_protocol_rollout_ft_local24_y32_acceptance_gate.json"
+GATE_NAME = "bire_protocol_rollout_ft_y32_x32_acceptance_gate.json"
 
 ACCEPTED_TRAINING_REPORT_VERSIONS = (TRAINING_VERSION,)
 
@@ -201,18 +202,18 @@ class BireProtocolRolloutFineTuneFigureError(RuntimeError):
     """Compatibility base for held-evaluation contract failures."""
 
 
-class BireY32FigureError(BireProtocolRolloutFineTuneFigureError):
-    """Raised when the Y32 held-evaluation contract is violated."""
+class BireY32X32FigureError(BireProtocolRolloutFineTuneFigureError):
+    """Raised when the 32x32 held-evaluation contract is violated."""
 
 
 _REPOSITORY = Path(__file__).resolve().parents[2]
 _EXPECTED_PROJECT_ROOT = str(
     _REPOSITORY
-    / "outputs/af_fno/C/bire_protocol_rollout_ft_local24_y32_s0_figures_v1"
+    / "outputs/af_fno/C/bire_protocol_rollout_ft_y32_x32_s0_figures_v1"
 )
 _EXPECTED_SCRATCH_ROOT = (
     "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/"
-    "bire_protocol_rollout_ft_local24_y32_s0_figures_v1"
+    "bire_protocol_rollout_ft_y32_x32_s0_figures_v1"
 )
 _EXPECTED_OUTPUTS = (
     *plots.FIGURE_NAMES,
@@ -275,16 +276,18 @@ def unfilled_fields(contract: Mapping[str, Any]) -> list[str]:
 
 
 def _training_provenance(contract: Mapping[str, Any]) -> None:
-    """Bind the figure declaration to the completed Y32 training report."""
+    """Bind the figure declaration to the completed 32x32 training report."""
 
     selected = contract["selected_model"]
     comparator = contract["comparator_model"]
     artifacts = contract["artifacts"]
     report_path = Path(str(artifacts["selected_report"].get("path", ""))).resolve()
     if report_path.name != TRAINING_REPORT_NAME or not report_path.is_file():
-        raise BireY32FigureError("the selected report is not the completed Y32 report")
+        raise BireY32X32FigureError(
+            "the selected report is not the completed 32x32 report"
+        )
     if _file_sha256(report_path) != artifacts["selected_report"].get("sha256"):
-        raise BireY32FigureError("the selected Y32 report hash changed")
+        raise BireY32X32FigureError("the selected 32x32 report hash changed")
     report = json.loads(report_path.read_text())
     published = report.get("published_checkpoint", {})
     selected_checkpoint = artifacts["selected_checkpoint"]
@@ -302,12 +305,14 @@ def _training_provenance(contract: Mapping[str, Any]) -> None:
         or published.get("normalization") != normalization.get("path")
         or published.get("normalization_sha256") != normalization.get("sha256")
     ):
-        raise BireY32FigureError("the selected model disagrees with its Y32 report")
+        raise BireY32X32FigureError(
+            "the selected model disagrees with its 32x32 report"
+        )
 
     training_path = Path(str(selected.get("training_contract", ""))).resolve()
     comparator_path = Path(str(comparator.get("training_contract", ""))).resolve()
     if not training_path.is_file() or not comparator_path.is_file():
-        raise BireY32FigureError("a selected or comparator training contract is absent")
+        raise BireY32X32FigureError("a selected or comparator training contract is absent")
     training = json.loads(training_path.read_text())
     comparator_training = json.loads(comparator_path.read_text())
     parent_checkpoint = training.get("sources", {}).get(
@@ -319,7 +324,7 @@ def _training_provenance(contract: Mapping[str, Any]) -> None:
     if (
         training.get("version") != TRAINING_VERSION
         or training.get("architecture") != selected.get("architecture")
-        or comparator_training.get("version") != LOCAL24_TRAINING_VERSION
+        or comparator_training.get("version") != COMPARATOR_TRAINING_VERSION
         or comparator_training.get("architecture") != comparator.get("architecture")
         or parent_checkpoint.get("path")
         != artifacts["comparator_checkpoint"].get("path")
@@ -327,9 +332,11 @@ def _training_provenance(contract: Mapping[str, Any]) -> None:
         != artifacts["comparator_checkpoint"].get("sha256")
         or parent_normalization.get("sha256") != normalization.get("sha256")
         or Path(str(normalization.get("path", ""))).name
-        != Y32_NORMALIZATION_NAME
+        != SELECTED_NORMALIZATION_NAME
     ):
-        raise BireY32FigureError("the local24-to-Y32 training provenance changed")
+        raise BireY32X32FigureError(
+            "the Y32-to-32x32 training provenance changed"
+        )
 
 
 def load_contract(
@@ -337,16 +344,16 @@ def load_contract(
     *,
     verify_sources: bool = True,
 ) -> tuple[dict[str, Any], Path, str]:
-    """Load and strictly audit the S0 Y32 held-evaluation declaration."""
+    """Load and strictly audit the S0 32x32 held-evaluation declaration."""
 
     resolved = Path(path).resolve()
     contract = json.loads(resolved.read_text())
     pending = unfilled_fields(contract)
     if pending:
-        raise BireY32FigureError(
-            "the Y32 figure contract still carries post-training fields: "
+        raise BireY32X32FigureError(
+            "the 32x32 figure contract still carries post-training fields: "
             + ", ".join(pending)
-            + " -- run `finalize` against the Y32 report first"
+            + " -- run `finalize` against the 32x32 report first"
         )
 
     protocol = contract.get("protocol", {})
@@ -378,7 +385,7 @@ def load_contract(
     )
     models_ok = (
         selected.get("version") == TRAINING_VERSION
-        and comparator.get("version") == LOCAL24_TRAINING_VERSION
+        and comparator.get("version") == COMPARATOR_TRAINING_VERSION
         and _integer(selected.get("optimizer_step")) in CHECKPOINT_STEPS
         and _integer(comparator.get("optimizer_step")) == COMPARATOR_STEP
         and _integer(selected.get("rollout_steps")) == ROLLOUT_STEPS
@@ -387,8 +394,8 @@ def load_contract(
         == FINE_TUNE_LOSS_CONTRACT_SHA256
         and comparator.get("base_loss_contract_sha256")
         == FINE_TUNE_LOSS_CONTRACT_SHA256
-        and selected.get("architecture") == BireY32Architecture().to_dict()
-        and comparator.get("architecture") == BireLocal24Architecture().to_dict()
+        and selected.get("architecture") == BireY32X32Architecture().to_dict()
+        and comparator.get("architecture") == BireY32Architecture().to_dict()
     )
     output_ok = (
         output.get("project_root") == _EXPECTED_PROJECT_ROOT
@@ -413,28 +420,32 @@ def load_contract(
         or _integer(figure6.get("comparator_optimizer_step")) != COMPARATOR_STEP
         or figure6.get("literal_pretrain_finetune_pair") is not True
     ):
-        raise BireY32FigureError("the Y32 S0 figure contract changed")
+        raise BireY32X32FigureError("the 32x32 S0 figure contract changed")
     try:
-        BireY32Architecture(**selected["architecture"])
-        BireLocal24Architecture(**comparator["architecture"])
+        BireY32X32Architecture(**selected["architecture"])
+        BireY32Architecture(**comparator["architecture"])
         _training_provenance(contract)
-    except BireY32FigureError:
+    except BireY32X32FigureError:
         raise
     except (KeyError, TypeError, ValueError, RuntimeError) as error:
-        raise BireY32FigureError(
-            "the selected or comparator Y32 figure provenance changed"
+        raise BireY32X32FigureError(
+            "the selected or comparator 32x32 figure provenance changed"
         ) from error
     if verify_sources:
         hashes = contract.get("source_hashes", {})
         if not _REQUIRED_SOURCE_HASHES.issubset(hashes):
-            raise BireY32FigureError("the Y32 figure source declaration is incomplete")
+            raise BireY32X32FigureError(
+                "the 32x32 figure source declaration is incomplete"
+            )
         for label, specification in contract.get("artifacts", {}).items():
             plots._verify_file(specification, label)
         root = resolved.parents[1]
         for relative, expected in hashes.items():
             source = root / relative
             if not source.is_file() or _file_sha256(source) != expected:
-                raise BireY32FigureError(f"Y32 figure source changed: {relative}")
+                raise BireY32X32FigureError(
+                    f"32x32 figure source changed: {relative}"
+                )
     return contract, resolved, _file_sha256(resolved)
 
 def _stepper(
@@ -445,22 +456,22 @@ def _stepper(
     wind_mean: float,
     wind_scale: float,
 ) -> BireAlignedStepper:
-    """Build either Y32 or its local24 parent after identity checks."""
+    """Build either the 32x32 model or its Y32 parent after identity checks."""
 
     if torch is None:  # pragma: no cover - environment dependent
-        raise RuntimeError("Y32 figure evaluation requires PyTorch")
+        raise RuntimeError("32x32 figure evaluation requires PyTorch")
     if key == "selected_checkpoint":
         declared = contract["selected_model"]
         expected_version = TRAINING_VERSION
-        architecture = BireY32Architecture(**declared["architecture"])
-        builder = build_bire_y32_model
+        architecture = BireY32X32Architecture(**declared["architecture"])
+        builder = build_bire_y32_x32_model
     elif key == "comparator_checkpoint":
         declared = contract["comparator_model"]
-        expected_version = LOCAL24_TRAINING_VERSION
-        architecture = BireLocal24Architecture(**declared["architecture"])
-        builder = build_bire_local24_model
+        expected_version = COMPARATOR_TRAINING_VERSION
+        architecture = BireY32Architecture(**declared["architecture"])
+        builder = build_bire_y32_model
     else:
-        raise BireY32FigureError(f"unknown checkpoint key: {key}")
+        raise BireY32X32FigureError(f"unknown checkpoint key: {key}")
     payload = torch.load(
         Path(contract["artifacts"][key]["path"]),
         map_location=device,
@@ -477,16 +488,16 @@ def _stepper(
         or _integer(payload.get("rollout_steps"))
         != _integer(declared.get("rollout_steps"))
     ):
-        raise BireY32FigureError(
+        raise BireY32X32FigureError(
             f"{key} identity, architecture, dataset, or objective changed"
         )
     try:
         model = builder(architecture).to(device)
         incompatible = model.load_state_dict(payload["model_state_dict"], strict=True)
     except (KeyError, TypeError, ValueError, RuntimeError) as error:
-        raise BireY32FigureError(f"{key} state dictionary changed") from error
+        raise BireY32X32FigureError(f"{key} state dictionary changed") from error
     if incompatible.missing_keys or incompatible.unexpected_keys:
-        raise BireY32FigureError(f"{key} did not load strictly")
+        raise BireY32X32FigureError(f"{key} did not load strictly")
     model.eval()
     with np.load(Path(contract["artifacts"]["selected_normalization"]["path"])) as artifact:
         mean = np.asarray(artifact["pointwise_mean"], dtype=np.float32)
@@ -589,7 +600,7 @@ class _S0Captions:
         plots.METHOD_LABELS = self._method_labels
 
 class FineTuneLabels(_S0Captions):
-    """Label Figure 6 as the literal local24 / Y32 comparison."""
+    """Label Figure 6 as the literal Y32 / 32x32 comparison."""
 
     def __init__(self, regime: str, tau0: float, selected_step: int) -> None:
         super().__init__(regime, tau0, selected_step)
@@ -601,15 +612,15 @@ class FineTuneLabels(_S0Captions):
         self.rules = (
             (
                 "S0 architecture-direction comparison",
-                f"{regime} local24 parent vs meridional-32 fine-tune",
+                f"{regime} Y32 parent vs zonal-32 fine-tune",
             ),
             (
                 "Prior residual Model C",
-                f"Local 3x3 + 24x24 modes (step {COMPARATOR_STEP:,})",
+                f"Local 3x3 + 32x24 modes (step {COMPARATOR_STEP:,})",
             ),
             (
                 "Selected anomaly-direct Model C",
-                f"Local 3x3 + 32x24 modes (step {selected_step:,})",
+                f"Local 3x3 + 32x32 modes (step {selected_step:,})",
             ),
             *(rule for rule in self.rules if rule[0] not in replaced),
         )
@@ -661,7 +672,7 @@ def long_rollout_gate(
         "advisory_note": (
             "a ratio at or near 1.0 means the day-2,000 field is indistinguishable "
             "from climatology; it is not gated, but is reported alongside "
-            "persistence and the anomaly diagnostics for the Y32 "
+            "persistence and the anomaly diagnostics for the 32x32 "
             "keep-or-revert decision"
         ),
         "streamfunction_basis": (
@@ -709,21 +720,21 @@ def acceptance_gate(contract: Mapping[str, Any], regime: str = "S0") -> dict[str
 def _readme(regime: str, report: Mapping[str, Any]) -> str:
     starts = declared_inference_starts()
     selected = int(report["selected_optimizer_step"])
-    return f"""# Meridional-32 local Model C, {regime}: Figures 3--8
+    return f"""# 32 x 32 local Model C, {regime}: Figures 3--8
 
 This held package evaluates the selected step-{selected:,} checkpoint of
 `{TRAINING_VERSION}` on the exact 15-member S0 inference protocol used for
-local24. The black Figure 6 curve is its literal step-{COMPARATOR_STEP:,}
-local24 parent; the red curve is the 32x24 fine-tune. Both retain the trained
-bias-free 49-to-46 local 3x3 path and the same six-step objective. Only four
-new meridional modes on each side were opened during fine-tuning; zonal modes
-remain fixed at 24.
+local24 and Y32. The black Figure 6 curve is its literal step-{COMPARATOR_STEP:,}
+Y32 parent; the red curve is the 32x32 fine-tune. Both retain the trained
+bias-free 49-to-46 local 3x3 path, the deterministic sine/cosine position
+encoder and the same six-step objective. Only four new zonal half-spectrum
+coefficients were opened during fine-tuning; meridional modes remain at 32.
 
 Starts span {int(starts.min())}--{int(starts.max())}; every member has
 lead-matched truth through day 2,000. Climatology remains the pointwise
 {regime} training-block mean and persistence holds the initial physical state.
 The numerical reductions, plot functions, filenames and lead grid are reused
-unchanged from the preceding local24 package.
+unchanged from the preceding Y32 package.
 
 The measurable gate is written beside the S0 folder as `{GATE_NAME}`. This
 package performs no training, selection, or checkpoint promotion.
@@ -743,16 +754,16 @@ def finalize(contract_path: str | Path) -> dict[str, Any]:
     contract = json.loads(resolved.read_text())
     report_path = Path(contract["artifacts"]["selected_report"]["path"])
     if not report_path.is_file():
-        raise BireY32FigureError(
+        raise BireY32X32FigureError(
             f"the training report is not on disk yet: {report_path}"
         )
     if report_path.name != TRAINING_REPORT_NAME:
-        raise BireY32FigureError(
+        raise BireY32X32FigureError(
             f"the declared report is not {TRAINING_REPORT_NAME}"
         )
     report = json.loads(report_path.read_text())
     if report.get("version") not in ACCEPTED_TRAINING_REPORT_VERSIONS:
-        raise BireY32FigureError("the report is not this arm's")
+        raise BireY32X32FigureError("the report is not this arm's")
     published = report["published_checkpoint"]
     resolutions = {
         ("selected_model", "optimizer_step"): int(published["optimizer_step"]),
@@ -764,7 +775,7 @@ def finalize(contract_path: str | Path) -> dict[str, Any]:
     for path, value in resolutions.items():
         current = _read(contract, path)
         if current not in (None, PENDING) and current != value:
-            raise BireY32FigureError(
+            raise BireY32X32FigureError(
                 f"{'.'.join(path)} is already {current!r}, not {value!r}; "
                 "refusing to overwrite a filled contract field"
             )
@@ -779,7 +790,7 @@ def finalize(contract_path: str | Path) -> dict[str, Any]:
         ("selected_normalization", published["normalization"]),
     ):
         if contract["artifacts"][key]["path"] != declared:
-            raise BireY32FigureError(
+            raise BireY32X32FigureError(
                 f"{key} path disagrees with the training report: "
                 f"{contract['artifacts'][key]['path']} vs {declared}"
             )

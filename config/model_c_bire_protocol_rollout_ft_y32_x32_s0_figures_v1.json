@@ -1,42 +1,42 @@
 {
   "acceptance_gate": {
-    "advisory": "the_gate_also_records_the_day_2000_model_RMSE_divided_by_climatologys_because_a_model_that_has_relaxed_onto_climatology_can_satisfy_every_bound_on_amplitude_and_finiteness_while_carrying_no_circulation",
-    "artifact": "bire_protocol_rollout_ft_acceptance_gate.json",
-    "artifact_location": "beside_the_regime_folder_not_inside_it_so_the_sealed_regime_manifest_stays_valid",
-    "by_inspection": "western_boundary_sharp_gyre_structure_identifiable_no_basin_wide_smoothing",
-    "decision": "the_checkpoint_is_frozen_and_the_adjoint_study_opens_after_this_evaluation_regardless_of_whether_this_gate_passes",
-    "evaluated_by_the_training_arm": [
-      "no_10_90_day_field_worsens_by_more_than_5_percent",
-      "worst_90_360_day_climatology_ratio_at_or_below_0.85"
-    ],
+    "advisory": "report_day2000_RMSE_relative_to_both_climatology_and_persistence_alongside_transient_anomaly_amplitude_and_directional_structure",
+    "artifact": "bire_protocol_rollout_ft_y32_x32_acceptance_gate.json",
+    "by_inspection": "western_boundary_sharp_gyre_identifiable_and_the_added_zonal_bandwidth_sharpens_the_field_without_amplifying_the_existing_zonal_banding",
+    "decision": "compare_against_the_retained_Y32_arm_before_retaining_or_reverting_the_32x32_arm",
     "evaluated_here": [
       "all_values_finite",
       "maximum_normalized_magnitude_at_most_8",
       "day2000_streamfunction_minimum_at_least_minus_33_sv",
-      "day2000_spatial_standard_deviation_ratio_within_0.80_1.25"
+      "day2000_total_field_standard_deviation_ratio",
+      "day2000_RMSE_relative_to_climatology_and_persistence"
     ],
-    "not_required": "the_day_2000_trajectory_RMSE_need_not_beat_persistence"
+    "evaluated_next": [
+      "day2000_streamfunction_anomaly_RMS_ratio",
+      "western_band_and_interior_anomaly_RMS",
+      "directional_gradient_and_high_wavenumber_power"
+    ]
   },
   "artifacts": {
     "comparator_checkpoint": {
-      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/bire_protocol_rollout_ft_v1/selected.pt",
-      "sha256": "113d82f6f390a94315d10c38b16e98ebb4f94d862c53c8cb0c4e99f06bdc0914"
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/bire_protocol_rollout_ft_local24_y32_v1/selected.pt",
+      "sha256": "238c255b9b7daf54a2ea2be5e815b65919642a46eb240fd7a0046ec1b88dba4e"
     },
     "dataset_metadata": {
       "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/trajectories_v3.zarr/.zmetadata",
       "sha256": "766cae89359311775c79103f44dc74630630ba6b7a0a8c6e9d26f73487512136"
     },
     "selected_checkpoint": {
-      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/bire_protocol_rollout_ft_local24_v1/selected.pt",
-      "sha256": "609b7483ec143d5b1b7e5d3643994910bbaa0db136f4cec272cc23fd49f529f7"
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/bire_protocol_rollout_ft_y32_x32_v1/selected.pt",
+      "sha256": "bd92b05454d625f246c268befc94ccf5594fc8e9c77a093355226adaca724cee"
     },
     "selected_normalization": {
-      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/bire_protocol_rollout_ft_local24_v1/model_c_bire_protocol_rollout_ft_local24_train_only_normalization.npz",
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/bire_protocol_rollout_ft_y32_x32_v1/model_c_bire_protocol_rollout_ft_y32_x32_train_only_normalization.npz",
       "sha256": "ad7cc8584788ccdd4e8beaae3e606b9423230552af7079f15667b93bd1abaf2f"
     },
     "selected_report": {
-      "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/bire_protocol_rollout_ft_local24_v1/bire_protocol_rollout_ft_local24_report.json",
-      "sha256": "4c1948e359f230e6d74ce1b56dada19b3911331bcda0c43cf38a8ac05b81b267"
+      "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/bire_protocol_rollout_ft_y32_x32_v1/bire_protocol_rollout_ft_y32_x32_report.json",
+      "sha256": "0741cb900938617eb35c25cc22115983cbc58be94729c5cc2da8101a9f2708ae"
     }
   },
   "baselines": {
@@ -46,9 +46,9 @@
     "rmse": "square_root_of_mean_squared_error_over_wet_cells_for_each_member"
   },
   "comparability": {
-    "basis": "same_15_starts_same_seed_same_lead_grid_same_truth_window_same_baselines_same_normalizers_parent_and_local24_checkpoints",
-    "compared_package": "outputs/af_fno/C/model_c_bire_protocol_rollout_ft/bire_protocol_rollout_ft_s0_figures_v1/S0",
-    "directly_comparable_with_archived_rollout_package": true
+    "basis": "same_15_starts_seed_leads_truth_baselines_normalizers_and_plot_definitions_as_local24_and_Y32",
+    "compared_package": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/bire_protocol_rollout_ft_local24_y32/bire_protocol_rollout_ft_local24_y32_s0_figures_v1/S0",
+    "directly_comparable_with_local24_package": true
   },
   "comparator_model": {
     "architecture": {
@@ -65,11 +65,11 @@
       "in_channels": 49,
       "lifting_channel_ratio": 2,
       "lifting_in_channels": 51,
-      "local_kernel_size": null,
+      "local_kernel_size": 3,
       "n_layers": 3,
       "n_modes": [
-        24,
-        16
+        32,
+        24
       ],
       "out_channels": 46,
       "pointwise_layer_norm": true,
@@ -79,15 +79,16 @@
       "use_channel_mlp": true
     },
     "base_loss_contract_sha256": "0cc75764a6eec7c7e82bb4cdb97e51929b57b1fbf765a7ee50c290ba3593bdbb",
-    "name": "bire_protocol_rollout_ft_Model_C",
+    "name": "bire_protocol_rollout_ft_local24_y32_Model_C",
     "objective": "group_balanced_model_c_loss_v1_with_a_six_step_rollout",
     "optimizer_step": 3840,
-    "role": "the_weights_the_fine_tune_started_from",
+    "role": "the_retained_model_the_32x32_arm_started_from",
     "rollout_steps": 6,
     "rollout_weight": 0.5,
-    "training_contract": "/home/mjalabert314/bire_james25_repro/archive/config/model_c_bire_protocol_rollout_ft_v1.json"
+    "training_contract": "/home/mjalabert314/bire_james25_repro/config/model_c_bire_protocol_rollout_ft_local24_y32_v1.json",
+    "version": "model_c_bire_protocol_rollout_ft_local24_y32_v1"
   },
-  "contract_status": "frozen_after_the_bire_protocol_rollout_ft_local24_training_and_validation_and_before_any_inference_metric",
+  "contract_status": "frozen_after_the_bire_protocol_rollout_ft_y32_x32_training_and_validation_and_before_any_inference_metric",
   "dataset": {
     "evaluation_truth_note": "never_trained_on_validated_on_or_used_as_an_inference_start_bire_figure_7_carries_a_ground_truth_column_at_the_2000th_day_obtained_because_their_simulations_2_and_4_are_entirely_held_out_we_obtain_the_same_separation_along_time",
     "evaluation_truth_only_days": [
@@ -118,19 +119,18 @@
     "version": "trajectories_v3"
   },
   "figure6": {
-    "black": "the_selected_six_step_24x16_checkpoint_the_fine_tune_started_from",
+    "black": "the_retained_Y32_step3840_checkpoint",
     "comparator_optimizer_step": 3840,
-    "first_literal_pair_in_this_project": true,
     "literal_pretrain_finetune_pair": true,
-    "reason": "the_new_capacity_starts_function_preserving_so_the_gap_is_the_effect_of_learning_with_added_local_and_zonal_capacity",
-    "red": "the_selected_local24_fine_tuned_checkpoint",
-    "required_label": "parent_rollout_model_vs_local24_fine_tune",
+    "reason": "the_32x32_warm_start_is_function_preserving_so_the_gap_is_the_effect_of_learning_the_four_new_zonal_half_spectrum_coefficients",
+    "red": "the_selected_32x32_checkpoint",
+    "required_label": "y32_parent_vs_zonal_32_fine_tune",
     "shared_objective_hash": "both_models_carry_the_same_six_step_objective_contract"
   },
   "output": {
     "one_folder_per_regime": true,
     "overwrite": false,
-    "project_root": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/bire_protocol_rollout_ft_local24_s0_figures_v1",
+    "project_root": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/bire_protocol_rollout_ft_y32_x32_s0_figures_v1",
     "required": [
       "model_c_bire_figure3_streamfunction_1deg_s0_dt10.png",
       "model_c_bire_figure4_dt10_rmse_0_200_days_s0.png",
@@ -145,7 +145,7 @@
       "manifest.json",
       "README.md"
     ],
-    "scratch_root": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/bire_protocol_rollout_ft_local24_s0_figures_v1"
+    "scratch_root": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/bire_protocol_rollout_ft_y32_x32_s0_figures_v1"
   },
   "pending_after_training": {
     "fields": [
@@ -155,7 +155,7 @@
       "artifacts.selected_report.sha256"
     ],
     "filled_by": "python -m oceanfno.figures finalize --contract <this file>",
-    "reason": "the_selected_optimizer_step_and_the_three_artifact_hashes_cannot_be_known_until_training_and_validation_have_run_and_the_loader_refuses_the_contract_until_they_are_filled_from_the_runs_own_report",
+    "reason": "the_selected_checkpoint_is_not_known_until_validation_selection_runs_and_finalize_is_an_idempotent_provenance_bind_to_the_completed_report",
     "sentinel": "PENDING_AFTER_TRAINING"
   },
   "protocol": {
@@ -224,10 +224,9 @@
     "start_window": [
       6200,
       7000
-    ],
-    "start_window_reason": "every_member_completes_a_2000_day_rollout_with_lead_matched_truth_6999_plus_2000_equals_8999"
+    ]
   },
-  "purpose": "s0_bire_style_figures_for_the_local24_fine_tune_directly_comparable_with_its_selected_six_step_parent",
+  "purpose": "same_S0_Bire_figures_for_the_selected_32x32_model_with_the_retained_Y32_model_as_its_literal_comparator",
   "read_contract": {
     "adjoint_state": false,
     "inference_state": true,
@@ -255,8 +254,8 @@
       "local_kernel_size": 3,
       "n_layers": 3,
       "n_modes": [
-        24,
-        24
+        32,
+        32
       ],
       "out_channels": 46,
       "pointwise_layer_norm": true,
@@ -268,42 +267,34 @@
     "base_loss_contract_sha256": "0cc75764a6eec7c7e82bb4cdb97e51929b57b1fbf765a7ee50c290ba3593bdbb",
     "initialized_from": {
       "load_only": "model_state_dict",
+      "mode_migration": "copy_parent_32x13_spectral_tensor_into_zonal_indices_0_to_12_and_zero_the_four_new_zonal_half_spectrum_coefficients",
       "optimizer_step": 3840,
-      "version": "model_c_bire_protocol_rollout_ft_v1"
+      "version": "model_c_bire_protocol_rollout_ft_local24_y32_v1"
     },
-    "name": "bire_protocol_rollout_ft_local24_Model_C",
+    "name": "bire_protocol_rollout_ft_y32_x32_Model_C",
     "objective": "group_balanced_model_c_loss_v1_with_a_six_step_rollout",
     "optimizer_step": 3840,
     "rollout_steps": 6,
     "rollout_weight": 0.5,
     "seed": 20260724,
-    "selected_by": "pooled_bire_protocol_validation_6000_6199_min_worst_long_climatology_ratio_subject_to_short_guard",
-    "training_contract": "/home/mjalabert314/bire_james25_repro/config/model_c_bire_protocol_rollout_ft_local24_v1.json"
+    "selected_by": "pooled_validation_6000_6199_min_worst_long_climatology_ratio_subject_to_short_guard",
+    "training_contract": "/home/mjalabert314/bire_james25_repro/config/model_c_bire_protocol_rollout_ft_y32_x32_v1.json",
+    "version": "model_c_bire_protocol_rollout_ft_y32_x32_v1"
   },
   "source_hashes": {
-    "src/oceanfno/anomaly.py": "4c2f849f1b2a323b3203ffbc34d161dad59fffa5b454e141bd6d87ea8af9644b",
     "src/oceanfno/dataset.py": "39ae79be3cbee5ead62c51c900679d3eef562a816faaf06cadbc0968dd3d4f00",
     "src/oceanfno/diagnostics.py": "cbd2fac4af73441b0a3c45a0e339b71e6bd2ccbe2631b0881be38adcc06d2ef6",
-    "src/oceanfno/figures.py": "56cf5cafc7d46cc3a79db39c1de1d179607316d091a66d1546915d0de5654d5b",
-    "src/oceanfno/model.py": "0ae43dc3f82b8065d06e19134f0faaedf88b1a01c79f8abcdffc217431e726bf",
-    "src/oceanfno/objective.py": "be64f0b9261afeb27236b1efef8f96203af03241e75e5caeacc190eb1d55ee9d",
+    "src/oceanfno/figures.py": "19f63c6cecd8a00873f66f8cede8cdaa6ebfb04cec8462a600453f8e26a649f5",
+    "src/oceanfno/model.py": "56e5bfdd2a77edf211da2f248fb75701e4a963af47f23ca913de20b46a20e896",
     "src/oceanfno/plots.py": "84a39e112fe6bfbddfdcff8ff102ed6cb9fb04ea0370eecad99fc55a1dd1be3a",
     "src/oceanfno/runtime.py": "c9d267eb708f6d1f89a72078b43e37dab2fb679d66e093371d1bb75f1c5ec20c",
-    "src/oceanfno/train.py": "32e73df9db34bdba3289d3490d9c2eb2d71de93e5149e2ed9ce7b991e8f9c805",
+    "src/oceanfno/train.py": "00973a78d0a5c5fe83f5e55b47e865a910bc73a6faf37f54c9e052399fa54e97",
     "src/oceanfno/validation.py": "4e77ae77547463ad82804fc599c27da15714d788f3c24a48e754eb08ad14df36"
-  },
-  "supersedes": {
-    "code_tree": "src/bire_repro (archived)",
-    "contract": "/home/mjalabert314/bire_james25_repro/archive/config/model_c_bire_protocol_rollout_ft_s0_figures_v1.json",
-    "contract_sha256": "f187791a9bdc3ac042906f21d6f72e0f3226d427e5a8917d0d06dd23513027e2",
-    "note": "the scientific arm is unchanged; v2 declares the consolidated src/oceanfno tree. Every function body was copied verbatim from the v1 modules and verified numerically identical, so the published artifacts remain the artifacts of this arm.",
-    "published_artifacts_were_produced_under": "model_c_bire_protocol_rollout_ft_s0_figures_v1",
-    "version": "model_c_bire_protocol_rollout_ft_s0_figures_v1"
   },
   "truth": {
     "continuation_required": false,
     "lead_matched_to_day": 2000,
     "source": "trajectory_v3_store"
   },
-  "version": "model_c_bire_protocol_rollout_ft_local24_s0_figures_v1"
+  "version": "model_c_bire_protocol_rollout_ft_y32_x32_s0_figures_v1"
 }

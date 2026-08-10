@@ -1,9 +1,12 @@
-"""Contract and metric tests for the canonical Y32 S0 anomaly package.
+"""Contract and metric tests for the canonical 32x32 S0 anomaly package.
 
 This package must change only the model values it reads.  The reference field,
 plot definitions, member, leads, and diagnostic formulas remain the retained
-local24 definitions, while every input artifact must belong to the sealed Y32
-figure package.
+local24 definitions, while every input artifact must belong to the sealed
+32x32 figure package.
+
+The contract and published-metric tests are skipped until the figure package
+they bind to exists; the metric-definition tests run immediately.
 """
 
 from __future__ import annotations
@@ -20,18 +23,18 @@ import pytest
 ROOT = Path(__file__).resolve().parents[1]
 CONTRACT = (
     ROOT
-    / "config/model_c_bire_protocol_rollout_ft_local24_y32_s0_anomaly_v1.json"
+    / "config/model_c_bire_protocol_rollout_ft_y32_x32_s0_anomaly_v1.json"
 )
 COMPARED = (
-    ROOT / "config/model_c_bire_protocol_rollout_ft_local24_s0_anomaly_v1.json"
+    ROOT
+    / "config/model_c_bire_protocol_rollout_ft_local24_y32_s0_anomaly_v1.json"
 )
 FIGURE_CONTRACT = (
     ROOT
-    / "config/model_c_bire_protocol_rollout_ft_local24_y32_s0_figures_v1.json"
+    / "config/model_c_bire_protocol_rollout_ft_y32_x32_s0_figures_v1.json"
 )
 FIGURE_PACKAGE = (
-    ROOT
-    / "outputs/af_fno/C/bire_protocol_rollout_ft_local24_y32_s0_figures_v1/S0"
+    ROOT / "outputs/af_fno/C/bire_protocol_rollout_ft_y32_x32_s0_figures_v1/S0"
 )
 FIGURE_REPORT = FIGURE_PACKAGE / "model_c_bire_s0_figures_report.json"
 FIGURE_ARRAYS = FIGURE_PACKAGE / "model_c_bire_s0_figures_arrays.npz"
@@ -39,16 +42,15 @@ FIGURE_MANIFEST = FIGURE_PACKAGE / "manifest.json"
 MODULE = ROOT / "src/oceanfno/anomaly.py"
 SBATCH = ROOT / "slurm/models/c/anomaly.sbatch"
 PACKAGE = (
-    ROOT
-    / "outputs/af_fno/C/bire_protocol_rollout_ft_local24_y32_s0_anomaly_v1/S0"
+    ROOT / "outputs/af_fno/C/bire_protocol_rollout_ft_y32_x32_s0_anomaly_v1/S0"
 )
 
-VERSION = "model_c_bire_protocol_rollout_ft_local24_y32_s0_anomaly_v1"
+VERSION = "model_c_bire_protocol_rollout_ft_y32_x32_s0_anomaly_v1"
 CONTRACT_STATUS = (
-    "frozen_after_the_rollout_ft_local24_y32_figure_package_and_before_any_"
+    "frozen_after_the_rollout_ft_y32_x32_figure_package_and_before_any_"
     "anomaly_metric"
 )
-FIGURE_VERSION = "model_c_bire_protocol_rollout_ft_local24_y32_s0_figures_v1"
+FIGURE_VERSION = "model_c_bire_protocol_rollout_ft_y32_x32_s0_figures_v1"
 PENDING = "PENDING_AFTER_FIGURES"
 
 FIGURE_3_LEADS = (0, 10, 20, 30, 40)
@@ -71,11 +73,11 @@ DIAGNOSTICS = (
 
 PROJECT_ROOT = (
     "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/"
-    "bire_protocol_rollout_ft_local24_y32_s0_anomaly_v1"
+    "bire_protocol_rollout_ft_y32_x32_s0_anomaly_v1"
 )
 SCRATCH_ROOT = (
     "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/"
-    "bire_protocol_rollout_ft_local24_y32_s0_anomaly_v1"
+    "bire_protocol_rollout_ft_y32_x32_s0_anomaly_v1"
 )
 
 PROVENANCE = {
@@ -93,48 +95,49 @@ PENDING_ARTIFACTS = (
 EXPECTED_FIGURE7 = {
     "60": {
         "truth_anomaly_rms_sv": 0.24119470400991888,
-        "model_anomaly_rms_sv": 0.2623884478417753,
-        "anomaly_rms_ratio": 1.0878698556788577,
-        "anomaly_error_rms_sv": 0.10967285763810991,
+        "model_anomaly_rms_sv": 0.2606782768144347,
+        "anomaly_rms_ratio": 1.080779438688316,
+        "anomaly_error_rms_sv": 0.10531760812921298,
         "truth_anomaly_range_sv": (-5.053138732910156, 6.039175033569336),
-        "model_anomaly_range_sv": (-4.805507659912109, 6.34630012512207),
+        "model_anomaly_range_sv": (-4.777185440063477, 6.355783462524414),
     },
     "2000": {
         "truth_anomaly_rms_sv": 0.1944885857667538,
-        "model_anomaly_rms_sv": 0.6737965126291088,
-        "anomaly_rms_ratio": 3.4644527336795963,
-        "anomaly_error_rms_sv": 0.6444222960271173,
+        "model_anomaly_rms_sv": 0.7023680707248172,
+        "anomaly_rms_ratio": 3.6113588257932676,
+        "anomaly_error_rms_sv": 0.6655044121429439,
         "truth_anomaly_range_sv": (-3.9899673461914062, 3.315977096557617),
-        "model_anomaly_range_sv": (-10.034830093383789, 3.070181503981871),
+        "model_anomaly_range_sv": (-9.073604583740234, 2.526254653930664),
     },
 }
 EXPECTED_STRUCTURE = {
     "normalized_first_difference_rms": {
         "truth_meridional": 1.2212329258247157,
-        "model_meridional": 0.42742369204102065,
+        "model_meridional": 0.43649400889995954,
         "truth_zonal": 0.5526219434406737,
-        "model_zonal": 0.7912927409799007,
+        "model_zonal": 0.8184016687383289,
     },
     "hann_directional_power_fraction_above_0p2_cycles_per_cell": {
         "truth_meridional": 0.02763470465687459,
-        "model_meridional": 0.002304569765306466,
+        "model_meridional": 0.0017593603503868263,
         "truth_zonal": 0.005084964649634374,
-        "model_zonal": 0.07616236495715499,
+        "model_zonal": 0.05201215477476319,
     },
     "western_first_4_wet_cells": {
         "truth_rms_sv": 0.7435585690750866,
-        "model_rms_sv": 1.5897058761923932,
-        "model_to_truth_rms_ratio": 2.1379699492533994,
+        "model_rms_sv": 2.066642273122052,
+        "model_to_truth_rms_ratio": 2.7793940639978785,
         "truth_boundary_to_interior_rms_ratio": 23.098211684067127,
-        "model_boundary_to_interior_rms_ratio": 2.8741788594173783,
+        "model_boundary_to_interior_rms_ratio": 4.371597760602986,
     },
 }
 
 requires_contract = pytest.mark.skipif(
-    not CONTRACT.is_file(), reason="the Y32 anomaly contract is absent"
+    not CONTRACT.is_file(),
+    reason="the 32x32 anomaly contract is absent until its figure package exists",
 )
 requires_module = pytest.mark.skipif(
-    not MODULE.is_file(), reason="the canonical Y32 anomaly module is absent"
+    not MODULE.is_file(), reason="the canonical anomaly module is absent"
 )
 
 
@@ -164,7 +167,7 @@ def _filled() -> dict:
 
 
 def _written(contract: dict, directory: Path) -> Path:
-    path = directory / "y32_anomaly.json"
+    path = directory / "x32_anomaly.json"
     path.write_text(json.dumps(contract, indent=2, sort_keys=True) + "\n")
     return path
 
@@ -174,7 +177,7 @@ def _suite():
 
 
 @requires_contract
-def test_y32_uses_the_same_three_png_definitions_as_local24() -> None:
+def test_x32_uses_the_same_three_png_definitions_as_y32() -> None:
     mine = _raw()
     compared = json.loads(COMPARED.read_text())
 
@@ -204,7 +207,7 @@ def test_y32_uses_the_same_three_png_definitions_as_local24() -> None:
 
 
 @requires_module
-def test_canonical_y32_module_exposes_the_frozen_metric_and_plot_functions() -> None:
+def test_canonical_module_exposes_the_frozen_metric_and_plot_functions() -> None:
     suite = _suite()
     names = (
         "training_mean_streamfunction",
@@ -224,7 +227,7 @@ def test_canonical_y32_module_exposes_the_frozen_metric_and_plot_functions() -> 
 
 
 @requires_contract
-def test_y32_reads_only_the_completed_y32_figure_package() -> None:
+def test_x32_reads_only_the_completed_x32_figure_package() -> None:
     contract = _filled()
     artifacts = contract["artifacts"]
     report = json.loads(FIGURE_REPORT.read_text())
@@ -250,7 +253,7 @@ def test_y32_reads_only_the_completed_y32_figure_package() -> None:
 
 
 @requires_contract
-def test_y32_is_s0_only_and_has_exact_noncolliding_output_roots() -> None:
+def test_x32_is_s0_only_and_has_exact_noncolliding_output_roots() -> None:
     mine = _raw()
     compared = json.loads(COMPARED.read_text())
 
@@ -265,13 +268,13 @@ def test_y32_is_s0_only_and_has_exact_noncolliding_output_roots() -> None:
     for key in ("project_root", "scratch_root"):
         assert mine["output"][key] != compared["output"][key]
     assert mine["retained_on_the_total_field"]["measurement_source"] == (
-        "bire_protocol_rollout_ft_local24_y32_acceptance_gate.json"
+        "bire_protocol_rollout_ft_y32_x32_acceptance_gate.json"
     )
 
 
 @requires_contract
 @requires_module
-def test_a_filled_y32_anomaly_contract_loads_strictly(tmp_path) -> None:
+def test_a_filled_x32_anomaly_contract_loads_strictly(tmp_path) -> None:
     suite = _suite()
     contract, resolved, digest = suite.load_contract(
         _written(_filled(), tmp_path), verify_sources=False
@@ -290,7 +293,7 @@ def test_pending_provenance_refuses_to_load_and_finalize_fills_it(tmp_path) -> N
     for key in PENDING_ARTIFACTS:
         assert pending["artifacts"][key]["sha256"] == PENDING
     path = _written(pending, tmp_path)
-    with pytest.raises(suite.BireY32AnomalyError):
+    with pytest.raises(suite.BireY32X32AnomalyError):
         suite.load_contract(path, verify_sources=False)
 
     result = suite.finalize(path)
@@ -311,7 +314,7 @@ def test_finalize_refuses_to_overwrite_bound_provenance(tmp_path) -> None:
     suite = _suite()
     contract = _pending()
     contract["artifacts"]["figure_package_arrays"]["sha256"] = "0" * 64
-    with pytest.raises(suite.BireY32AnomalyError, match="refus|mismatch|changed"):
+    with pytest.raises(suite.BireY32X32AnomalyError, match="refus|mismatch|changed"):
         suite.finalize(_written(contract, tmp_path))
 
 
@@ -365,13 +368,13 @@ def test_finalize_refuses_to_overwrite_bound_provenance(tmp_path) -> None:
         ),
         pytest.param(
             lambda c: c["artifacts"]["figure_package_report"].update(
-                path="/tmp/not-the-y32-report.json"
+                path="/tmp/not-the-x32-report.json"
             ),
             id="figure_report_replaced",
         ),
         pytest.param(
             lambda c: c["artifacts"]["figure_package_arrays"].update(
-                path="/tmp/not-the-y32-arrays.npz"
+                path="/tmp/not-the-x32-arrays.npz"
             ),
             id="figure_arrays_replaced",
         ),
@@ -387,7 +390,7 @@ def test_finalize_refuses_to_overwrite_bound_provenance(tmp_path) -> None:
         ),
         pytest.param(
             lambda c: c["output"].update(
-                project_root=PROJECT_ROOT.replace("local24_y32", "local24")
+                project_root=PROJECT_ROOT.replace("y32_x32", "local24_y32")
             ),
             id="project_root_collides",
         ),
@@ -406,13 +409,13 @@ def test_finalize_refuses_to_overwrite_bound_provenance(tmp_path) -> None:
         pytest.param(lambda c: c.update(adds_only=False), id="not_additive"),
     ],
 )
-def test_y32_anomaly_contract_rejects_science_provenance_and_output_tampering(
+def test_x32_anomaly_contract_rejects_science_provenance_and_output_tampering(
     mutate, tmp_path
 ) -> None:
     suite = _suite()
     contract = _filled()
     mutate(contract)
-    with pytest.raises(suite.BireY32AnomalyError):
+    with pytest.raises(suite.BireY32X32AnomalyError):
         suite.load_contract(_written(contract, tmp_path), verify_sources=False)
 
 
@@ -495,9 +498,9 @@ def test_anomaly_ratio_catches_variability_hidden_by_the_total_mean() -> None:
 
 @pytest.mark.skipif(
     not (PACKAGE / REPORT_NAME).is_file(),
-    reason="the Y32 anomaly package has not been produced",
+    reason="the 32x32 anomaly package has not been produced",
 )
-def test_published_y32_anomaly_metrics_match_the_sealed_figure_arrays() -> None:
+def test_published_anomaly_metrics_match_the_sealed_figure_arrays() -> None:
     report = json.loads((PACKAGE / REPORT_NAME).read_text())
     assert report["version"] == VERSION
     assert report["status"] == "complete"
@@ -523,7 +526,7 @@ def test_published_y32_anomaly_metrics_match_the_sealed_figure_arrays() -> None:
 
 @pytest.mark.skipif(
     not (PACKAGE / ARRAYS_NAME).is_file(),
-    reason="the Y32 anomaly package has not been produced",
+    reason="the 32x32 anomaly package has not been produced",
 )
 def test_published_arrays_are_one_shared_field_subtraction() -> None:
     with np.load(PACKAGE / ARRAYS_NAME) as anomaly:
@@ -545,14 +548,17 @@ def test_published_arrays_are_one_shared_field_subtraction() -> None:
 
 
 @requires_module
-def test_canonical_anomaly_has_no_y32_wrapper_context() -> None:
+def test_canonical_anomaly_has_no_wrapper_context() -> None:
     suite = _suite()
     assert suite.VERSION == VERSION
     assert suite.CONTRACT_STATUS == CONTRACT_STATUS
     assert not hasattr(suite, "_y32_anomaly_runner")
+    assert not hasattr(suite, "_x32_anomaly_runner")
 
 
-@pytest.mark.skipif(not SBATCH.is_file(), reason="the Y32 anomaly launcher is absent")
+@pytest.mark.skipif(
+    not SBATCH.is_file(), reason="the 32x32 anomaly launcher is absent"
+)
 def test_launcher_finalizes_preflights_then_runs_only_the_canonical_module() -> None:
     text = SBATCH.read_text()
     invoked = {
@@ -561,6 +567,6 @@ def test_launcher_finalizes_preflights_then_runs_only_the_canonical_module() -> 
         if " -m " in f" {line} " and "oceanfno." in line
     }
     assert invoked == {"oceanfno.anomaly"}
-    assert "model_c_bire_protocol_rollout_ft_local24_y32_s0_anomaly_v1.json" in text
+    assert "model_c_bire_protocol_rollout_ft_y32_x32_s0_anomaly_v1.json" in text
     assert text.index("finalize") < text.index("  preflight") < text.index("  run")
     assert "--gres=gpu" not in text

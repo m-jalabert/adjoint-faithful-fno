@@ -1,5 +1,5 @@
 #!/bin/bash -l
-#SBATCH --job-name=af-c-y32anom
+#SBATCH --job-name=af-c-x32anom
 #SBATCH --account=pod-users
 #SBATCH --partition=batch
 #SBATCH --nodes=1
@@ -8,7 +8,7 @@
 #SBATCH --mem=16G
 #SBATCH --time=00:30:00
 
-# Save the Y32 streamfunction-anomaly companions:
+# Save the 32x32 streamfunction-anomaly companions:
 #   psi'(x,y,t) = psi(x,y,t) - psi_bar_S0(x,y),
 # where psi_bar_S0 is the MITgcm training-block mean over days 0--5999. This
 # consumes the sealed figure arrays, rolls nothing out, and reads no weights.
@@ -21,7 +21,7 @@ export OMP_NUM_THREADS="${SLURM_CPUS_PER_TASK}"
 export MKL_NUM_THREADS="${SLURM_CPUS_PER_TASK}"
 
 AF_PROJECT_ROOT="${AF_PROJECT_ROOT:-${SLURM_SUBMIT_DIR:?Submit from the repository root or set AF_PROJECT_ROOT}}"
-AF_CONTRACT="${AF_CONTRACT:-${AF_PROJECT_ROOT}/config/model_c_bire_protocol_rollout_ft_local24_y32_s0_anomaly_v1.json}"
+AF_CONTRACT="${AF_CONTRACT:-${AF_PROJECT_ROOT}/config/model_c_bire_protocol_rollout_ft_y32_x32_s0_anomaly_v1.json}"
 AF_PYTHON="${AF_PYTHON:-${AF_PROJECT_ROOT}/.venv/bin/python}"
 
 cd "${AF_PROJECT_ROOT}"

@@ -1,5 +1,5 @@
 #!/bin/bash -l
-#SBATCH --job-name=af-c-y32
+#SBATCH --job-name=af-c-x32
 #SBATCH --account=pod-users
 #SBATCH --partition=gpu
 #SBATCH --gres=gpu:v100:1
@@ -8,12 +8,14 @@
 #SBATCH --cpus-per-task=4
 #SBATCH --time=04:00:00
 
-# Retained successor to the local24 arm: Fourier modes (Y,X) 24x24 -> 32x24.
-# The trained bias-free 49-to-46 local 3x3 branch is copied unchanged. The old
-# spectral tensors are centered in indices 4:28 of the enlarged Y axis, with
-# four zero modes on either side, so the migrated map is initially exact.
-# Data, normalization, six-step loss, optimizer schedule, seed, validation
-# starts, and checkpoint selection remain inherited from local24.
+# Successor to the retained Y32 arm: Fourier modes (Y,X) 32x24 -> 32x32.
+# The trained bias-free 49-to-46 local 3x3 branch and the deterministic
+# sine/cosine position encoder are copied unchanged. The zonal axis is the
+# real-transform axis, so the old 32x13 spectral tensors occupy indices
+# [..., :13] of the enlarged 32x17 tensors and the four new coefficients start
+# at zero, making the migrated map initially exact. Data, normalization,
+# six-step loss, optimizer schedule, seed, validation starts, and checkpoint
+# selection remain inherited from Y32, which inherits them from local24.
 set -euo pipefail
 
 module purge
@@ -23,7 +25,7 @@ export OMP_NUM_THREADS="${SLURM_CPUS_PER_TASK}"
 export MKL_NUM_THREADS="${SLURM_CPUS_PER_TASK}"
 
 AF_PROJECT_ROOT="${AF_PROJECT_ROOT:-${SLURM_SUBMIT_DIR:?Submit from the repository root or set AF_PROJECT_ROOT}}"
-AF_CONTRACT="${AF_CONTRACT:-${AF_PROJECT_ROOT}/config/model_c_bire_protocol_rollout_ft_local24_y32_v1.json}"
+AF_CONTRACT="${AF_CONTRACT:-${AF_PROJECT_ROOT}/config/model_c_bire_protocol_rollout_ft_y32_x32_v1.json}"
 AF_PYTHON="${AF_PYTHON:-${AF_PROJECT_ROOT}/.venv/bin/python}"
 
 cd "${AF_PROJECT_ROOT}"

@@ -1,10 +1,14 @@
-"""Tests for the canonical Y32 model's S0 figure package.
+"""Tests for the canonical 32x32 model's S0 figure package.
 
-The Y32 figures are an architecture ablation, not a new evaluation protocol.
-They must therefore reuse the local24 starts, truth, baselines, normalizers,
-lead grid, and six plot definitions exactly.  Only the selected checkpoint
-changes: Y32 is red and the retained local24 checkpoint it started from is
+The 32x32 figures are an architecture ablation, not a new evaluation protocol.
+They must therefore reuse the Y32 starts, truth, baselines, normalizers, lead
+grid, and six plot definitions exactly.  Only the selected checkpoint changes:
+the 32x32 fine-tune is red and the retained Y32 checkpoint it started from is
 black.
+
+The tests that bind to the training report are skipped until the arm has
+actually been trained; everything that is a property of the declaration alone
+runs immediately.
 """
 
 from __future__ import annotations
@@ -21,26 +25,35 @@ import pytest
 ROOT = Path(__file__).resolve().parents[1]
 CONTRACT = (
     ROOT
-    / "config/model_c_bire_protocol_rollout_ft_local24_y32_s0_figures_v1.json"
+    / "config/model_c_bire_protocol_rollout_ft_y32_x32_s0_figures_v1.json"
 )
 COMPARED = (
-    ROOT / "config/model_c_bire_protocol_rollout_ft_local24_s0_figures_v1.json"
+    ROOT
+    / "config/model_c_bire_protocol_rollout_ft_local24_y32_s0_figures_v1.json"
 )
-TRAINING = ROOT / "config/model_c_bire_protocol_rollout_ft_local24_y32_v1.json"
-COMPARATOR_TRAINING = ROOT / "config/model_c_bire_protocol_rollout_ft_local24_v1.json"
+TRAINING = ROOT / "config/model_c_bire_protocol_rollout_ft_y32_x32_v1.json"
+COMPARATOR_TRAINING = (
+    ROOT / "config/model_c_bire_protocol_rollout_ft_local24_y32_v1.json"
+)
 TRAINING_REPORT = (
     ROOT
-    / "outputs/af_fno/C/bire_protocol_rollout_ft_local24_y32_v1/"
-    "bire_protocol_rollout_ft_local24_y32_report.json"
+    / "outputs/af_fno/C/bire_protocol_rollout_ft_y32_x32_v1/"
+    "bire_protocol_rollout_ft_y32_x32_report.json"
 )
 MODULE = ROOT / "src/oceanfno/figures.py"
 SBATCH = ROOT / "slurm/models/c/figures.sbatch"
 
-VERSION = "model_c_bire_protocol_rollout_ft_local24_y32_s0_figures_v1"
-TRAINING_VERSION = "model_c_bire_protocol_rollout_ft_local24_y32_v1"
-COMPARATOR_VERSION = "model_c_bire_protocol_rollout_ft_local24_v1"
+VERSION = "model_c_bire_protocol_rollout_ft_y32_x32_s0_figures_v1"
+TRAINING_VERSION = "model_c_bire_protocol_rollout_ft_y32_x32_v1"
+COMPARATOR_VERSION = "model_c_bire_protocol_rollout_ft_local24_y32_v1"
 PENDING = "PENDING_AFTER_TRAINING"
-SELECTED_STEP = 3840
+#: Which checkpoint selection lands on is not known before the run; only that
+#: it is one of the four declared ones. The comparator step is fixed.
+CHECKPOINT_STEPS = (960, 1920, 2880, 3840)
+COMPARATOR_STEP = 3840
+#: An arbitrary declared step, used only where a caption's formatting is under
+#: test rather than the arm's actual selection.
+EXAMPLE_STEP = 2880
 
 STARTS = (
     6263,
@@ -72,18 +85,21 @@ FIGURE_NAMES = (
 
 PROJECT_ROOT = (
     "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/"
-    "bire_protocol_rollout_ft_local24_y32_s0_figures_v1"
+    "bire_protocol_rollout_ft_y32_x32_s0_figures_v1"
 )
 SCRATCH_ROOT = (
     "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/"
-    "bire_protocol_rollout_ft_local24_y32_s0_figures_v1"
+    "bire_protocol_rollout_ft_y32_x32_s0_figures_v1"
 )
 
 requires_contract = pytest.mark.skipif(
-    not CONTRACT.is_file(), reason="the Y32 figure contract is absent"
+    not CONTRACT.is_file(), reason="the 32x32 figure contract is absent"
 )
 requires_module = pytest.mark.skipif(
-    not MODULE.is_file(), reason="the canonical Y32 figure module is absent"
+    not MODULE.is_file(), reason="the canonical figure module is absent"
+)
+requires_report = pytest.mark.skipif(
+    not TRAINING_REPORT.is_file(), reason="the 32x32 arm has not been trained yet"
 )
 
 
@@ -123,7 +139,7 @@ def _filled() -> dict:
 
 
 def _written(contract: dict, directory: Path) -> Path:
-    path = directory / "y32_figures.json"
+    path = directory / "x32_figures.json"
     path.write_text(json.dumps(contract, indent=2, sort_keys=True) + "\n")
     return path
 
@@ -133,7 +149,7 @@ def _suite():
 
 
 @requires_contract
-def test_y32_reuses_the_exact_local24_s0_protocol_and_six_plots() -> None:
+def test_x32_reuses_the_exact_y32_s0_protocol_and_six_plots() -> None:
     mine = _raw()
     compared = json.loads(COMPARED.read_text())
     compared_protocol = compared["protocol"]
@@ -175,7 +191,8 @@ def test_y32_reuses_the_exact_local24_s0_protocol_and_six_plots() -> None:
 
 
 @requires_contract
-def test_y32_reuses_truth_baselines_dataset_and_normalized_coordinates() -> None:
+@requires_report
+def test_x32_reuses_truth_baselines_dataset_and_normalization() -> None:
     mine = _raw()
     compared = json.loads(COMPARED.read_text())
     report = json.loads(TRAINING_REPORT.read_text())
@@ -190,6 +207,8 @@ def test_y32_reuses_truth_baselines_dataset_and_normalized_coordinates() -> None
     selected = mine["artifacts"]["selected_normalization"]
     published = report["published_checkpoint"]
     assert selected["path"] == published["normalization"]
+    # The normalizers are republished bytes of the same train-only coordinates
+    # the parent weights were trained in, so the digest must not have moved.
     assert published["normalization_sha256"] == compared["artifacts"][
         "selected_normalization"
     ]["sha256"]
@@ -197,7 +216,8 @@ def test_y32_reuses_truth_baselines_dataset_and_normalized_coordinates() -> None
 
 
 @requires_contract
-def test_figure6_is_y32_selected_against_its_literal_local24_parent() -> None:
+@requires_report
+def test_figure6_is_x32_selected_against_its_literal_y32_parent() -> None:
     contract = _filled()
     training = json.loads(TRAINING.read_text())
     comparator_training = json.loads(COMPARATOR_TRAINING.read_text())
@@ -210,12 +230,25 @@ def test_figure6_is_y32_selected_against_its_literal_local24_parent() -> None:
     assert comparator["version"] == COMPARATOR_VERSION
     assert selected["architecture"] == training["architecture"]
     assert comparator["architecture"] == comparator_training["architecture"]
-    assert selected["architecture"]["n_modes"] == [32, 24]
-    assert comparator["architecture"]["n_modes"] == [24, 24]
+    assert selected["architecture"]["n_modes"] == [32, 32]
+    assert comparator["architecture"]["n_modes"] == [32, 24]
     assert selected["architecture"]["local_kernel_size"] == 3
     assert comparator["architecture"]["local_kernel_size"] == 3
-    assert selected["optimizer_step"] == SELECTED_STEP
-    assert comparator["optimizer_step"] == SELECTED_STEP
+    # Zonal bandwidth is the sole declared architecture difference; in
+    # particular the reverted smooth-position field must not have come back.
+    assert "position_encoding" not in selected["architecture"]
+    assert "position_encoding" not in comparator["architecture"]
+    assert {
+        key: value
+        for key, value in selected["architecture"].items()
+        if key != "n_modes"
+    } == {
+        key: value
+        for key, value in comparator["architecture"].items()
+        if key != "n_modes"
+    }
+    assert selected["optimizer_step"] in CHECKPOINT_STEPS
+    assert comparator["optimizer_step"] == COMPARATOR_STEP
     assert selected["rollout_steps"] == comparator["rollout_steps"] == 6
     assert selected["base_loss_contract_sha256"] == comparator[
         "base_loss_contract_sha256"
@@ -232,18 +265,18 @@ def test_figure6_is_y32_selected_against_its_literal_local24_parent() -> None:
         assert contract["artifacts"]["comparator_checkpoint"][key] == training[
             "sources"
         ]["initialization_checkpoint"][key]
-    assert "bire_protocol_rollout_ft_local24_y32_v1/selected.pt" in published[
+    assert "bire_protocol_rollout_ft_y32_x32_v1/selected.pt" in published[
         "checkpoint"
     ]
-    assert "bire_protocol_rollout_ft_local24_v1/selected.pt" in contract[
+    assert "bire_protocol_rollout_ft_local24_y32_v1/selected.pt" in contract[
         "artifacts"
     ]["comparator_checkpoint"]["path"]
     assert contract["figure6"]["literal_pretrain_finetune_pair"] is True
-    assert contract["figure6"]["comparator_optimizer_step"] == SELECTED_STEP
+    assert contract["figure6"]["comparator_optimizer_step"] == COMPARATOR_STEP
 
 
 @requires_contract
-def test_y32_figure_outputs_have_exact_noncolliding_roots() -> None:
+def test_x32_figure_outputs_have_exact_noncolliding_roots() -> None:
     mine = _raw()
     compared = json.loads(COMPARED.read_text())
     training = json.loads(TRAINING.read_text())
@@ -262,7 +295,8 @@ def test_y32_figure_outputs_have_exact_noncolliding_roots() -> None:
 
 @requires_contract
 @requires_module
-def test_a_filled_y32_figure_contract_loads_strictly(tmp_path) -> None:
+@requires_report
+def test_a_filled_x32_figure_contract_loads_strictly(tmp_path) -> None:
     suite = _suite()
     contract, resolved, digest = suite.load_contract(
         _written(_filled(), tmp_path), verify_sources=False
@@ -276,6 +310,7 @@ def test_a_filled_y32_figure_contract_loads_strictly(tmp_path) -> None:
 
 @requires_contract
 @requires_module
+@requires_report
 @pytest.mark.parametrize(
     "mutate",
     [
@@ -300,7 +335,7 @@ def test_a_filled_y32_figure_contract_loads_strictly(tmp_path) -> None:
             id="comparator_version_moved",
         ),
         pytest.param(
-            lambda c: c["selected_model"]["architecture"].update(n_modes=[24, 24]),
+            lambda c: c["selected_model"]["architecture"].update(n_modes=[32, 24]),
             id="selected_modes_reverted",
         ),
         pytest.param(
@@ -308,8 +343,14 @@ def test_a_filled_y32_figure_contract_loads_strictly(tmp_path) -> None:
             id="selected_axis_order_reversed",
         ),
         pytest.param(
+            lambda c: c["selected_model"]["architecture"].update(
+                position_encoding="smooth_xy"
+            ),
+            id="reverted_position_encoding_reintroduced",
+        ),
+        pytest.param(
             lambda c: c["comparator_model"]["architecture"].update(
-                n_modes=[24, 16]
+                n_modes=[24, 24]
             ),
             id="wrong_comparator_architecture",
         ),
@@ -347,7 +388,7 @@ def test_a_filled_y32_figure_contract_loads_strictly(tmp_path) -> None:
         ),
         pytest.param(
             lambda c: c["output"].update(
-                project_root=PROJECT_ROOT.replace("local24_y32", "local24")
+                project_root=PROJECT_ROOT.replace("y32_x32", "local24_y32")
             ),
             id="project_root_changed",
         ),
@@ -371,19 +412,20 @@ def test_a_filled_y32_figure_contract_loads_strictly(tmp_path) -> None:
         ),
     ],
 )
-def test_y32_figure_contract_rejects_protocol_model_and_output_tampering(
+def test_x32_figure_contract_rejects_protocol_model_and_output_tampering(
     mutate, tmp_path
 ) -> None:
     suite = _suite()
     contract = _filled()
     mutate(contract)
-    with pytest.raises(suite.BireY32FigureError):
+    with pytest.raises(suite.BireY32X32FigureError):
         suite.load_contract(_written(contract, tmp_path), verify_sources=False)
 
 
 @requires_contract
 @requires_module
-def test_finalize_binds_only_to_the_y32_training_report(tmp_path) -> None:
+@requires_report
+def test_finalize_binds_only_to_the_x32_training_report(tmp_path) -> None:
     suite = _suite()
     path = _written(_pending(), tmp_path)
     result = suite.finalize(path)
@@ -391,7 +433,7 @@ def test_finalize_binds_only_to_the_y32_training_report(tmp_path) -> None:
     expected = _filled()
 
     assert result["status"] == "filled"
-    assert written["selected_model"]["optimizer_step"] == SELECTED_STEP
+    assert written["selected_model"]["optimizer_step"] in CHECKPOINT_STEPS
     for key in ("selected_checkpoint", "selected_normalization", "selected_report"):
         assert written["artifacts"][key] == expected["artifacts"][key]
     suite.load_contract(path, verify_sources=False)
@@ -478,29 +520,29 @@ def test_day2000_climatology_ratio_remains_advisory() -> None:
     assert "not gated" in gate["advisory_note"]
 
 
-def test_captions_and_readme_name_the_local24_to_y32_comparison() -> None:
+def test_captions_and_readme_name_the_y32_to_x32_comparison() -> None:
     suite = _suite()
-    with suite.FineTuneLabels("S0", 0.1, SELECTED_STEP) as labels:
+    with suite.FineTuneLabels("S0", 0.1, EXAMPLE_STEP) as labels:
         assert (
             labels.rewrite("S0 architecture-direction comparison")
-            == "S0 local24 parent vs meridional-32 fine-tune"
+            == "S0 Y32 parent vs zonal-32 fine-tune"
         )
         assert labels.rewrite("Prior residual Model C") == (
-            "Local 3x3 + 24x24 modes (step 3,840)"
+            "Local 3x3 + 32x24 modes (step 3,840)"
         )
         assert labels.rewrite("Selected anomaly-direct Model C") == (
-            "Local 3x3 + 32x24 modes (step 3,840)"
+            "Local 3x3 + 32x32 modes (step 2,880)"
         )
     text = suite._readme(
         "S0",
         {
-            "selected_optimizer_step": SELECTED_STEP,
+            "selected_optimizer_step": EXAMPLE_STEP,
             "report_content_sha256": "0" * 64,
         },
     )
     flat = " ".join(text.split())
-    assert "literal step-3,840 local24 parent" in flat
-    assert "32x24 fine-tune" in flat
+    assert "literal step-3,840 Y32 parent" in flat
+    assert "32x32 fine-tune" in flat
     assert "6263--6979" in flat
     assert suite.GATE_NAME in text
 
@@ -509,7 +551,9 @@ def test_canonical_figure_module_has_no_wrapper_context() -> None:
     assert not hasattr(_suite(), "_y32_figures_runner")
 
 
-@pytest.mark.skipif(not SBATCH.is_file(), reason="the Y32 figure launcher is absent")
+@pytest.mark.skipif(
+    not SBATCH.is_file(), reason="the 32x32 figure launcher is absent"
+)
 def test_launcher_finalizes_then_runs_only_the_canonical_module() -> None:
     text = SBATCH.read_text()
     invoked = {
@@ -519,6 +563,6 @@ def test_launcher_finalizes_then_runs_only_the_canonical_module() -> None:
     }
     assert invoked == {"oceanfno.figures"}
     assert (
-        "model_c_bire_protocol_rollout_ft_local24_y32_s0_figures_v1.json" in text
+        "model_c_bire_protocol_rollout_ft_y32_x32_s0_figures_v1.json" in text
     )
     assert text.index("finalize") < text.index("  preflight") < text.index("  run")

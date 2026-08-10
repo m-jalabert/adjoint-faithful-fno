@@ -1,7 +1,8 @@
-"""Canonical 32x24 Model C and its explicit checkpoint ancestors.
+"""Canonical 32x32 Model C and its explicit checkpoint ancestors.
 
-The active emulator is :class:`BireY32FullStateFNO`. The retained 24x24 local
-model and original 24x16 Bire-aligned model remain here only so archived
+The active emulator is :class:`BireY32FullStateFNO` built from
+:class:`BireY32X32Architecture`. The retained 32x24 Y32 model, the 24x24 local
+model and the original 24x16 Bire-aligned model remain here only so archived
 checkpoints can be migrated and used as literal comparators.
 """
 from __future__ import annotations
@@ -324,6 +325,103 @@ class BireY32Architecture:
         if self.fno_block_precision != "full" or self.factorization is not None:
             raise BireAlignedFullStateError(
                 "the canonical Y32 model remains a dense float32 FNO"
+            )
+
+    @property
+    def layer_norm_count(self) -> int:
+        return 2 * self.n_layers
+
+    def to_dict(self) -> dict[str, Any]:
+        result = asdict(self)
+        result["n_modes"] = list(self.n_modes)
+        result["grid_shape"] = list(self.grid_shape)
+        return result
+
+
+@dataclass(frozen=True)
+class BireY32X32Architecture:
+    """Canonical Model C with the zonal band opened to 32x32 Y,X modes.
+
+    Field for field the retained Y32 model, including the deterministic
+    sine/cosine position encoder and the bias-free local 3x3 correction. Only
+    ``n_modes`` moves, from 32x24 to 32x32.
+    """
+
+    in_channels: int = EXTERNAL_INPUT_CHANNELS
+    out_channels: int = STATE_CHANNEL_COUNT
+    positional_channels: int = POSITIONAL_CHANNELS
+    lifting_in_channels: int = LIFTING_INPUT_CHANNELS
+    grid_shape: tuple[int, int] = (62, 62)
+    n_modes: tuple[int, int] = (32, 32)
+    hidden_channels: int = 128
+    n_layers: int = 3
+    lifting_channel_ratio: int = 2
+    projection_channel_ratio: int = 2
+    channel_mlp_expansion: float = 4.0
+    channel_mlp_dropout: float = 0.0
+    domain_padding: float = 0.1
+    positional_embedding: str | None = None
+    use_channel_mlp: bool = True
+    pointwise_layer_norm: bool = True
+    local_kernel_size: int = 3
+    fno_block_precision: str = "full"
+    factorization: str | None = None
+
+    def __post_init__(self) -> None:
+        object.__setattr__(
+            self, "n_modes", tuple(int(value) for value in self.n_modes)
+        )
+        object.__setattr__(
+            self, "grid_shape", tuple(int(value) for value in self.grid_shape)
+        )
+        if (
+            self.in_channels != EXTERNAL_INPUT_CHANNELS
+            or self.out_channels != STATE_CHANNEL_COUNT
+            or self.positional_channels != POSITIONAL_CHANNELS
+            or self.lifting_in_channels != LIFTING_INPUT_CHANNELS
+        ):
+            raise BireAlignedFullStateError(
+                "the 32x32 model maps 46 state + 3 static (+2 position) -> 46"
+            )
+        if self.grid_shape != (62, 62) or self.n_modes != (32, 32):
+            raise BireAlignedFullStateError(
+                "the 32x32 model keeps the 62x62 grid and uses 32x32 Y,X modes"
+            )
+        if self.n_layers != 3:
+            raise BireAlignedFullStateError(
+                "the 32x32 model uses exactly three FNO blocks"
+            )
+        if self.hidden_channels != 128 or self.channel_mlp_expansion != 4.0:
+            raise BireAlignedFullStateError(
+                "the 32x32 model keeps width 128 and the 4C Channel MLP"
+            )
+        if self.lifting_channel_ratio != 2 or self.projection_channel_ratio != 2:
+            raise BireAlignedFullStateError(
+                "the 32x32 model keeps lifting and projection width 256"
+            )
+        if self.domain_padding != 0.1 or not self.use_channel_mlp:
+            raise BireAlignedFullStateError(
+                "the 32x32 model keeps 10% padding and the Channel MLP"
+            )
+        if self.channel_mlp_dropout != 0.0:
+            raise BireAlignedFullStateError(
+                "the 32x32 model freezes Channel MLP dropout at zero"
+            )
+        if self.positional_embedding is not None:
+            raise BireAlignedFullStateError(
+                "position enters only through the Bire sine/cosine encoder"
+            )
+        if not self.pointwise_layer_norm:
+            raise BireAlignedFullStateError(
+                "the 32x32 model normalizes channel-wise after both mixing operations"
+            )
+        if self.local_kernel_size != 3:
+            raise BireAlignedFullStateError(
+                "the 32x32 model retains exactly one external 3x3 correction"
+            )
+        if self.fno_block_precision != "full" or self.factorization is not None:
+            raise BireAlignedFullStateError(
+                "the 32x32 model remains a dense float32 FNO"
             )
 
     @property
@@ -749,11 +847,34 @@ def build_bire_local24_model(architecture: BireLocal24Architecture) -> Any:
 
 
 def build_bire_y32_model(architecture: BireY32Architecture) -> Any:
-    """Build the canonical 32x24 FNO with its local correction topology."""
+    """Build the retained 32x24 FNO with its local correction topology."""
 
     require_model_a_runtime()
     if BireY32FullStateFNO is None:  # pragma: no cover
-        raise RuntimeError("the canonical Y32 model requires PyTorch")
+        raise RuntimeError("the retained Y32 model requires PyTorch")
+    if not isinstance(architecture, BireY32Architecture):
+        raise BireAlignedFullStateError(
+            "build_bire_y32_model is reserved for the retained 32x24 parent"
+        )
+    return BireY32FullStateFNO(architecture)
+
+
+def build_bire_y32_x32_model(architecture: BireY32X32Architecture) -> Any:
+    """Build the 32x32 successor on the unchanged Y32 topology.
+
+    The module class is shared with the parent deliberately: every layer, the
+    position encoder and the local branch are identical, and only the FNO's
+    declared ``n_modes`` differs, so a second class would duplicate code without
+    describing a second model.
+    """
+
+    require_model_a_runtime()
+    if BireY32FullStateFNO is None:  # pragma: no cover
+        raise RuntimeError("the 32x32 model requires PyTorch")
+    if not isinstance(architecture, BireY32X32Architecture):
+        raise BireAlignedFullStateError(
+            "the 32x32 builder requires BireY32X32Architecture"
+        )
     return BireY32FullStateFNO(architecture)
 
 
@@ -1049,6 +1170,154 @@ def migrate_local24_state_dict(
             "missing_keys": [],
             "unexpected_keys": [],
             "initial_map_preserved_by_centered_zero_extension": True,
+        },
+    }
+
+
+_Y32_X32_SPECTRAL_WEIGHT_KEYS = tuple(
+    f"fno.fno_blocks.convs.{layer}.weight.tensor" for layer in range(3)
+)
+
+
+def migrate_y32_state_dict(
+    parent_state: Mapping[str, Any],
+    target_model: Any,
+) -> dict[str, Any]:
+    """Strictly migrate the retained Y32 state into the 32x32 model.
+
+    The zonal dimension is the real-transform axis, so its coefficients are the
+    non-redundant half spectrum: 24 requested zonal modes are stored as 13
+    coefficients and 32 as 17. Unlike the meridional axis, this one is *not*
+    fft-shifted, so the parent's 13 coefficients are the 13 lowest zonal
+    wavenumbers and occupy the leading slice ``[..., :13]`` of each new 32x17
+    tensor; the four added coefficients begin at exact zero.
+
+    Every other parameter, including the trained ``local.weight``, is copied
+    without modification, so the migration adds no parameter and the initial map
+    is preserved exactly.
+    """
+
+    if BireY32FullStateFNO is None or not isinstance(
+        target_model, BireY32FullStateFNO
+    ):
+        raise BireAlignedFullStateError(
+            "the Y32 migration target must be BireY32FullStateFNO"
+        )
+    if target_model.architecture != BireY32X32Architecture():
+        raise BireAlignedFullStateError(
+            "the Y32 migration target architecture changed"
+        )
+
+    parent = {key: value for key, value in parent_state.items() if key != "_metadata"}
+    raw_target = target_model.state_dict()
+    target = {key: value for key, value in raw_target.items() if key != "_metadata"}
+    parent_keys = set(parent)
+    target_keys = set(target)
+    missing = sorted(target_keys - parent_keys)
+    unexpected = sorted(parent_keys - target_keys)
+    if missing or unexpected:
+        raise BireAlignedFullStateError(
+            "the Y32-to-32x32 migration must retain exactly the same keys: "
+            f"missing_parent={missing!r}, unexpected_parent={unexpected!r}"
+        )
+    if "local.weight" not in parent_keys:
+        raise BireAlignedFullStateError(
+            "the Y32 checkpoint has no trained local.weight"
+        )
+
+    expected_expansions = set(_Y32_X32_SPECTRAL_WEIGHT_KEYS)
+    observed_expansions: set[str] = set()
+    migrated: dict[str, Any] = {}
+    expansion_records: list[dict[str, Any]] = []
+    for key in sorted(parent_keys):
+        source = parent[key]
+        destination = target[key]
+        if not hasattr(source, "shape") or not hasattr(destination, "shape"):
+            raise BireAlignedFullStateError(
+                f"the Y32 checkpoint entry {key!r} is not a tensor"
+            )
+        source_shape = tuple(int(value) for value in source.shape)
+        destination_shape = tuple(int(value) for value in destination.shape)
+        if source.dtype != destination.dtype:
+            raise BireAlignedFullStateError(
+                f"the Y32 checkpoint dtype changed for {key}: "
+                f"{source.dtype} -> {destination.dtype}"
+            )
+        if source_shape == destination_shape:
+            value = destination.detach().clone()
+            value.copy_(source)
+            migrated[key] = value
+            continue
+        if key not in expected_expansions:
+            raise BireAlignedFullStateError(
+                f"undeclared Y32 checkpoint shape change for {key}: "
+                f"{source_shape} -> {destination_shape}"
+            )
+        if source_shape != (128, 128, 32, 13) or destination_shape != (
+            128,
+            128,
+            32,
+            17,
+        ):
+            raise BireAlignedFullStateError(
+                f"the declared 32x32 zonal expansion has unexpected shapes for {key}: "
+                f"{source_shape} -> {destination_shape}"
+            )
+        value = destination.detach().clone()
+        value.zero_()
+        value[:, :, :, :13].copy_(source)
+        migrated[key] = value
+        observed_expansions.add(key)
+        expansion_records.append(
+            {
+                "key": key,
+                "source_shape": list(source_shape),
+                "target_shape": list(destination_shape),
+                "copied_zonal_slice": [0, 13],
+                "zero_initialized_new_zonal_coefficients": (
+                    destination_shape[-1] - source_shape[-1]
+                ),
+            }
+        )
+
+    if observed_expansions != expected_expansions:
+        missing_expansions = sorted(expected_expansions - observed_expansions)
+        extra_expansions = sorted(observed_expansions - expected_expansions)
+        raise BireAlignedFullStateError(
+            "the Y32 checkpoint did not perform exactly three zonal expansions: "
+            f"missing={missing_expansions!r}, extra={extra_expansions!r}"
+        )
+
+    local_shape = tuple(int(value) for value in migrated["local.weight"].shape)
+    if local_shape != (STATE_CHANNEL_COUNT, EXTERNAL_INPUT_CHANNELS, 3, 3):
+        raise BireAlignedFullStateError(
+            f"the migrated trained local correction has unexpected shape {local_shape!r}"
+        )
+    incompatible = target_model.load_state_dict(migrated, strict=True)
+    if incompatible.missing_keys or incompatible.unexpected_keys:
+        raise BireAlignedFullStateError(
+            "strict 32x32 checkpoint loading reported incompatible keys: "
+            f"missing={incompatible.missing_keys!r}, "
+            f"unexpected={incompatible.unexpected_keys!r}"
+        )
+
+    return {
+        "state_dict": migrated,
+        "provenance": {
+            "migration": "bire_y32_32x24_to_y32_x32_32x32",
+            "source_n_modes_tensor_order_y_x": [32, 24],
+            "target_n_modes_tensor_order_y_x": [32, 32],
+            "spectral_expansions": expansion_records,
+            "retained_parameter": {
+                "key": "local.weight",
+                "shape": list(local_shape),
+                "bias": False,
+                "copied_without_modification": True,
+            },
+            "strict_load": True,
+            "missing_keys": [],
+            "unexpected_keys": [],
+            "initial_map_preserved_by_zero_extension": True,
         },
     }
 

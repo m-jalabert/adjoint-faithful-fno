@@ -1,5 +1,5 @@
 #!/bin/bash -l
-#SBATCH --job-name=af-c-y32figs
+#SBATCH --job-name=af-c-x32figs
 #SBATCH --account=pod-users
 #SBATCH --partition=gpu
 #SBATCH --gres=gpu:v100:1
@@ -8,10 +8,11 @@
 #SBATCH --cpus-per-task=4
 #SBATCH --time=02:00:00
 
-# Held S0 evaluation of the retained Y32 checkpoint. This reproduces the exact
-# six Figure 3--8 definitions, members, starts, truth, climatology, and
-# persistence baselines used for local24. Figure 6 compares local24 (black)
-# with its 32x24 meridional-mode fine-tune (red). No training or selection.
+# Held S0 evaluation of the selected 32x32 checkpoint. This reproduces the
+# exact six Figure 3--8 definitions, members, starts, truth, climatology, and
+# persistence baselines used for local24 and Y32. Figure 6 compares the Y32
+# parent (black) with its 32x32 zonal-mode fine-tune (red). No training or
+# selection.
 set -euo pipefail
 
 module purge
@@ -21,7 +22,7 @@ export OMP_NUM_THREADS="${SLURM_CPUS_PER_TASK}"
 export MKL_NUM_THREADS="${SLURM_CPUS_PER_TASK}"
 
 AF_PROJECT_ROOT="${AF_PROJECT_ROOT:-${SLURM_SUBMIT_DIR:?Submit from the repository root or set AF_PROJECT_ROOT}}"
-AF_CONTRACT="${AF_CONTRACT:-${AF_PROJECT_ROOT}/config/model_c_bire_protocol_rollout_ft_local24_y32_s0_figures_v1.json}"
+AF_CONTRACT="${AF_CONTRACT:-${AF_PROJECT_ROOT}/config/model_c_bire_protocol_rollout_ft_y32_x32_s0_figures_v1.json}"
 AF_PYTHON="${AF_PYTHON:-${AF_PROJECT_ROOT}/.venv/bin/python}"
 
 cd "${AF_PROJECT_ROOT}"

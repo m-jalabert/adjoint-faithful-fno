@@ -1,4 +1,4 @@
-"""Streamfunction-anomaly companions for the canonical Y32 S0 figures."""
+"""Streamfunction-anomaly companions for the canonical 32x32 S0 figures."""
 from __future__ import annotations
 
 import argparse
@@ -20,10 +20,10 @@ from .diagnostics import derived_fields
 from .model import MANIFEST_NAME, README_NAME
 from .plots import FIGURE_3_LEADS, FIGURE_7_LEADS, _finite_bound, _masked, _style
 
-VERSION = "model_c_bire_protocol_rollout_ft_local24_y32_s0_anomaly_v1"
+VERSION = "model_c_bire_protocol_rollout_ft_y32_x32_s0_anomaly_v1"
 
 CONTRACT_STATUS = (
-    "frozen_after_the_rollout_ft_local24_y32_figure_package_and_before_any_"
+    "frozen_after_the_rollout_ft_y32_x32_figure_package_and_before_any_"
     "anomaly_metric"
 )
 
@@ -57,8 +57,8 @@ class BireProtocolRolloutFineTuneAnomalyError(RuntimeError):
     """Compatibility base for anomaly-package contract failures."""
 
 
-class BireY32AnomalyError(BireProtocolRolloutFineTuneAnomalyError):
-    """Raised when the Y32 anomaly package loses its frozen provenance."""
+class BireY32X32AnomalyError(BireProtocolRolloutFineTuneAnomalyError):
+    """Raised when the 32x32 anomaly package loses its frozen provenance."""
 
 
 PENDING = "PENDING_AFTER_FIGURES"
@@ -71,11 +71,11 @@ PENDING_PATHS: tuple[tuple[str, ...], ...] = (
 _REPOSITORY = Path(__file__).resolve().parents[2]
 _EXPECTED_PROJECT_ROOT = str(
     _REPOSITORY
-    / "outputs/af_fno/C/bire_protocol_rollout_ft_local24_y32_s0_anomaly_v1"
+    / "outputs/af_fno/C/bire_protocol_rollout_ft_y32_x32_s0_anomaly_v1"
 )
 _EXPECTED_SCRATCH_ROOT = (
     "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/"
-    "bire_protocol_rollout_ft_local24_y32_s0_anomaly_v1"
+    "bire_protocol_rollout_ft_y32_x32_s0_anomaly_v1"
 )
 _EXPECTED_REQUIRED = (
     FIGURE_3A,
@@ -169,13 +169,13 @@ def training_mean_streamfunction(
         total += derived_fields(raw, wet)["streamfunction"].sum(axis=0, dtype=np.float64)
         count += int(raw.shape[0])
     if count != stop - start:
-        raise BireY32AnomalyError(
+        raise BireY32X32AnomalyError(
             f"the training mean covered {count} days, not {stop - start}"
         )
     mean = (total / count).astype(np.float32)
     mean[~wet] = 0.0
     if not np.all(np.isfinite(mean)):
-        raise BireY32AnomalyError("the time-mean streamfunction is not finite")
+        raise BireY32X32AnomalyError("the time-mean streamfunction is not finite")
     return mean, count
 
 
@@ -197,13 +197,13 @@ def _figure_paths(contract: Mapping[str, Any]) -> tuple[Path, Path, Path, Path]:
 
 
 def _sealed_figure_provenance(contract: Mapping[str, Any]) -> dict[str, str]:
-    """Verify the exact Y32 contract/report/arrays chain and sealed manifest."""
+    """Verify the exact 32x32 contract/report/arrays chain and sealed manifest."""
 
     figure_contract_path, report_path, arrays_path, manifest_path = _figure_paths(
         contract
     )
     expected_names = (
-        "model_c_bire_protocol_rollout_ft_local24_y32_s0_figures_v1.json",
+        "model_c_bire_protocol_rollout_ft_y32_x32_s0_figures_v1.json",
         plots.REPORT_NAME,
         plots.ARRAYS_NAME,
         plots.MANIFEST_NAME,
@@ -215,7 +215,9 @@ def _sealed_figure_provenance(contract: Mapping[str, Any]) -> dict[str, str]:
         path.is_file()
         for path in (figure_contract_path, report_path, arrays_path, manifest_path)
     ):
-        raise BireY32AnomalyError("the sealed Y32 figure package is incomplete")
+        raise BireY32X32AnomalyError(
+            "the sealed 32x32 figure package is incomplete"
+        )
 
     digests = {
         "figure_package_contract": _file_sha256(figure_contract_path),
@@ -264,11 +266,11 @@ def _sealed_figure_provenance(contract: Mapping[str, Any]) -> dict[str, str]:
         or records["dataset_metadata"].get("sha256")
         != figure_contract["artifacts"]["dataset_metadata"].get("sha256")
     ):
-        raise BireY32AnomalyError("the sealed Y32 figure provenance changed")
+        raise BireY32X32AnomalyError("the sealed 32x32 figure provenance changed")
 
     with np.load(arrays_path) as stored:
         if not _REQUIRED_ARRAYS.issubset(stored.files):
-            raise BireY32AnomalyError("the Y32 figure arrays are incomplete")
+            raise BireY32X32AnomalyError("the 32x32 figure arrays are incomplete")
         if (
             np.asarray(stored["figure3_truth_streamfunction"]).shape
             != (len(plots.FIGURE_3_LEADS), 62, 62)
@@ -281,7 +283,7 @@ def _sealed_figure_provenance(contract: Mapping[str, Any]) -> dict[str, str]:
             or tuple(np.asarray(stored["start_draw_order"]).astype(int))
             != tuple(int(value) for value in figures.declared_inference_starts())
         ):
-            raise BireY32AnomalyError("the Y32 figure array protocol changed")
+            raise BireY32X32AnomalyError("the 32x32 figure array protocol changed")
     return digests
 
 
@@ -295,8 +297,8 @@ def finalize(contract_path: str | Path) -> dict[str, Any]:
         "sha256"
     )
     if pinned_contract != digests["figure_package_contract"]:
-        raise BireY32AnomalyError(
-            "the pinned Y32 figure contract changed before anomaly finalization"
+        raise BireY32X32AnomalyError(
+            "the pinned 32x32 figure contract changed before finalization"
         )
     applied: dict[str, str] = {}
     for path in PENDING_PATHS:
@@ -304,7 +306,7 @@ def finalize(contract_path: str | Path) -> dict[str, Any]:
         value = digests[key]
         current = _read(contract, path)
         if current not in (None, PENDING) and current != value:
-            raise BireY32AnomalyError(
+            raise BireY32X32AnomalyError(
                 f"{'.'.join(path)} is already {current!r}, not {value!r}; "
                 "refusing to overwrite a filled field"
             )
@@ -327,14 +329,14 @@ def load_contract(
     *,
     verify_sources: bool = True,
 ) -> tuple[dict[str, Any], Path, str]:
-    """Load the frozen Y32 anomaly declaration and its figure provenance."""
+    """Load the frozen 32x32 anomaly declaration and its figure provenance."""
 
     resolved = Path(path).resolve()
     contract = json.loads(resolved.read_text())
     pending = unfilled_fields(contract)
     if pending:
-        raise BireY32AnomalyError(
-            "the Y32 anomaly contract still carries figure fields: "
+        raise BireY32X32AnomalyError(
+            "the 32x32 anomaly contract still carries figure fields: "
             + ", ".join(pending)
             + " -- run `finalize` first"
         )
@@ -374,12 +376,12 @@ def load_contract(
         or output.get("one_folder_per_regime") is not True
         or tuple(output.get("required", ())) != _EXPECTED_REQUIRED
     ):
-        raise BireY32AnomalyError("the Y32 anomaly figure contract changed")
+        raise BireY32X32AnomalyError("the 32x32 anomaly figure contract changed")
 
     digests = _sealed_figure_provenance(contract)
     for key, digest in digests.items():
         if contract["artifacts"][key].get("sha256") != digest:
-            raise BireY32AnomalyError(f"{key} changed after finalization")
+            raise BireY32X32AnomalyError(f"{key} changed after finalization")
     if verify_sources:
         for label, specification in contract.get("artifacts", {}).items():
             artifact = Path(str(specification.get("path", ""))).resolve()
@@ -387,15 +389,19 @@ def load_contract(
             if not target.is_file() or _file_sha256(target) != specification.get(
                 "sha256"
             ):
-                raise BireY32AnomalyError(f"{label} changed on disk")
+                raise BireY32X32AnomalyError(f"{label} changed on disk")
         hashes = contract.get("source_hashes", {})
         if not _REQUIRED_SOURCE_HASHES.issubset(hashes):
-            raise BireY32AnomalyError("the Y32 anomaly source declaration is incomplete")
+            raise BireY32X32AnomalyError(
+                "the 32x32 anomaly source declaration is incomplete"
+            )
         root = resolved.parents[1]
         for relative, expected in hashes.items():
             source = root / relative
             if not source.is_file() or _file_sha256(source) != expected:
-                raise BireY32AnomalyError(f"Y32 anomaly source changed: {relative}")
+                raise BireY32X32AnomalyError(
+                    f"32x32 anomaly source changed: {relative}"
+                )
     return contract, resolved, _file_sha256(resolved)
 
 def wet_rms(field: np.ndarray, wet: np.ndarray) -> float:
@@ -661,7 +667,7 @@ def _readme(report: Mapping[str, Any]) -> str:
     spectrum = structure[
         "hann_directional_power_fraction_above_0p2_cycles_per_cell"
     ]
-    return f"""# Y32 streamfunction anomalies, S0 — companions to figures 3 and 7
+    return f"""# 32 x 32 streamfunction anomalies, S0 — companions to figures 3 and 7
 
 These plates reuse the frozen anomaly definition exactly:
 
@@ -669,11 +675,11 @@ These plates reuse the frozen anomaly definition exactly:
 
 `psi_bar_S0` is MITgcm's two-dimensional time-mean barotropic streamfunction
 over training days {TRAIN_RANGE[0]}--{TRAIN_RANGE[1] - 1}. The identical field
-is subtracted from truth and the selected 32x24 model; the model's own mean is
+is subtracted from truth and the selected 32x32 model; the model's own mean is
 never subtracted. The three PNG definitions and member 0 inputs are unchanged
-from local24, while this package writes to a distinct Y32 output root.
+from Y32, while this package writes to a distinct 32x32 output root.
 
-| lead | truth anomaly RMS | Y32 anomaly RMS | ratio |
+| lead | truth anomaly RMS | 32x32 anomaly RMS | ratio |
 | --- | --- | --- | --- |
 | day 60 | {day60['truth_anomaly_rms_sv']:.3f} Sv | {day60['model_anomaly_rms_sv']:.3f} Sv | {day60['anomaly_rms_ratio']:.3f} |
 | day 2,000 | {day2000['truth_anomaly_rms_sv']:.3f} Sv | {day2000['model_anomaly_rms_sv']:.3f} Sv | {day2000['anomaly_rms_ratio']:.3f} |
@@ -684,7 +690,7 @@ At day 2,000, normalized first-difference RMS is
 are {spectrum['model_meridional']:.5f} and {spectrum['model_zonal']:.5f}.
 The report also retains western-four-cell and interior anomaly RMS diagnostics.
 
-This package reads the sealed Y32 figure arrays and model-visible MITgcm
+This package reads the sealed 32x32 figure arrays and model-visible MITgcm
 training state only. It rolls out no model, promotes nothing, and does not
 modify the total-field figures or acceptance gate.
 
