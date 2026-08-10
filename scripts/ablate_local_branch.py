@@ -84,21 +84,11 @@ def _sha256(path: Path) -> str:
 
 
 def _resolve(declared: Path) -> Path:
-    """Resolve a declared artifact, allowing for the per-arm output regrouping.
+    """Resolve a declared artifact path."""
 
-    The published arm directories were regrouped under a per-arm folder after
-    the figure runs, so the frozen contract's ``selected_report`` path is stale.
-    The content is unchanged and is hash-verified by the caller; only the
-    location moved.
-    """
-
-    if declared.is_file():
-        return declared
-    arm = "bire_protocol_rollout_ft_y32_x32"
-    moved = Path(str(declared).replace(f"/C/{arm}_v1/", f"/C/{arm}/{arm}_v1/"))
-    if moved.is_file():
-        return moved
-    raise AblationError(f"artifact is absent at {declared} and at {moved}")
+    if not declared.is_file():
+        raise AblationError(f"artifact is absent at {declared}")
+    return declared
 
 
 def audit_contract(contract_path: Path) -> dict[str, Any]:
