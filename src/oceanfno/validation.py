@@ -9,7 +9,7 @@ import numpy as np
 
 from .runtime import torch
 from .runtime import STATE_CHANNEL_COUNT
-from .dataset import DATASET_VERSION, PRODUCTION_DAYS, TRAIN_RANGE, VALIDATION_ROLLOUT_DAYS, v3_split_codes
+from .dataset import DATASET_VERSION, HORIZON_DAYS, PRODUCTION_DAYS, TRAIN_RANGE, VALIDATION_ROLLOUT_DAYS, v3_split_codes
 from .diagnostics import _member_acc, _member_rmse, derived_fields
 from .model import BireAlignedFullStateError, BireAlignedStepper
 
@@ -80,6 +80,14 @@ def validate_checkpoint(
     experiments = records[:, 0]
     initial = _gather(state, records, 0)
     current = stepper.normalized_state(initial)
+    # A two-time-level map needs one more truth state to start from. It is an
+    # initial condition, never a target: the scored leads are unchanged.
+    if getattr(stepper, "requires_history", False):
+        if int(np.asarray(records)[:, 1].min()) < HORIZON_DAYS:
+            raise ChronologicalArmError(
+                "a two-input validation rollout has no t-10 initial condition"
+            )
+        stepper.begin(_gather(state, records, -HORIZON_DAYS))
     forcing = stepper.normalized_static(static, experiments)
     initial_fields = _evaluation_fields(initial, wet)
     climate_state = np.stack([climatology_state[int(e)] for e in experiments])

@@ -1,0 +1,212 @@
+{
+  "architecture": {
+    "channel_mlp_dropout": 0.0,
+    "channel_mlp_expansion": 4.0,
+    "domain_padding": 0.1,
+    "factorization": null,
+    "fno_block_precision": "full",
+    "grid_shape": [
+      62,
+      62
+    ],
+    "hidden_channels": 128,
+    "in_channels": 95,
+    "input_lag_days": 10,
+    "input_states": 2,
+    "lifting_channel_ratio": 2,
+    "lifting_in_channels": 97,
+    "local_kernel_size": 3,
+    "n_layers": 3,
+    "n_modes": [
+      32,
+      32
+    ],
+    "out_channels": 46,
+    "pointwise_layer_norm": true,
+    "positional_channels": 2,
+    "positional_embedding": null,
+    "projection_channel_ratio": 2,
+    "use_channel_mlp": true
+  },
+  "architecture_notes": {
+    "channel_layout": "history_46_then_present_46_then_static_3_then_two_appended_position_channels",
+    "fourier_axis_order": "N_C_Y_X_so_the_first_mode_count_is_meridional",
+    "local_branch": "retain_the_trained_bias_free_3x3_correction_and_widen_it_to_95_inputs_with_a_zero_history_block",
+    "map": "(x_t_minus_10, x_t) -> x_t_plus_10_on_the_unchanged_32x32_direct_normalized_future_state_map",
+    "parameter_count": 27327440,
+    "position_encoding": "unchanged_deterministic_alternating_sine_cosine_bire_encoder",
+    "spectral_capacity": "unchanged_at_32x32_so_no_Fourier_bandwidth_is_added_by_this_arm",
+    "temporal_context": "two_consecutive_time_levels_ten_days_apart_supply_an_empirical_tendency"
+  },
+  "changed_relative_to_the_initialization": {
+    "declared_architecture_change": {
+      "in_channels": {
+        "parent": 49,
+        "this_arm": 95
+      },
+      "input_lag_days": {
+        "parent": null,
+        "this_arm": 10
+      },
+      "input_states": {
+        "parent": 1,
+        "this_arm": 2
+      },
+      "lifting_in_channels": {
+        "parent": 51,
+        "this_arm": 97
+      }
+    },
+    "everything_else": "modes_dataset_normalization_training_loss_optimizer_schedule_seed_selection_position_encoding_and_trained_local_branch_are_asserted_equal_to_the_parent",
+    "function_preserving_migration": "zero_46_new_leading_input_channels_on_the_lifting_and_local_weights_and_copy_the_parent_state_static_and_position_columns_into_the_trailing_slice_so_the_initial_map_ignores_the_history_state",
+    "migration_exactness": "exact_in_algebra_and_equal_to_the_parent_map_to_float32_summation_order_because_the_lifting_reduction_now_sums_46_additional_exact_zeros"
+  },
+  "contract_status": "frozen_before_any_model_c_2in_1out_metric",
+  "freeze_date": "2026-08-10",
+  "held_evaluation": {
+    "decision": "keep_only_if_validation_and_the_same_S0_2000_day_RMSE_ACC_anomaly_amplitude_and_directional_structure_diagnostics_improve_or_remain_scientifically_acceptable",
+    "figures": "produce_the_same_six_main_and_three_anomaly_plots_after_training_selection",
+    "regime": "S0_only",
+    "status": "deferred_until_the_selected_training_checkpoint_exists"
+  },
+  "inherit_parent_fields": [
+    "dataset",
+    "normalization",
+    "training",
+    "loss",
+    "checkpoint_selection"
+  ],
+  "initialization": {
+    "checkpoint": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/bire_protocol_rollout_ft_y32_x32_v1/selected.pt",
+    "history_branch_initialization": "zeros",
+    "history_branch_reason": "a_zero_history_block_makes_the_warm_start_ignore_x_t_minus_10_so_the_arm_begins_at_the_parents_measured_skill",
+    "input_migration": "prepend_46_zero_history_input_channels_to_the_lifting_and_local_weights_and_copy_the_parent_state_static_and_position_columns_into_the_trailing_slice",
+    "load_only": "model_state_dict",
+    "local_branch_bias": false,
+    "local_branch_initialization": "copied_from_parent",
+    "normalization_reused": true,
+    "optimizer_state_loaded": false,
+    "optimizer_state_reason": "reset_to_keep_the_temporal_context_ablation_independent_of_parent_Adam_moments",
+    "optimizer_step": 3840,
+    "version": "model_c_bire_protocol_rollout_ft_y32_x32_v1"
+  },
+  "output": {
+    "artifacts": [
+      "model_c_2in_1out_report.json",
+      "model_c_2in_1out_arrays.npz",
+      "model_c_2in_1out_selection.png",
+      "README.md",
+      "manifest.json"
+    ],
+    "project_root": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/model_c_2in_1out_v1",
+    "scratch_root": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/model_c_2in_1out_v1"
+  },
+  "purpose": "test_whether_giving_the_operator_two_consecutive_time_levels_instead_of_one_fixes_the_long_term_instability_by_supplying_the_missing_temporal_tendency_information",
+  "read_contract": {
+    "adjoint_state": false,
+    "inference_state": false,
+    "intermediate_wind_state": false,
+    "response_state": false,
+    "training_state": true,
+    "validation_state": true
+  },
+  "scientific_motivation": {
+    "adams_bashforth_relation": "MITgcm_AB_II_extrapolates_from_two_stored_tendencies_G_n_and_G_n_minus_1_whereas_this_surrogate_reads_two_states_so_the_idea_is_the_same_multistep_one_but_the_algebra_is_not_equivalent",
+    "controlled_variable": "only_temporal_context_moves_the_output_horizon_stays_at_one_ten_day_step_and_the_spatial_bandwidth_stays_at_32x32",
+    "declared_risk": "two_input_channels_double_the_state_facing_input_width_so_a_two_input_arm_can_also_overfit_the_recent_difference_and_amplify_step_to_step_noise",
+    "incumbent_decision": "retain_the_32x32_one_input_arm_because_it_improved_every_primary_short_AUC_and_the_worst_long_climatology_ratio_over_Y32",
+    "remaining_error": "the_one_input_arm_still_drifts_at_long_lead_and_the_S0_trajectory_is_not_chaotic_so_the_residual_is_model_error_not_predictability_loss",
+    "target": "give_the_FNO_an_empirical_tendency_x_t_minus_x_t_minus_10_over_10_days_and_measure_whether_the_long_term_instability_is_a_missing_history_problem_rather_than_a_missing_spatial_resolution_problem"
+  },
+  "source_hashes": {
+    "src/oceanfno/dataset.py": "ce70baa4c0b0e8e2ff53c5959a2bd4759d501719922414af0b573143e7ee33e1",
+    "src/oceanfno/model.py": "f4615c1a7ceb6689e5b6ee21a3ffb5e687cb66287e7b244615c699af1753a7c6",
+    "src/oceanfno/objective.py": "be64f0b9261afeb27236b1efef8f96203af03241e75e5caeacc190eb1d55ee9d",
+    "src/oceanfno/runtime.py": "c9d267eb708f6d1f89a72078b43e37dab2fb679d66e093371d1bb75f1c5ec20c",
+    "src/oceanfno/train.py": "1a1ae0cf0feed68903400bd70ff316f7e8ea7fe43c6f2de3432ee8282516ba11",
+    "src/oceanfno/validation.py": "e08acf26aa92b2e03a996a7dd315982e834c0f9d1b2ecb4fe837c006165c7e8b"
+  },
+  "sources": {
+    "dataset": {
+      "metadata_sha256": "766cae89359311775c79103f44dc74630630ba6b7a0a8c6e9d26f73487512136",
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/trajectories_v3.zarr",
+      "role": "the_immutable_trajectory_v3_store"
+    },
+    "dataset_manifest": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/trajectories_v3.manifest.json",
+      "sha256": "cf4b531a13a38b888d1e5f8c0817a26b9ec0b8946cc7b976847a9c64c22b0498"
+    },
+    "initialization_checkpoint": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/bire_protocol_rollout_ft_y32_x32_v1/selected.pt",
+      "role": "the_selected_32x32_one_input_weights",
+      "sha256": "bd92b05454d625f246c268befc94ccf5594fc8e9c77a093355226adaca724cee"
+    },
+    "parent_contract": {
+      "materialized_sha256": "21e663937ef638283ccd3b825abea969d69a39bcfbf5c3136f0d94fedbccc1df",
+      "path": "/home/mjalabert314/bire_james25_repro/config/model_c_bire_protocol_rollout_ft_y32_x32_v1.json",
+      "role": "the_32x32_architecture_and_recursively_inherited_training_contract",
+      "sha256": "edb9058740e8d6fe25e2b0693d35503045a9e23452675af3b8ea317e97fcd553",
+      "version": "model_c_bire_protocol_rollout_ft_y32_x32_v1"
+    },
+    "parent_normalization": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/bire_protocol_rollout_ft_y32_x32_v1/model_c_bire_protocol_rollout_ft_y32_x32_train_only_normalization.npz",
+      "role": "the_identical_train_only_coordinates_used_by_the_parent_weights",
+      "sha256": "ad7cc8584788ccdd4e8beaae3e606b9423230552af7079f15667b93bd1abaf2f"
+    },
+    "parent_report": {
+      "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/bire_protocol_rollout_ft_y32_x32/bire_protocol_rollout_ft_y32_x32_v1/bire_protocol_rollout_ft_y32_x32_report.json",
+      "role": "the_32x32_increment_scales_selected_validation_baseline_and_published_artifact_chain",
+      "sha256": "0741cb900938617eb35c25cc22115983cbc58be94729c5cc2da8101a9f2708ae"
+    }
+  },
+  "stages": [
+    {
+      "first_optimizer_step": 1,
+      "inputs": "self_generated_pairs_at_steps_two_through_six",
+      "last_optimizer_step": 3840,
+      "objective": "the_inherited_group_balanced_six_step_loss",
+      "rollout_steps": 6,
+      "stage_id": "two_in_one_out_fine_tune",
+      "teacher_forcing": "initial_pair_only"
+    }
+  ],
+  "training": {
+    "adam_betas": [
+      0.9,
+      0.95
+    ],
+    "batch_size": 4,
+    "checkpoint_steps": [
+      960,
+      1920,
+      2880,
+      3840
+    ],
+    "decay_factor": 0.2,
+    "decay_fraction": 0.75,
+    "dropout_status": "frozen_at_zero_because_the_successful_incumbent_uses_zero_and_the_requested_changes_do_not_include_dropout_and_the_paper_does_not_establish_the_repository_default_of_0p5",
+    "exposure_budget": {
+      "basis": "batch_4_over_six_unrolled_calls_carries_the_same_activation_load_as_batch_8_over_three_because_4_times_6_equals_8_times_3",
+      "parent_steps_times_batch": "15360_times_8",
+      "this_arm_steps_times_batch": "3840_times_4"
+    },
+    "from_scratch": false,
+    "gradient_clipping": false,
+    "gradient_clipping_reason": "adding_a_clip_would_introduce_another_untested_stabilizing_mechanism_into_a_composite_test",
+    "initial_learning_rate": 2e-05,
+    "learning_rate_schedule": {
+      "steps_1_to_2880": 2e-05,
+      "steps_2881_to_3840": 4.000000000000001e-06
+    },
+    "load_optimizer_state": false,
+    "maximum_steps": 3840,
+    "on_non_finite": "fail_fast_and_report",
+    "optimizer": "adam",
+    "records": "pooled_split1_complete_six_step_rollout_starts_read_five_steps_deep_5940_per_regime_17820_pooled_latest_start_5939",
+    "rollout_steps": 6,
+    "schedule_status": "the_decay_schedule_is_a_separately_declared_control_not_a_claim_about_the_published_Bire_configuration",
+    "seed": 20260724,
+    "weight_decay": 0.0
+  },
+  "version": "model_c_2in_1out_v1"
+}

@@ -33,6 +33,32 @@ POSITIONAL_CHANNELS = 2
 
 LIFTING_INPUT_CHANNELS = EXTERNAL_INPUT_CHANNELS + POSITIONAL_CHANNELS
 
+#: The two-input arm hands the operator two consecutive time levels instead of
+#: one.  ``x_{t-10}`` is prepended to ``x_t``, so the external block becomes
+#: ``46 + 46 + 3 = 95`` and lifting sees ``97``.  The lag is the prediction
+#: interval itself, which is what makes ``(x_t - x_{t-10}) / 10 days`` an
+#: empirical tendency the operator can read.
+INPUT_STATE_COUNT = 2
+
+INPUT_LAG_DAYS = 10
+
+TWO_IN_EXTERNAL_INPUT_CHANNELS = (
+    INPUT_STATE_COUNT * STATE_CHANNEL_COUNT + len(RETAINED_STATIC_FEATURES)
+)
+
+TWO_IN_LIFTING_INPUT_CHANNELS = (
+    TWO_IN_EXTERNAL_INPUT_CHANNELS + POSITIONAL_CHANNELS
+)
+
+#: Channel layout of the 95-channel external block, in the one published order.
+HISTORY_SLICE = slice(0, STATE_CHANNEL_COUNT)
+
+PRESENT_SLICE = slice(STATE_CHANNEL_COUNT, 2 * STATE_CHANNEL_COUNT)
+
+TWO_IN_STATIC_SLICE = slice(
+    2 * STATE_CHANNEL_COUNT, TWO_IN_EXTERNAL_INPUT_CHANNELS
+)
+
 README_NAME = "README.md"
 
 MANIFEST_NAME = "manifest.json"
@@ -434,6 +460,120 @@ class BireY32X32Architecture:
         result["grid_shape"] = list(self.grid_shape)
         return result
 
+@dataclass(frozen=True)
+class BireTwoInOneOutArchitecture:
+    """Canonical Model C given two consecutive time levels instead of one.
+
+    Field for field the 32x32 model, including the 32x32 modes, the
+    deterministic sine/cosine position encoder and the bias-free local 3x3
+    correction. Only the *input* contract moves: the operator is handed
+    ``(x_{t-10}, x_t)`` rather than ``x_t`` alone, so the external block grows
+    from 49 to 95 channels and lifting from 51 to 97. The output is still one
+    state, ten days ahead, and autoregression slides the pair forward::
+
+        (x_{t-10}, x_t) -> x_{t+10},  (x_t, x_{t+10}) -> x_{t+20},  ...
+
+    This is the multistep analogue of Adams--Bashforth in spirit, not in
+    algebra: MITgcm's AB-II extrapolates from two stored *tendencies*, whereas
+    the pair here lets the operator infer one empirical tendency,
+    ``(x_t - x_{t-10}) / 10 days``.
+    """
+
+    in_channels: int = TWO_IN_EXTERNAL_INPUT_CHANNELS
+    out_channels: int = STATE_CHANNEL_COUNT
+    input_states: int = INPUT_STATE_COUNT
+    input_lag_days: int = INPUT_LAG_DAYS
+    positional_channels: int = POSITIONAL_CHANNELS
+    lifting_in_channels: int = TWO_IN_LIFTING_INPUT_CHANNELS
+    grid_shape: tuple[int, int] = (62, 62)
+    n_modes: tuple[int, int] = (32, 32)
+    hidden_channels: int = 128
+    n_layers: int = 3
+    lifting_channel_ratio: int = 2
+    projection_channel_ratio: int = 2
+    channel_mlp_expansion: float = 4.0
+    channel_mlp_dropout: float = 0.0
+    domain_padding: float = 0.1
+    positional_embedding: str | None = None
+    use_channel_mlp: bool = True
+    pointwise_layer_norm: bool = True
+    local_kernel_size: int = 3
+    fno_block_precision: str = "full"
+    factorization: str | None = None
+
+    def __post_init__(self) -> None:
+        object.__setattr__(
+            self, "n_modes", tuple(int(value) for value in self.n_modes)
+        )
+        object.__setattr__(
+            self, "grid_shape", tuple(int(value) for value in self.grid_shape)
+        )
+        if self.input_states != INPUT_STATE_COUNT or (
+            self.input_lag_days != INPUT_LAG_DAYS
+        ):
+            raise BireAlignedFullStateError(
+                "the two-input arm reads exactly two states ten days apart"
+            )
+        if (
+            self.in_channels != TWO_IN_EXTERNAL_INPUT_CHANNELS
+            or self.out_channels != STATE_CHANNEL_COUNT
+            or self.positional_channels != POSITIONAL_CHANNELS
+            or self.lifting_in_channels != TWO_IN_LIFTING_INPUT_CHANNELS
+        ):
+            raise BireAlignedFullStateError(
+                "the two-input arm maps 2x46 state + 3 static (+2 position) -> 46"
+            )
+        if self.grid_shape != (62, 62) or self.n_modes != (32, 32):
+            raise BireAlignedFullStateError(
+                "the two-input arm keeps the 62x62 grid and the 32x32 Y,X modes"
+            )
+        if self.n_layers != 3:
+            raise BireAlignedFullStateError(
+                "the two-input arm uses exactly three FNO blocks"
+            )
+        if self.hidden_channels != 128 or self.channel_mlp_expansion != 4.0:
+            raise BireAlignedFullStateError(
+                "the two-input arm keeps width 128 and the 4C Channel MLP"
+            )
+        if self.lifting_channel_ratio != 2 or self.projection_channel_ratio != 2:
+            raise BireAlignedFullStateError(
+                "the two-input arm keeps lifting and projection width 256"
+            )
+        if self.domain_padding != 0.1 or not self.use_channel_mlp:
+            raise BireAlignedFullStateError(
+                "the two-input arm keeps 10% padding and the Channel MLP"
+            )
+        if self.channel_mlp_dropout != 0.0:
+            raise BireAlignedFullStateError(
+                "the two-input arm freezes Channel MLP dropout at zero"
+            )
+        if self.positional_embedding is not None:
+            raise BireAlignedFullStateError(
+                "position enters only through the Bire sine/cosine encoder"
+            )
+        if not self.pointwise_layer_norm:
+            raise BireAlignedFullStateError(
+                "the two-input arm normalizes channel-wise after both mixing operations"
+            )
+        if self.local_kernel_size != 3:
+            raise BireAlignedFullStateError(
+                "the two-input arm retains exactly one external 3x3 correction"
+            )
+        if self.fno_block_precision != "full" or self.factorization is not None:
+            raise BireAlignedFullStateError(
+                "the two-input arm remains a dense float32 FNO"
+            )
+
+    @property
+    def layer_norm_count(self) -> int:
+        return 2 * self.n_layers
+
+    def to_dict(self) -> dict[str, Any]:
+        result = asdict(self)
+        result["n_modes"] = list(self.n_modes)
+        result["grid_shape"] = list(self.grid_shape)
+        return result
+
 def retained_features(batch: Any) -> Any:
     """Drop the two linear coordinate channels from a 51-channel batch."""
 
@@ -448,6 +588,28 @@ def retained_features(batch: Any) -> Any:
     )
     return torch.cat(
         (batch[:, :STATE_CHANNEL_COUNT], batch.index_select(1, index)),
+        dim=1,
+    )
+
+
+def retained_two_in_features(batch: Any) -> Any:
+    """Drop the two linear coordinate channels from a 97-channel pair batch.
+
+    The dataset stacks ``(x_{t-10}, x_t)`` ahead of all five static fields, so
+    the reduction is the single-state one with the static block found 46
+    channels further along; both state blocks are kept whole.
+    """
+
+    states = INPUT_STATE_COUNT * STATE_CHANNEL_COUNT
+    if batch.ndim != 4 or batch.shape[1] != states + len(STATIC_FEATURES):
+        raise ValueError("the two-input arm reduces N,97,Y,X inputs")
+    index = torch.as_tensor(
+        [states + offset for offset in RETAINED_STATIC_INDICES],
+        dtype=torch.long,
+        device=batch.device,
+    )
+    return torch.cat(
+        (batch[:, :states], batch.index_select(1, index)),
         dim=1,
     )
 
@@ -566,6 +728,35 @@ def direct_state_unroll(
         predictions.append(current)
     return torch.stack(predictions, dim=1)
 
+
+def two_in_state_unroll(
+    model: Any,
+    features: Any,
+    wet: Any,
+    steps: int,
+) -> Any:
+    """Autoregress the two-time-level map, sliding the pair forward.
+
+    ``features`` carries ``(x_{t-10}, x_t, static)``. The first call is the only
+    one with two truth states; from the second call onward the pair is
+    ``(previous prediction, latest prediction)``, so there is no teacher forcing
+    after the initial condition --- exactly the exposure the one-input arm had.
+    """
+
+    if steps <= 0:
+        raise ValueError("two-input rollout needs at least one step")
+    if features.shape[1] != TWO_IN_EXTERNAL_INPUT_CHANNELS:
+        raise ValueError("the two-input unroll expects N,95,Y,X features")
+    previous = features[:, HISTORY_SLICE]
+    current = features[:, PRESENT_SLICE]
+    static = features[:, TWO_IN_STATIC_SLICE]
+    predictions = []
+    for _ in range(steps):
+        future = model(torch.cat((previous, current, static), dim=1)) * wet
+        predictions.append(future)
+        previous, current = current, future
+    return torch.stack(predictions, dim=1)
+
 @dataclass
 class PointwiseDirectStepper:
     """Evaluation adapter for a direct map with pointwise normalization."""
@@ -577,6 +768,15 @@ class PointwiseDirectStepper:
     scale: np.ndarray
     wind_mean: float
     wind_scale: float
+
+    #: One-input maps need no history, so shared evaluation code can ask before
+    #: paying for a second truth read.
+    requires_history = False
+
+    def begin(self, history: np.ndarray | None = None) -> None:
+        """Accept the optional ``t - 10`` physical state; this map ignores it."""
+
+        return None
 
     def normalized_state(self, physical: np.ndarray) -> Any:
         value = (physical - self.mean[None]) / self.scale[None]
@@ -822,11 +1022,70 @@ if nn is not None:
             global_state = self.fno(self.positional_encoding(features))
             return global_state + self.local(features)
 
+
+    class BireTwoInOneOutFNO(nn.Module):
+        """The 32x32 Model C reading two consecutive time levels.
+
+        Deliberately the same module names as :class:`BireY32FullStateFNO`: the
+        FNO body, the six pointwise LayerNorms, the position encoder and the
+        bias-free local branch are identical objects, and only the two
+        input-facing tensors --- ``fno.lifting.fcs.0.weight`` and
+        ``local.weight`` --- carry 46 extra input channels. Sharing the names
+        is what makes every other parameter identifiable during migration.
+        """
+
+        def __init__(self, architecture: BireTwoInOneOutArchitecture) -> None:
+            super().__init__()
+            self.architecture = architecture
+            self.positional_encoding = BirePositionalEncoding(
+                *architecture.grid_shape
+            )
+            self.fno = FNO(
+                n_modes=architecture.n_modes,
+                in_channels=architecture.lifting_in_channels,
+                out_channels=architecture.out_channels,
+                hidden_channels=architecture.hidden_channels,
+                n_layers=architecture.n_layers,
+                lifting_channel_ratio=architecture.lifting_channel_ratio,
+                projection_channel_ratio=architecture.projection_channel_ratio,
+                positional_embedding=architecture.positional_embedding,
+                use_channel_mlp=architecture.use_channel_mlp,
+                channel_mlp_dropout=architecture.channel_mlp_dropout,
+                channel_mlp_expansion=architecture.channel_mlp_expansion,
+                domain_padding=architecture.domain_padding,
+                fno_block_precision=architecture.fno_block_precision,
+                factorization=architecture.factorization,
+            )
+            self.fno.fno_blocks.norm = nn.ModuleList(
+                [
+                    PointwiseChannelLayerNorm(architecture.hidden_channels)
+                    for _ in range(architecture.layer_norm_count)
+                ]
+            )
+            self.local = nn.Conv2d(
+                architecture.in_channels,
+                architecture.out_channels,
+                kernel_size=architecture.local_kernel_size,
+                padding=architecture.local_kernel_size // 2,
+                bias=False,
+            )
+            nn.init.zeros_(self.local.weight)
+
+        def forward(self, features: Any) -> Any:
+            if (
+                features.ndim != 4
+                or features.shape[1] != self.architecture.in_channels
+            ):
+                raise ValueError("two-input Model C expects N,95,Y,X")
+            global_state = self.fno(self.positional_encoding(features))
+            return global_state + self.local(features)
+
 else:  # pragma: no cover - environment dependent
     BirePositionalEncoding = None  # type: ignore[assignment,misc]
     BireAlignedFullStateFNO = None  # type: ignore[assignment,misc]
     BireLocal24FullStateFNO = None  # type: ignore[assignment,misc]
     BireY32FullStateFNO = None  # type: ignore[assignment,misc]
+    BireTwoInOneOutFNO = None  # type: ignore[assignment,misc]
 
 def build_bire_aligned_model(architecture: BireAlignedArchitecture) -> Any:
     """Build the Bire-aligned map, matching ``build_successor``'s signature."""
@@ -876,6 +1135,21 @@ def build_bire_y32_x32_model(architecture: BireY32X32Architecture) -> Any:
             "the 32x32 builder requires BireY32X32Architecture"
         )
     return BireY32FullStateFNO(architecture)
+
+
+def build_bire_two_in_one_out_model(
+    architecture: BireTwoInOneOutArchitecture,
+) -> Any:
+    """Build the two-time-level 32x32 model."""
+
+    require_model_a_runtime()
+    if BireTwoInOneOutFNO is None:  # pragma: no cover
+        raise RuntimeError("the two-input model requires PyTorch")
+    if not isinstance(architecture, BireTwoInOneOutArchitecture):
+        raise BireAlignedFullStateError(
+            "the two-input builder requires BireTwoInOneOutArchitecture"
+        )
+    return BireTwoInOneOutFNO(architecture)
 
 
 _BIRE_SPECTRAL_WEIGHT_KEYS = tuple(
@@ -1321,6 +1595,172 @@ def migrate_y32_state_dict(
         },
     }
 
+#: The only two tensors that face the external input block, and therefore the
+#: only two whose shape can move when a second time level is prepended.
+_TWO_IN_INPUT_FACING_KEYS = {
+    "fno.lifting.fcs.0.weight": (
+        LIFTING_INPUT_CHANNELS,
+        TWO_IN_LIFTING_INPUT_CHANNELS,
+    ),
+    "local.weight": (
+        EXTERNAL_INPUT_CHANNELS,
+        TWO_IN_EXTERNAL_INPUT_CHANNELS,
+    ),
+}
+
+
+def migrate_y32_x32_state_dict(
+    parent_state: Mapping[str, Any],
+    target_model: Any,
+) -> dict[str, Any]:
+    """Strictly migrate the 32x32 one-input state into the two-input model.
+
+    The two-input external block is ``(x_{t-10}, x_t, static)``, so the parent's
+    ``(x_t, static)`` block keeps its order and simply moves 46 channels to the
+    right; the position channels the encoder appends move with it. Both
+    input-facing tensors are therefore zeroed and the whole parent tensor is
+    copied into the trailing slice. The new leading 46 input channels are exact
+    zeros, so at initialization the model *ignores* the history state and
+    reproduces the parent map on ``x_t`` for any history whatsoever.
+
+    Every other parameter --- the three spectral tensors, the Channel MLPs, the
+    six LayerNorms, the projection and the skips --- is copied unchanged, so no
+    Fourier capacity is added and temporal context is the sole change.
+    """
+
+    if BireTwoInOneOutFNO is None or not isinstance(
+        target_model, BireTwoInOneOutFNO
+    ):
+        raise BireAlignedFullStateError(
+            "the two-input migration target must be BireTwoInOneOutFNO"
+        )
+    if target_model.architecture != BireTwoInOneOutArchitecture():
+        raise BireAlignedFullStateError(
+            "the two-input migration target architecture changed"
+        )
+
+    parent = {key: value for key, value in parent_state.items() if key != "_metadata"}
+    raw_target = target_model.state_dict()
+    target = {key: value for key, value in raw_target.items() if key != "_metadata"}
+    parent_keys = set(parent)
+    target_keys = set(target)
+    missing = sorted(target_keys - parent_keys)
+    unexpected = sorted(parent_keys - target_keys)
+    if missing or unexpected:
+        raise BireAlignedFullStateError(
+            "the 32x32-to-two-input migration must retain exactly the same keys: "
+            f"missing_parent={missing!r}, unexpected_parent={unexpected!r}"
+        )
+    if "local.weight" not in parent_keys:
+        raise BireAlignedFullStateError(
+            "the 32x32 checkpoint has no trained local.weight"
+        )
+
+    expected_expansions = set(_TWO_IN_INPUT_FACING_KEYS)
+    observed_expansions: set[str] = set()
+    migrated: dict[str, Any] = {}
+    expansion_records: list[dict[str, Any]] = []
+    for key in sorted(parent_keys):
+        source = parent[key]
+        destination = target[key]
+        if not hasattr(source, "shape") or not hasattr(destination, "shape"):
+            raise BireAlignedFullStateError(
+                f"the 32x32 checkpoint entry {key!r} is not a tensor"
+            )
+        source_shape = tuple(int(value) for value in source.shape)
+        destination_shape = tuple(int(value) for value in destination.shape)
+        if source.dtype != destination.dtype:
+            raise BireAlignedFullStateError(
+                f"the 32x32 checkpoint dtype changed for {key}: "
+                f"{source.dtype} -> {destination.dtype}"
+            )
+        if source_shape == destination_shape:
+            value = destination.detach().clone()
+            value.copy_(source)
+            migrated[key] = value
+            continue
+        if key not in expected_expansions:
+            raise BireAlignedFullStateError(
+                f"undeclared two-input shape change for {key}: "
+                f"{source_shape} -> {destination_shape}"
+            )
+        parent_width, target_width = _TWO_IN_INPUT_FACING_KEYS[key]
+        if (
+            source_shape[1] != parent_width
+            or destination_shape[1] != target_width
+            or source_shape[:1] != destination_shape[:1]
+            or source_shape[2:] != destination_shape[2:]
+        ):
+            raise BireAlignedFullStateError(
+                f"the declared history expansion has unexpected shapes for {key}: "
+                f"{source_shape} -> {destination_shape}"
+            )
+        value = destination.detach().clone()
+        value.zero_()
+        value[:, STATE_CHANNEL_COUNT:].copy_(source)
+        migrated[key] = value
+        observed_expansions.add(key)
+        expansion_records.append(
+            {
+                "key": key,
+                "source_shape": list(source_shape),
+                "target_shape": list(destination_shape),
+                "copied_into_input_slice": [STATE_CHANNEL_COUNT, target_width],
+                "zero_initialized_history_input_channels": STATE_CHANNEL_COUNT,
+            }
+        )
+
+    if observed_expansions != expected_expansions:
+        missing_expansions = sorted(expected_expansions - observed_expansions)
+        extra_expansions = sorted(observed_expansions - expected_expansions)
+        raise BireAlignedFullStateError(
+            "the 32x32 checkpoint did not perform exactly two input expansions: "
+            f"missing={missing_expansions!r}, extra={extra_expansions!r}"
+        )
+
+    local_shape = tuple(int(value) for value in migrated["local.weight"].shape)
+    if local_shape != (
+        STATE_CHANNEL_COUNT,
+        TWO_IN_EXTERNAL_INPUT_CHANNELS,
+        3,
+        3,
+    ):
+        raise BireAlignedFullStateError(
+            f"the migrated local correction has unexpected shape {local_shape!r}"
+        )
+    incompatible = target_model.load_state_dict(migrated, strict=True)
+    if incompatible.missing_keys or incompatible.unexpected_keys:
+        raise BireAlignedFullStateError(
+            "strict two-input checkpoint loading reported incompatible keys: "
+            f"missing={incompatible.missing_keys!r}, "
+            f"unexpected={incompatible.unexpected_keys!r}"
+        )
+
+    return {
+        "state_dict": migrated,
+        "provenance": {
+            "migration": "bire_y32_x32_one_in_to_two_in_one_out",
+            "source_external_input_channels": EXTERNAL_INPUT_CHANNELS,
+            "target_external_input_channels": TWO_IN_EXTERNAL_INPUT_CHANNELS,
+            "source_lifting_input_channels": LIFTING_INPUT_CHANNELS,
+            "target_lifting_input_channels": TWO_IN_LIFTING_INPUT_CHANNELS,
+            "input_expansions": expansion_records,
+            "n_modes_tensor_order_y_x": [32, 32],
+            "spectral_capacity_unchanged": True,
+            "retained_parameter": {
+                "key": "local.weight",
+                "shape": list(local_shape),
+                "bias": False,
+                "trained_columns_copied_without_modification": True,
+            },
+            "strict_load": True,
+            "missing_keys": [],
+            "unexpected_keys": [],
+            "initial_map_ignores_history_and_equals_the_parent": True,
+        },
+    }
+
+
 class BireAlignedStepper(PointwiseDirectStepper):
     """Evaluation adapter that supplies only the three retained static fields."""
 
@@ -1332,3 +1772,45 @@ class BireAlignedStepper(PointwiseDirectStepper):
             device=value.device,
         )
         return value.index_select(1, index)
+
+
+class BireTwoInStepper(BireAlignedStepper):
+    """Evaluation adapter that carries the previous time level across a rollout.
+
+    ``begin`` is handed the physical ``t - 10`` truth state once, before the
+    first call; every ``step`` afterwards consumes the pair it holds and slides
+    it forward, so the shared 360-day and 2,000-day rollout loops need no other
+    change. ``requires_history`` is what lets those loops decide whether the
+    extra truth read is needed at all.
+    """
+
+    requires_history = True
+
+    _previous: Any = None
+
+    def begin(self, history: np.ndarray | None = None) -> None:
+        if history is None:
+            raise BireAlignedFullStateError(
+                "the two-input stepper needs the t-10 physical state"
+            )
+        self._previous = self.normalized_state(
+            np.asarray(history, dtype=np.float32)
+        )
+
+    def step(self, current: Any, static: Any) -> Any:
+        if self._previous is None:
+            raise BireAlignedFullStateError(
+                "the two-input stepper was stepped before begin() supplied history"
+            )
+        if self._previous.shape != current.shape:
+            raise BireAlignedFullStateError(
+                "the two-input stepper's history and present states disagree"
+            )
+        wet = torch.from_numpy(self.wet.astype(np.float32))[None, None].to(
+            self.device
+        )
+        future = self.model(
+            torch.cat((self._previous, current, static), dim=1)
+        ) * wet
+        self._previous = current
+        return future

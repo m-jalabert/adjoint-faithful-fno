@@ -1,10 +1,22 @@
-"""Canonical six-step fine-tuning pipeline for the 32x32 Model C.
+"""Canonical six-step fine-tuning pipeline for the two-in / one-out Model C.
 
-The raw 32x32 contract inherits the frozen dataset, objective, schedule and
-selection fields from the retained Y32 parent, which is itself compact and
-inherits them from local24. This module resolves that two-level inheritance,
-audits it, performs the function-preserving zonal mode migration, then trains
-and selects the 32x32 arm directly without module rebinding.
+The one-input arm learned ``x_t -> x_{t+10}``. This arm learns
+
+    (x_{t-10}, x_t) -> x_{t+10},
+
+and autoregresses by sliding the pair forward, so the operator is given two
+consecutive time levels --- and therefore an empirical tendency
+``(x_t - x_{t-10}) / 10 days`` --- instead of the current state alone. Nothing
+else moves: the 32x32 modes, the trained bias-free local 3x3 branch, the
+position encoder, the dataset, the normalizers, the six-step objective, the
+optimizer schedule, the seed and the checkpoint-selection rule are all
+inherited from the 32x32 parent this arm warm-starts.
+
+The raw contract inherits the frozen dataset, objective, schedule and selection
+fields from that parent, which is itself compact and inherits them from Y32,
+which inherits them from local24. This module resolves that inheritance chain to
+its root, audits it, performs the function-preserving history-channel migration,
+then trains and selects the two-input arm.
 """
 from __future__ import annotations
 
@@ -24,27 +36,23 @@ import zarr
 
 from .runtime import DataLoader, torch
 from .runtime import AUDIT_TERMS, ChunkAwareBatchSampler, GROUP_SLICES, STATE_CHANNEL_COUNT, _checkpoint_state_dict, _device, _file_sha256, _json_sha256, require_model_a_runtime, seed_everything
-from .dataset import DATASET_VERSION, EXPERIMENTS, INFERENCE_RANGE, ModelCAnomalyRolloutDataset, TRAIN_RANGE, _normalizers, records_for_rollout_split, store_codes, validation_records, validation_starts, verify, western_boundary_mask
+from .dataset import DATASET_VERSION, EXPERIMENTS, HORIZON_DAYS, INFERENCE_RANGE, ModelCTwoInRolloutDataset, TRAIN_RANGE, _normalizers, records_for_two_in_rollout_split, store_codes, validation_records, validation_starts, verify, western_boundary_mask
 from .objective import MODEL_C_LOSS_V1_CONTRACT_SHA256, ModelCLossConfig, model_c_loss_terms
-from .model import BireAlignedDivergenceError, BireAlignedStepper, BireY32Architecture, BireY32X32Architecture, CHECKPOINT_DIRECTORY, MANIFEST_NAME, README_NAME, build_bire_y32_x32_model, direct_state_unroll, migrate_y32_state_dict, retained_features
+from .model import BireAlignedDivergenceError, BireTwoInOneOutArchitecture, BireTwoInStepper, BireY32X32Architecture, CHECKPOINT_DIRECTORY, INPUT_LAG_DAYS, INPUT_STATE_COUNT, MANIFEST_NAME, PRESENT_SLICE, README_NAME, TWO_IN_EXTERNAL_INPUT_CHANNELS, TWO_IN_LIFTING_INPUT_CHANNELS, build_bire_two_in_one_out_model, migrate_y32_x32_state_dict, retained_two_in_features, two_in_state_unroll
 from .validation import PRIMARY_FIELDS, _assert_store_is_v3, _plot, select_by_validation, train_only_climatology, validate_checkpoint
 
-VERSION = "model_c_bire_protocol_rollout_ft_y32_x32_v1"
+VERSION = "model_c_2in_1out_v1"
 
-CONTRACT_STATUS = "frozen_before_any_bire_protocol_rollout_ft_y32_x32_metric"
+CONTRACT_STATUS = "frozen_before_any_model_c_2in_1out_metric"
 
-PARENT_VERSION = "model_c_bire_protocol_rollout_ft_local24_y32_v1"
-
-#: The Y32 declaration is compact, so its own parent must be resolved before
-#: this arm's inherited blocks can be compared against anything.
-GRANDPARENT_VERSION = "model_c_bire_protocol_rollout_ft_local24_v1"
+PARENT_VERSION = "model_c_bire_protocol_rollout_ft_y32_x32_v1"
 
 PARENT_CONTRACT_SHA256 = (
-    "a839bf25948989fd693c600f1554d42907cceb5d519a8b51f1b60adc326db277"
+    "edb9058740e8d6fe25e2b0693d35503045a9e23452675af3b8ea317e97fcd553"
 )
 
 PARENT_MATERIALIZED_CONTRACT_SHA256 = (
-    "c54714f8855ad21cc9798b7a0d5d2a3dc55848bec801141f415cd11e99a418fb"
+    "21e663937ef638283ccd3b825abea969d69a39bcfbf5c3136f0d94fedbccc1df"
 )
 
 BASELINE_OPTIMIZER_STEP = 3840
@@ -73,7 +81,10 @@ CHECKPOINT_STEPS = (960, 1920, 2880, 3840)
 
 SEED = 20260724
 
-TRAINING_STARTS_PER_REGIME = 5940
+#: Ten starts per regime are lost relative to the one-input arm: days 0--9 have
+#: no t - 10 history inside the record. Starts are consecutive days, not
+#: multiples of the ten-day horizon, so the loss is ten days and not one start.
+TRAINING_STARTS_PER_REGIME = 5930
 
 TRAINING_RECORDS = TRAINING_STARTS_PER_REGIME * len(EXPERIMENTS)
 
@@ -83,25 +94,25 @@ WORST_LONG_RATIO_CEILING = 0.85
 
 LONG_AUC_TOLERANCE_TO_BASELINE = 1.0
 
-SLUG = "bire_protocol_rollout_ft_y32_x32"
+SLUG = "model_c_2in_1out"
 
-NORMALIZATION_NAME = f"model_c_{SLUG}_train_only_normalization.npz"
+NORMALIZATION_NAME = f"{SLUG}_train_only_normalization.npz"
 
 DIVERGENCE_NAME = f"{SLUG}_divergence.json"
 
-CHECKPOINT_STEM = f"model_c_{SLUG}_step"
+CHECKPOINT_STEM = f"{SLUG}_step"
 
 REPORT_NAME = f"{SLUG}_report.json"
 
 ARRAYS_NAME = f"{SLUG}_arrays.npz"
 
-FIGURE_NAME = f"model_c_{SLUG}_selection.png"
+FIGURE_NAME = f"{SLUG}_selection.png"
 
-PARENT_MODES = (32, 24)
-
-TARGET_MODES = (32, 32)
+MODES = (32, 32)
 
 LOCAL_KERNEL_SIZE = 3
+
+PARENT_INPUT_STATES = 1
 
 INHERITED_FIELDS = (
     "dataset",
@@ -111,9 +122,17 @@ INHERITED_FIELDS = (
     "checkpoint_selection",
 )
 
-MODE_MIGRATION = (
-    "copy_parent_32x13_spectral_tensor_into_zonal_indices_0_to_12_"
-    "and_zero_the_four_new_zonal_half_spectrum_coefficients"
+#: The only architecture fields that may differ from the 32x32 parent.
+DECLARED_ARCHITECTURE_CHANGES = (
+    "in_channels",
+    "lifting_in_channels",
+    "input_states",
+    "input_lag_days",
+)
+
+INPUT_MIGRATION = (
+    "prepend_46_zero_history_input_channels_to_the_lifting_and_local_weights_"
+    "and_copy_the_parent_state_static_and_position_columns_into_the_trailing_slice"
 )
 
 OUTPUT_ARTIFACTS = (
@@ -126,18 +145,19 @@ OUTPUT_ARTIFACTS = (
 
 REQUIRED_SOURCE_HASHES = frozenset(
     {
+        "src/oceanfno/dataset.py",
         "src/oceanfno/model.py",
         "src/oceanfno/train.py",
     }
 )
 
-class BireY32X32TrainingError(RuntimeError):
-    """Raised when the canonical Y32-to-32x32 arm violates its contract."""
+class ModelCTwoInTrainingError(RuntimeError):
+    """Raised when the two-in / one-out arm violates its contract."""
 
 
 # Historical callers used the generic arm name. Keep it as an exact alias so
 # every canonical training failure is catchable through either public API.
-BireProtocolRolloutFineTuneError = BireY32X32TrainingError
+BireProtocolRolloutFineTuneError = ModelCTwoInTrainingError
 
 @dataclass(frozen=True)
 class BireProtocolRolloutFineTuneLossConfig(ModelCLossConfig):
@@ -176,10 +196,15 @@ def fine_tune_loss_contract(config: ModelCLossConfig) -> dict[str, Any]:
     so reusing it would record a description that contradicts the configuration
     it carries.  The structure and the hashing are identical, so the two
     contracts are comparable field for field.
+
+    The strings below are also *unchanged* from the one-input arm, which is the
+    point: the objective this arm optimizes is byte-for-byte the incumbent's, so
+    the two runs' losses are directly comparable.  Only what the model is handed
+    at each call moved.
     """
 
     if not isinstance(config, BireProtocolRolloutFineTuneLossConfig):
-        raise BireProtocolRolloutFineTuneError(
+        raise ModelCTwoInTrainingError(
             "the six-step loss contract describes only the fine-tune configuration"
         )
     return {
@@ -233,34 +258,62 @@ FINE_TUNE_LOSS_CONTRACT_SHA256 = fine_tune_loss_contract_sha256(fine_tune_loss_c
 def _materialize(
     raw: Mapping[str, Any],
     parent: Mapping[str, Any],
+    fields: Sequence[str] = INHERITED_FIELDS,
 ) -> dict[str, Any]:
     """Overlay a compact declaration onto its parent's resolved document.
 
-    Everything the child states explicitly wins; the five inherited blocks are
-    always taken from the parent, so a child cannot silently redefine them by
-    restating them with a different value.
+    Everything the child states explicitly wins; the inherited blocks are always
+    taken from the parent, so a child cannot silently redefine them by restating
+    them with a different value.
     """
 
     contract = copy.deepcopy(dict(parent))
     for key, value in raw.items():
-        if key not in INHERITED_FIELDS:
+        if key not in fields:
             contract[key] = copy.deepcopy(value)
-    for field in INHERITED_FIELDS:
+    for field in fields:
         contract[field] = copy.deepcopy(parent[field])
     return contract
 
 
-def _parent_contract(record: Mapping[str, Any]) -> dict[str, Any]:
-    """Resolve the retained Y32 parent, including its own inheritance.
+def _resolve_contract(path: Path, *, depth: int = 0) -> dict[str, Any]:
+    """Resolve a compact declaration against its ancestors, to the root.
 
-    The Y32 declaration is itself compact: it inherits the frozen dataset,
-    normalization, schedule, loss and selection blocks from the local24
-    contract it was fine-tuned from. Comparing this arm's inherited fields
-    against the raw Y32 file would compare them against fields that file does
-    not contain, so the parent is resolved one level further back. Both the raw
-    Y32 bytes and the resolved document are pinned, the second by
-    ``materialized_sha256``, so neither level can move unnoticed.
+    The chain this arm sits on is three deep --- 32x32 inherits from Y32, Y32
+    from local24, and local24 states everything --- so comparing this arm's
+    inherited fields against the raw parent bytes would compare them against
+    fields that file does not contain. Each hop's bytes are pinned by the
+    child's own ``sources.parent_contract.sha256``, so no level can move
+    unnoticed, and a contract without ``inherit_parent_fields`` terminates the
+    walk.
     """
+
+    if depth > 8:
+        raise ModelCTwoInTrainingError("the contract inheritance chain does not terminate")
+    resolved = Path(path).resolve()
+    if not resolved.is_file():
+        raise ModelCTwoInTrainingError(f"an ancestor contract is missing: {resolved}")
+    raw = json.loads(resolved.read_text())
+    fields = tuple(raw.get("inherit_parent_fields", ()))
+    if not fields:
+        return raw
+    record = raw.get("sources", {}).get("parent_contract", {})
+    ancestor = Path(str(record.get("path", ""))).resolve()
+    if not ancestor.is_file() or _file_sha256(ancestor) != record.get("sha256"):
+        raise ModelCTwoInTrainingError(
+            f"the contract {resolved.name} no longer pins its own parent's bytes"
+        )
+    parent = _resolve_contract(ancestor, depth=depth + 1)
+    for field in fields:
+        if field in raw and raw[field] != parent[field]:
+            raise ModelCTwoInTrainingError(
+                f"{resolved.name} overrides inherited field {field}"
+            )
+    return _materialize(raw, parent, fields)
+
+
+def _parent_contract(record: Mapping[str, Any]) -> dict[str, Any]:
+    """Resolve the 32x32 parent, including its own two levels of inheritance."""
 
     path = Path(str(record.get("path", ""))).resolve()
     if (
@@ -268,69 +321,54 @@ def _parent_contract(record: Mapping[str, Any]) -> dict[str, Any]:
         or _file_sha256(path) != record.get("sha256")
         or record.get("sha256") != PARENT_CONTRACT_SHA256
     ):
-        raise BireY32X32TrainingError("the selected Y32 parent contract changed")
+        raise ModelCTwoInTrainingError("the selected 32x32 parent contract changed")
     raw_parent = json.loads(path.read_text())
     if raw_parent.get("version") != PARENT_VERSION:
-        raise BireY32X32TrainingError("the parent is not the retained Y32 arm")
+        raise ModelCTwoInTrainingError("the parent is not the 32x32 one-input arm")
     if tuple(raw_parent.get("inherit_parent_fields", ())) != INHERITED_FIELDS:
-        raise BireY32X32TrainingError(
-            "the Y32 parent's own inherited-field declaration changed"
+        raise ModelCTwoInTrainingError(
+            "the 32x32 parent's own inherited-field declaration changed"
         )
-
-    grandparent_record = raw_parent.get("sources", {}).get("parent_contract", {})
-    grandparent_path = Path(str(grandparent_record.get("path", ""))).resolve()
-    if not grandparent_path.is_file() or _file_sha256(
-        grandparent_path
-    ) != grandparent_record.get("sha256"):
-        raise BireY32X32TrainingError(
-            "the local24 contract the Y32 parent inherits from changed"
-        )
-    grandparent = json.loads(grandparent_path.read_text())
-    if grandparent.get("version") != GRANDPARENT_VERSION:
-        raise BireY32X32TrainingError(
-            "the Y32 parent's own parent is not the retained local24 arm"
-        )
-    for field in INHERITED_FIELDS:
-        if field in raw_parent and raw_parent[field] != grandparent[field]:
-            raise BireY32X32TrainingError(
-                f"the raw Y32 declaration overrides inherited field {field}"
-            )
-
-    parent = _materialize(raw_parent, grandparent)
+    parent = _resolve_contract(path)
     materialized = _json_sha256(parent)
     if (
         materialized != PARENT_MATERIALIZED_CONTRACT_SHA256
         or record.get("materialized_sha256") != materialized
     ):
-        raise BireY32X32TrainingError("the resolved Y32 parent contract changed")
+        raise ModelCTwoInTrainingError("the resolved 32x32 parent contract changed")
     return parent
 
 
 def _assert_only_the_declared_changes(
     contract: Mapping[str, Any],
 ) -> Mapping[str, Any]:
-    """Prove that zonal bandwidth is the sole scientific change."""
+    """Prove that temporal context is the sole scientific change."""
 
     parent = _parent_contract(contract["sources"]["parent_contract"])
     parent_architecture = dict(parent["architecture"])
     if (
-        tuple(parent_architecture.get("n_modes", ())) != PARENT_MODES
+        tuple(parent_architecture.get("n_modes", ())) != MODES
         or parent_architecture.get("local_kernel_size") != LOCAL_KERNEL_SIZE
+        or "input_states" in parent_architecture
     ):
-        raise BireY32X32TrainingError(
-            "the parent is not the audited 32x24 model with a trained 3x3 branch"
+        raise ModelCTwoInTrainingError(
+            "the parent is not the audited one-input 32x32 model with a trained 3x3 branch"
         )
-    BireY32Architecture(**parent_architecture)
+    BireY32X32Architecture(**parent_architecture)
     expected = dict(parent_architecture)
-    expected["n_modes"] = list(TARGET_MODES)
+    expected["in_channels"] = TWO_IN_EXTERNAL_INPUT_CHANNELS
+    expected["lifting_in_channels"] = TWO_IN_LIFTING_INPUT_CHANNELS
+    expected["input_states"] = INPUT_STATE_COUNT
+    expected["input_lag_days"] = INPUT_LAG_DAYS
     if contract.get("architecture") != expected:
-        raise BireY32X32TrainingError(
-            "only n_modes 32x24 -> 32x32 may move from the Y32 parent"
+        raise ModelCTwoInTrainingError(
+            "only the input contract may move from the 32x32 parent: "
+            f"{', '.join(DECLARED_ARCHITECTURE_CHANGES)}"
         )
     for field in INHERITED_FIELDS:
         if contract.get(field) != parent.get(field):
-            raise BireY32X32TrainingError(
-                f"the 32x32 arm moved the parent's {field} contract"
+            raise ModelCTwoInTrainingError(
+                f"the two-input arm moved the parent's {field} contract"
             )
     return parent
 
@@ -339,18 +377,18 @@ def load_contract(
     *,
     verify_sources: bool = True,
 ) -> tuple[dict[str, Any], Path, str]:
-    """Load the canonical 32x32 declaration and its pinned inherited fields."""
+    """Load the two-in / one-out declaration and its pinned inherited fields."""
 
     resolved = Path(path).resolve()
     raw = json.loads(resolved.read_text())
     if tuple(raw.get("inherit_parent_fields", ())) != INHERITED_FIELDS:
-        raise BireY32X32TrainingError("the exact inherited-field declaration changed")
+        raise ModelCTwoInTrainingError("the exact inherited-field declaration changed")
     sources = raw.get("sources", {})
     parent = _parent_contract(sources.get("parent_contract", {}))
     for field in INHERITED_FIELDS:
         if field in raw and raw[field] != parent[field]:
-            raise BireY32X32TrainingError(
-                f"the raw 32x32 declaration overrides inherited field {field}"
+            raise ModelCTwoInTrainingError(
+                f"the raw two-input declaration overrides inherited field {field}"
             )
 
     contract = _materialize(raw, parent)
@@ -365,7 +403,7 @@ def load_contract(
     if not report_path.is_file() or _file_sha256(report_path) != report_record.get(
         "sha256"
     ):
-        raise BireY32X32TrainingError("the retained Y32 parent report changed")
+        raise ModelCTwoInTrainingError("the 32x32 parent report changed")
     parent_report = json.loads(report_path.read_text())
     published = parent_report.get("published_checkpoint", {})
     normalization_record = sources.get("parent_normalization", {})
@@ -374,13 +412,20 @@ def load_contract(
     if (
         contract.get("version") != VERSION
         or contract.get("contract_status") != CONTRACT_STATUS
-        or tuple(architecture.get("n_modes", ())) != TARGET_MODES
+        or tuple(architecture.get("n_modes", ())) != MODES
         or architecture.get("local_kernel_size") != LOCAL_KERNEL_SIZE
+        or int(architecture.get("input_states", -1)) != INPUT_STATE_COUNT
+        or int(architecture.get("input_lag_days", -1)) != INPUT_LAG_DAYS
+        or int(architecture.get("in_channels", -1))
+        != TWO_IN_EXTERNAL_INPUT_CHANNELS
+        or int(architecture.get("lifting_in_channels", -1))
+        != TWO_IN_LIFTING_INPUT_CHANNELS
         or initialization.get("load_only") != "model_state_dict"
         or int(initialization.get("optimizer_step", -1))
         != BASELINE_OPTIMIZER_STEP
         or initialization.get("version") != PARENT_VERSION
-        or initialization.get("mode_migration") != MODE_MIGRATION
+        or initialization.get("input_migration") != INPUT_MIGRATION
+        or initialization.get("history_branch_initialization") != "zeros"
         or initialization.get("local_branch_initialization")
         != "copied_from_parent"
         or initialization.get("local_branch_bias") is not False
@@ -415,32 +460,32 @@ def load_contract(
         or published.get("normalization_sha256")
         != normalization_record.get("sha256")
     ):
-        raise BireY32X32TrainingError("the Y32-to-32x32 training contract changed")
+        raise ModelCTwoInTrainingError("the two-in / one-out training contract changed")
 
     _assert_only_the_declared_changes(contract)
-    BireY32X32Architecture(**architecture)
+    BireTwoInOneOutArchitecture(**architecture)
     if verify_sources:
         root = resolved.parents[1]
         for relative, expected in hashes.items():
             source = root / relative
             if not source.is_file() or _file_sha256(source) != expected:
-                raise BireY32X32TrainingError(f"32x32 source changed: {source}")
+                raise ModelCTwoInTrainingError(f"two-input source changed: {source}")
     return contract, resolved, _file_sha256(resolved)
 
 def _verify_file(record: Mapping[str, Any], label: str) -> Path:
     path = Path(record["path"]).resolve()
     if not path.exists():
-        raise BireProtocolRolloutFineTuneError(f"{label} is missing: {path}")
+        raise ModelCTwoInTrainingError(f"{label} is missing: {path}")
     digest = _file_sha256(path / ".zmetadata" if path.is_dir() else path)
     if digest != record["sha256"]:
-        raise BireProtocolRolloutFineTuneError(f"{label} changed on disk: {path}")
+        raise ModelCTwoInTrainingError(f"{label} changed on disk: {path}")
     return path
 
 def _verify_dataset(contract: Mapping[str, Any]) -> Path:
     record = contract["sources"]["dataset"]
     dataset = Path(record["path"]).resolve()
     if not dataset.is_dir() or _file_sha256(dataset / ".zmetadata") != record["metadata_sha256"]:
-        raise BireProtocolRolloutFineTuneError("trajectory-v3 dataset source changed")
+        raise ModelCTwoInTrainingError("trajectory-v3 dataset source changed")
     return dataset
 
 def reused_normalization(contract: Mapping[str, Any]) -> dict[str, Any]:
@@ -448,10 +493,12 @@ def reused_normalization(contract: Mapping[str, Any]) -> dict[str, Any]:
 
     The fine-tuned weights must see the same normalized coordinates as the
     weights they start from, so the pointwise mean and scale come from the
-    parent's ``.npz`` verbatim.  The per-channel increment scale is not stored
-    in that file, but it is a deterministic function of the same training block
-    and the same pointwise scale, and the parent's report records the 46 values
-    it used; they are read from there rather than recomputed over 18,000
+    parent's ``.npz`` verbatim.  The history state is normalized with those same
+    pointwise fields, which is what makes ``x_t - x_{t-10}`` a meaningful
+    difference inside the network.  The per-channel increment scale is not
+    stored in that file, but it is a deterministic function of the same training
+    block and the same pointwise scale, and the parent's report records the 46
+    values it used; they are read from there rather than recomputed over 18,000
     snapshots for a second time.
     """
 
@@ -473,7 +520,7 @@ def reused_normalization(contract: Mapping[str, Any]) -> dict[str, Any]:
         or not np.all(np.isfinite(increment))
         or np.any(increment <= 0.0)
     ):
-        raise BireProtocolRolloutFineTuneError("the reused normalizers are not the 46-channel set")
+        raise ModelCTwoInTrainingError("the reused normalizers are not the 46-channel set")
     summary = dict(report["normalization"]["summary"])
     return {
         "mean": mean,
@@ -491,7 +538,7 @@ def load_initial_state_dict(
     device: Any,
     target_model: Any,
 ) -> dict[str, Any]:
-    """Load and audit the function-preserving Y32 -> 32x32 migration."""
+    """Load and audit the function-preserving one-input -> two-input migration."""
 
     path = _verify_file(contract["sources"]["initialization_checkpoint"], "initialization checkpoint")
     payload = torch.load(path, map_location=device, weights_only=False)
@@ -501,17 +548,17 @@ def load_initial_state_dict(
         or payload.get("dataset_version") != DATASET_VERSION
         or payload.get("base_loss_contract_sha256") != FINE_TUNE_LOSS_CONTRACT_SHA256
     ):
-        raise BireProtocolRolloutFineTuneError(
-            "the initialization checkpoint is not the retained Y32 model"
+        raise ModelCTwoInTrainingError(
+            "the initialization checkpoint is not the 32x32 one-input model"
         )
     if "model_state_dict" not in payload:
-        raise BireProtocolRolloutFineTuneError("the initialization checkpoint has no weights")
+        raise ModelCTwoInTrainingError("the initialization checkpoint has no weights")
     parent_contract = _assert_only_the_declared_changes(contract)
     if payload.get("architecture") != parent_contract["architecture"]:
-        raise BireProtocolRolloutFineTuneError(
+        raise ModelCTwoInTrainingError(
             "the initialization architecture does not match its archived contract"
         )
-    migration = migrate_y32_state_dict(payload["model_state_dict"], target_model)
+    migration = migrate_y32_x32_state_dict(payload["model_state_dict"], target_model)
     return {
         "state_dict": migration["state_dict"],
         "provenance": {
@@ -527,7 +574,7 @@ def load_initial_state_dict(
     }
 
 def baseline_validation_summary(report: Mapping[str, Any]) -> dict[str, Any]:
-    """The incumbent six-step checkpoint's metrics on the same 102 rollouts.
+    """The incumbent one-input checkpoint's metrics on the same 102 rollouts.
 
     Recomputing them here would be identical work: the validation records, the
     train-only climatology, the normalizers and the 360-day protocol are all
@@ -538,7 +585,7 @@ def baseline_validation_summary(report: Mapping[str, Any]) -> dict[str, Any]:
     for summary in report["validation_summaries"]:
         if int(summary["optimizer_step"]) == BASELINE_OPTIMIZER_STEP:
             return dict(summary)
-    raise BireProtocolRolloutFineTuneError(
+    raise ModelCTwoInTrainingError(
         "the parent report carries no selected step-3,840 validation summary"
     )
 
@@ -593,11 +640,24 @@ def acceptance_gate(
 
 
 def fine_tune_split_summary() -> dict[str, Any]:
-    """Return the shared split summary with the six-call start bound."""
+    """Return the shared split summary with the two-input start bounds."""
 
     summary = dict(verify())
     summary["training_rollout_steps"] = ROLLOUT_STEPS
+    summary["input_states"] = INPUT_STATE_COUNT
+    summary["input_lag_days"] = INPUT_LAG_DAYS
+    summary["earliest_training_rollout_start"] = INPUT_LAG_DAYS
     summary["latest_training_rollout_start"] = TRAIN_RANGE[1] - 1 - 10 * ROLLOUT_STEPS
+    summary["history_note"] = (
+        "the record's time index is still the present state t; the pair adds the "
+        "t-10 state as an initial condition, so no target moves and days 0-9 are "
+        "the only training starts the history requirement removes"
+    )
+    summary["validation_history_note"] = (
+        "a validation rollout starting at day 6000 reads day 5990 as its second "
+        "initial condition; that day is model-visible training input, never a "
+        "scored target, exactly as persistence reads the initial state"
+    )
     return summary
 
 
@@ -609,14 +669,16 @@ def preflight(contract_path: str | Path) -> dict[str, Any]:
     group = zarr.open_consolidated(str(dataset), mode="r")
     _assert_store_is_v3(group)
     _, pair_split = store_codes()
-    records = records_for_rollout_split(pair_split, 1, rollout_steps=ROLLOUT_STEPS)
+    records = records_for_two_in_rollout_split(
+        pair_split, 1, rollout_steps=ROLLOUT_STEPS
+    )
     if len(records) != TRAINING_RECORDS:
-        raise BireProtocolRolloutFineTuneError(
-            f"the six-step training set is {len(records)} records, not {TRAINING_RECORDS}"
+        raise ModelCTwoInTrainingError(
+            f"the two-input training set is {len(records)} records, not {TRAINING_RECORDS}"
         )
     normalization = reused_normalization(contract)
     baseline = baseline_validation_summary(normalization["report"])
-    architecture = BireY32X32Architecture(**contract["architecture"])
+    architecture = BireTwoInOneOutArchitecture(**contract["architecture"])
     result: dict[str, Any] = {
         "status": "ready",
         "version": VERSION,
@@ -628,8 +690,13 @@ def preflight(contract_path: str | Path) -> dict[str, Any]:
         "loss_contract_sha256": FINE_TUNE_LOSS_CONTRACT_SHA256,
         "rollout_steps": ROLLOUT_STEPS,
         "rollout_weight": ROLLOUT_WEIGHT,
+        "input_states": INPUT_STATE_COUNT,
+        "input_lag_days": INPUT_LAG_DAYS,
+        "external_input_channels": TWO_IN_EXTERNAL_INPUT_CHANNELS,
+        "lifting_input_channels": TWO_IN_LIFTING_INPUT_CHANNELS,
         "training_rollout_records": len(records),
         "training_starts_per_regime": len(records) // len(EXPERIMENTS),
+        "earliest_training_start": int(min(t for _, t in records)),
         "latest_training_start": int(max(t for _, t in records)),
         "validation_records": int(validation_records().shape[0]),
         "inference_range": list(INFERENCE_RANGE),
@@ -642,7 +709,7 @@ def preflight(contract_path: str | Path) -> dict[str, Any]:
     }
     if torch is not None:
         device = _device("cpu")
-        model = build_bire_y32_x32_model(architecture)
+        model = build_bire_two_in_one_out_model(architecture)
         initialization = load_initial_state_dict(contract, device, model)
         model.load_state_dict(initialization["state_dict"])
         result["parameter_count"] = int(sum(p.numel() for p in model.parameters()))
@@ -662,90 +729,9 @@ def _parser() -> argparse.ArgumentParser:
             child.add_argument("--device", choices=("auto", "cpu", "cuda"), default="auto")
     return parser
 
-def _archived_local24_readme(report: Mapping[str, Any]) -> str:
-    decision = report["selection_decision"]
-    gate = report["acceptance_gate"]
-    comparison = report["checkpoint_comparison_to_baseline"]
-    rows = "\n".join(
-        "| {step} | {short} | {long} | {ratio} |".format(
-            step=f"{int(s['optimizer_step']):,}",
-            short="/".join(f"{s['short_auc_10_90'][f]:.3f}" for f in PRIMARY_FIELDS),
-            long="/".join(f"{s['long_ratio_to_climatology'][f]:.3f}" for f in PRIMARY_FIELDS),
-            ratio="/".join(
-                f"{comparison[str(int(s['optimizer_step']))]['short_auc_10_90_ratio_to_baseline'][f]:.3f}"
-                for f in PRIMARY_FIELDS
-            ),
-        )
-        for s in report["validation_summaries"]
-    )
-    baseline = report["baseline_validation_summary"]
-    return f"""# Local-24 fine-tune of the six-step Bire-protocol model
-
-Warm start from `{PARENT_VERSION}`'s selected checkpoint
-(`selected.pt`, optimizer step {BASELINE_OPTIMIZER_STEP:,}); only
-`model_state_dict` was loaded and the optimizer was reset.
-
-| quantity | incumbent | local-24 arm |
-| --- | --- | --- |
-| Fourier modes (Y, X) | 24 x 16 | 24 x 24 |
-| raw-input local branch | none | bias-free 49 -> 46, 3 x 3 |
-| rollout calls / weight | {ROLLOUT_STEPS} / {ROLLOUT_WEIGHT} | {ROLLOUT_STEPS} / {ROLLOUT_WEIGHT} |
-| initial learning rate | {LEARNING_RATE:g} | {LEARNING_RATE:g} |
-| batch / optimizer steps | {BATCH_SIZE} / {BASELINE_OPTIMIZER_STEP:,} | {BATCH_SIZE} / {MAXIMUM_STEPS:,} |
-
-The old 24 x 9 realized spectral tensors are copied into the new 24 x 13
-tensors and the four added zonal coefficients are zero. The bias-free local
-branch is also zero-initialized. Therefore the warm start is function-preserving
-before optimization. Static inputs, positional encoding, output channels,
-split, normalizers, loss, optimizer schedule, seed and checkpoint selection are
-asserted equal to the archived incumbent.
-
-The unchanged objective is:
-
-    L = L_state + 0.001 L_increment + {ROLLOUT_WEIGHT} (1/5) sum_(k=2..6) L_state^(k)
-      + 1e-5 (1/6) sum_(k=1..6) L_spectral^(k) + 0.065 (1/6) sum_(k=1..6) L_boundary^(k)
-
-with U, V, temperature and SSH weighted 0.25 each. The prediction is
-fed back at steps two through six; there is no teacher forcing after the initial
-state. Six-step objective SHA-256: `{FINE_TUNE_LOSS_CONTRACT_SHA256}`.
-
-Training draws {report['counts']['training_starts_per_regime']:,} starts per regime
-({report['counts']['training_rollout_records']:,} pooled), the latest being
-{report['counts']['latest_training_start']:,}, so every six-step target sequence stays inside
-training 0--5999.
-
-Selection is unchanged: minimise the worst 90--360-day RMSE-AUC relative to
-climatology subject to each field's 10--90-day AUC staying within 5% of the best
-fine-tuning checkpoint, on {report['counts']['validation_records']} pooled validation rollouts.
-
-| step | short AUC 10--90 | long AUC / climatology | short AUC / step-{BASELINE_OPTIMIZER_STEP:,} |
-| --- | --- | --- | --- |
-{rows}
-
-The step-{BASELINE_OPTIMIZER_STEP:,} baseline scores
-{"/".join(f"{baseline['short_auc_10_90'][f]:.3f}" for f in PRIMARY_FIELDS)} short and
-{"/".join(f"{baseline['long_ratio_to_climatology'][f]:.3f}" for f in PRIMARY_FIELDS)} long on the
-same rollouts, in the order {", ".join(PRIMARY_FIELDS)}.
-
-Selected step {selected_step_text(decision)} via `{decision['branch']}`.
-
-Acceptance gate, validation half: no 10--90-day field worsens by more than 5%
-against the baseline -- **{'pass' if gate['short_auc_no_field_worsens_by_more_than_5_percent'] else 'fail'}**;
-worst 90--360-day climatology ratio {gate['worst_long_ratio_to_climatology']:.3f} <= {WORST_LONG_RATIO_CEILING}
--- **{'pass' if gate['worst_long_ratio_at_or_below_ceiling'] else 'fail'}**; no worse than the
-incumbent -- **{'pass' if gate['worst_long_ratio_no_worse_than_parent'] else 'fail'}**. The 2,000-day and
-visual conditions are evaluated by the figure package, which is the only stage
-that runs a 2,000-day rollout.
-
-Training and validation only; the inference set opens through the figure
-contract, S0 only.
-
-Report content SHA-256: `{report['content_sha256']}`.
-"""
-
 
 def _readme(report: Mapping[str, Any]) -> str:
-    """Describe the canonical 32x32 training package."""
+    """Describe the canonical two-in / one-out training package."""
 
     decision = report["selection_decision"]
     gate = report["acceptance_gate"]
@@ -763,26 +749,52 @@ def _readme(report: Mapping[str, Any]) -> str:
         )
         for summary in report["validation_summaries"]
     )
-    return f"""# Canonical 32 x 32 continuation of the retained Y32 model
+    baseline = report["baseline_validation_summary"]
+    return f"""# Two-in / one-out continuation of the 32 x 32 Model C
 
 This model warm-starts `{PARENT_VERSION}` at optimizer step
-{BASELINE_OPTIMIZER_STEP:,}. Only the Fourier mode count in tensor order
-(Y, X) changes, from 32 x 24 to 32 x 32. The trained bias-free 49 -> 46 local
-3 x 3 branch and the deterministic sine/cosine position encoder are copied
-unchanged. The zonal axis is the real-transform axis, so its 24 requested modes
-are stored as 13 non-redundant coefficients and its 32 as 17: each 32 x 13
-complex spectral tensor is copied into indices [..., :13] of a zeroed 32 x 17
-tensor, preserving the initial map exactly while opening four new zonal
-coefficients.
+{BASELINE_OPTIMIZER_STEP:,}. Only the input contract changes:
 
-Dataset, split, normalization, six-step autoregressive loss, optimizer reset,
-schedule, seed, validation starts, and checkpoint-selection rule are inherited
-byte-for-byte from the Y32 parent, which inherits them in turn from local24.
-Meridional capacity remains at the 32 modes the Y32 arm opened.
+    one-in / one-out:   x_t                -> x_(t+10)
+    two-in / one-out:  (x_(t-10), x_t)     -> x_(t+10)
+
+and autoregression slides the pair forward, so a self-generated rollout reads
+`(x_t, xhat_(t+10)) -> xhat_(t+20)` and then
+`(xhat_(t+10), xhat_(t+20)) -> xhat_(t+30)`. The pair gives the operator an
+empirical tendency `(x_t - x_(t-10)) / 10 days`, which is the multistep idea
+behind Adams--Bashforth in spirit; it is not AB-II's algebra, since MITgcm
+extrapolates from two stored *tendencies* rather than two states.
+
+The external input block therefore grows from 46 + 3 = 49 channels to
+2 x 46 + 3 = {TWO_IN_EXTERNAL_INPUT_CHANNELS}, and lifting from 51 to
+{TWO_IN_LIFTING_INPUT_CHANNELS}. The two input-facing tensors --- the lifting
+weight and the bias-free local 3 x 3 weight --- gain 46 leading input channels
+that begin at exact zero, and the parent's state, static and position columns
+are copied into the trailing slice. At initialization the model therefore
+*ignores* the history state and reproduces the parent's map on `x_t` for any
+history whatsoever, up to float32 summation order.
+
+The 32 x 32 Fourier modes, the trained local branch, the deterministic
+sine/cosine position encoder, the dataset, the normalizers, the six-step
+autoregressive loss, the optimizer reset, the schedule, the seed, the validation
+starts and the checkpoint-selection rule are inherited unchanged, so temporal
+context is the only thing this arm tests.
+
+Training draws {report['counts']['training_starts_per_regime']:,} starts per
+regime ({report['counts']['training_rollout_records']:,} pooled), from
+{report['counts']['earliest_training_start']:,} to
+{report['counts']['latest_training_start']:,}: days 0--9 are the only starts the
+one-input arm had that the history requirement removes, and no target moved.
 
 | step | short AUC 10--90 (speed / SST / pressure) | long / climatology |
 | --- | --- | --- |
 {rows}
+
+The step-{BASELINE_OPTIMIZER_STEP:,} one-input baseline scores
+{" / ".join(f"{baseline['short_auc_10_90'][f]:.3f}" for f in PRIMARY_FIELDS)} short and
+{" / ".join(f"{baseline['long_ratio_to_climatology'][f]:.3f}" for f in PRIMARY_FIELDS)} long on the
+same {report['counts']['validation_records']} pooled rollouts, in the order
+{", ".join(PRIMARY_FIELDS)}.
 
 Selected step {int(decision['selected_optimizer_step']):,} via
 `{decision['branch']}`. Validation gate:
@@ -795,7 +807,7 @@ Report content SHA-256: `{report['content_sha256']}`.
 """
 
 def run(contract_path: str | Path, *, device_name: str = "auto") -> dict[str, Any]:
-    """Fine-tune the function-preserving Y32-to-32x32 migration and select it."""
+    """Fine-tune the function-preserving two-input migration and select it."""
 
     if torch is None or DataLoader is None:  # pragma: no cover - environment dependent
         raise RuntimeError("the rollout fine-tuning arm requires PyTorch")
@@ -809,7 +821,7 @@ def run(contract_path: str | Path, *, device_name: str = "auto") -> dict[str, An
     scratch_tmp = scratch.with_name(scratch.name + ".tmp")
     project_tmp = project.with_name(project.name + ".tmp")
     if any(p.exists() for p in (scratch, project, scratch_tmp, project_tmp)):
-        raise FileExistsError("refusing to overwrite rollout fine-tune output")
+        raise FileExistsError("refusing to overwrite two-input fine-tune output")
 
     training = contract["training"]
     seed_everything(int(training["seed"]))
@@ -833,16 +845,16 @@ def run(contract_path: str | Path, *, device_name: str = "auto") -> dict[str, An
 
     loss_config = fine_tune_loss_config()
     if fine_tune_loss_contract_sha256(loss_config) != FINE_TUNE_LOSS_CONTRACT_SHA256:
-        raise BireProtocolRolloutFineTuneError("the six-step objective changed")
+        raise ModelCTwoInTrainingError("the six-step objective changed")
     if loss_config.rollout_steps != ROLLOUT_STEPS or loss_config.rollout_weight != ROLLOUT_WEIGHT:
-        raise BireProtocolRolloutFineTuneError("the fine-tune objective is not the six-step one")
+        raise ModelCTwoInTrainingError("the fine-tune objective is not the six-step one")
 
-    training_records = records_for_rollout_split(
+    training_records = records_for_two_in_rollout_split(
         pair_split, 1, rollout_steps=loss_config.rollout_steps
     )
     if len(training_records) != TRAINING_RECORDS:
-        raise BireProtocolRolloutFineTuneError("the six-step training record count changed")
-    training_dataset = ModelCAnomalyRolloutDataset(
+        raise ModelCTwoInTrainingError("the two-input training record count changed")
+    training_dataset = ModelCTwoInRolloutDataset(
         dataset, training_records, point_mean, point_scale,
         rollout_steps=loss_config.rollout_steps,
     )
@@ -853,12 +865,12 @@ def run(contract_path: str | Path, *, device_name: str = "auto") -> dict[str, An
         num_workers=0,
         pin_memory=device.type == "cuda",
     )
-    architecture = BireY32X32Architecture(**contract["architecture"])
-    model = build_bire_y32_x32_model(architecture).to(device)
+    architecture = BireTwoInOneOutArchitecture(**contract["architecture"])
+    model = build_bire_two_in_one_out_model(architecture).to(device)
     initialization = load_initial_state_dict(contract, device, model)
     model.load_state_dict(initialization["state_dict"])
     parameter_count = int(sum(p.numel() for p in model.parameters()))
-    # A fresh Adam keeps the architecture ablation independent of parent moments.
+    # A fresh Adam keeps the temporal-context ablation independent of parent moments.
     optimizer = torch.optim.Adam(
         model.parameters(),
         lr=float(training["initial_learning_rate"]),
@@ -919,12 +931,12 @@ def run(contract_path: str | Path, *, device_name: str = "auto") -> dict[str, An
             raw_features, futures = next(iterator)
         raw_features = raw_features.to(device=device, dtype=torch.float32, non_blocking=True)
         futures = futures.to(device=device, dtype=torch.float32, non_blocking=True)
-        features = retained_features(raw_features)
+        features = retained_two_in_features(raw_features)
         model.train()
-        # Six calls, the prediction fed back from the second onward.
-        predictions = direct_state_unroll(model, features, wet, loss_config.rollout_steps)
+        # Six calls; the pair is self-generated from the second onward.
+        predictions = two_in_state_unroll(model, features, wet, loss_config.rollout_steps)
         terms = model_c_loss_terms(
-            predictions, futures, features[:, :STATE_CHANNEL_COUNT],
+            predictions, futures, features[:, PRESENT_SLICE],
             wet, boundary, increment_scale, loss_config,
         )
         if not all(bool(torch.isfinite(terms[n]).item()) for n in AUDIT_TERMS):
@@ -964,6 +976,8 @@ def run(contract_path: str | Path, *, device_name: str = "auto") -> dict[str, An
                 "base_loss_contract": fine_tune_loss_contract(loss_config),
                 "base_loss_contract_sha256": FINE_TUNE_LOSS_CONTRACT_SHA256,
                 "rollout_steps": loss_config.rollout_steps,
+                "input_states": INPUT_STATE_COUNT,
+                "input_lag_days": INPUT_LAG_DAYS,
                 "initialized_from": initialization["provenance"],
                 "training_history_record": history_record,
                 "model_state_dict": _checkpoint_state_dict(model),
@@ -978,7 +992,7 @@ def run(contract_path: str | Path, *, device_name: str = "auto") -> dict[str, An
         samples = 0
 
     if len(checkpoints) != len(CHECKPOINT_STEPS):
-        raise BireProtocolRolloutFineTuneError("not every declared checkpoint was written")
+        raise ModelCTwoInTrainingError("not every declared checkpoint was written")
 
     records = validation_records()
     summaries = []
@@ -987,10 +1001,10 @@ def run(contract_path: str | Path, *, device_name: str = "auto") -> dict[str, An
         payload = torch.load(
             checkpoint_directory / record["checkpoint"], map_location=device, weights_only=False
         )
-        probe = build_bire_y32_x32_model(architecture).to(device)
+        probe = build_bire_two_in_one_out_model(architecture).to(device)
         probe.load_state_dict(payload["model_state_dict"])
         probe.eval()
-        stepper = BireAlignedStepper(
+        stepper = BireTwoInStepper(
             model=probe, device=device, wet=wet_array, mean=point_mean, scale=point_scale,
             wind_mean=float(wind_mean), wind_scale=float(wind_scale),
         )
@@ -1063,6 +1077,14 @@ def run(contract_path: str | Path, *, device_name: str = "auto") -> dict[str, An
         "loss": contract["loss"],
         "base_loss_contract": fine_tune_loss_contract(loss_config),
         "base_loss_contract_sha256": FINE_TUNE_LOSS_CONTRACT_SHA256,
+        "temporal_context": {
+            "input_states": INPUT_STATE_COUNT,
+            "input_lag_days": INPUT_LAG_DAYS,
+            "map": "(x_t_minus_10, x_t) -> x_t_plus_10",
+            "autoregression": "the_pair_slides_forward_so_no_step_after_the_first_sees_truth",
+            "external_input_channels": TWO_IN_EXTERNAL_INPUT_CHANNELS,
+            "lifting_input_channels": TWO_IN_LIFTING_INPUT_CHANNELS,
+        },
         "optimizer": {
             "name": "adam",
             "initial_learning_rate": float(training["initial_learning_rate"]),
@@ -1075,6 +1097,7 @@ def run(contract_path: str | Path, *, device_name: str = "auto") -> dict[str, An
         "counts": {
             "training_rollout_records": len(training_records),
             "training_starts_per_regime": len(training_records) // len(EXPERIMENTS),
+            "earliest_training_start": int(min(t for _, t in training_records)),
             "latest_training_start": int(max(t for _, t in training_records)),
             "validation_records": int(records.shape[0]),
             "validation_starts_per_regime": int(validation_starts().size),

@@ -1,10 +1,10 @@
-"""S0 Figures 3--8 for the 32x32 successor to the retained Y32 model.
+"""S0 Figures 3--8 for the two-in / one-out successor to the 32x32 model.
 
-Publishes the frozen Bire figure suite for the selected 32x32 checkpoint and
+Publishes the frozen Bire figure suite for the selected two-input checkpoint and
 evaluates the 2,000-day half of the final acceptance gate. Figure 6 is the
-literal Y32-parent / 32x32-fine-tune pair: the two differ only in zonal
-bandwidth, and each checkpoint is verified and built against its own
-architecture declaration.
+literal one-input / two-input pair: the two differ only in how many consecutive
+time levels the operator is handed, and each checkpoint is verified and built
+against its own architecture declaration.
 
 Held-evaluation only: no training, no checkpoint selection, no promotion.
 """
@@ -24,9 +24,9 @@ import zarr
 from .runtime import torch
 from . import plots
 from .runtime import _device, _file_sha256, _json_sha256
-from .dataset import DATASET_VERSION, INFERENCE_START_RANGE, MAXIMUM_INFERENCE_ROLLOUT_DAYS, TRAIN_RANGE, _normalizers, assert_model_visible, assert_truth_available, inference_starts
+from .dataset import DATASET_VERSION, HORIZON_DAYS, INFERENCE_START_RANGE, MAXIMUM_INFERENCE_ROLLOUT_DAYS, TRAIN_RANGE, _normalizers, assert_model_visible, assert_truth_available, inference_starts
 from .diagnostics import _member_acc, _member_rmse, derived_fields
-from .model import BireAlignedStepper, BireY32Architecture, BireY32X32Architecture, build_bire_y32_model, build_bire_y32_x32_model
+from .model import BireAlignedStepper, BireTwoInOneOutArchitecture, BireTwoInStepper, BireY32X32Architecture, build_bire_two_in_one_out_model, build_bire_y32_x32_model
 from .validation import _gather, train_only_climatology
 from .train import BASELINE_OPTIMIZER_STEP, CHECKPOINT_STEPS, FINE_TUNE_LOSS_CONTRACT_SHA256, NORMALIZATION_NAME as SELECTED_NORMALIZATION_NAME, PARENT_VERSION as COMPARATOR_TRAINING_VERSION, REPORT_NAME as TRAINING_REPORT_NAME, ROLLOUT_STEPS, VERSION as TRAINING_VERSION
 
@@ -60,6 +60,25 @@ def declared_inference_starts() -> np.ndarray:
     )
     return starts
 
+def expected_history(starts: Sequence[int]) -> dict[str, Any]:
+    """The one protocol addition the two-input arm makes, stated exactly.
+
+    Every member reads a second initial condition, the truth state ten days
+    before its start. That day is model-visible --- the earliest is
+    ``min(starts) - 10``, far inside the record --- and it is never scored, so
+    the leads, truth, climatology and persistence baselines are untouched. It is
+    declared here so a contract cannot quietly turn the history read into a
+    protocol change.
+    """
+
+    return {
+        "earliest_history_day": int(min(starts)) - HORIZON_DAYS,
+        "is_scored_target": False,
+        "lag_days": HORIZON_DAYS,
+        "leads_unchanged": True,
+        "states_per_call": 2,
+    }
+
 REGIME_WIND_LABEL = {"S0": "Control wind", "S1": "Low wind", "S2": "High wind"}
 
 def _fields(states: np.ndarray, wet: np.ndarray) -> dict[str, np.ndarray]:
@@ -90,6 +109,17 @@ def evaluate_regime(
     selected_static = selected.normalized_static(static, experiments)
     comparator_current = comparator.normalized_state(initial)
     comparator_static = comparator.normalized_static(static, experiments)
+    # Only a two-time-level map asks for it, and only as an initial condition.
+    history = None
+    for stepper in (selected, comparator):
+        if getattr(stepper, "requires_history", False):
+            if history is None:
+                if int(starts.min()) < HORIZON_DAYS:
+                    raise BireProtocolFigureError(
+                        "a two-input member has no t-10 initial condition"
+                    )
+                history = _gather(state, records, -HORIZON_DAYS)
+            stepper.begin(history)
     initial_fields = _fields(initial, wet)
     climate = np.repeat(climatology_state[regime_index][None], starts.size, axis=0)
     climate_fields = _fields(climate, wet)
@@ -168,16 +198,16 @@ def evaluate_regime(
                 arrays["figure7_model_streamfunction"][figure7[lead]] = selected_fields["streamfunction"][0]
     return arrays
 
-VERSION = "model_c_bire_protocol_rollout_ft_y32_x32_s0_figures_v1"
+VERSION = "model_c_2in_1out_s0_figures_v1"
 
 CONTRACT_STATUS = (
-    "frozen_after_the_bire_protocol_rollout_ft_y32_x32_training_and_"
+    "frozen_after_the_model_c_2in_1out_training_and_"
     "validation_and_before_any_inference_metric"
 )
 
 COMPARATOR_STEP = BASELINE_OPTIMIZER_STEP
 
-MODEL_LABEL = "Bire-protocol Model C (local 3x3, 32x32 modes)"
+MODEL_LABEL = "Model C 2-in / 1-out (32x32 modes)"
 
 PENDING = "PENDING_AFTER_TRAINING"
 
@@ -194,7 +224,7 @@ MINIMUM_STREAMFUNCTION_SV = -33.0
 
 DAY2000_STD_RATIO_RANGE = (0.80, 1.25)
 
-GATE_NAME = "bire_protocol_rollout_ft_y32_x32_acceptance_gate.json"
+GATE_NAME = "model_c_2in_1out_acceptance_gate.json"
 
 ACCEPTED_TRAINING_REPORT_VERSIONS = (TRAINING_VERSION,)
 
@@ -202,18 +232,17 @@ class BireProtocolRolloutFineTuneFigureError(RuntimeError):
     """Compatibility base for held-evaluation contract failures."""
 
 
-class BireY32X32FigureError(BireProtocolRolloutFineTuneFigureError):
-    """Raised when the 32x32 held-evaluation contract is violated."""
+class ModelCTwoInFigureError(BireProtocolRolloutFineTuneFigureError):
+    """Raised when the two-input held-evaluation contract is violated."""
 
 
 _REPOSITORY = Path(__file__).resolve().parents[2]
 _EXPECTED_PROJECT_ROOT = str(
-    _REPOSITORY
-    / "outputs/af_fno/C/bire_protocol_rollout_ft_y32_x32_s0_figures_v1"
+    _REPOSITORY / "outputs/af_fno/C/model_c_2in_1out_s0_figures_v1"
 )
 _EXPECTED_SCRATCH_ROOT = (
     "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/"
-    "bire_protocol_rollout_ft_y32_x32_s0_figures_v1"
+    "model_c_2in_1out_s0_figures_v1"
 )
 _EXPECTED_OUTPUTS = (
     *plots.FIGURE_NAMES,
@@ -276,18 +305,18 @@ def unfilled_fields(contract: Mapping[str, Any]) -> list[str]:
 
 
 def _training_provenance(contract: Mapping[str, Any]) -> None:
-    """Bind the figure declaration to the completed 32x32 training report."""
+    """Bind the figure declaration to the completed two-input training report."""
 
     selected = contract["selected_model"]
     comparator = contract["comparator_model"]
     artifacts = contract["artifacts"]
     report_path = Path(str(artifacts["selected_report"].get("path", ""))).resolve()
     if report_path.name != TRAINING_REPORT_NAME or not report_path.is_file():
-        raise BireY32X32FigureError(
-            "the selected report is not the completed 32x32 report"
+        raise ModelCTwoInFigureError(
+            "the selected report is not the completed two-input report"
         )
     if _file_sha256(report_path) != artifacts["selected_report"].get("sha256"):
-        raise BireY32X32FigureError("the selected 32x32 report hash changed")
+        raise ModelCTwoInFigureError("the selected two-input report hash changed")
     report = json.loads(report_path.read_text())
     published = report.get("published_checkpoint", {})
     selected_checkpoint = artifacts["selected_checkpoint"]
@@ -305,14 +334,14 @@ def _training_provenance(contract: Mapping[str, Any]) -> None:
         or published.get("normalization") != normalization.get("path")
         or published.get("normalization_sha256") != normalization.get("sha256")
     ):
-        raise BireY32X32FigureError(
-            "the selected model disagrees with its 32x32 report"
+        raise ModelCTwoInFigureError(
+            "the selected model disagrees with its two-input report"
         )
 
     training_path = Path(str(selected.get("training_contract", ""))).resolve()
     comparator_path = Path(str(comparator.get("training_contract", ""))).resolve()
     if not training_path.is_file() or not comparator_path.is_file():
-        raise BireY32X32FigureError("a selected or comparator training contract is absent")
+        raise ModelCTwoInFigureError("a selected or comparator training contract is absent")
     training = json.loads(training_path.read_text())
     comparator_training = json.loads(comparator_path.read_text())
     parent_checkpoint = training.get("sources", {}).get(
@@ -334,8 +363,8 @@ def _training_provenance(contract: Mapping[str, Any]) -> None:
         or Path(str(normalization.get("path", ""))).name
         != SELECTED_NORMALIZATION_NAME
     ):
-        raise BireY32X32FigureError(
-            "the Y32-to-32x32 training provenance changed"
+        raise ModelCTwoInFigureError(
+            "the one-input-to-two-input training provenance changed"
         )
 
 
@@ -344,16 +373,16 @@ def load_contract(
     *,
     verify_sources: bool = True,
 ) -> tuple[dict[str, Any], Path, str]:
-    """Load and strictly audit the S0 32x32 held-evaluation declaration."""
+    """Load and strictly audit the S0 two-input held-evaluation declaration."""
 
     resolved = Path(path).resolve()
     contract = json.loads(resolved.read_text())
     pending = unfilled_fields(contract)
     if pending:
-        raise BireY32X32FigureError(
-            "the 32x32 figure contract still carries post-training fields: "
+        raise ModelCTwoInFigureError(
+            "the two-input figure contract still carries post-training fields: "
             + ", ".join(pending)
-            + " -- run `finalize` against the 32x32 report first"
+            + " -- run `finalize` against the two-input report first"
         )
 
     protocol = contract.get("protocol", {})
@@ -382,6 +411,8 @@ def load_contract(
         and _integer(protocol.get("prediction_interval_days")) == 10
         and protocol.get("short_lead_days") == "0_to_200_inclusive_by_10"
         and protocol.get("long_lead_days") == "0_to_2000_inclusive_by_10"
+        and protocol.get("history_initial_condition")
+        == expected_history(expected_starts)
     )
     models_ok = (
         selected.get("version") == TRAINING_VERSION
@@ -394,8 +425,8 @@ def load_contract(
         == FINE_TUNE_LOSS_CONTRACT_SHA256
         and comparator.get("base_loss_contract_sha256")
         == FINE_TUNE_LOSS_CONTRACT_SHA256
-        and selected.get("architecture") == BireY32X32Architecture().to_dict()
-        and comparator.get("architecture") == BireY32Architecture().to_dict()
+        and selected.get("architecture") == BireTwoInOneOutArchitecture().to_dict()
+        and comparator.get("architecture") == BireY32X32Architecture().to_dict()
     )
     output_ok = (
         output.get("project_root") == _EXPECTED_PROJECT_ROOT
@@ -420,22 +451,22 @@ def load_contract(
         or _integer(figure6.get("comparator_optimizer_step")) != COMPARATOR_STEP
         or figure6.get("literal_pretrain_finetune_pair") is not True
     ):
-        raise BireY32X32FigureError("the 32x32 S0 figure contract changed")
+        raise ModelCTwoInFigureError("the two-input S0 figure contract changed")
     try:
-        BireY32X32Architecture(**selected["architecture"])
-        BireY32Architecture(**comparator["architecture"])
+        BireTwoInOneOutArchitecture(**selected["architecture"])
+        BireY32X32Architecture(**comparator["architecture"])
         _training_provenance(contract)
-    except BireY32X32FigureError:
+    except ModelCTwoInFigureError:
         raise
     except (KeyError, TypeError, ValueError, RuntimeError) as error:
-        raise BireY32X32FigureError(
-            "the selected or comparator 32x32 figure provenance changed"
+        raise ModelCTwoInFigureError(
+            "the selected or comparator two-input figure provenance changed"
         ) from error
     if verify_sources:
         hashes = contract.get("source_hashes", {})
         if not _REQUIRED_SOURCE_HASHES.issubset(hashes):
-            raise BireY32X32FigureError(
-                "the 32x32 figure source declaration is incomplete"
+            raise ModelCTwoInFigureError(
+                "the two-input figure source declaration is incomplete"
             )
         for label, specification in contract.get("artifacts", {}).items():
             plots._verify_file(specification, label)
@@ -443,8 +474,8 @@ def load_contract(
         for relative, expected in hashes.items():
             source = root / relative
             if not source.is_file() or _file_sha256(source) != expected:
-                raise BireY32X32FigureError(
-                    f"32x32 figure source changed: {relative}"
+                raise ModelCTwoInFigureError(
+                    f"two-input figure source changed: {relative}"
                 )
     return contract, resolved, _file_sha256(resolved)
 
@@ -456,22 +487,24 @@ def _stepper(
     wind_mean: float,
     wind_scale: float,
 ) -> BireAlignedStepper:
-    """Build either the 32x32 model or its Y32 parent after identity checks."""
+    """Build either the two-input model or its one-input parent, after checks."""
 
     if torch is None:  # pragma: no cover - environment dependent
-        raise RuntimeError("32x32 figure evaluation requires PyTorch")
+        raise RuntimeError("two-input figure evaluation requires PyTorch")
     if key == "selected_checkpoint":
         declared = contract["selected_model"]
         expected_version = TRAINING_VERSION
-        architecture = BireY32X32Architecture(**declared["architecture"])
-        builder = build_bire_y32_x32_model
+        architecture = BireTwoInOneOutArchitecture(**declared["architecture"])
+        builder = build_bire_two_in_one_out_model
+        adapter = BireTwoInStepper
     elif key == "comparator_checkpoint":
         declared = contract["comparator_model"]
         expected_version = COMPARATOR_TRAINING_VERSION
-        architecture = BireY32Architecture(**declared["architecture"])
-        builder = build_bire_y32_model
+        architecture = BireY32X32Architecture(**declared["architecture"])
+        builder = build_bire_y32_x32_model
+        adapter = BireAlignedStepper
     else:
-        raise BireY32X32FigureError(f"unknown checkpoint key: {key}")
+        raise ModelCTwoInFigureError(f"unknown checkpoint key: {key}")
     payload = torch.load(
         Path(contract["artifacts"][key]["path"]),
         map_location=device,
@@ -488,21 +521,21 @@ def _stepper(
         or _integer(payload.get("rollout_steps"))
         != _integer(declared.get("rollout_steps"))
     ):
-        raise BireY32X32FigureError(
+        raise ModelCTwoInFigureError(
             f"{key} identity, architecture, dataset, or objective changed"
         )
     try:
         model = builder(architecture).to(device)
         incompatible = model.load_state_dict(payload["model_state_dict"], strict=True)
     except (KeyError, TypeError, ValueError, RuntimeError) as error:
-        raise BireY32X32FigureError(f"{key} state dictionary changed") from error
+        raise ModelCTwoInFigureError(f"{key} state dictionary changed") from error
     if incompatible.missing_keys or incompatible.unexpected_keys:
-        raise BireY32X32FigureError(f"{key} did not load strictly")
+        raise ModelCTwoInFigureError(f"{key} did not load strictly")
     model.eval()
     with np.load(Path(contract["artifacts"]["selected_normalization"]["path"])) as artifact:
         mean = np.asarray(artifact["pointwise_mean"], dtype=np.float32)
         scale = np.asarray(artifact["pointwise_scale"], dtype=np.float32)
-    return BireAlignedStepper(
+    return adapter(
         model=model, device=device, wet=wet, mean=mean, scale=scale,
         wind_mean=wind_mean, wind_scale=wind_scale,
     )
@@ -600,7 +633,7 @@ class _S0Captions:
         plots.METHOD_LABELS = self._method_labels
 
 class FineTuneLabels(_S0Captions):
-    """Label Figure 6 as the literal Y32 / 32x32 comparison."""
+    """Label Figure 6 as the literal one-input / two-input comparison."""
 
     def __init__(self, regime: str, tau0: float, selected_step: int) -> None:
         super().__init__(regime, tau0, selected_step)
@@ -612,15 +645,15 @@ class FineTuneLabels(_S0Captions):
         self.rules = (
             (
                 "S0 architecture-direction comparison",
-                f"{regime} Y32 parent vs zonal-32 fine-tune",
+                f"{regime} one-input parent vs two-input fine-tune",
             ),
             (
                 "Prior residual Model C",
-                f"Local 3x3 + 32x24 modes (step {COMPARATOR_STEP:,})",
+                f"1-in / 1-out, 32x32 modes (step {COMPARATOR_STEP:,})",
             ),
             (
                 "Selected anomaly-direct Model C",
-                f"Local 3x3 + 32x32 modes (step {selected_step:,})",
+                f"2-in / 1-out, 32x32 modes (step {selected_step:,})",
             ),
             *(rule for rule in self.rules if rule[0] not in replaced),
         )
@@ -720,21 +753,24 @@ def acceptance_gate(contract: Mapping[str, Any], regime: str = "S0") -> dict[str
 def _readme(regime: str, report: Mapping[str, Any]) -> str:
     starts = declared_inference_starts()
     selected = int(report["selected_optimizer_step"])
-    return f"""# 32 x 32 local Model C, {regime}: Figures 3--8
+    return f"""# Two-in / one-out Model C, {regime}: Figures 3--8
 
 This held package evaluates the selected step-{selected:,} checkpoint of
 `{TRAINING_VERSION}` on the exact 15-member S0 inference protocol used for
-local24 and Y32. The black Figure 6 curve is its literal step-{COMPARATOR_STEP:,}
-Y32 parent; the red curve is the 32x32 fine-tune. Both retain the trained
-bias-free 49-to-46 local 3x3 path, the deterministic sine/cosine position
-encoder and the same six-step objective. Only four new zonal half-spectrum
-coefficients were opened during fine-tuning; meridional modes remain at 32.
+local24, Y32 and the 32x32 arm. The black Figure 6 curve is its literal
+step-{COMPARATOR_STEP:,} one-input parent; the red curve is the two-input
+fine-tune. Both carry 32x32 Fourier modes, the trained bias-free local 3x3
+path, the deterministic sine/cosine position encoder and the same six-step
+objective. The only difference is what each call is handed: the parent reads
+`x_t`, this arm reads the pair `(x_(t-10), x_t)` and slides it forward at every
+autoregressive step.
 
-Starts span {int(starts.min())}--{int(starts.max())}; every member has
-lead-matched truth through day 2,000. Climatology remains the pointwise
-{regime} training-block mean and persistence holds the initial physical state.
-The numerical reductions, plot functions, filenames and lead grid are reused
-unchanged from the preceding Y32 package.
+Each member therefore reads one extra initial condition, the truth state ten
+days before its start. That day is model-visible and is never a scored target,
+so the leads, truth, climatology and persistence baselines are identical to the
+compared packages. Starts span {int(starts.min())}--{int(starts.max())}; every
+member has lead-matched truth through day 2,000. The numerical reductions, plot
+functions, filenames and lead grid are reused unchanged.
 
 The measurable gate is written beside the S0 folder as `{GATE_NAME}`. This
 package performs no training, selection, or checkpoint promotion.
@@ -754,16 +790,16 @@ def finalize(contract_path: str | Path) -> dict[str, Any]:
     contract = json.loads(resolved.read_text())
     report_path = Path(contract["artifacts"]["selected_report"]["path"])
     if not report_path.is_file():
-        raise BireY32X32FigureError(
+        raise ModelCTwoInFigureError(
             f"the training report is not on disk yet: {report_path}"
         )
     if report_path.name != TRAINING_REPORT_NAME:
-        raise BireY32X32FigureError(
+        raise ModelCTwoInFigureError(
             f"the declared report is not {TRAINING_REPORT_NAME}"
         )
     report = json.loads(report_path.read_text())
     if report.get("version") not in ACCEPTED_TRAINING_REPORT_VERSIONS:
-        raise BireY32X32FigureError("the report is not this arm's")
+        raise ModelCTwoInFigureError("the report is not this arm's")
     published = report["published_checkpoint"]
     resolutions = {
         ("selected_model", "optimizer_step"): int(published["optimizer_step"]),
@@ -775,7 +811,7 @@ def finalize(contract_path: str | Path) -> dict[str, Any]:
     for path, value in resolutions.items():
         current = _read(contract, path)
         if current not in (None, PENDING) and current != value:
-            raise BireY32X32FigureError(
+            raise ModelCTwoInFigureError(
                 f"{'.'.join(path)} is already {current!r}, not {value!r}; "
                 "refusing to overwrite a filled contract field"
             )
@@ -790,7 +826,7 @@ def finalize(contract_path: str | Path) -> dict[str, Any]:
         ("selected_normalization", published["normalization"]),
     ):
         if contract["artifacts"][key]["path"] != declared:
-            raise BireY32X32FigureError(
+            raise ModelCTwoInFigureError(
                 f"{key} path disagrees with the training report: "
                 f"{contract['artifacts'][key]['path']} vs {declared}"
             )

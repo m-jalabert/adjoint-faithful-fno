@@ -356,6 +356,48 @@ def records_for_rollout_split(
         (experiment, time_index) for experiment in range(experiment_count) for time_index in starts
     )
 
+
+def records_for_two_in_rollout_split(
+    pair_codes: Sequence[int],
+    split_code: int,
+    *,
+    experiment_count: int = 3,
+    horizon_days: int = 10,
+    rollout_steps: int = 3,
+) -> tuple[tuple[int, int], ...]:
+    """Rollout starts that also admit the ``t - horizon`` history state.
+
+    The record's time index is the *present* state ``t``, exactly as for the
+    one-input arm, so the target sequence and its split membership are decided
+    by the identical rule. The only added requirement is that ``t - 10`` exists
+    inside the same split, which removes the single earliest start of each
+    regime and nothing else.
+    """
+
+    if horizon_days <= 0:
+        raise ValueError("the two-input history lag must be positive")
+    codes = np.asarray(pair_codes, dtype=np.uint8)
+    starts = tuple(
+        time_index
+        for time_index in rollout_start_indices(
+            pair_codes,
+            split_code,
+            horizon_days=horizon_days,
+            rollout_steps=rollout_steps,
+        )
+        if time_index >= horizon_days
+        and codes[time_index - horizon_days] == split_code
+    )
+    if not starts:
+        raise ValueError(
+            f"dataset has no complete two-input rollouts for pair split {split_code}"
+        )
+    return tuple(
+        (experiment, time_index)
+        for experiment in range(experiment_count)
+        for time_index in starts
+    )
+
 def western_boundary_mask(wet_mask: np.ndarray, width: int = 4) -> np.ndarray:
     """Select the first ``width`` wet cells east of each row's western wall."""
 
@@ -471,4 +513,56 @@ class ModelCAnomalyRolloutDataset(Dataset):
     def __setstate__(self, state: dict[str, Any]) -> None:
         self.__dict__.update(state)
         self._open()
+
+
+class ModelCTwoInRolloutDataset(ModelCAnomalyRolloutDataset):
+    """The same rollout records, with the ``t - horizon`` state prepended.
+
+    ``features`` becomes ``(x_{t-10}, x_t, static)`` --- 46 + 46 + 5 = 97
+    channels, reduced to 95 by the model's static-feature selection --- and the
+    targets are the identical six future states. Normalization, static handling
+    and the wet mask are inherited unchanged, so the pair lives in exactly the
+    coordinates the one-input arm's weights were trained in.
+    """
+
+    def _open(self) -> None:
+        super()._open()
+        if any(
+            time_index - self.horizon_days < 0 for _, time_index in self.records
+        ):
+            raise ValueError("a two-input record has no history state at t - 10")
+
+    def __getitem__(self, index: int) -> tuple[Any, Any]:
+        experiment, time_index = self.records[index]
+        previous = self._normalise_state(
+            np.asarray(
+                self._state[experiment, time_index - self.horizon_days],
+                dtype=np.float32,
+            )
+        )
+        present = self._normalise_state(
+            np.asarray(self._state[experiment, time_index], dtype=np.float32)
+        )
+        futures = np.stack(
+            [
+                self._normalise_state(
+                    np.asarray(
+                        self._state[
+                            experiment,
+                            time_index + step * self.horizon_days,
+                        ],
+                        dtype=np.float32,
+                    )
+                )
+                for step in range(1, self.rollout_steps + 1)
+            ]
+        )
+        static = np.asarray(self._static[experiment], dtype=np.float32).copy()
+        static[0] = (static[0] - self.wind_mean) / self.wind_scale
+        static[0, ~self.wet] = 0.0
+        features = np.concatenate((previous, present, static), axis=0)
+        return (
+            torch.from_numpy(np.ascontiguousarray(features, dtype=np.float32)),
+            torch.from_numpy(np.ascontiguousarray(futures, dtype=np.float32)),
+        )
 

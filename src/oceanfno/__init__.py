@@ -1,11 +1,14 @@
-"""Canonical 32x32 six-step FNO for the 46-channel MITgcm double gyre.
+"""Canonical two-in / one-out six-step FNO for the 46-channel MITgcm double gyre.
 
 A 32x32-mode Fourier Neural Operator with a bias-free local 3x3 correction and
 the deterministic sine/cosine position encoder advances a closed 46-channel
-ocean state by ten days. This package trains it, selects a checkpoint,
-publishes the S0 figure suite, and evaluates the acceptance gate. The retained
-32x24 Y32 architecture is represented only where it is required for checkpoint
-migration and literal comparison.
+ocean state by ten days. The canonical arm reads *two* consecutive time levels,
+``(x_{t-10}, x_t) -> x_{t+10}``, and autoregresses by sliding the pair forward,
+which gives the operator an empirical tendency instead of the current state
+alone. This package trains it, selects a checkpoint, publishes the S0 figure
+suite, and evaluates the acceptance gate. The one-input 32x32 architecture and
+its own ancestors are represented only where checkpoint migration and literal
+comparison require them.
 
 Layout, in dependency order --- each module imports only from the ones above it::
 

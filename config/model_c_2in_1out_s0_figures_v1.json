@@ -1,0 +1,316 @@
+{
+  "acceptance_gate": {
+    "advisory": "report_day2000_RMSE_relative_to_both_climatology_and_persistence_alongside_transient_anomaly_amplitude_and_directional_structure",
+    "artifact": "model_c_2in_1out_acceptance_gate.json",
+    "by_inspection": "western_boundary_sharp_gyre_identifiable_and_the_added_temporal_context_stabilises_the_long_rollout_without_manufacturing_transients",
+    "decision": "compare_against_the_32x32_one_input_arm_before_retaining_or_reverting_the_two_input_arm",
+    "evaluated_here": [
+      "all_values_finite",
+      "maximum_normalized_magnitude_at_most_8",
+      "day2000_streamfunction_minimum_at_least_minus_33_sv",
+      "day2000_total_field_standard_deviation_ratio",
+      "day2000_RMSE_relative_to_climatology_and_persistence"
+    ],
+    "evaluated_next": [
+      "day2000_streamfunction_anomaly_RMS_ratio",
+      "western_band_and_interior_anomaly_RMS",
+      "directional_gradient_and_high_wavenumber_power"
+    ]
+  },
+  "artifacts": {
+    "comparator_checkpoint": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/bire_protocol_rollout_ft_y32_x32_v1/selected.pt",
+      "sha256": "bd92b05454d625f246c268befc94ccf5594fc8e9c77a093355226adaca724cee"
+    },
+    "dataset_metadata": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/trajectories_v3.zarr/.zmetadata",
+      "sha256": "766cae89359311775c79103f44dc74630630ba6b7a0a8c6e9d26f73487512136"
+    },
+    "selected_checkpoint": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/model_c_2in_1out_v1/selected.pt",
+      "sha256": "e88c026b4ac2ed4da484dd5a2795d5448f8f8342efc07e2b474df0d406183187"
+    },
+    "selected_normalization": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/model_c_2in_1out_v1/model_c_2in_1out_train_only_normalization.npz",
+      "sha256": "ad7cc8584788ccdd4e8beaae3e606b9423230552af7079f15667b93bd1abaf2f"
+    },
+    "selected_report": {
+      "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/model_c_2in_1out_v1/model_c_2in_1out_report.json",
+      "sha256": "9e717907242efa22ddcf56d389580cebf77bca90e5d92ea080d2bf85955001d5"
+    }
+  },
+  "baselines": {
+    "climatology": "pointwise_S0_mean_over_the_bire_training_block_0_5999_only",
+    "ensemble_summary": "mean_and_10th_90th_percentiles_across_15_member_metrics",
+    "persistence": "each_members_initial_physical_field_held_fixed_at_every_lead",
+    "rmse": "square_root_of_mean_squared_error_over_wet_cells_for_each_member"
+  },
+  "comparability": {
+    "basis": "same_15_starts_seed_leads_truth_baselines_normalizers_and_plot_definitions_as_the_32x32_one_input_package",
+    "compared_package": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/bire_protocol_rollout_ft_y32_x32/bire_protocol_rollout_ft_y32_x32_s0_figures_v1/S0",
+    "directly_comparable_with_one_input_package": true,
+    "protocol_addition": "each_member_reads_one_extra_initial_condition_the_truth_state_ten_days_before_its_start_which_is_model_visible_and_never_a_scored_target"
+  },
+  "comparator_model": {
+    "architecture": {
+      "channel_mlp_dropout": 0.0,
+      "channel_mlp_expansion": 4.0,
+      "domain_padding": 0.1,
+      "factorization": null,
+      "fno_block_precision": "full",
+      "grid_shape": [
+        62,
+        62
+      ],
+      "hidden_channels": 128,
+      "in_channels": 49,
+      "lifting_channel_ratio": 2,
+      "lifting_in_channels": 51,
+      "local_kernel_size": 3,
+      "n_layers": 3,
+      "n_modes": [
+        32,
+        32
+      ],
+      "out_channels": 46,
+      "pointwise_layer_norm": true,
+      "positional_channels": 2,
+      "positional_embedding": null,
+      "projection_channel_ratio": 2,
+      "use_channel_mlp": true
+    },
+    "base_loss_contract_sha256": "0cc75764a6eec7c7e82bb4cdb97e51929b57b1fbf765a7ee50c290ba3593bdbb",
+    "input_lag_days": null,
+    "input_states": 1,
+    "map": "x_t -> x_t_plus_10",
+    "name": "bire_protocol_rollout_ft_y32_x32_Model_C",
+    "objective": "group_balanced_model_c_loss_v1_with_a_six_step_rollout",
+    "optimizer_step": 3840,
+    "role": "the_one_input_model_the_two_input_arm_started_from",
+    "rollout_steps": 6,
+    "rollout_weight": 0.5,
+    "training_contract": "/home/mjalabert314/bire_james25_repro/config/model_c_bire_protocol_rollout_ft_y32_x32_v1.json",
+    "version": "model_c_bire_protocol_rollout_ft_y32_x32_v1"
+  },
+  "contract_status": "frozen_after_the_model_c_2in_1out_training_and_validation_and_before_any_inference_metric",
+  "dataset": {
+    "evaluation_truth_note": "never_trained_on_validated_on_or_used_as_an_inference_start_bire_figure_7_carries_a_ground_truth_column_at_the_2000th_day_obtained_because_their_simulations_2_and_4_are_entirely_held_out_we_obtain_the_same_separation_along_time",
+    "evaluation_truth_only_days": [
+      7200,
+      8999
+    ],
+    "inference": [
+      6200,
+      7200
+    ],
+    "metadata_sha256": "766cae89359311775c79103f44dc74630630ba6b7a0a8c6e9d26f73487512136",
+    "model_visible_days": [
+      0,
+      7199
+    ],
+    "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/trajectories_v3.zarr",
+    "tau0_n_m2": {
+      "S0": 0.1
+    },
+    "train": [
+      0,
+      6000
+    ],
+    "validation": [
+      6000,
+      7200
+    ],
+    "version": "trajectories_v3"
+  },
+  "figure6": {
+    "black": "the_32x32_one_input_step3840_checkpoint",
+    "comparator_optimizer_step": 3840,
+    "literal_pretrain_finetune_pair": true,
+    "reason": "the_two_input_warm_start_ignores_the_history_state_so_the_gap_is_the_effect_of_learning_to_use_the_second_time_level",
+    "red": "the_selected_two_input_checkpoint",
+    "required_label": "one_input_parent_vs_two_input_fine_tune",
+    "shared_objective_hash": "both_models_carry_the_same_six_step_objective_contract"
+  },
+  "output": {
+    "one_folder_per_regime": true,
+    "overwrite": false,
+    "project_root": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/model_c_2in_1out_s0_figures_v1",
+    "required": [
+      "model_c_bire_figure3_streamfunction_1deg_s0_dt10.png",
+      "model_c_bire_figure4_dt10_rmse_0_200_days_s0.png",
+      "model_c_bire_figure5_dt10_single_member_rmse_s0.png",
+      "model_c_bire_figure6_dt10_acc_0_200_days_s0.png",
+      "model_c_bire_figure7_dt10_streamfunction_day060_day2000_s0.png",
+      "model_c_bire_figure8_dt10_rmse_0_2000_days_s0.png",
+      "model_c_bire_s0_figures_report.json",
+      "model_c_bire_s0_figures_arrays.npz",
+      "model_c_bire_s0_figures_summary.json",
+      "model_c_bire_s0_ensemble_curves.csv",
+      "manifest.json",
+      "README.md"
+    ],
+    "scratch_root": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/model_c_2in_1out_s0_figures_v1"
+  },
+  "pending_after_training": {
+    "fields": [
+      "selected_model.optimizer_step",
+      "artifacts.selected_checkpoint.sha256",
+      "artifacts.selected_normalization.sha256",
+      "artifacts.selected_report.sha256"
+    ],
+    "filled_by": "python -m oceanfno.figures finalize --contract <this file>",
+    "reason": "the_selected_checkpoint_is_not_known_until_validation_selection_runs_and_finalize_is_an_idempotent_provenance_bind_to_the_completed_report",
+    "sentinel": "PENDING_AFTER_TRAINING"
+  },
+  "protocol": {
+    "acc_fields": [
+      "surface_u",
+      "surface_v",
+      "phihyd_surface",
+      "sst"
+    ],
+    "figure3_lead_days": [
+      0,
+      10,
+      20,
+      30,
+      40
+    ],
+    "figure7_lead_days": [
+      60,
+      2000
+    ],
+    "figure_names": [
+      "model_c_bire_figure3_streamfunction_1deg_s0_dt10.png",
+      "model_c_bire_figure4_dt10_rmse_0_200_days_s0.png",
+      "model_c_bire_figure5_dt10_single_member_rmse_s0.png",
+      "model_c_bire_figure6_dt10_acc_0_200_days_s0.png",
+      "model_c_bire_figure7_dt10_streamfunction_day060_day2000_s0.png",
+      "model_c_bire_figure8_dt10_rmse_0_2000_days_s0.png"
+    ],
+    "history_initial_condition": {
+      "earliest_history_day": 6253,
+      "is_scored_target": false,
+      "lag_days": 10,
+      "leads_unchanged": true,
+      "states_per_call": 2
+    },
+    "inference_set": [
+      6200,
+      7200
+    ],
+    "long_lead_days": "0_to_2000_inclusive_by_10",
+    "maximum_lead_days": 2000,
+    "member_count": 15,
+    "prediction_interval_days": 10,
+    "primary_regime": "S0",
+    "regimes": [
+      "S0"
+    ],
+    "rmse_fields": [
+      "surface_speed",
+      "phihyd_surface",
+      "sst"
+    ],
+    "short_lead_days": "0_to_200_inclusive_by_10",
+    "start_draw_order": [
+      6263,
+      6293,
+      6331,
+      6389,
+      6579,
+      6593,
+      6598,
+      6601,
+      6651,
+      6661,
+      6694,
+      6707,
+      6711,
+      6968,
+      6979
+    ],
+    "start_seed": 20260802,
+    "start_selection": "numpy_default_rng_seed_20260802_choice_without_replacement_from_6200_6999_then_sorted",
+    "start_window": [
+      6200,
+      7000
+    ]
+  },
+  "purpose": "same_S0_Bire_figures_for_the_selected_two_in_one_out_model_with_the_32x32_one_input_model_as_its_literal_comparator",
+  "read_contract": {
+    "adjoint_state": false,
+    "inference_state": true,
+    "intermediate_wind_state": false,
+    "promotes_no_checkpoint": true,
+    "response_state": false,
+    "training_state": false,
+    "validation_state": false
+  },
+  "selected_model": {
+    "architecture": {
+      "channel_mlp_dropout": 0.0,
+      "channel_mlp_expansion": 4.0,
+      "domain_padding": 0.1,
+      "factorization": null,
+      "fno_block_precision": "full",
+      "grid_shape": [
+        62,
+        62
+      ],
+      "hidden_channels": 128,
+      "in_channels": 95,
+      "input_lag_days": 10,
+      "input_states": 2,
+      "lifting_channel_ratio": 2,
+      "lifting_in_channels": 97,
+      "local_kernel_size": 3,
+      "n_layers": 3,
+      "n_modes": [
+        32,
+        32
+      ],
+      "out_channels": 46,
+      "pointwise_layer_norm": true,
+      "positional_channels": 2,
+      "positional_embedding": null,
+      "projection_channel_ratio": 2,
+      "use_channel_mlp": true
+    },
+    "base_loss_contract_sha256": "0cc75764a6eec7c7e82bb4cdb97e51929b57b1fbf765a7ee50c290ba3593bdbb",
+    "initialized_from": {
+      "input_migration": "prepend_46_zero_history_input_channels_to_the_lifting_and_local_weights_and_copy_the_parent_state_static_and_position_columns_into_the_trailing_slice",
+      "load_only": "model_state_dict",
+      "optimizer_step": 3840,
+      "version": "model_c_bire_protocol_rollout_ft_y32_x32_v1"
+    },
+    "input_lag_days": 10,
+    "input_states": 2,
+    "map": "(x_t_minus_10, x_t) -> x_t_plus_10",
+    "name": "model_c_2in_1out_Model_C",
+    "objective": "group_balanced_model_c_loss_v1_with_a_six_step_rollout",
+    "optimizer_step": 3840,
+    "rollout_steps": 6,
+    "rollout_weight": 0.5,
+    "seed": 20260724,
+    "selected_by": "pooled_validation_6000_6199_min_worst_long_climatology_ratio_subject_to_short_guard",
+    "training_contract": "/home/mjalabert314/bire_james25_repro/config/model_c_2in_1out_v1.json",
+    "version": "model_c_2in_1out_v1"
+  },
+  "source_hashes": {
+    "src/oceanfno/dataset.py": "ce70baa4c0b0e8e2ff53c5959a2bd4759d501719922414af0b573143e7ee33e1",
+    "src/oceanfno/diagnostics.py": "cbd2fac4af73441b0a3c45a0e339b71e6bd2ccbe2631b0881be38adcc06d2ef6",
+    "src/oceanfno/figures.py": "6815d918085421b5606d63bd49f3f78c12499145b70553343ac38182a7a4c9f6",
+    "src/oceanfno/model.py": "f4615c1a7ceb6689e5b6ee21a3ffb5e687cb66287e7b244615c699af1753a7c6",
+    "src/oceanfno/plots.py": "84a39e112fe6bfbddfdcff8ff102ed6cb9fb04ea0370eecad99fc55a1dd1be3a",
+    "src/oceanfno/runtime.py": "c9d267eb708f6d1f89a72078b43e37dab2fb679d66e093371d1bb75f1c5ec20c",
+    "src/oceanfno/train.py": "1a1ae0cf0feed68903400bd70ff316f7e8ea7fe43c6f2de3432ee8282516ba11",
+    "src/oceanfno/validation.py": "e08acf26aa92b2e03a996a7dd315982e834c0f9d1b2ecb4fe837c006165c7e8b"
+  },
+  "truth": {
+    "continuation_required": false,
+    "lead_matched_to_day": 2000,
+    "source": "trajectory_v3_store"
+  },
+  "version": "model_c_2in_1out_s0_figures_v1"
+}

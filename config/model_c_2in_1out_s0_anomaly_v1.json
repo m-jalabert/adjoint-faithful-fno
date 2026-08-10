@@ -1,0 +1,141 @@
+{
+  "adds_only": true,
+  "artifacts": {
+    "dataset_metadata": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/trajectories_v3.zarr/.zmetadata",
+      "sha256": "766cae89359311775c79103f44dc74630630ba6b7a0a8c6e9d26f73487512136"
+    },
+    "figure_package_arrays": {
+      "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/model_c_2in_1out_s0_figures_v1/S0/model_c_bire_s0_figures_arrays.npz",
+      "sha256": "0f9ce382404569862183d7bf2673c2409ed45f40a4e485098bd3fd88c4aec714"
+    },
+    "figure_package_contract": {
+      "path": "/home/mjalabert314/bire_james25_repro/config/model_c_2in_1out_s0_figures_v1.json",
+      "sha256": "1542026a2f2496bee73f1d2c5a73110510d442abb87cd24032e711f1fc5863a3"
+    },
+    "figure_package_manifest": {
+      "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/model_c_2in_1out_s0_figures_v1/S0/manifest.json",
+      "sha256": "5c1aba8b8b5b59accafb8049e8724308f9386f1983ac5ef369ae725db5258a2b"
+    },
+    "figure_package_report": {
+      "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/model_c_2in_1out_s0_figures_v1/S0/model_c_bire_s0_figures_report.json",
+      "sha256": "e3ce719831096697a3fecc28e006daa1104a9d9a0e3bd19e1b073ec1c4e5c25c"
+    },
+    "total_field_acceptance_gate": {
+      "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/model_c_2in_1out_s0_figures_v1/model_c_2in_1out_acceptance_gate.json",
+      "sha256": "47cdab4f548ed262d0a677314c1ae2b1069de36e0c11c6ce065753e041f25d70"
+    }
+  },
+  "contract_status": "frozen_after_the_model_c_2in_1out_figure_package_and_before_any_anomaly_metric",
+  "dataset": {
+    "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/trajectories_v3.zarr",
+    "tau0_n_m2": {
+      "S0": 0.1
+    },
+    "train": [
+      0,
+      6000
+    ],
+    "version": "trajectories_v3"
+  },
+  "modifies_published_figures": false,
+  "output": {
+    "one_folder_per_regime": true,
+    "overwrite": false,
+    "project_root": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/model_c_2in_1out_s0_anomaly_v1",
+    "required": [
+      "model_c_bire_figure3a_streamfunction_anomaly_1deg_s0_dt10.png",
+      "model_c_bire_figure7a_streamfunction_anomaly_day060_day2000_s0.png",
+      "model_c_bire_reference_time_mean_streamfunction_s0.png",
+      "model_c_bire_rollout_ft_anomaly_report.json",
+      "model_c_bire_rollout_ft_anomaly_arrays.npz",
+      "README.md",
+      "manifest.json"
+    ],
+    "scratch_root": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/model_c_2in_1out_s0_anomaly_v1"
+  },
+  "pending_after_figures": {
+    "fields": [
+      "artifacts.figure_package_report.sha256",
+      "artifacts.figure_package_arrays.sha256",
+      "artifacts.figure_package_manifest.sha256"
+    ],
+    "filled_by": "python -m oceanfno.anomaly finalize --contract <this file>",
+    "reason": "bind_the_anomaly_package_to_the_completed_and_sealed_two_input_figure_package_before_any_anomaly_metric_is_read",
+    "sentinel": "PENDING_AFTER_FIGURES"
+  },
+  "protocol": {
+    "colour_bar_label": "Barotropic streamfunction anomaly psi' (Sv)",
+    "day2000_structure_diagnostics": [
+      "anomaly_rms_ratio",
+      "amplitude_normalized_meridional_and_zonal_first_difference_rms",
+      "hann_directional_power_fraction_above_0p2_cycles_per_cell",
+      "western_first_4_wet_cells_rms_and_boundary_to_interior_ratio"
+    ],
+    "figure3_lead_days": [
+      0,
+      10,
+      20,
+      30,
+      40
+    ],
+    "figure7_lead_days": [
+      60,
+      2000
+    ],
+    "figure_names": [
+      "model_c_bire_figure3a_streamfunction_anomaly_1deg_s0_dt10.png",
+      "model_c_bire_figure7a_streamfunction_anomaly_day060_day2000_s0.png"
+    ],
+    "member": 0,
+    "member_note": "the_same_member_figures_3_and_7_plot",
+    "primary_regime": "S0",
+    "reads_model_weights": false,
+    "rolls_nothing_out": true
+  },
+  "purpose": "save_the_same_streamfunction_anomaly_companions_for_the_two_in_one_out_arm_and_measure_whether_the_added_temporal_context_restores_transient_amplitude_at_day_2000_or_only_damps_it_further",
+  "read_contract": {
+    "adjoint_state": false,
+    "inference_state": true,
+    "inference_state_note": "consumed_from_the_already_published_two_input_figure_arrays_not_recomputed",
+    "intermediate_wind_state": false,
+    "promotes_no_checkpoint": true,
+    "response_state": false,
+    "training_state": true,
+    "training_state_note": "read_only_to_build_the_MITgcm_training_mean_reference_field",
+    "validation_state": false
+  },
+  "reference": {
+    "days": [
+      0,
+      6000
+    ],
+    "days_note": "training_block_only_so_no_validation_inference_or_evaluation_truth_day_enters_the_reference",
+    "definition": "psi_prime(x,y,t) = psi(x,y,t) - psi_bar_S0(x,y)",
+    "is_two_dimensional_field": true,
+    "model_own_mean_reason": "subtracting_the_FNOs_own_mean_would_absorb_mean_circulation_bias",
+    "model_own_mean_used": false,
+    "not_a_scalar_spatial_mean": true,
+    "regime": "S0",
+    "source": "mitgcm",
+    "subtracted_from": "both_truth_and_prediction"
+  },
+  "retained_on_the_total_field": {
+    "acceptance_gate_unaffected": true,
+    "measurement_source": "model_c_2in_1out_acceptance_gate.json",
+    "quantity": "day2000_streamfunction_minimum_sv",
+    "reason": "anomaly_subtraction_does_not_change_total_field_diagnostics"
+  },
+  "source_hashes": {
+    "src/oceanfno/anomaly.py": "0960095992e60e1cc60d4693b5ef915f2d4f2ccb7776dc7793636d77963fe969",
+    "src/oceanfno/dataset.py": "ce70baa4c0b0e8e2ff53c5959a2bd4759d501719922414af0b573143e7ee33e1",
+    "src/oceanfno/diagnostics.py": "cbd2fac4af73441b0a3c45a0e339b71e6bd2ccbe2631b0881be38adcc06d2ef6",
+    "src/oceanfno/figures.py": "6815d918085421b5606d63bd49f3f78c12499145b70553343ac38182a7a4c9f6",
+    "src/oceanfno/model.py": "f4615c1a7ceb6689e5b6ee21a3ffb5e687cb66287e7b244615c699af1753a7c6",
+    "src/oceanfno/plots.py": "84a39e112fe6bfbddfdcff8ff102ed6cb9fb04ea0370eecad99fc55a1dd1be3a",
+    "src/oceanfno/runtime.py": "c9d267eb708f6d1f89a72078b43e37dab2fb679d66e093371d1bb75f1c5ec20c",
+    "src/oceanfno/train.py": "1a1ae0cf0feed68903400bd70ff316f7e8ea7fe43c6f2de3432ee8282516ba11",
+    "src/oceanfno/validation.py": "e08acf26aa92b2e03a996a7dd315982e834c0f9d1b2ecb4fe837c006165c7e8b"
+  },
+  "version": "model_c_2in_1out_s0_anomaly_v1"
+}
