@@ -1,5 +1,5 @@
 #!/bin/bash -l
-#SBATCH --job-name=af-c-bproft
+#SBATCH --job-name=af-c-y32
 #SBATCH --account=pod-users
 #SBATCH --partition=gpu
 #SBATCH --gres=gpu:v100:1
@@ -8,37 +8,12 @@
 #SBATCH --cpus-per-task=4
 #SBATCH --time=04:00:00
 
-# Six-step rollout fine-tune of the Bire-protocol step-15,360 checkpoint.
-#
-# Warm start from
-#   .../models/C/bire_protocol_duration_v1/selected.pt
-# loading model_state_dict only; the optimizer is reset.  The train-only
-# pointwise normalizers are REUSED from that package rather than recomputed, so
-# the fine-tuned weights stay in exactly the normalized coordinates they start
-# in.
-#
-# What moves, and it is one change:
-#   rollout_steps  3 -> 6   (t -> t+10 -> ... -> t+60, prediction fed back from
-#                            the second call; no teacher forcing after the
-#                            initial state)
-#   rollout_weight 0.15 -> 0.50
-#   learning rate  5e-4 -> 2e-5, decaying to 4e-6 at step 2,880
-#   batch          8 -> 4   (4 x 6 = 8 x 3, so activation memory is unchanged)
-#   budget         3,840 steps, checkpoints at 960 / 1,920 / 2,880 / 3,840
-#
-# Architecture, Fourier modes, static inputs, positional encoding, 46-channel
-# output, the Bire Section 3.2 split and the selection rule are asserted field
-# by field against the parent contract at load time.
-#
-# Training draws 5,940 starts per regime (17,820 pooled); the latest start is
-# 5,939 so every six-step target sequence stays inside training 0-5999.
-#
-# Budget: the parent ran 15,360 steps at batch 8 x 3 calls in about 1h35m
-# including validation.  This arm runs a quarter of the steps at the same
-# per-step activation load, plus the same four-checkpoint validation pass.
-#
-# Training and validation only; the inference set opens through the figure
-# contract, S0 only.
+# Retained successor to the local24 arm: Fourier modes (Y,X) 24x24 -> 32x24.
+# The trained bias-free 49-to-46 local 3x3 branch is copied unchanged. The old
+# spectral tensors are centered in indices 4:28 of the enlarged Y axis, with
+# four zero modes on either side, so the migrated map is initially exact.
+# Data, normalization, six-step loss, optimizer schedule, seed, validation
+# starts, and checkpoint selection remain inherited from local24.
 set -euo pipefail
 
 module purge
@@ -48,7 +23,7 @@ export OMP_NUM_THREADS="${SLURM_CPUS_PER_TASK}"
 export MKL_NUM_THREADS="${SLURM_CPUS_PER_TASK}"
 
 AF_PROJECT_ROOT="${AF_PROJECT_ROOT:-${SLURM_SUBMIT_DIR:?Submit from the repository root or set AF_PROJECT_ROOT}}"
-AF_CONTRACT="${AF_CONTRACT:-${AF_PROJECT_ROOT}/config/model_c_bire_protocol_rollout_ft_v2.json}"
+AF_CONTRACT="${AF_CONTRACT:-${AF_PROJECT_ROOT}/config/model_c_bire_protocol_rollout_ft_local24_y32_v1.json}"
 AF_PYTHON="${AF_PYTHON:-${AF_PROJECT_ROOT}/.venv/bin/python}"
 
 cd "${AF_PROJECT_ROOT}"

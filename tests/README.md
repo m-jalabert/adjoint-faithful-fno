@@ -1,10 +1,11 @@
 # Test layout
 
-- `core/`: reusable package utilities.
-- `data/`: MITgcm, trajectory, and dataset workflows.
-- `models/`: A0, Model A, Model B, and forward-comparison tests.
-- `model_c/`: Model C diagnostics, evaluations, and plot-generation tests.
-- test root: checks whose exact paths and bytes are fixed by immutable contracts.
+- `test_train.py`: canonical Y32 architecture, centered checkpoint migration,
+  objective, split, selection, and training-contract checks.
+- `test_figures.py`: held S0 inference, local24 comparator, acceptance-gate,
+  and Figure 3--8 publication checks.
+- `test_anomaly.py`: sealed figure-package provenance and streamfunction-anomaly
+  diagnostics.
 
-Pytest discovers all subdirectories through the repository-level `testpaths`
-setting.
+The retained local24 model appears only where a parent checkpoint or literal
+comparison is required. There are no per-arm duplicate test modules.

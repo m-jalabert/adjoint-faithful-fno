@@ -1,420 +1,401 @@
-"""Tests for the rollout fine-tune's S0 figure suite and acceptance gate.
+"""Tests for the canonical Y32 model's S0 figure package.
 
-The package's value is that it is comparable with the step-15,360 package it was
-fine-tuned from, so most of these assert that the evaluation protocol is
-identical and only the checkpoint differs.
-
-Three tests carry the weight this suite adds over the earlier ones:
-
-* ``_stepper`` is rewritten here because figure 6 pairs two checkpoints with
-  *different* objective hashes for the first time in this project.  It is
-  exercised against the real comparator checkpoint on disk.
-* ``finalize`` fills the four contract fields training cannot know in advance.
-  It must be idempotent and must refuse to overwrite a filled field, or it
-  becomes a way to edit a frozen contract.
-* ``long_rollout_gate`` is the only implementation of the 2,000-day half of the
-  acceptance gate, so each threshold is checked at its boundary.
+The Y32 figures are an architecture ablation, not a new evaluation protocol.
+They must therefore reuse the local24 starts, truth, baselines, normalizers,
+lead grid, and six plot definitions exactly.  Only the selected checkpoint
+changes: Y32 is red and the retained local24 checkpoint it started from is
+black.
 """
 
 from __future__ import annotations
 
+import hashlib
+import importlib
 import json
 from pathlib import Path
 
 import numpy as np
 import pytest
 
-from oceanfno import figures as suite
-from oceanfno import plots as figures
-from oceanfno.objective import MODEL_C_LOSS_V1_CONTRACT_SHA256
-from oceanfno.train import (
-    BASELINE_OPTIMIZER_STEP,
-    CHECKPOINT_STEPS,
-    FINE_TUNE_LOSS_CONTRACT_SHA256,
-    ROLLOUT_STEPS,
-)
-from oceanfno.figures import (
-    COMPARATOR_STEP,
-    CONTRACT_STATUS,
-    DAY2000_STD_RATIO_RANGE,
-    GATE_NAME,
-    MAXIMUM_NORMALIZED_MAGNITUDE,
-    MEMBER_COUNT,
-    MINIMUM_STREAMFUNCTION_SV,
-    MODEL_LABEL,
-    PENDING,
-    PENDING_PATHS,
-    VERSION,
-    BireProtocolRolloutFineTuneFigureError,
-    FineTuneLabels,
-    publish,
-    _readme,
-    declared_inference_starts,
-    finalize,
-    load_contract,
-    long_rollout_gate,
-    unfilled_fields,
-)
 
 ROOT = Path(__file__).resolve().parents[1]
-CONTRACT = ROOT / "config/model_c_bire_protocol_rollout_ft_s0_figures_v2.json"
-COMPARED = ROOT / "archive/config/model_c_bire_protocol_duration_s0_figures_v1.json"
-TRAINING = ROOT / "config/model_c_bire_protocol_rollout_ft_v2.json"
+CONTRACT = (
+    ROOT
+    / "config/model_c_bire_protocol_rollout_ft_local24_y32_s0_figures_v1.json"
+)
+COMPARED = (
+    ROOT / "config/model_c_bire_protocol_rollout_ft_local24_s0_figures_v1.json"
+)
+TRAINING = ROOT / "config/model_c_bire_protocol_rollout_ft_local24_y32_v1.json"
+COMPARATOR_TRAINING = ROOT / "config/model_c_bire_protocol_rollout_ft_local24_v1.json"
+TRAINING_REPORT = (
+    ROOT
+    / "outputs/af_fno/C/bire_protocol_rollout_ft_local24_y32_v1/"
+    "bire_protocol_rollout_ft_local24_y32_report.json"
+)
+MODULE = ROOT / "src/oceanfno/figures.py"
 SBATCH = ROOT / "slurm/models/c/figures.sbatch"
 
-pytestmark = pytest.mark.skipif(
-    not CONTRACT.is_file(), reason="the rollout fine-tune figure contract is absent"
+VERSION = "model_c_bire_protocol_rollout_ft_local24_y32_s0_figures_v1"
+TRAINING_VERSION = "model_c_bire_protocol_rollout_ft_local24_y32_v1"
+COMPARATOR_VERSION = "model_c_bire_protocol_rollout_ft_local24_v1"
+PENDING = "PENDING_AFTER_TRAINING"
+SELECTED_STEP = 3840
+
+STARTS = (
+    6263,
+    6293,
+    6331,
+    6389,
+    6579,
+    6593,
+    6598,
+    6601,
+    6651,
+    6661,
+    6694,
+    6707,
+    6711,
+    6968,
+    6979,
+)
+FIGURE3_LEADS = (0, 10, 20, 30, 40)
+FIGURE7_LEADS = (60, 2000)
+FIGURE_NAMES = (
+    "model_c_bire_figure3_streamfunction_1deg_s0_dt10.png",
+    "model_c_bire_figure4_dt10_rmse_0_200_days_s0.png",
+    "model_c_bire_figure5_dt10_single_member_rmse_s0.png",
+    "model_c_bire_figure6_dt10_acc_0_200_days_s0.png",
+    "model_c_bire_figure7_dt10_streamfunction_day060_day2000_s0.png",
+    "model_c_bire_figure8_dt10_rmse_0_2000_days_s0.png",
 )
 
-SELECTED_STEP = CHECKPOINT_STEPS[-1]
+PROJECT_ROOT = (
+    "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/"
+    "bire_protocol_rollout_ft_local24_y32_s0_figures_v1"
+)
+SCRATCH_ROOT = (
+    "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/"
+    "bire_protocol_rollout_ft_local24_y32_s0_figures_v1"
+)
+
+requires_contract = pytest.mark.skipif(
+    not CONTRACT.is_file(), reason="the Y32 figure contract is absent"
+)
+requires_module = pytest.mark.skipif(
+    not MODULE.is_file(), reason="the canonical Y32 figure module is absent"
+)
+
+
+def _sha256(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _raw() -> dict:
+    return json.loads(CONTRACT.read_text())
 
 
 def _pending() -> dict:
-    """The contract as shipped, before `finalize` has run.
-
-    Reconstructed rather than read: `finalize` writes the real contract in
-    place, so after the arm has run the file on disk is no longer pending and
-    any test that assumed otherwise would silently start testing nothing.
-    """
-
-    contract = json.loads(CONTRACT.read_text())
+    contract = _raw()
     contract["selected_model"]["optimizer_step"] = PENDING
     for key in ("selected_checkpoint", "selected_normalization", "selected_report"):
         contract["artifacts"][key]["sha256"] = PENDING
     return contract
 
 
-def _filled(step: int = SELECTED_STEP) -> dict:
-    """The contract as `finalize` would leave it after a completed run."""
+def _filled() -> dict:
+    """Materialize the four post-training fields from the run's own report."""
 
     contract = _pending()
-    contract["selected_model"]["optimizer_step"] = step
-    for key in ("selected_checkpoint", "selected_normalization", "selected_report"):
-        contract["artifacts"][key]["sha256"] = "b" * 64
+    report = json.loads(TRAINING_REPORT.read_text())
+    published = report["published_checkpoint"]
+    contract["selected_model"]["optimizer_step"] = int(
+        published["optimizer_step"]
+    )
+    contract["artifacts"]["selected_checkpoint"]["sha256"] = published[
+        "checkpoint_sha256"
+    ]
+    contract["artifacts"]["selected_normalization"]["sha256"] = published[
+        "normalization_sha256"
+    ]
+    contract["artifacts"]["selected_report"]["sha256"] = _sha256(TRAINING_REPORT)
     return contract
 
 
-def _written(contract: dict, directory: Path, name: str = "filled.json") -> Path:
-    """Write a contract copy under pytest's ``tmp_path``.
-
-    Every caller loads it with ``verify_sources=False``, so nothing needs the
-    repository layout; earlier arms' tests wrote these beside the real contracts
-    and left hundreds of stray directories in ``config/``.
-    """
-
-    path = directory / name
+def _written(contract: dict, directory: Path) -> Path:
+    path = directory / "y32_figures.json"
     path.write_text(json.dumps(contract, indent=2, sort_keys=True) + "\n")
     return path
 
 
-# --------------------------------------------------------------------------
-# Comparability with the package this model was fine-tuned from
-# --------------------------------------------------------------------------
+def _suite():
+    return importlib.import_module("oceanfno.figures")
 
 
-def test_the_evaluation_protocol_is_identical_to_the_compared_package() -> None:
-    """Only the checkpoint may differ, or the two packages are not comparable."""
-
-    mine = json.loads(CONTRACT.read_text())
+@requires_contract
+def test_y32_reuses_the_exact_local24_s0_protocol_and_six_plots() -> None:
+    mine = _raw()
     compared = json.loads(COMPARED.read_text())
-    for key in ("member_count", "maximum_lead_days", "prediction_interval_days",
-                "start_draw_order", "figure_names", "rmse_fields", "acc_fields",
-                "regimes", "primary_regime", "inference_set", "start_seed",
-                "figure3_lead_days", "figure7_lead_days", "long_lead_days"):
-        assert mine["protocol"][key] == compared["protocol"][key], key
-    assert mine["baselines"] == compared["baselines"]
+    compared_protocol = compared["protocol"]
+    protocol = mine["protocol"]
+
+    shared = (
+        "member_count",
+        "maximum_lead_days",
+        "prediction_interval_days",
+        "start_draw_order",
+        "figure_names",
+        "rmse_fields",
+        "acc_fields",
+        "regimes",
+        "primary_regime",
+        "inference_set",
+        "start_seed",
+        "start_window",
+        "figure3_lead_days",
+        "figure7_lead_days",
+        "short_lead_days",
+        "long_lead_days",
+    )
+    for key in shared:
+        assert protocol[key] == compared_protocol[key], key
+
+    assert protocol["member_count"] == len(STARTS) == 15
+    assert tuple(protocol["start_draw_order"]) == STARTS
+    assert tuple(protocol["figure3_lead_days"]) == FIGURE3_LEADS
+    assert tuple(protocol["figure7_lead_days"]) == FIGURE7_LEADS
+    assert protocol["maximum_lead_days"] == 2000
+    assert protocol["prediction_interval_days"] == 10
+    assert protocol["inference_set"] == [6200, 7200]
+    assert protocol["start_window"] == [6200, 7000]
+    assert tuple(protocol["figure_names"]) == FIGURE_NAMES
+    assert tuple(
+        name for name in mine["output"]["required"] if name.endswith(".png")
+    ) == FIGURE_NAMES
+
+
+@requires_contract
+def test_y32_reuses_truth_baselines_dataset_and_normalized_coordinates() -> None:
+    mine = _raw()
+    compared = json.loads(COMPARED.read_text())
+    report = json.loads(TRAINING_REPORT.read_text())
+
     assert mine["truth"] == compared["truth"]
+    assert mine["baselines"] == compared["baselines"]
     assert mine["dataset"] == compared["dataset"]
-    assert mine["artifacts"]["dataset_metadata"] == compared["artifacts"]["dataset_metadata"]
-    assert mine["output"]["required"] == compared["output"]["required"]
-    assert mine["comparability"]["byte_comparable_with_the_step_15360_figure_package"] is True
+    assert mine["artifacts"]["dataset_metadata"] == compared["artifacts"][
+        "dataset_metadata"
+    ]
+
+    selected = mine["artifacts"]["selected_normalization"]
+    published = report["published_checkpoint"]
+    assert selected["path"] == published["normalization"]
+    assert published["normalization_sha256"] == compared["artifacts"][
+        "selected_normalization"
+    ]["sha256"]
+    assert selected["sha256"] in (PENDING, published["normalization_sha256"])
 
 
-def test_starts_are_the_compared_packages_and_admit_2000_days_of_truth() -> None:
-    starts = declared_inference_starts()
-    assert starts.size == MEMBER_COUNT == 15
-    assert np.array_equal(starts, suite.declared_inference_starts())
-    assert starts.min() >= 6200 and int(starts.max()) + 2000 < 9000
-    assert np.array_equal(starts, np.sort(starts))
-
-
-def test_outputs_do_not_collide_with_the_compared_package() -> None:
-    mine = json.loads(CONTRACT.read_text())
-    compared = json.loads(COMPARED.read_text())
-    for key in ("project_root", "scratch_root"):
-        assert mine["output"][key] != compared["output"][key]
-        assert "rollout_ft" in mine["output"][key]
-
-
-# --------------------------------------------------------------------------
-# The literal pre-train / fine-tune pair
-# --------------------------------------------------------------------------
-
-
-def test_figure6_is_a_literal_pretrain_finetune_pair(tmp_path) -> None:
-    contract, _, _ = load_contract(_written(_filled(), tmp_path), verify_sources=False)
-    assert contract["figure6"]["literal_pretrain_finetune_pair"] is True
-    assert int(contract["figure6"]["comparator_optimizer_step"]) == COMPARATOR_STEP
-    assert COMPARATOR_STEP == BASELINE_OPTIMIZER_STEP == 15360
-    # The comparator is the checkpoint the fine-tune actually started from.
-    assert "bire_protocol_duration_v1/selected.pt" in contract["artifacts"]["comparator_checkpoint"]["path"]
-    assert "bire_protocol_rollout_ft_v1/selected.pt" in contract["artifacts"]["selected_checkpoint"]["path"]
+@requires_contract
+def test_figure6_is_y32_selected_against_its_literal_local24_parent() -> None:
+    contract = _filled()
     training = json.loads(TRAINING.read_text())
-    assert (
-        contract["artifacts"]["comparator_checkpoint"]["path"]
-        == training["sources"]["initialization_checkpoint"]["path"]
-    )
-    assert (
-        contract["artifacts"]["comparator_checkpoint"]["sha256"]
-        == training["sources"]["initialization_checkpoint"]["sha256"]
-    )
-    # And every earlier package in this project could not say this.
-    assert json.loads(COMPARED.read_text())["figure6"]["literal_pretrain_finetune_pair"] is False
-
-
-def test_the_two_checkpoints_declare_different_objectives(tmp_path) -> None:
-    contract, _, _ = load_contract(_written(_filled(), tmp_path), verify_sources=False)
+    comparator_training = json.loads(COMPARATOR_TRAINING.read_text())
+    report = json.loads(TRAINING_REPORT.read_text())
     selected = contract["selected_model"]
     comparator = contract["comparator_model"]
-    assert selected["base_loss_contract_sha256"] == FINE_TUNE_LOSS_CONTRACT_SHA256
-    assert comparator["base_loss_contract_sha256"] == MODEL_C_LOSS_V1_CONTRACT_SHA256
-    assert selected["base_loss_contract_sha256"] != comparator["base_loss_contract_sha256"]
-    assert int(selected["rollout_steps"]) == ROLLOUT_STEPS == 6
-    assert int(comparator["rollout_steps"]) == 3
-    assert selected["architecture"] == json.loads(TRAINING.read_text())["architecture"]
 
-
-@pytest.mark.skipif(
-    not Path(
-        "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/"
-        "bire_protocol_duration_v1/selected.pt"
-    ).is_file(),
-    reason="the comparator checkpoint is not on this filesystem",
-)
-def test_the_stepper_verifies_each_checkpoint_against_its_own_objective() -> None:
-    """The suite's single-hash check cannot serve a pre-train / fine-tune pair."""
-
-    torch = pytest.importorskip("torch")
-    from oceanfno.figures import _stepper
-
-    contract = _filled()
-    # The fine-tune's own normalizers are not written until it runs, and this
-    # test is about the identity check, not the file layout; the parent's are
-    # the same 46-channel arrays by construction.
-    parent_normalization = (
-        "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/"
-        "bire_protocol_duration_v1/model_c_bire_protocol_duration_train_only_normalization.npz"
-    )
-    contract["artifacts"]["selected_normalization"]["path"] = parent_normalization
-    device = torch.device("cpu")
-    with np.load(parent_normalization) as stored:
-        wet = np.asarray(stored["pointwise_scale"][0] > 0, dtype=bool)
-    stepper = _stepper(contract, "comparator_checkpoint", device, wet, 0.0, 1.0)
-    assert stepper.model is not None
-
-    # The same file offered as the six-step selected checkpoint must be refused.
-    contract["artifacts"]["selected_checkpoint"] = dict(
-        contract["artifacts"]["comparator_checkpoint"]
-    )
-    contract["selected_model"]["optimizer_step"] = COMPARATOR_STEP
-    with pytest.raises(BireProtocolRolloutFineTuneFigureError):
-        _stepper(contract, "selected_checkpoint", device, wet, 0.0, 1.0)
-
-
-def test_the_captions_name_the_fine_tune_pairing() -> None:
-    with suite.FineTuneLabels("S0", 0.1, SELECTED_STEP) as labels:
-        if True:
-            assert isinstance(labels, FineTuneLabels)
-            assert figures.METHOD_LABELS["model"] == MODEL_LABEL
-            assert (
-                labels.rewrite("S0 architecture-direction comparison")
-                == "S0 three-step model vs six-step fine-tune"
-            )
-            assert labels.rewrite("Prior residual Model C") == (
-                f"Before fine-tuning (step {COMPARATOR_STEP:,})"
-            )
-            assert labels.rewrite("Selected anomaly-direct Model C") == (
-                f"After {ROLLOUT_STEPS}-step fine-tune (step {SELECTED_STEP:,})"
-            )
-            # The regime and wind rules the suite supplies must survive.
-            assert r"$\tau_0=0.1$" in labels.rewrite(
-                r"Control wind $\tau_0=0.1$ N m$^{-2}$"
-            )
-    assert figures.METHOD_LABELS["model"] == "Selected Model C"
-    # The unspecialised base captions remain available and unchanged.
-    with suite._S0Captions("S0", 0.1, 7680) as base:
-        assert base.rewrite("S0 architecture-direction comparison") == (
-            "S0 training-progress comparison"
-        )
-
-
-def test_the_red_curve_is_labelled_distinctly_from_the_compared_package() -> None:
-    assert "6-step fine-tune" in MODEL_LABEL
-    assert suite.MODEL_LABEL == MODEL_LABEL
-
-
-# --------------------------------------------------------------------------
-# Contract loading and the pending fields
-# --------------------------------------------------------------------------
-
-
-def test_a_contract_with_unfilled_fields_refuses_to_load(tmp_path) -> None:
-    """The pending state must be reconstructed, not read off disk.
-
-    The shipped contract ships pending and `finalize` fills it in place, so
-    once the arm has actually run, the file on disk is complete. A test that
-    asserted the on-disk file was pending passed only until the first real run.
-    """
-
-    contract = _pending()
-    assert unfilled_fields(contract) == [".".join(path) for path in PENDING_PATHS]
-    assert contract["pending_after_training"]["sentinel"] == PENDING
-    with pytest.raises(BireProtocolRolloutFineTuneFigureError) as raised:
-        load_contract(_written(contract, tmp_path), verify_sources=False)
-    assert "finalize" in str(raised.value)
-
-
-def test_a_filled_contract_loads(tmp_path) -> None:
-    contract, resolved, digest = load_contract(_written(_filled(), tmp_path), verify_sources=False)
     assert contract["version"] == VERSION
-    assert contract["contract_status"] == CONTRACT_STATUS
-    assert int(contract["selected_model"]["optimizer_step"]) in CHECKPOINT_STEPS
-    assert len(digest) == 64 and resolved.is_file()
+    assert selected["version"] == TRAINING_VERSION
+    assert comparator["version"] == COMPARATOR_VERSION
+    assert selected["architecture"] == training["architecture"]
+    assert comparator["architecture"] == comparator_training["architecture"]
+    assert selected["architecture"]["n_modes"] == [32, 24]
+    assert comparator["architecture"]["n_modes"] == [24, 24]
+    assert selected["architecture"]["local_kernel_size"] == 3
+    assert comparator["architecture"]["local_kernel_size"] == 3
+    assert selected["optimizer_step"] == SELECTED_STEP
+    assert comparator["optimizer_step"] == SELECTED_STEP
+    assert selected["rollout_steps"] == comparator["rollout_steps"] == 6
+    assert selected["base_loss_contract_sha256"] == comparator[
+        "base_loss_contract_sha256"
+    ]
+
+    published = report["published_checkpoint"]
+    assert contract["artifacts"]["selected_checkpoint"]["path"] == published[
+        "checkpoint"
+    ]
+    assert contract["artifacts"]["selected_checkpoint"]["sha256"] == published[
+        "checkpoint_sha256"
+    ]
+    for key in ("path", "sha256"):
+        assert contract["artifacts"]["comparator_checkpoint"][key] == training[
+            "sources"
+        ]["initialization_checkpoint"][key]
+    assert "bire_protocol_rollout_ft_local24_y32_v1/selected.pt" in published[
+        "checkpoint"
+    ]
+    assert "bire_protocol_rollout_ft_local24_v1/selected.pt" in contract[
+        "artifacts"
+    ]["comparator_checkpoint"]["path"]
+    assert contract["figure6"]["literal_pretrain_finetune_pair"] is True
+    assert contract["figure6"]["comparator_optimizer_step"] == SELECTED_STEP
 
 
+@requires_contract
+def test_y32_figure_outputs_have_exact_noncolliding_roots() -> None:
+    mine = _raw()
+    compared = json.loads(COMPARED.read_text())
+    training = json.loads(TRAINING.read_text())
+    output = mine["output"]
+
+    assert output["project_root"] == PROJECT_ROOT
+    assert output["scratch_root"] == SCRATCH_ROOT
+    assert output["overwrite"] is False
+    assert output["one_folder_per_regime"] is True
+    assert output["required"] == compared["output"]["required"]
+    for key in ("project_root", "scratch_root"):
+        assert output[key] != compared["output"][key]
+        assert output[key] != training["output"][key]
+    assert mine["comparability"]["directly_comparable_with_local24_package"] is True
+
+
+@requires_contract
+@requires_module
+def test_a_filled_y32_figure_contract_loads_strictly(tmp_path) -> None:
+    suite = _suite()
+    contract, resolved, digest = suite.load_contract(
+        _written(_filled(), tmp_path), verify_sources=False
+    )
+    assert contract["version"] == suite.VERSION == VERSION
+    assert contract["selected_model"]["version"] == TRAINING_VERSION
+    assert contract["comparator_model"]["version"] == COMPARATOR_VERSION
+    assert resolved.is_file()
+    assert len(digest) == 64
+
+
+@requires_contract
+@requires_module
 @pytest.mark.parametrize(
     "mutate",
     [
         pytest.param(
+            lambda c: c["protocol"].update(start_draw_order=list(reversed(STARTS))),
+            id="starts_reordered",
+        ),
+        pytest.param(
+            lambda c: c["protocol"].update(figure7_lead_days=[60, 1000]),
+            id="day2000_removed",
+        ),
+        pytest.param(
+            lambda c: c["protocol"].update(figure_names=list(FIGURE_NAMES[:-1])),
+            id="sixth_plot_removed",
+        ),
+        pytest.param(
+            lambda c: c["selected_model"].update(version=COMPARATOR_VERSION),
+            id="selected_version_reverted",
+        ),
+        pytest.param(
+            lambda c: c["comparator_model"].update(version=TRAINING_VERSION),
+            id="comparator_version_moved",
+        ),
+        pytest.param(
+            lambda c: c["selected_model"]["architecture"].update(n_modes=[24, 24]),
+            id="selected_modes_reverted",
+        ),
+        pytest.param(
+            lambda c: c["selected_model"]["architecture"].update(n_modes=[24, 32]),
+            id="selected_axis_order_reversed",
+        ),
+        pytest.param(
+            lambda c: c["comparator_model"]["architecture"].update(
+                n_modes=[24, 16]
+            ),
+            id="wrong_comparator_architecture",
+        ),
+        pytest.param(
+            lambda c: c["comparator_model"]["architecture"].update(
+                local_kernel_size=None
+            ),
+            id="comparator_local_branch_removed",
+        ),
+        pytest.param(
+            lambda c: c["artifacts"]["selected_checkpoint"].update(
+                path=c["artifacts"]["comparator_checkpoint"]["path"]
+            ),
+            id="selected_checkpoint_replaced",
+        ),
+        pytest.param(
+            lambda c: c["artifacts"]["comparator_checkpoint"].update(
+                path="/bigscratch/wrong-parent/selected.pt"
+            ),
+            id="comparator_checkpoint_replaced",
+        ),
+        pytest.param(
+            lambda c: c["artifacts"]["selected_normalization"].update(
+                sha256="0" * 64
+            ),
+            id="normalizer_changed",
+        ),
+        pytest.param(
+            lambda c: c.update(truth={"source": "another_trajectory"}),
+            id="truth_changed",
+        ),
+        pytest.param(
+            lambda c: c["baselines"].update(climatology="full_record_mean"),
+            id="climatology_changed",
+        ),
+        pytest.param(
+            lambda c: c["output"].update(
+                project_root=PROJECT_ROOT.replace("local24_y32", "local24")
+            ),
+            id="project_root_changed",
+        ),
+        pytest.param(
+            lambda c: c["output"].update(scratch_root=SCRATCH_ROOT + "_other"),
+            id="scratch_root_changed",
+        ),
+        pytest.param(
+            lambda c: c["output"].update(overwrite=True),
+            id="overwrite_enabled",
+        ),
+        pytest.param(
             lambda c: c["figure6"].update(literal_pretrain_finetune_pair=False),
-            id="pairing_denied",
+            id="literal_pair_denied",
         ),
         pytest.param(
-            lambda c: c["figure6"].update(comparator_optimizer_step=11520),
-            id="comparator_moved",
-        ),
-        pytest.param(
-            lambda c: c["selected_model"].update(rollout_steps=3), id="depth_reverted"
-        ),
-        pytest.param(
-            lambda c: c["selected_model"].update(base_loss_contract_sha256="0" * 64),
-            id="objective_moved",
-        ),
-        pytest.param(
-            lambda c: c["comparator_model"].update(base_loss_contract_sha256="0" * 64),
-            id="comparator_objective_moved",
-        ),
-        pytest.param(
-            lambda c: c["selected_model"].update(optimizer_step=1234), id="step_not_a_checkpoint"
-        ),
-        pytest.param(
-            lambda c: c["protocol"].update(member_count=10), id="members_moved"
+            lambda c: c["selected_model"].update(
+                base_loss_contract_sha256="0" * 64
+            ),
+            id="objective_changed",
         ),
     ],
 )
-def test_a_tampered_figure_contract_is_rejected(mutate, tmp_path) -> None:
+def test_y32_figure_contract_rejects_protocol_model_and_output_tampering(
+    mutate, tmp_path
+) -> None:
+    suite = _suite()
     contract = _filled()
     mutate(contract)
-    with pytest.raises(BireProtocolRolloutFineTuneFigureError):
-        load_contract(_written(contract, tmp_path), verify_sources=False)
+    with pytest.raises(suite.BireY32FigureError):
+        suite.load_contract(_written(contract, tmp_path), verify_sources=False)
 
 
-# --------------------------------------------------------------------------
-# finalize
-# --------------------------------------------------------------------------
-
-
-def _staged_report(directory: Path, step: int = SELECTED_STEP) -> tuple[Path, dict]:
-    """A training report on disk, plus a contract pointing at it."""
-
-    from oceanfno.train import REPORT_NAME
-
-    report_path = directory / REPORT_NAME
-    contract = _filled(step)
-    published = {
-        "optimizer_step": step,
-        "checkpoint": contract["artifacts"]["selected_checkpoint"]["path"],
-        "checkpoint_sha256": "c" * 64,
-        "normalization": contract["artifacts"]["selected_normalization"]["path"],
-        "normalization_sha256": "d" * 64,
-    }
-    report_path.write_text(
-        json.dumps(
-            {"version": "model_c_bire_protocol_rollout_ft_v1", "published_checkpoint": published},
-            indent=2, sort_keys=True,
-        )
-    )
-    contract = _pending()
-    contract["artifacts"]["selected_report"]["path"] = str(report_path)
-    return report_path, contract
-
-
-def test_finalize_fills_the_pending_fields_from_the_runs_own_report(tmp_path) -> None:
-    _, contract = _staged_report(tmp_path, step=2880)
-    path = _written(contract, tmp_path, "contract.json")
-    result = finalize(path)
-    assert result["status"] == "filled"
-    assert result["selected_optimizer_step"] == 2880
-    assert set(result["applied"]) == {".".join(p) for p in PENDING_PATHS}
+@requires_contract
+@requires_module
+def test_finalize_binds_only_to_the_y32_training_report(tmp_path) -> None:
+    suite = _suite()
+    path = _written(_pending(), tmp_path)
+    result = suite.finalize(path)
     written = json.loads(path.read_text())
-    assert unfilled_fields(written) == []
-    assert written["selected_model"]["optimizer_step"] == 2880
-    assert written["artifacts"]["selected_checkpoint"]["sha256"] == "c" * 64
-    assert written["artifacts"]["selected_normalization"]["sha256"] == "d" * 64
-    loaded, _, _ = load_contract(path, verify_sources=False)
-    assert int(loaded["selected_model"]["optimizer_step"]) == 2880
+    expected = _filled()
 
+    assert result["status"] == "filled"
+    assert written["selected_model"]["optimizer_step"] == SELECTED_STEP
+    for key in ("selected_checkpoint", "selected_normalization", "selected_report"):
+        assert written["artifacts"][key] == expected["artifacts"][key]
+    suite.load_contract(path, verify_sources=False)
 
-def test_finalize_is_idempotent(tmp_path) -> None:
-    _, contract = _staged_report(tmp_path)
-    path = _written(contract, tmp_path, "contract.json")
-    finalize(path)
-    before = path.read_text()
-    again = finalize(path)
-    assert again["status"] == "already_complete" and again["applied"] == {}
-    assert path.read_text() == before
-
-
-def test_finalize_refuses_to_overwrite_a_filled_field(tmp_path) -> None:
-    _, contract = _staged_report(tmp_path, step=1920)
-    contract["selected_model"]["optimizer_step"] = 3840
-    path = _written(contract, tmp_path, "contract.json")
-    with pytest.raises(BireProtocolRolloutFineTuneFigureError) as raised:
-        finalize(path)
-    assert "refusing to overwrite" in str(raised.value)
-
-
-def test_finalize_refuses_a_report_from_another_arm(tmp_path) -> None:
-    report_path, contract = _staged_report(tmp_path)
-    payload = json.loads(report_path.read_text())
-    payload["version"] = "model_c_bire_protocol_duration_v1"
-    report_path.write_text(json.dumps(payload))
-    with pytest.raises(BireProtocolRolloutFineTuneFigureError):
-        finalize(_written(contract, tmp_path, "contract.json"))
-
-
-def test_finalize_refuses_a_report_that_names_a_different_checkpoint(tmp_path) -> None:
-    report_path, contract = _staged_report(tmp_path)
-    payload = json.loads(report_path.read_text())
-    payload["published_checkpoint"]["checkpoint"] = "/somewhere/else/selected.pt"
-    report_path.write_text(json.dumps(payload))
-    with pytest.raises(BireProtocolRolloutFineTuneFigureError):
-        finalize(_written(contract, tmp_path, "contract.json"))
-
-
-def test_finalize_reports_a_missing_training_report(tmp_path) -> None:
-    contract = _pending()
-    contract["artifacts"]["selected_report"]["path"] = str(
-        tmp_path / "bire_protocol_rollout_ft_report.json"
-    )
-    with pytest.raises(BireProtocolRolloutFineTuneFigureError) as raised:
-        finalize(_written(contract, tmp_path, "contract.json"))
-    assert "not on disk yet" in str(raised.value)
-
-
-# --------------------------------------------------------------------------
-# The 2,000-day half of the acceptance gate
-# --------------------------------------------------------------------------
 
 
 def _gate_inputs(
@@ -424,12 +405,12 @@ def _gate_inputs(
     minimum: float = -20.0,
     std_scale: float = 1.0,
 ) -> tuple[dict, dict]:
+    suite = _suite()
     rng = np.random.default_rng(0)
     grid = 32
     wet = np.ones((grid, grid), dtype=np.uint8)
     truth = rng.normal(0.0, 5.0, size=(grid, grid))
     model = truth * std_scale
-    # Plant the requested extreme without disturbing the spread much.
     model = model - model.min() + minimum
     model = (model - model.mean()) * (
         (truth.std() * std_scale) / max(model.std(), 1e-12)
@@ -448,20 +429,21 @@ def _gate_inputs(
                 "model": {"day2000_mean": 1.0},
                 "climatology": {"day2000_mean": 1.25},
             }
-            for field in figures.RMSE_FIELDS
+            for field in suite.RMSE_FIELDS
         },
     }
     return arrays, summary
 
 
-def test_the_long_rollout_gate_passes_a_healthy_rollout() -> None:
-    arrays, summary = _gate_inputs()
-    gate = long_rollout_gate(arrays, summary)
+def test_long_rollout_gate_passes_and_uses_the_frozen_thresholds() -> None:
+    suite = _suite()
+    arrays, summary = _gate_inputs(magnitude=8.0, minimum=-33.0)
+    gate = suite.long_rollout_gate(arrays, summary)
     assert gate["long_rollout_conditions_pass"]
     assert all(gate["conditions"].values())
-    assert gate["measured"]["day2000_streamfunction_minimum_sv"] == pytest.approx(-20.0)
-    low, high = DAY2000_STD_RATIO_RANGE
-    assert low <= gate["measured"]["day2000_spatial_std_ratio_to_truth"] <= high
+    assert suite.MAXIMUM_NORMALIZED_MAGNITUDE == 8.0
+    assert suite.MINIMUM_STREAMFUNCTION_SV == -33.0
+    assert suite.DAY2000_STD_RATIO_RANGE == (0.80, 1.25)
 
 
 @pytest.mark.parametrize(
@@ -474,72 +456,61 @@ def test_the_long_rollout_gate_passes_a_healthy_rollout() -> None:
         ({"std_scale": 1.5}, "day2000_spatial_std_ratio_in_range"),
     ],
 )
-def test_each_long_rollout_condition_can_fail_on_its_own(kwargs, failing) -> None:
+def test_each_long_rollout_condition_can_fail_independently(kwargs, failing) -> None:
     arrays, summary = _gate_inputs(**kwargs)
-    gate = long_rollout_gate(arrays, summary)
-    assert gate["conditions"][failing] is False, failing
+    gate = _suite().long_rollout_gate(arrays, summary)
+    assert gate["conditions"][failing] is False
     assert not gate["long_rollout_conditions_pass"]
-    assert sum(1 for value in gate["conditions"].values() if not value) == 1
+    assert sum(not value for value in gate["conditions"].values()) == 1
 
 
-def test_the_thresholds_are_the_declared_ones() -> None:
-    assert MAXIMUM_NORMALIZED_MAGNITUDE == 8.0
-    assert MINIMUM_STREAMFUNCTION_SV == -33.0
-    assert DAY2000_STD_RATIO_RANGE == (0.80, 1.25)
-    arrays, summary = _gate_inputs(magnitude=8.0, minimum=-33.0)
-    gate = long_rollout_gate(arrays, summary)
-    assert gate["conditions"]["maximum_normalized_magnitude_at_most_8"]
-    assert gate["conditions"]["streamfunction_minimum_at_least_minus_33_sv"]
-
-
-def test_the_gate_reports_the_collapse_indicator_without_gating_on_it() -> None:
-    """A model that has relaxed onto climatology can satisfy every bound above."""
-
+def test_day2000_climatology_ratio_remains_advisory() -> None:
+    suite = _suite()
     arrays, summary = _gate_inputs()
-    for field in figures.RMSE_FIELDS:
+    for field in suite.RMSE_FIELDS:
         summary["rmse"][field]["model"]["day2000_mean"] = 1.25
-    gate = long_rollout_gate(arrays, summary)
-    ratios = gate["advisory_day2000_rmse_ratio_to_climatology"]
-    assert set(ratios) == set(figures.RMSE_FIELDS)
-    assert all(value == pytest.approx(1.0) for value in ratios.values())
-    # Advisory only: the arm declaration does not require day-2,000 skill.
+    gate = suite.long_rollout_gate(arrays, summary)
+    assert all(
+        value == pytest.approx(1.0)
+        for value in gate["advisory_day2000_rmse_ratio_to_climatology"].values()
+    )
     assert gate["long_rollout_conditions_pass"]
     assert "not gated" in gate["advisory_note"]
 
 
-# --------------------------------------------------------------------------
-# Bindings, README, launcher
-# --------------------------------------------------------------------------
-
-
-
-
-
-
-
-
-
-
-def test_readme_renders_and_names_this_arm() -> None:
-    text = _readme(
+def test_captions_and_readme_name_the_local24_to_y32_comparison() -> None:
+    suite = _suite()
+    with suite.FineTuneLabels("S0", 0.1, SELECTED_STEP) as labels:
+        assert (
+            labels.rewrite("S0 architecture-direction comparison")
+            == "S0 local24 parent vs meridional-32 fine-tune"
+        )
+        assert labels.rewrite("Prior residual Model C") == (
+            "Local 3x3 + 24x24 modes (step 3,840)"
+        )
+        assert labels.rewrite("Selected anomaly-direct Model C") == (
+            "Local 3x3 + 32x24 modes (step 3,840)"
+        )
+    text = suite._readme(
         "S0",
         {
             "selected_optimizer_step": SELECTED_STEP,
-            "tau0_n_m2": 0.1,
             "report_content_sha256": "0" * 64,
         },
     )
-    assert f"{SELECTED_STEP:,}" in text and f"{COMPARATOR_STEP:,}" in text
-    assert "6263" in text and "6979" in text
-    assert GATE_NAME in text
     flat = " ".join(text.split())
-    assert "literal pre-train / fine-tune pair" in flat
-    assert "three ten-day calls to six" in flat
-    for stale in ("5039", "5130", "6389", "6480", "held test block", "7,680"):
-        assert stale not in text
+    assert "literal step-3,840 local24 parent" in flat
+    assert "32x24 fine-tune" in flat
+    assert "6263--6979" in flat
+    assert suite.GATE_NAME in text
 
 
-def test_launcher_finalizes_then_runs_its_own_module_and_contract() -> None:
+def test_canonical_figure_module_has_no_wrapper_context() -> None:
+    assert not hasattr(_suite(), "_y32_figures_runner")
+
+
+@pytest.mark.skipif(not SBATCH.is_file(), reason="the Y32 figure launcher is absent")
+def test_launcher_finalizes_then_runs_only_the_canonical_module() -> None:
     text = SBATCH.read_text()
     invoked = {
         line.split("-m", 1)[1].strip().split()[0]
@@ -547,7 +518,7 @@ def test_launcher_finalizes_then_runs_its_own_module_and_contract() -> None:
         if " -m " in f" {line} " and "oceanfno." in line
     }
     assert invoked == {"oceanfno.figures"}
-    assert "model_c_bire_protocol_rollout_ft_s0_figures_v2.json" in text
-    # finalize must run before preflight, or preflight meets a pending contract.
+    assert (
+        "model_c_bire_protocol_rollout_ft_local24_y32_s0_figures_v1.json" in text
+    )
     assert text.index("finalize") < text.index("  preflight") < text.index("  run")
-    assert "oceanfno.figures" in text

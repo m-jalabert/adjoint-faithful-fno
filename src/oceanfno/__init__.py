@@ -1,9 +1,10 @@
-"""Six-step rollout fine-tune of the 46-channel MITgcm double-gyre emulator.
+"""Canonical Y32 six-step FNO for the 46-channel MITgcm double gyre.
 
-A Fourier Neural Operator advances a closed 46-channel ocean state by ten days.
-This package trains it, selects a checkpoint, publishes the S0 figure suite, and
-evaluates the acceptance gate. It contains only the code those three jobs
-execute.
+A 32x24-mode Fourier Neural Operator with a bias-free local 3x3 correction
+advances a closed 46-channel ocean state by ten days. This package trains it,
+selects a checkpoint, publishes the S0 figure suite, and evaluates the
+acceptance gate. The retained 24x24 architecture is represented only where it
+is required for checkpoint migration and literal comparison.
 
 Layout, in dependency order --- each module imports only from the ones above it::
 
@@ -34,17 +35,24 @@ Entry points, each driven by a frozen contract in ``config/``::
 
     python -m oceanfno.train    preflight|run       --contract ...
     python -m oceanfno.figures  finalize|preflight|run --contract ...
-    python -m oceanfno.anomaly  preflight|run       --contract ...
+    python -m oceanfno.anomaly  finalize|preflight|run --contract ...
 
-Provenance: every function body here was copied verbatim from the arm that
-produced the published checkpoint, and verified to reproduce it numerically ---
-the same forward pass on the published weights, the same loss to the last bit,
-the same objective hash, and a bit-identical rebuild of the anomaly package. The
-superseded tree is kept under ``archive/`` together with the v1 contracts it is
-hashed by.
+The frozen contracts and reports remain the provenance record of the completed
+experiments. The canonical modules consolidate their selected Y32 workflows;
+they do not rewrite those historical records.
 """
 
 from __future__ import annotations
 
-__all__ = ["anomaly", "dataset", "diagnostics", "figures", "model",
-           "objective", "plots", "runtime", "train", "validation"]
+__all__ = [
+    "anomaly",
+    "dataset",
+    "diagnostics",
+    "figures",
+    "model",
+    "objective",
+    "plots",
+    "runtime",
+    "train",
+    "validation",
+]

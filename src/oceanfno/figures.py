@@ -1,28 +1,21 @@
-"""S0 figure suite and acceptance gate for the six-step rollout fine-tune.
+"""S0 Figures 3--8 for the meridional-32 successor to local24.
 
-Publishes Bire figures 3-8 on the S0 inference set for the fine-tuned
-checkpoint, then evaluates the 2,000-day half of the final acceptance gate.
-
-Figure 6 is a literal pre-train / fine-tune pair: black is the step-15,360
-checkpoint the arm started from, red is the selected fine-tuned one. The two
-carry different objective hashes -- v1 over three steps against the six-step
-contract -- so :func:`_stepper` verifies each against the hash its own contract
-block declares, rather than against one shared constant.
+Publishes the frozen Bire figure suite for the selected 32x24 checkpoint and
+evaluates the 2,000-day half of the final acceptance gate. Figure 6 is the
+literal local24-parent / Y32-fine-tune pair. Each checkpoint is verified and
+built against its own architecture declaration.
 
 Held-evaluation only: no training, no checkpoint selection, no promotion.
 """
 from __future__ import annotations
 
 import argparse
-import copy
 import json
 import os
 import shutil
 import time
 from pathlib import Path
 from typing import Any, Mapping, Sequence
-
-from .train import REPORT_NAME as TRAINING_REPORT_NAME
 
 import numpy as np
 import zarr
@@ -32,11 +25,9 @@ from . import plots
 from .runtime import _device, _file_sha256, _json_sha256
 from .dataset import DATASET_VERSION, INFERENCE_START_RANGE, MAXIMUM_INFERENCE_ROLLOUT_DAYS, TRAIN_RANGE, _normalizers, assert_model_visible, assert_truth_available, inference_starts
 from .diagnostics import _member_acc, _member_rmse, derived_fields
-from .objective import MODEL_C_LOSS_V1_CONTRACT_SHA256
-from .model import BireAlignedArchitecture, BireAlignedStepper, MANIFEST_NAME, README_NAME, build_bire_aligned_model
-from .validation import _gather, _plot, train_only_climatology
-from .plots import ARRAYS_NAME, CSV_NAME, FIGURE_3_LEADS, FIGURE_7_LEADS, FIGURE_NAMES, METHODS, METHOD_LABELS, REPORT_NAME, SUMMARY_NAME, _plot_acc, _plot_day60_day2000, _plot_rmse, _plot_single_member, _plot_streamfunction_grid, _style, _summary, _verify_file, _write_csv
-from .train import BASELINE_OPTIMIZER_STEP, CHECKPOINT_STEPS, FINE_TUNE_LOSS_CONTRACT_SHA256, ROLLOUT_STEPS
+from .model import BireAlignedStepper, BireLocal24Architecture, BireY32Architecture, build_bire_local24_model, build_bire_y32_model
+from .validation import _gather, train_only_climatology
+from .train import BASELINE_OPTIMIZER_STEP, CHECKPOINT_STEPS, FINE_TUNE_LOSS_CONTRACT_SHA256, NORMALIZATION_NAME as Y32_NORMALIZATION_NAME, PARENT_VERSION as LOCAL24_TRAINING_VERSION, REPORT_NAME as TRAINING_REPORT_NAME, ROLLOUT_STEPS, VERSION as TRAINING_VERSION
 
 MEMBER_COUNT = 15
 
@@ -176,16 +167,16 @@ def evaluate_regime(
                 arrays["figure7_model_streamfunction"][figure7[lead]] = selected_fields["streamfunction"][0]
     return arrays
 
-VERSION = "model_c_bire_protocol_rollout_ft_s0_figures_v2"
+VERSION = "model_c_bire_protocol_rollout_ft_local24_y32_s0_figures_v1"
 
 CONTRACT_STATUS = (
-    "frozen_after_the_bire_protocol_rollout_ft_training_and_validation"
-    "_and_before_any_inference_metric"
+    "frozen_after_the_bire_protocol_rollout_ft_local24_y32_training_and_"
+    "validation_and_before_any_inference_metric"
 )
 
 COMPARATOR_STEP = BASELINE_OPTIMIZER_STEP
 
-MODEL_LABEL = f"Bire-protocol Model C ({ROLLOUT_STEPS}-step fine-tune)"
+MODEL_LABEL = "Bire-protocol Model C (local 3x3, 32x24 modes)"
 
 PENDING = "PENDING_AFTER_TRAINING"
 
@@ -202,18 +193,68 @@ MINIMUM_STREAMFUNCTION_SV = -33.0
 
 DAY2000_STD_RATIO_RANGE = (0.80, 1.25)
 
-GATE_NAME = "bire_protocol_rollout_ft_acceptance_gate.json"
+GATE_NAME = "bire_protocol_rollout_ft_local24_y32_acceptance_gate.json"
 
-#: The arm is the same arm before and after the code was consolidated, so a
-#: report published by the v1 tree finalizes a v2 contract. The code that
-#: produced it is byte-identical; only the module layout moved.
-ACCEPTED_TRAINING_REPORT_VERSIONS = (
-    "model_c_bire_protocol_rollout_ft_v1",
-    "model_c_bire_protocol_rollout_ft_v2",
-)
+ACCEPTED_TRAINING_REPORT_VERSIONS = (TRAINING_VERSION,)
 
 class BireProtocolRolloutFineTuneFigureError(RuntimeError):
-    """Raised when the rollout fine-tune figure contract is violated."""
+    """Compatibility base for held-evaluation contract failures."""
+
+
+class BireY32FigureError(BireProtocolRolloutFineTuneFigureError):
+    """Raised when the Y32 held-evaluation contract is violated."""
+
+
+_REPOSITORY = Path(__file__).resolve().parents[2]
+_EXPECTED_PROJECT_ROOT = str(
+    _REPOSITORY
+    / "outputs/af_fno/C/bire_protocol_rollout_ft_local24_y32_s0_figures_v1"
+)
+_EXPECTED_SCRATCH_ROOT = (
+    "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/"
+    "bire_protocol_rollout_ft_local24_y32_s0_figures_v1"
+)
+_EXPECTED_OUTPUTS = (
+    *plots.FIGURE_NAMES,
+    plots.REPORT_NAME,
+    plots.ARRAYS_NAME,
+    plots.SUMMARY_NAME,
+    plots.CSV_NAME,
+    plots.MANIFEST_NAME,
+    plots.README_NAME,
+)
+_EXPECTED_BASELINES = {
+    "climatology": "pointwise_S0_mean_over_the_bire_training_block_0_5999_only",
+    "ensemble_summary": "mean_and_10th_90th_percentiles_across_15_member_metrics",
+    "persistence": "each_members_initial_physical_field_held_fixed_at_every_lead",
+    "rmse": "square_root_of_mean_squared_error_over_wet_cells_for_each_member",
+}
+_EXPECTED_TRUTH = {
+    "continuation_required": False,
+    "lead_matched_to_day": 2000,
+    "source": "trajectory_v3_store",
+}
+_REQUIRED_SOURCE_HASHES = frozenset(
+    {
+        "src/oceanfno/dataset.py",
+        "src/oceanfno/diagnostics.py",
+        "src/oceanfno/figures.py",
+        "src/oceanfno/model.py",
+        "src/oceanfno/plots.py",
+        "src/oceanfno/runtime.py",
+        "src/oceanfno/train.py",
+        "src/oceanfno/validation.py",
+    }
+)
+
+
+def _integer(value: Any, fallback: int = -1) -> int:
+    try:
+        if isinstance(value, bool):
+            return fallback
+        return int(value)
+    except (TypeError, ValueError):
+        return fallback
 
 def _read(contract: Mapping[str, Any], path: Sequence[str]) -> Any:
     value: Any = contract
@@ -232,51 +273,168 @@ def unfilled_fields(contract: Mapping[str, Any]) -> list[str]:
         if _read(contract, path) in (None, PENDING)
     ]
 
+
+def _training_provenance(contract: Mapping[str, Any]) -> None:
+    """Bind the figure declaration to the completed Y32 training report."""
+
+    selected = contract["selected_model"]
+    comparator = contract["comparator_model"]
+    artifacts = contract["artifacts"]
+    report_path = Path(str(artifacts["selected_report"].get("path", ""))).resolve()
+    if report_path.name != TRAINING_REPORT_NAME or not report_path.is_file():
+        raise BireY32FigureError("the selected report is not the completed Y32 report")
+    if _file_sha256(report_path) != artifacts["selected_report"].get("sha256"):
+        raise BireY32FigureError("the selected Y32 report hash changed")
+    report = json.loads(report_path.read_text())
+    published = report.get("published_checkpoint", {})
+    selected_checkpoint = artifacts["selected_checkpoint"]
+    normalization = artifacts["selected_normalization"]
+    if (
+        report.get("status") != "complete"
+        or report.get("version") != TRAINING_VERSION
+        or report.get("architecture") != selected.get("architecture")
+        or report.get("base_loss_contract_sha256")
+        != FINE_TUNE_LOSS_CONTRACT_SHA256
+        or _integer(published.get("optimizer_step"))
+        != _integer(selected.get("optimizer_step"))
+        or published.get("checkpoint") != selected_checkpoint.get("path")
+        or published.get("checkpoint_sha256") != selected_checkpoint.get("sha256")
+        or published.get("normalization") != normalization.get("path")
+        or published.get("normalization_sha256") != normalization.get("sha256")
+    ):
+        raise BireY32FigureError("the selected model disagrees with its Y32 report")
+
+    training_path = Path(str(selected.get("training_contract", ""))).resolve()
+    comparator_path = Path(str(comparator.get("training_contract", ""))).resolve()
+    if not training_path.is_file() or not comparator_path.is_file():
+        raise BireY32FigureError("a selected or comparator training contract is absent")
+    training = json.loads(training_path.read_text())
+    comparator_training = json.loads(comparator_path.read_text())
+    parent_checkpoint = training.get("sources", {}).get(
+        "initialization_checkpoint", {}
+    )
+    parent_normalization = training.get("sources", {}).get(
+        "parent_normalization", {}
+    )
+    if (
+        training.get("version") != TRAINING_VERSION
+        or training.get("architecture") != selected.get("architecture")
+        or comparator_training.get("version") != LOCAL24_TRAINING_VERSION
+        or comparator_training.get("architecture") != comparator.get("architecture")
+        or parent_checkpoint.get("path")
+        != artifacts["comparator_checkpoint"].get("path")
+        or parent_checkpoint.get("sha256")
+        != artifacts["comparator_checkpoint"].get("sha256")
+        or parent_normalization.get("sha256") != normalization.get("sha256")
+        or Path(str(normalization.get("path", ""))).name
+        != Y32_NORMALIZATION_NAME
+    ):
+        raise BireY32FigureError("the local24-to-Y32 training provenance changed")
+
+
 def load_contract(
     path: str | Path,
     *,
     verify_sources: bool = True,
 ) -> tuple[dict[str, Any], Path, str]:
-    """Load the figure contract frozen after training and before any inference metric."""
+    """Load and strictly audit the S0 Y32 held-evaluation declaration."""
 
     resolved = Path(path).resolve()
     contract = json.loads(resolved.read_text())
-    protocol = contract.get("protocol", {})
-    figure6 = contract.get("figure6", {})
-    selected = contract.get("selected_model", {})
     pending = unfilled_fields(contract)
     if pending:
-        raise BireProtocolRolloutFineTuneFigureError(
-            "the figure contract still carries post-training fields: "
+        raise BireY32FigureError(
+            "the Y32 figure contract still carries post-training fields: "
             + ", ".join(pending)
-            + " -- run `finalize` against the training report first"
+            + " -- run `finalize` against the Y32 report first"
         )
+
+    protocol = contract.get("protocol", {})
+    selected = contract.get("selected_model", {})
+    comparator = contract.get("comparator_model", {})
+    figure6 = contract.get("figure6", {})
+    output = contract.get("output", {})
+    dataset = contract.get("dataset", {})
+    expected_starts = tuple(int(value) for value in declared_inference_starts())
+    protocol_ok = (
+        _integer(protocol.get("member_count")) == MEMBER_COUNT
+        and _integer(protocol.get("start_seed")) == START_SEED
+        and tuple(protocol.get("start_draw_order", ())) == expected_starts
+        and tuple(protocol.get("regimes", ())) == REGIMES
+        and protocol.get("primary_regime") == "S0"
+        and tuple(protocol.get("figure_names", ())) == tuple(plots.FIGURE_NAMES)
+        and tuple(protocol.get("figure3_lead_days", ()))
+        == tuple(plots.FIGURE_3_LEADS)
+        and tuple(protocol.get("figure7_lead_days", ()))
+        == tuple(plots.FIGURE_7_LEADS)
+        and tuple(protocol.get("rmse_fields", ())) == tuple(plots.RMSE_FIELDS)
+        and tuple(protocol.get("acc_fields", ())) == tuple(plots.ACC_FIELDS)
+        and tuple(protocol.get("inference_set", ())) == (6200, 7200)
+        and tuple(protocol.get("start_window", ())) == (6200, 7000)
+        and _integer(protocol.get("maximum_lead_days")) == 2000
+        and _integer(protocol.get("prediction_interval_days")) == 10
+        and protocol.get("short_lead_days") == "0_to_200_inclusive_by_10"
+        and protocol.get("long_lead_days") == "0_to_2000_inclusive_by_10"
+    )
+    models_ok = (
+        selected.get("version") == TRAINING_VERSION
+        and comparator.get("version") == LOCAL24_TRAINING_VERSION
+        and _integer(selected.get("optimizer_step")) in CHECKPOINT_STEPS
+        and _integer(comparator.get("optimizer_step")) == COMPARATOR_STEP
+        and _integer(selected.get("rollout_steps")) == ROLLOUT_STEPS
+        and _integer(comparator.get("rollout_steps")) == ROLLOUT_STEPS
+        and selected.get("base_loss_contract_sha256")
+        == FINE_TUNE_LOSS_CONTRACT_SHA256
+        and comparator.get("base_loss_contract_sha256")
+        == FINE_TUNE_LOSS_CONTRACT_SHA256
+        and selected.get("architecture") == BireY32Architecture().to_dict()
+        and comparator.get("architecture") == BireLocal24Architecture().to_dict()
+    )
+    output_ok = (
+        output.get("project_root") == _EXPECTED_PROJECT_ROOT
+        and output.get("scratch_root") == _EXPECTED_SCRATCH_ROOT
+        and output.get("overwrite") is False
+        and output.get("one_folder_per_regime") is True
+        and tuple(output.get("required", ())) == _EXPECTED_OUTPUTS
+    )
     if (
         contract.get("version") != VERSION
         or contract.get("contract_status") != CONTRACT_STATUS
-        or contract.get("dataset", {}).get("version") != DATASET_VERSION
-        or int(protocol.get("member_count", -1)) != MEMBER_COUNT
-        or tuple(protocol.get("start_draw_order", ()))
-        != tuple(int(v) for v in declared_inference_starts())
-        or tuple(protocol.get("regimes", ())) != REGIMES
-        or protocol.get("primary_regime") != "S0"
-        or int(figure6.get("comparator_optimizer_step", -1)) != COMPARATOR_STEP
+        or dataset.get("version") != DATASET_VERSION
+        or tuple(dataset.get("train", ())) != (0, 6000)
+        or tuple(dataset.get("validation", ())) != (6000, 7200)
+        or tuple(dataset.get("inference", ())) != (6200, 7200)
+        or dataset.get("tau0_n_m2") != {"S0": 0.1}
+        or contract.get("baselines") != _EXPECTED_BASELINES
+        or contract.get("truth") != _EXPECTED_TRUTH
+        or not protocol_ok
+        or not models_ok
+        or not output_ok
+        or _integer(figure6.get("comparator_optimizer_step")) != COMPARATOR_STEP
         or figure6.get("literal_pretrain_finetune_pair") is not True
-        or int(selected.get("rollout_steps", -1)) != ROLLOUT_STEPS
-        or selected.get("base_loss_contract_sha256") != FINE_TUNE_LOSS_CONTRACT_SHA256
-        or contract.get("comparator_model", {}).get("base_loss_contract_sha256")
-        != MODEL_C_LOSS_V1_CONTRACT_SHA256
-        or int(selected.get("optimizer_step", -1)) not in CHECKPOINT_STEPS
     ):
-        raise BireProtocolRolloutFineTuneFigureError("rollout fine-tune figure contract changed")
+        raise BireY32FigureError("the Y32 S0 figure contract changed")
+    try:
+        BireY32Architecture(**selected["architecture"])
+        BireLocal24Architecture(**comparator["architecture"])
+        _training_provenance(contract)
+    except BireY32FigureError:
+        raise
+    except (KeyError, TypeError, ValueError, RuntimeError) as error:
+        raise BireY32FigureError(
+            "the selected or comparator Y32 figure provenance changed"
+        ) from error
     if verify_sources:
-        for label, specification in contract["artifacts"].items():
+        hashes = contract.get("source_hashes", {})
+        if not _REQUIRED_SOURCE_HASHES.issubset(hashes):
+            raise BireY32FigureError("the Y32 figure source declaration is incomplete")
+        for label, specification in contract.get("artifacts", {}).items():
             plots._verify_file(specification, label)
         root = resolved.parents[1]
-        for relative, expected in contract["source_hashes"].items():
+        for relative, expected in hashes.items():
             source = root / relative
             if not source.is_file() or _file_sha256(source) != expected:
-                raise BireProtocolRolloutFineTuneFigureError(f"source changed: {relative}")
+                raise BireY32FigureError(f"Y32 figure source changed: {relative}")
     return contract, resolved, _file_sha256(resolved)
 
 def _stepper(
@@ -287,35 +445,48 @@ def _stepper(
     wind_mean: float,
     wind_scale: float,
 ) -> BireAlignedStepper:
-    """Build one checkpoint's stepper against the objective declared for *it*.
+    """Build either Y32 or its local24 parent after identity checks."""
 
-    The suite's own ``_stepper`` checks every checkpoint against a single loss
-    hash.  That is right when both curves come from one run; here the comparator
-    is a three-step v1 model and the selected one is its six-step fine-tune, so
-    each is verified against the hash its own contract block declares.
-    """
-
-    record = contract["artifacts"][key]
-    payload = torch.load(Path(record["path"]), map_location=device, weights_only=False)
+    if torch is None:  # pragma: no cover - environment dependent
+        raise RuntimeError("Y32 figure evaluation requires PyTorch")
     if key == "selected_checkpoint":
         declared = contract["selected_model"]
-        expected_step = int(declared["optimizer_step"])
-    else:
+        expected_version = TRAINING_VERSION
+        architecture = BireY32Architecture(**declared["architecture"])
+        builder = build_bire_y32_model
+    elif key == "comparator_checkpoint":
         declared = contract["comparator_model"]
-        expected_step = COMPARATOR_STEP
-    architecture_dict = contract["selected_model"]["architecture"]
+        expected_version = LOCAL24_TRAINING_VERSION
+        architecture = BireLocal24Architecture(**declared["architecture"])
+        builder = build_bire_local24_model
+    else:
+        raise BireY32FigureError(f"unknown checkpoint key: {key}")
+    payload = torch.load(
+        Path(contract["artifacts"][key]["path"]),
+        map_location=device,
+        weights_only=False,
+    )
     if (
-        payload.get("architecture") != architecture_dict
-        or int(payload.get("optimizer_step", -1)) != expected_step
+        payload.get("version") != expected_version
+        or payload.get("architecture") != declared["architecture"]
+        or _integer(payload.get("optimizer_step"))
+        != _integer(declared.get("optimizer_step"))
         or payload.get("dataset_version") != DATASET_VERSION
-        or payload.get("base_loss_contract_sha256") != declared["base_loss_contract_sha256"]
-        or int(payload.get("rollout_steps", -1)) != int(declared["rollout_steps"])
+        or payload.get("base_loss_contract_sha256")
+        != declared["base_loss_contract_sha256"]
+        or _integer(payload.get("rollout_steps"))
+        != _integer(declared.get("rollout_steps"))
     ):
-        raise BireProtocolRolloutFineTuneFigureError(
-            f"{key} identity, dataset, or objective changed"
+        raise BireY32FigureError(
+            f"{key} identity, architecture, dataset, or objective changed"
         )
-    model = build_bire_aligned_model(BireAlignedArchitecture(**architecture_dict)).to(device)
-    model.load_state_dict(payload["model_state_dict"])
+    try:
+        model = builder(architecture).to(device)
+        incompatible = model.load_state_dict(payload["model_state_dict"], strict=True)
+    except (KeyError, TypeError, ValueError, RuntimeError) as error:
+        raise BireY32FigureError(f"{key} state dictionary changed") from error
+    if incompatible.missing_keys or incompatible.unexpected_keys:
+        raise BireY32FigureError(f"{key} did not load strictly")
     model.eval()
     with np.load(Path(contract["artifacts"]["selected_normalization"]["path"])) as artifact:
         mean = np.asarray(artifact["pointwise_mean"], dtype=np.float32)
@@ -418,39 +589,29 @@ class _S0Captions:
         plots.METHOD_LABELS = self._method_labels
 
 class FineTuneLabels(_S0Captions):
-    """The frozen captions, rewritten for a literal pre-train / fine-tune pair.
-
-    The suite rewrites ``S0 architecture-direction comparison`` into a
-    *training-progress* comparison, which is what an earlier arm's own-run
-    comparator was.  Here the two curves really are the model before and after
-    fine-tuning, so the caption says so.
-    """
+    """Label Figure 6 as the literal local24 / Y32 comparison."""
 
     def __init__(self, regime: str, tau0: float, selected_step: int) -> None:
         super().__init__(regime, tau0, selected_step)
+        replaced = {
+            "S0 architecture-direction comparison",
+            "Prior residual Model C",
+            "Selected anomaly-direct Model C",
+        }
         self.rules = (
             (
                 "S0 architecture-direction comparison",
-                f"{regime} three-step model vs six-step fine-tune",
+                f"{regime} local24 parent vs meridional-32 fine-tune",
             ),
             (
                 "Prior residual Model C",
-                f"Before fine-tuning (step {COMPARATOR_STEP:,})",
+                f"Local 3x3 + 24x24 modes (step {COMPARATOR_STEP:,})",
             ),
             (
                 "Selected anomaly-direct Model C",
-                f"After {ROLLOUT_STEPS}-step fine-tune (step {selected_step:,})",
+                f"Local 3x3 + 32x24 modes (step {selected_step:,})",
             ),
-            *(
-                rule
-                for rule in self.rules
-                if rule[0]
-                not in (
-                    "S0 architecture-direction comparison",
-                    "Prior residual Model C",
-                    "Selected anomaly-direct Model C",
-                )
-            ),
+            *(rule for rule in self.rules if rule[0] not in replaced),
         )
 
 def long_rollout_gate(
@@ -499,8 +660,9 @@ def long_rollout_gate(
         "advisory_day2000_rmse_ratio_to_climatology": collapse,
         "advisory_note": (
             "a ratio at or near 1.0 means the day-2,000 field is indistinguishable "
-            "from climatology; it is reported, not gated, because the arm "
-            "declaration does not require day-2,000 skill over persistence"
+            "from climatology; it is not gated, but is reported alongside "
+            "persistence and the anomaly diagnostics for the Y32 "
+            "keep-or-revert decision"
         ),
         "streamfunction_basis": (
             "member 0's day-2,000 barotropic streamfunction, the field figure 7 "
@@ -537,8 +699,8 @@ def acceptance_gate(contract: Mapping[str, Any], regime: str = "S0") -> dict[str
             "smoothing -- figures 3 and 7"
         ),
         "decision_note": (
-            "the arm declaration freezes this checkpoint and opens the adjoint "
-            "study after the evaluation regardless of whether this gate passes"
+            "these measurable diagnostics and visual inspection support the "
+            "keep-or-revert decision; this package promotes no checkpoint"
         ),
     }
     gate["content_sha256"] = _json_sha256(gate)
@@ -547,48 +709,24 @@ def acceptance_gate(contract: Mapping[str, Any], regime: str = "S0") -> dict[str
 def _readme(regime: str, report: Mapping[str, Any]) -> str:
     starts = declared_inference_starts()
     selected = int(report["selected_optimizer_step"])
-    return f"""# Six-step rollout fine-tune, {regime}: Figures 3--8
+    return f"""# Meridional-32 local Model C, {regime}: Figures 3--8
 
-This package evaluates the step-{selected:,} checkpoint of the six-step rollout
-fine-tune on the **{regime}** inference set (indices 6200--7199), tau0 =
-{report['tau0_n_m2']} N m-2.
+This held package evaluates the selected step-{selected:,} checkpoint of
+`{TRAINING_VERSION}` on the exact 15-member S0 inference protocol used for
+local24. The black Figure 6 curve is its literal step-{COMPARATOR_STEP:,}
+local24 parent; the red curve is the 32x24 fine-tune. Both retain the trained
+bias-free 49-to-46 local 3x3 path and the same six-step objective. Only four
+new meridional modes on each side were opened during fine-tuning; zonal modes
+remain fixed at 24.
 
-The fine-tune started from the step-{COMPARATOR_STEP:,} checkpoint of
-`model_c_bire_protocol_duration_v1` and continued for 3,840 steps at 2e-5 with
-the autoregressive rollout deepened from three ten-day calls to six and the
-rollout weight raised from 0.15 to 0.50. Architecture, normalization, split,
-Fourier modes, static inputs, positional encoding and the 46-channel output are
-unchanged, so this package and
-`outputs/af_fno/C/bire_protocol_duration_s0_figures_v1/S0/` differ only in the
-checkpoint: same 15 members, same seed, same lead grid, same truth window, same
-climatology and persistence baselines.
+Starts span {int(starts.min())}--{int(starts.max())}; every member has
+lead-matched truth through day 2,000. Climatology remains the pointwise
+{regime} training-block mean and persistence holds the initial physical state.
+The numerical reductions, plot functions, filenames and lead grid are reused
+unchanged from the preceding local24 package.
 
-The starts are drawn from 6200--6999, this draw spanning {int(starts.min())}--{int(starts.max())},
-so every member has lead-matched MITgcm truth to day 2,000
-({int(starts.max())} + 2000 = {int(starts.max()) + 2000} < 9000) from days 7200--8999, which the
-model never saw in any capacity.
-
-**Figure 6 is a literal pre-train / fine-tune pair.** The black curve is the
-step-{COMPARATOR_STEP:,} model the fine-tune started from; the red curve is the
-selected step-{selected:,} fine-tuned model. Both were trained on the same data in
-the same normalized coordinates by the same code path, so the gap between them
-is what deepening the rollout bought and nothing else. Every earlier package in
-this project could only offer a within-run training-progress comparison.
-
-The two checkpoints carry different objective hashes -- v1 over three steps for
-the comparator, the six-step contract for the selected model -- and each is
-verified against its own.
-
-Climatology is the pointwise {regime} mean over the Bire training block
-(0--5999) only. Persistence holds each member's initial physical field fixed.
-RMSE is computed over wet cells per member; lines and bands are the mean and
-10th/90th percentiles across the 15 members.
-
-The 2,000-day half of the final acceptance gate is written beside this folder as
-`{GATE_NAME}`.
-
-This is a held-evaluation package. It performs no training, no checkpoint
-selection, and promotes nothing.
+The measurable gate is written beside the S0 folder as `{GATE_NAME}`. This
+package performs no training, selection, or checkpoint promotion.
 
 Report content SHA-256: `{report['report_content_sha256']}`.
 """
@@ -605,16 +743,16 @@ def finalize(contract_path: str | Path) -> dict[str, Any]:
     contract = json.loads(resolved.read_text())
     report_path = Path(contract["artifacts"]["selected_report"]["path"])
     if not report_path.is_file():
-        raise BireProtocolRolloutFineTuneFigureError(
+        raise BireY32FigureError(
             f"the training report is not on disk yet: {report_path}"
         )
     if report_path.name != TRAINING_REPORT_NAME:
-        raise BireProtocolRolloutFineTuneFigureError(
+        raise BireY32FigureError(
             f"the declared report is not {TRAINING_REPORT_NAME}"
         )
     report = json.loads(report_path.read_text())
     if report.get("version") not in ACCEPTED_TRAINING_REPORT_VERSIONS:
-        raise BireProtocolRolloutFineTuneFigureError("the report is not this arm's")
+        raise BireY32FigureError("the report is not this arm's")
     published = report["published_checkpoint"]
     resolutions = {
         ("selected_model", "optimizer_step"): int(published["optimizer_step"]),
@@ -626,7 +764,7 @@ def finalize(contract_path: str | Path) -> dict[str, Any]:
     for path, value in resolutions.items():
         current = _read(contract, path)
         if current not in (None, PENDING) and current != value:
-            raise BireProtocolRolloutFineTuneFigureError(
+            raise BireY32FigureError(
                 f"{'.'.join(path)} is already {current!r}, not {value!r}; "
                 "refusing to overwrite a filled contract field"
             )
@@ -641,7 +779,7 @@ def finalize(contract_path: str | Path) -> dict[str, Any]:
         ("selected_normalization", published["normalization"]),
     ):
         if contract["artifacts"][key]["path"] != declared:
-            raise BireProtocolRolloutFineTuneFigureError(
+            raise BireY32FigureError(
                 f"{key} path disagrees with the training report: "
                 f"{contract['artifacts'][key]['path']} vs {declared}"
             )
@@ -707,7 +845,7 @@ def run(contract_path: str | Path, *, device_name: str = "auto") -> dict[str, An
         try:
             scratch_arrays = scratch_tmp / plots.ARRAYS_NAME
             np.savez_compressed(scratch_arrays, **arrays)
-            with _S0Captions(
+            with FineTuneLabels(
                 regime,
                 float(contract["dataset"]["tau0_n_m2"][regime]),
                 int(contract["selected_model"]["optimizer_step"]),

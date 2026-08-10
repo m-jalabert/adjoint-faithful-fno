@@ -1,4 +1,4 @@
-"""Tests for the six-step rollout fine-tuning arm.
+"""Tests for the canonical meridional-32 continuation of the local24 arm.
 
 Three things here are worth more than the rest.
 
@@ -26,7 +26,6 @@ from pathlib import Path
 
 import pytest
 
-from oceanfno import validation as protocol
 from oceanfno.objective import (
     MODEL_C_LOSS_V1_CONTRACT_SHA256,
     ModelCLossConfig,
@@ -38,13 +37,14 @@ from oceanfno.train import (
     BOUNDARY_WEIGHT,
     CHECKPOINT_STEPS,
     CONTRACT_STATUS,
-    DECLARED_CHANGES,
     FINE_TUNE_LOSS_CONTRACT_SHA256,
-    HELD_TRAINING_FIELDS,
     INCREMENT_WEIGHT,
     LEARNING_RATE,
+    LOCAL_KERNEL_SIZE,
     MAXIMUM_STEPS,
+    MODE_MIGRATION,
     PARENT_VERSION,
+    PARENT_MODES,
     ROLLOUT_STEPS,
     ROLLOUT_WEIGHT,
     SPECTRAL_WEIGHT,
@@ -54,6 +54,8 @@ from oceanfno.train import (
     WORST_LONG_RATIO_CEILING,
     BireProtocolRolloutFineTuneError,
     BireProtocolRolloutFineTuneLossConfig,
+    BireY32TrainingError,
+    Y32_MODES,
     _readme,
     acceptance_gate,
     baseline_validation_summary,
@@ -64,11 +66,21 @@ from oceanfno.train import (
 )
 
 ROOT = Path(__file__).resolve().parents[1]
-CONTRACT = ROOT / "config/model_c_bire_protocol_rollout_ft_v2.json"
-PARENT = ROOT / "archive/config/model_c_bire_protocol_duration_v1.json"
+CONTRACT = ROOT / "config/model_c_bire_protocol_rollout_ft_local24_y32_v1.json"
+PARENT = ROOT / "config/model_c_bire_protocol_rollout_ft_local24_v1.json"
 SBATCH = ROOT / "slurm/models/c/train.sbatch"
 
 torch = pytest.importorskip("torch", reason="the objective algebra needs PyTorch")
+
+
+def _portable_state_dict(model) -> dict:
+    """Mirror the checkpoint writer without coupling this test to its helper."""
+
+    return {
+        key: value.detach().clone()
+        for key, value in model.state_dict().items()
+        if key != "_metadata"
+    }
 
 
 def _tampered(mutate, directory: Path) -> Path:
@@ -230,6 +242,124 @@ def test_the_rollout_term_is_not_the_three_step_one() -> None:
 
 
 # --------------------------------------------------------------------------
+# The active Y32 architecture and exact local24 warm migration
+# --------------------------------------------------------------------------
+
+
+def test_y32_has_32_meridional_modes_and_the_trained_local_branch() -> None:
+    pytest.importorskip("neuralop")
+    from oceanfno.model import BireY32Architecture, build_bire_y32_model
+
+    architecture = BireY32Architecture()
+    assert architecture.n_modes == Y32_MODES == (32, 24)
+    assert architecture.local_kernel_size == 3
+    model = build_bire_y32_model(architecture)
+
+    convolutions = model.fno.fno_blocks.convs
+    assert len(convolutions) == 3
+    for index, convolution in enumerate(convolutions):
+        assert tuple(convolution.n_modes) == (32, 13), index
+        weight = model.state_dict()[
+            f"fno.fno_blocks.convs.{index}.weight.tensor"
+        ]
+        assert tuple(weight.shape) == (128, 128, 32, 13)
+
+    local = model.local
+    assert tuple(local.weight.shape) == (46, 49, 3, 3)
+    assert local.padding == (1, 1)
+    assert local.bias is None
+    assert sum(parameter.numel() for parameter in model.parameters()) == 21_005_164
+
+
+def test_y32_migration_is_centered_strict_and_bitwise_function_preserving() -> None:
+    pytest.importorskip("neuralop")
+    from oceanfno.model import (
+        BireLocal24Architecture,
+        BireY32Architecture,
+        build_bire_local24_model,
+        build_bire_y32_model,
+        migrate_local24_state_dict,
+    )
+
+    torch.manual_seed(19)
+    parent = build_bire_local24_model(BireLocal24Architecture()).eval()
+    # A real retained parent has a trained, nonzero local correction.  Seeding
+    # it here catches a migration that silently re-zeroes that learned branch.
+    with torch.no_grad():
+        parent.local.weight.normal_(mean=0.0, std=0.02)
+    parent_state = _portable_state_dict(parent)
+    parent_before = {key: value.clone() for key, value in parent_state.items()}
+    target = build_bire_y32_model(BireY32Architecture()).eval()
+    result = migrate_local24_state_dict(parent_state, target)
+    state = result["state_dict"]
+    provenance = result["provenance"]
+
+    assert provenance["source_n_modes_tensor_order_y_x"] == [24, 24]
+    assert provenance["target_n_modes_tensor_order_y_x"] == [32, 24]
+    assert len(provenance["spectral_expansions"]) == 3
+    assert all(
+        record["copied_meridional_slice"] == [4, 28]
+        for record in provenance["spectral_expansions"]
+    )
+    assert provenance["strict_load"] is True
+    assert provenance["missing_keys"] == []
+    assert provenance["unexpected_keys"] == []
+    assert provenance["initial_map_preserved_by_centered_zero_extension"] is True
+
+    target_keys = {key for key in target.state_dict() if key != "_metadata"}
+    assert set(state) == set(parent_state) == target_keys
+    spectral = {
+        f"fno.fno_blocks.convs.{index}.weight.tensor" for index in range(3)
+    }
+    for key, parent_value in parent_state.items():
+        if key not in spectral:
+            assert torch.equal(state[key], parent_value), key
+    for key in spectral:
+        assert tuple(parent_state[key].shape) == (128, 128, 24, 13)
+        assert tuple(state[key].shape) == (128, 128, 32, 13)
+        assert torch.equal(state[key][..., 4:28, :], parent_state[key]), key
+        assert torch.count_nonzero(state[key][..., :4, :]).item() == 0, key
+        assert torch.count_nonzero(state[key][..., 28:, :]).item() == 0, key
+    assert torch.count_nonzero(parent_state["local.weight"]).item() > 0
+    assert torch.equal(state["local.weight"], parent_state["local.weight"])
+    assert all(torch.equal(parent_state[key], parent_before[key]) for key in parent_state)
+
+    target.load_state_dict(state, strict=True)
+    features = torch.randn(1, 49, 62, 62)
+    with torch.inference_mode():
+        expected = parent(features)
+        actual = target(features)
+    assert torch.equal(actual, expected)
+
+
+def test_y32_migration_rejects_missing_unexpected_and_wrong_shape_state() -> None:
+    pytest.importorskip("neuralop")
+    from oceanfno.model import (
+        BireAlignedFullStateError,
+        BireLocal24Architecture,
+        BireY32Architecture,
+        build_bire_local24_model,
+        build_bire_y32_model,
+        migrate_local24_state_dict,
+    )
+
+    parent = build_bire_local24_model(BireLocal24Architecture())
+    state = _portable_state_dict(parent)
+    target = build_bire_y32_model(BireY32Architecture())
+    spectral = "fno.fno_blocks.convs.0.weight.tensor"
+
+    missing = dict(state)
+    missing.pop("fno.projection.fcs.1.bias")
+    unexpected = dict(state)
+    unexpected["undeclared.weight"] = torch.zeros(1)
+    wrong_shape = dict(state)
+    wrong_shape[spectral] = state[spectral][..., :23, :]
+    for tampered in (missing, unexpected, wrong_shape):
+        with pytest.raises(BireAlignedFullStateError):
+            migrate_local24_state_dict(tampered, target)
+
+
+# --------------------------------------------------------------------------
 # The contract
 # --------------------------------------------------------------------------
 
@@ -240,25 +370,20 @@ def test_the_contract_moves_only_the_declared_quantities() -> None:
     parent = json.loads(PARENT.read_text())
     assert contract["version"] == VERSION != parent["version"]
     assert contract["contract_status"] == CONTRACT_STATUS
-    assert contract["architecture"] == parent["architecture"]
-    assert contract["dataset"] == parent["dataset"]
-    assert contract["normalization"] == parent["normalization"]
-    assert contract["checkpoint_selection"] == parent["checkpoint_selection"]
-    for field in HELD_TRAINING_FIELDS:
-        assert contract["training"][field] == parent["training"][field], field
-    for field, (before, after) in DECLARED_CHANGES.items():
-        assert parent["training"][field] == before, field
-        assert contract["training"][field] == after, field
-    moved = {
+    for field in ("dataset", "normalization", "training", "loss", "checkpoint_selection"):
+        assert contract[field] == parent[field], field
+
+    architecture_changes = {
         field
-        for field in set(contract["training"]) & set(parent["training"])
-        if contract["training"][field] != parent["training"][field]
+        for field in set(contract["architecture"]) | set(parent["architecture"])
+        if contract["architecture"].get(field) != parent["architecture"].get(field)
     }
-    assert set(DECLARED_CHANGES) <= moved
-    # Nothing outside the declared changes plus the bookkeeping fields moved.
-    assert moved - set(DECLARED_CHANGES) <= {
-        "records", "exposure_budget", "from_scratch", "checkpoint_steps",
-    }
+    assert architecture_changes == {"n_modes"}
+    assert tuple(parent["architecture"]["n_modes"]) == PARENT_MODES == (24, 24)
+    assert tuple(contract["architecture"]["n_modes"]) == Y32_MODES == (32, 24)
+    assert parent["architecture"]["local_kernel_size"] == (
+        contract["architecture"]["local_kernel_size"]
+    ) == LOCAL_KERNEL_SIZE == 3
 
 
 @pytest.mark.skipif(not CONTRACT.is_file(), reason="the fine-tune contract is absent")
@@ -283,24 +408,31 @@ def test_the_optimizer_matches_the_declaration() -> None:
 
 
 @pytest.mark.skipif(not CONTRACT.is_file(), reason="the fine-tune contract is absent")
-def test_the_initialization_is_the_step_15360_checkpoint_weights_only() -> None:
+def test_initialization_is_the_local24_checkpoint_with_centered_zero_extension() -> None:
     contract, _, _ = load_contract(CONTRACT, verify_sources=False)
     initialization = contract["initialization"]
     assert initialization["version"] == PARENT_VERSION
-    assert int(initialization["optimizer_step"]) == BASELINE_OPTIMIZER_STEP == 15360
+    assert int(initialization["optimizer_step"]) == BASELINE_OPTIMIZER_STEP == 3840
     assert initialization["load_only"] == "model_state_dict"
     assert initialization["optimizer_state_loaded"] is False
     assert initialization["normalization_reused"] is True
     assert contract["training"]["from_scratch"] is False
     assert contract["training"]["load_optimizer_state"] is False
-    assert initialization["checkpoint"].endswith("bire_protocol_duration_v1/selected.pt")
+    assert initialization["checkpoint"].endswith(
+        "bire_protocol_rollout_ft_local24_v1/selected.pt"
+    )
+    assert initialization["mode_migration"] == MODE_MIGRATION
+    assert initialization["local_branch_initialization"] == "copied_from_parent"
+    assert initialization["local_branch_bias"] is False
     assert (
         contract["sources"]["initialization_checkpoint"]["path"]
         == initialization["checkpoint"]
     )
     assert (
         contract["sources"]["parent_normalization"]["path"]
-        .endswith("model_c_bire_protocol_duration_train_only_normalization.npz")
+        .endswith(
+            "model_c_bire_protocol_rollout_ft_local24_train_only_normalization.npz"
+        )
     )
 
 
@@ -311,27 +443,22 @@ def test_the_loss_block_declares_the_six_step_objective() -> None:
     loss = contract["loss"]
     assert loss["contract_sha256"] == FINE_TUNE_LOSS_CONTRACT_SHA256
     assert loss["derived_from_contract_sha256"] == MODEL_C_LOSS_V1_CONTRACT_SHA256
-    assert int(loss["rollout_steps"]) == 6 and int(parent["loss"]["rollout_steps"]) == 3
-    moved = {
-        key
-        for key, value in loss["coefficients"].items()
-        if parent["loss"]["coefficients"][key] != value
-    }
-    assert moved == {"rollout"}
+    assert int(loss["rollout_steps"]) == int(parent["loss"]["rollout_steps"]) == 6
+    assert loss == parent["loss"]
     assert loss["coefficients"]["rollout"] == 0.50
     assert loss["state"] == parent["loss"]["state"]
 
 
 @pytest.mark.skipif(not CONTRACT.is_file(), reason="the fine-tune contract is absent")
-def test_outputs_do_not_collide_with_anything_already_published() -> None:
+def test_completed_outputs_are_pinned_and_a_rerun_would_be_refused() -> None:
     contract, _, _ = load_contract(CONTRACT, verify_sources=False)
-    for key in ("scratch_root", "project_root"):
-        root = contract["output"][key]
-        assert root.endswith("bire_protocol_rollout_ft_v2")
-        assert not Path(root).exists(), "a re-run would refuse to overwrite this"
-    superseded = contract["supersedes"]
-    assert superseded["version"] == "model_c_bire_protocol_rollout_ft_v1"
-    assert len(superseded["contract_sha256"]) == 64
+    scratch = Path(contract["output"]["scratch_root"])
+    project = Path(contract["output"]["project_root"])
+    assert scratch.name == project.name == "bire_protocol_rollout_ft_local24_y32_v1"
+    assert (scratch / "selected.pt").is_file()
+    assert (project / "manifest.json").is_file()
+    assert scratch.exists(), "the completed scratch root is the overwrite guard"
+    assert project != Path(json.loads(PARENT.read_text())["output"]["project_root"])
 
 
 
@@ -339,32 +466,38 @@ def test_outputs_do_not_collide_with_anything_already_published() -> None:
 @pytest.mark.parametrize(
     "mutate",
     [
-        pytest.param(lambda c: c["training"].update(batch_size=8), id="batch_reverted"),
-        pytest.param(lambda c: c["training"].update(rollout_steps=3), id="depth_reverted"),
-        pytest.param(lambda c: c["training"].update(seed=1), id="seed_moved"),
-        pytest.param(lambda c: c["training"].update(weight_decay=0.01), id="decay_added"),
-        pytest.param(lambda c: c["training"].update(adam_betas=[0.9, 0.999]), id="betas_moved"),
-        pytest.param(lambda c: c["loss"].update(contract_sha256="0" * 64), id="objective_moved"),
-        pytest.param(
-            lambda c: c["loss"]["coefficients"].update(boundary=0.1), id="second_coefficient_moved"
-        ),
         pytest.param(
             lambda c: c["architecture"].update(hidden_channels=64), id="architecture_moved"
         ),
         pytest.param(
-            lambda c: c["normalization"].update(recomputed_from="something_else"),
-            id="normalizers_moved",
+            lambda c: c["architecture"].update(n_modes=[24, 24]),
+            id="meridional_modes_reverted",
         ),
         pytest.param(
-            lambda c: c["initialization"].update(optimizer_step=11520), id="initialization_moved"
+            lambda c: c["architecture"].update(n_modes=[24, 32]),
+            id="axis_order_reversed",
         ),
         pytest.param(
-            lambda c: c["training"].update(load_optimizer_state=True), id="optimizer_state_loaded"
+            lambda c: c["architecture"].update(local_kernel_size=None), id="local_removed"
+        ),
+        pytest.param(
+            lambda c: c["initialization"].update(
+                mode_migration="prefix_copy_into_first_24_meridional_indices"
+            ),
+            id="uncentered_migration",
+        ),
+        pytest.param(
+            lambda c: c["initialization"].update(local_branch_initialization="zeros"),
+            id="trained_local_branch_zeroed",
+        ),
+        pytest.param(
+            lambda c: c["training"].update(load_optimizer_state=True),
+            id="optimizer_state_loaded",
         ),
     ],
 )
 def test_a_tampered_contract_is_rejected(mutate, tmp_path) -> None:
-    with pytest.raises(BireProtocolRolloutFineTuneError):
+    with pytest.raises(BireY32TrainingError):
         load_contract(_tampered(mutate, tmp_path), verify_sources=False)
 
 
@@ -405,7 +538,7 @@ def _summary(step: int, short: float, long: float) -> dict:
 
 
 def test_the_acceptance_gate_reads_both_conditions() -> None:
-    baseline = _summary(15360, 1.0, 0.93)
+    baseline = _summary(BASELINE_OPTIMIZER_STEP, 1.0, 0.93)
     passing = acceptance_gate(_summary(3840, 0.95, 0.80), baseline)
     assert passing["short_auc_no_field_worsens_by_more_than_5_percent"]
     assert passing["worst_long_ratio_at_or_below_ceiling"]
@@ -424,12 +557,25 @@ def test_the_acceptance_gate_reads_both_conditions() -> None:
     assert not long_breach["validation_conditions_pass"]
     assert "2000_day_all_values_finite" in long_breach["deferred_to_the_figure_package"]
 
+    # Passing the absolute 0.85 ceiling is insufficient if the architecture
+    # fine-tune regresses against its archived six-step parent.
+    stronger_parent = _summary(BASELINE_OPTIMIZER_STEP, 1.0, 0.70)
+    parent_breach = acceptance_gate(_summary(3840, 0.95, 0.80), stronger_parent)
+    assert parent_breach["worst_long_ratio_at_or_below_ceiling"]
+    assert not parent_breach["worst_long_ratio_no_worse_than_parent"]
+    assert not parent_breach["validation_conditions_pass"]
 
-def test_the_baseline_summary_must_be_the_step_15360_one() -> None:
-    report = {"validation_summaries": [_summary(11520, 1.0, 1.0), _summary(15360, 0.9, 0.93)]}
-    assert baseline_validation_summary(report)["optimizer_step"] == 15360
+
+def test_the_baseline_summary_must_be_the_parent_step_3840_one() -> None:
+    report = {
+        "validation_summaries": [
+            _summary(1920, 1.0, 1.0),
+            _summary(BASELINE_OPTIMIZER_STEP, 0.9, 0.93),
+        ]
+    }
+    assert baseline_validation_summary(report)["optimizer_step"] == BASELINE_OPTIMIZER_STEP
     with pytest.raises(BireProtocolRolloutFineTuneError):
-        baseline_validation_summary({"validation_summaries": [_summary(11520, 1.0, 1.0)]})
+        baseline_validation_summary({"validation_summaries": [_summary(1920, 1.0, 1.0)]})
 
 
 def _report() -> dict:
@@ -441,6 +587,7 @@ def _report() -> dict:
     selected = summaries[-1]
     return {
         "content_sha256": "a" * 64,
+        "parameter_count": 21_005_164,
         "optimizer": {"decay_step": 2880},
         "counts": {
             "training_rollout_records": TRAINING_RECORDS,
@@ -465,18 +612,17 @@ def test_the_readme_renders_before_the_job_is_ever_submitted() -> None:
     """Regression guard: the duration arm lost a finished job to a README KeyError."""
 
     text = _readme(_report())
-    assert "Six-step rollout fine-tune" in text
+    assert "Canonical meridional-32" in text
     assert f"{BASELINE_OPTIMIZER_STEP:,}" in text
     assert "Selected step 3,840" in text and "primary_rule" in text
-    assert "17,820" in text and "5,940" in text and "5,939" in text
-    assert FINE_TUNE_LOSS_CONTRACT_SHA256 in text
-    assert "2e-05" in text or "2.0e-05" in text or "2e-5" in text
+    assert "21,005,164" in text
     for step in CHECKPOINT_STEPS:
         assert f"{step:,}" in text
-    flat = " ".join(text.split())          # the sentences wrap across lines
-    assert "no teacher forcing after the initial state" in flat
-    assert "reused from the parent package rather than recomputed" in flat
-    for stale in ("7,680", "from scratch", "three-step rollout"):
+    flat = " ".join(text.split())
+    assert "24 x 24 to 32 x 24" in flat
+    assert "embedded in indices 4:28" in flat
+    assert "local 3 x 3 branch is copied unchanged" in flat
+    for stale in ("7,680", "from scratch", "24 x 16", "zero-initialized local"):
         assert stale not in text
 
 
@@ -501,7 +647,7 @@ def test_artifact_names_are_distinct_and_name_this_arm() -> None:
                                        "NORMALIZATION_NAME", "DIVERGENCE_NAME",
                                        "CHECKPOINT_STEM")]
     assert len(set(names)) == len(names)
-    assert all("rollout_ft" in n for n in names)
+    assert all("rollout_ft_local24_y32" in n for n in names)
     checkpoints = {f"{arm.CHECKPOINT_STEM}_{s:05d}.pt" for s in CHECKPOINT_STEPS}
     assert len(checkpoints) == len(CHECKPOINT_STEPS)
 
@@ -516,8 +662,7 @@ def test_launcher_invokes_its_own_module_and_contract() -> None:
         if " -m " in f" {line} " and "oceanfno." in line
     }
     assert invoked == {"oceanfno.train"}
-    assert "model_c_bire_protocol_rollout_ft_v2.json" in text
-    assert "_v1.json" not in text
+    assert "model_c_bire_protocol_rollout_ft_local24_y32_v1.json" in text
 
 
 def test_the_package_carries_no_module_rebinding_machinery() -> None:
@@ -534,4 +679,6 @@ def test_the_package_carries_no_module_rebinding_machinery() -> None:
         assert not hasattr(module, "_ParentBinding")
         assert not hasattr(module, "_SuiteBinding")
         assert not hasattr(module, "PARENT_BINDINGS")
-
+        assert not hasattr(module, "_y32_runner")
+        assert not hasattr(module, "_y32_figures_runner")
+        assert not hasattr(module, "_y32_anomaly_runner")

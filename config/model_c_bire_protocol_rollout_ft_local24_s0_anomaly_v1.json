@@ -6,11 +6,11 @@
       "sha256": "766cae89359311775c79103f44dc74630630ba6b7a0a8c6e9d26f73487512136"
     },
     "figure_package_arrays": {
-      "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/bire_protocol_rollout_ft_s0_figures_v1/S0/model_c_bire_s0_figures_arrays.npz",
-      "sha256": "b531630753b8f6623a0dc1488609a5df08b6d4fcac28b2c225cb54fd2390cf34"
+      "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/bire_protocol_rollout_ft_local24_s0_figures_v1/S0/model_c_bire_s0_figures_arrays.npz",
+      "sha256": "4dc1ae86415496c9b7772b54ddb81b2e318a60082e03755d1a83e1e68a4295c4"
     }
   },
-  "contract_status": "frozen_after_the_rollout_ft_figure_package_and_before_any_anomaly_metric",
+  "contract_status": "frozen_after_the_rollout_ft_local24_figure_package_and_before_any_anomaly_metric",
   "dataset": {
     "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/trajectories_v3.zarr",
     "tau0_n_m2": {
@@ -26,7 +26,7 @@
   "output": {
     "one_folder_per_regime": true,
     "overwrite": false,
-    "project_root": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/bire_protocol_rollout_ft_s0_anomaly_v2",
+    "project_root": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/bire_protocol_rollout_ft_local24_s0_anomaly_v1",
     "required": [
       "model_c_bire_figure3a_streamfunction_anomaly_1deg_s0_dt10.png",
       "model_c_bire_figure7a_streamfunction_anomaly_day060_day2000_s0.png",
@@ -36,7 +36,7 @@
       "README.md",
       "manifest.json"
     ],
-    "scratch_root": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/bire_protocol_rollout_ft_s0_anomaly_v2"
+    "scratch_root": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/bire_protocol_rollout_ft_local24_s0_anomaly_v1"
   },
   "protocol": {
     "colour_bar_label": "Barotropic streamfunction anomaly psi' (Sv)",
@@ -54,6 +54,12 @@
     "figure_names": [
       "model_c_bire_figure3a_streamfunction_anomaly_1deg_s0_dt10.png",
       "model_c_bire_figure7a_streamfunction_anomaly_day060_day2000_s0.png"
+    ],
+    "day2000_structure_diagnostics": [
+      "anomaly_rms_ratio",
+      "amplitude_normalized_meridional_and_zonal_first_difference_rms",
+      "hann_directional_power_fraction_above_0p2_cycles_per_cell",
+      "western_first_4_wet_cells_rms_and_boundary_to_interior_ratio"
     ],
     "member": 0,
     "member_note": "the_same_member_figures_3_and_7_plot",
@@ -90,19 +96,20 @@
   },
   "retained_on_the_total_field": {
     "acceptance_gate_unaffected": true,
-    "day2000_streamfunction_minimum_sv": -32.89970397949219,
-    "reason": "a_diagnostic_of_mean_circulation_intensity_not_of_variability_so_it_stays_defined_on_the_total_field"
+    "measurement_source": "bire_protocol_rollout_ft_local24_acceptance_gate.json",
+    "quantity": "day2000_streamfunction_minimum_sv",
+    "reason": "anomaly_subtraction_does_not_change_total_field_diagnostics"
   },
   "source_hashes": {
-    "src/oceanfno/anomaly.py": "e89b85466c0e0c9887ee482912f0bf894512121db6406a1afac28a778f3caa62",
+    "src/oceanfno/anomaly.py": "4c2f849f1b2a323b3203ffbc34d161dad59fffa5b454e141bd6d87ea8af9644b",
     "src/oceanfno/dataset.py": "39ae79be3cbee5ead62c51c900679d3eef562a816faaf06cadbc0968dd3d4f00",
     "src/oceanfno/diagnostics.py": "cbd2fac4af73441b0a3c45a0e339b71e6bd2ccbe2631b0881be38adcc06d2ef6",
-    "src/oceanfno/figures.py": "8e788660782f8957f5557d3a3018e1a923f6087b8ea2d32ca56b4725e874b45f",
-    "src/oceanfno/model.py": "bc942d5f142b8f6f89def2298e83e5cc7604caa13a7611cf57fbb3080a5fed07",
+    "src/oceanfno/figures.py": "56cf5cafc7d46cc3a79db39c1de1d179607316d091a66d1546915d0de5654d5b",
+    "src/oceanfno/model.py": "0ae43dc3f82b8065d06e19134f0faaedf88b1a01c79f8abcdffc217431e726bf",
     "src/oceanfno/objective.py": "be64f0b9261afeb27236b1efef8f96203af03241e75e5caeacc190eb1d55ee9d",
     "src/oceanfno/plots.py": "84a39e112fe6bfbddfdcff8ff102ed6cb9fb04ea0370eecad99fc55a1dd1be3a",
     "src/oceanfno/runtime.py": "c9d267eb708f6d1f89a72078b43e37dab2fb679d66e093371d1bb75f1c5ec20c",
-    "src/oceanfno/train.py": "9757ed13646e9358bec599c8df33732e5a087fe5f21a2d7f80741562741c95d6",
+    "src/oceanfno/train.py": "32e73df9db34bdba3289d3490d9c2eb2d71de93e5149e2ed9ce7b991e8f9c805",
     "src/oceanfno/validation.py": "4e77ae77547463ad82804fc599c27da15714d788f3c24a48e754eb08ad14df36"
   },
   "supersedes": {
@@ -113,5 +120,5 @@
     "published_artifacts_were_produced_under": "model_c_bire_protocol_rollout_ft_s0_anomaly_v1",
     "version": "model_c_bire_protocol_rollout_ft_s0_anomaly_v1"
   },
-  "version": "model_c_bire_protocol_rollout_ft_s0_anomaly_v2"
+  "version": "model_c_bire_protocol_rollout_ft_local24_s0_anomaly_v1"
 }

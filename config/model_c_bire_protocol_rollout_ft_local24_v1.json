@@ -13,11 +13,11 @@
     "in_channels": 49,
     "lifting_channel_ratio": 2,
     "lifting_in_channels": 51,
-    "local_kernel_size": null,
+    "local_kernel_size": 3,
     "n_layers": 3,
     "n_modes": [
       24,
-      16
+      24
     ],
     "out_channels": 46,
     "pointwise_layer_norm": true,
@@ -31,42 +31,20 @@
     "layer_norm": "channel_wise_at_every_grid_point_over_the_128_hidden_channels_with_epsilon_1e_minus_5_after_spectral_mixing_and_after_channel_mixing",
     "layer_norm_modules": 6,
     "lifting": "two_layer_pointwise_51_to_256_to_128_with_GELU_between",
-    "map": "49_append_position_51_lift_256_to_128_three_FNO_blocks_project_256_to_46",
+    "map": "49_append_position_51_lift_256_to_128_three_FNO_blocks_project_256_to_46_plus_zero_initialized_bias_free_49_to_46_3x3_local_branch",
     "non_linearity": "neuraloperator_applies_GELU_between_blocks_and_not_after_the_final_block_which_is_unchanged_from_every_earlier_arm_in_this_project",
     "prediction": "direct_normalized_future_state_not_an_increment",
     "projection": "two_layer_pointwise_128_to_256_to_46_with_GELU_after_the_first",
-    "removed_residual": "only_the_external_raw_input_51_to_46_convolution_around_the_whole_FNO_is_removed",
+    "local_residual": "bias_free_49_to_46_3x3_convolution_zero_initialized_for_a_function_preserving_warm_start",
     "retained_residual": "the_pointwise_W_h_path_inside_each_spectral_block_is_neuraloperator_fno_skip_linear_and_is_kept"
   },
   "changed_relative_to_the_initialization": {
-    "decay_step_consequence": {
-      "note": "decay_fraction_is_held_at_0.75_so_the_schedule_shape_is_preserved",
-      "parent": 11520,
-      "this_arm": 2880
+    "declared_architecture_changes": {
+      "local_kernel_size": {"parent": null, "this_arm": 3},
+      "n_modes_tensor_order_YX": {"parent": [24, 16], "this_arm": [24, 24]}
     },
-    "declared_changes": {
-      "batch_size": {
-        "parent": 8,
-        "this_arm": 4
-      },
-      "initial_learning_rate": {
-        "parent": 0.0005,
-        "this_arm": 2e-05
-      },
-      "maximum_steps": {
-        "parent": 15360,
-        "this_arm": 3840
-      },
-      "rollout_steps": {
-        "parent": 3,
-        "this_arm": 6
-      }
-    },
-    "everything_else": "asserted_field_by_field_against_the_parent_contract_at_load_time",
-    "rollout_weight": {
-      "parent": 0.15,
-      "this_arm": 0.5
-    }
+    "function_preserving_migration": "copy_each_parent_24x9_real_fft_tensor_into_the_first_9_of_13_coefficients_zero_the_4_new_coefficients_and_zero_the_bias_free_local_branch",
+    "everything_else": "dataset_normalization_training_loss_optimizer_schedule_seed_and_selection_are_asserted_equal_to_the_parent_contract_at_load_time"
   },
   "checkpoint_selection": {
     "constraint": "AUC_10:90(RMSE_q) <= 1.05 * min over checkpoints of AUC_10:90(RMSE_q), for every primary field",
@@ -145,7 +123,7 @@
       },
       "long_validation": "worst_90_360_day_climatology_ratio_at_or_below_0.85",
       "not_required": "the_day_2000_trajectory_RMSE_need_not_beat_persistence",
-      "short": "no_10_90_day_field_AUC_worsens_by_more_than_5_percent_relative_to_the_step_15360_selected_model",
+      "short": "no_10_90_day_field_AUC_worsens_by_more_than_5_percent_relative_to_the_selected_six_step_parent",
       "visual": "western_boundary_sharp_gyre_structure_identifiable_no_basin_wide_smoothing"
     },
     "figures": [
@@ -175,14 +153,17 @@
     "split_module": "src/bire_repro/af_bire_protocol_split.py"
   },
   "initialization": {
-    "checkpoint": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/bire_protocol_duration_v1/selected.pt",
+    "checkpoint": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/bire_protocol_rollout_ft_v1/selected.pt",
+    "local_branch_bias": false,
+    "local_branch_initialization": "zeros",
     "load_only": "model_state_dict",
     "normalization_reason": "the_fine_tuned_weights_must_see_the_same_normalized_coordinates_as_the_weights_they_start_from",
     "normalization_reused": true,
     "optimizer_state_loaded": false,
-    "optimizer_state_reason": "the_adam_second_moments_were_accumulated_under_the_three_step_objective_at_5e-4_and_carry_that_objectives_curvature_estimate",
-    "optimizer_step": 15360,
-    "version": "model_c_bire_protocol_duration_v1"
+    "optimizer_state_reason": "reset_to_isolate_the_architecture_ablation_from_the_incumbents_optimizer_moments",
+    "optimizer_step": 3840,
+    "mode_migration": "copy_24x9_parent_spectral_tensor_and_zero_new_x_modes",
+    "version": "model_c_bire_protocol_rollout_ft_v1"
   },
   "input_channels": {
     "appended_positional_channels": 2,
@@ -247,14 +228,14 @@
   },
   "output": {
     "artifacts": [
-      "bire_protocol_rollout_ft_report.json",
-      "bire_protocol_rollout_ft_arrays.npz",
-      "model_c_bire_protocol_rollout_ft_selection.png",
+      "bire_protocol_rollout_ft_local24_report.json",
+      "bire_protocol_rollout_ft_local24_arrays.npz",
+      "model_c_bire_protocol_rollout_ft_local24_selection.png",
       "README.md",
       "manifest.json"
     ],
-    "project_root": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/bire_protocol_rollout_ft_v2",
-    "scratch_root": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/bire_protocol_rollout_ft_v2"
+    "project_root": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/bire_protocol_rollout_ft_local24_v1",
+    "scratch_root": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/bire_protocol_rollout_ft_local24_v1"
   },
   "positional_encoding": {
     "concatenation_order": "external_inputs_then_p_x_then_p_y",
@@ -270,7 +251,7 @@
     "not_used": "neuraloperator_GridEmbeddingND",
     "source": "oceanfourcast_PosEmbed"
   },
-  "purpose": "fine_tune_the_selected_step_15360_bire_protocol_checkpoint_with_the_autoregressive_rollout_deepened_from_three_ten_day_calls_to_six",
+  "purpose": "fine_tune_the_selected_six_step_checkpoint_with_24_zonal_modes_and_a_zero_initialized_bias_free_local_3x3_branch",
   "read_contract": {
     "adjoint_state": false,
     "inference_state": false,
@@ -280,13 +261,10 @@
     "validation_state": true
   },
   "retained_from_the_initialization": {
-    "architecture": "unchanged",
+    "architecture": "all_fields_unchanged_except_n_modes_and_local_kernel_size",
     "dataset_and_splits": "unchanged",
     "evaluation_suite": "same_15_S0_starts_and_day2000_truth",
-    "fourier_modes": [
-      24,
-      16
-    ],
+    "fourier_modes_tensor_order_YX": [24, 24],
     "normalization": "reused_without_recomputation",
     "output_channels": 46,
     "positional_encoding": "unchanged_bire_PosEmbed",
@@ -295,34 +273,28 @@
   },
   "scientific_motivation": {
     "baseline": {
-      "optimizer_step": 15360,
-      "short_auc_10_90": {
-        "phihyd_surface": 0.6373930957474216,
-        "sst": 1.4863642542531679,
-        "surface_speed": 0.12362389997054146
-      },
-      "worst_long_ratio_to_climatology": 0.9322768361566365
+      "optimizer_step": 3840,
+      "version": "model_c_bire_protocol_rollout_ft_v1",
+      "worst_long_ratio_to_climatology": 0.7094082527644672
     },
-    "change": "six_calls_reach_60_days_with_five_self_generated_steps",
-    "decision": "this_checkpoint_is_frozen_and_the_adjoint_study_opens_after_the_evaluation_regardless_of_whether_the_long_rollout_gate_passes",
-    "observation": "the_three_step_objective_supervises_self_generated_inputs_only_at_20_and_30_days_so_error_growth_beyond_30_days_is_never_seen_in_training",
+    "change": "expand_the_zonal_mode_budget_and_add_a_local_nonperiodic_high_wavenumber_correction",
+    "decision": "keep_only_if_validation_and_S0_long_rollout_diagnostics_are_not_worse_than_the_archived_parent",
+    "observation": "at_day_2000_the_parent_streamfunction_anomaly_is_7.21_times_too_large_yet_5.4_times_too_smooth_meridionally_with_a_coherent_western_wall_stripe",
     "predeclared_outcomes": {
-      "deeper_supervision_helps": "the_worst_90_360_day_climatology_ratio_falls_to_0.85_or_below_while_no_10_90_day_field_worsens_by_more_than_5_percent",
-      "deeper_supervision_smooths": "the_long_ratio_improves_and_the_day_2000_spatial_standard_deviation_ratio_falls_below_0.80_which_is_the_basin_wide_smoothing_failure",
-      "deeper_supervision_trades_short_for_long": "the_long_ratio_improves_but_a_short_field_breaches_the_5_percent_guard_and_the_gate_fails_on_its_first_condition"
-    },
-    "rollout_weight": "raised_from_0.15_to_0.50_so_the_five_self_generated_steps_carry_weight_comparable_to_the_single_teacher_forced_step"
+      "local24_helps": "validation_is_not_worse_and_the_long_streamfunction_anomaly_has_less_wall_excess_and_more_truth_like_directional_structure",
+      "local24_hurts": "retain_the_archived_parent_and_revert_this_versioned_arm"
+    }
   },
   "source_hashes": {
-    "src/oceanfno/anomaly.py": "e89b85466c0e0c9887ee482912f0bf894512121db6406a1afac28a778f3caa62",
+    "src/oceanfno/anomaly.py": "4c2f849f1b2a323b3203ffbc34d161dad59fffa5b454e141bd6d87ea8af9644b",
     "src/oceanfno/dataset.py": "39ae79be3cbee5ead62c51c900679d3eef562a816faaf06cadbc0968dd3d4f00",
     "src/oceanfno/diagnostics.py": "cbd2fac4af73441b0a3c45a0e339b71e6bd2ccbe2631b0881be38adcc06d2ef6",
-    "src/oceanfno/figures.py": "8e788660782f8957f5557d3a3018e1a923f6087b8ea2d32ca56b4725e874b45f",
-    "src/oceanfno/model.py": "bc942d5f142b8f6f89def2298e83e5cc7604caa13a7611cf57fbb3080a5fed07",
+    "src/oceanfno/figures.py": "56cf5cafc7d46cc3a79db39c1de1d179607316d091a66d1546915d0de5654d5b",
+    "src/oceanfno/model.py": "0ae43dc3f82b8065d06e19134f0faaedf88b1a01c79f8abcdffc217431e726bf",
     "src/oceanfno/objective.py": "be64f0b9261afeb27236b1efef8f96203af03241e75e5caeacc190eb1d55ee9d",
     "src/oceanfno/plots.py": "84a39e112fe6bfbddfdcff8ff102ed6cb9fb04ea0370eecad99fc55a1dd1be3a",
     "src/oceanfno/runtime.py": "c9d267eb708f6d1f89a72078b43e37dab2fb679d66e093371d1bb75f1c5ec20c",
-    "src/oceanfno/train.py": "9757ed13646e9358bec599c8df33732e5a087fe5f21a2d7f80741562741c95d6",
+    "src/oceanfno/train.py": "32e73df9db34bdba3289d3490d9c2eb2d71de93e5149e2ed9ce7b991e8f9c805",
     "src/oceanfno/validation.py": "4e77ae77547463ad82804fc599c27da15714d788f3c24a48e754eb08ad14df36"
   },
   "sources": {
@@ -336,24 +308,24 @@
       "sha256": "cf4b531a13a38b888d1e5f8c0817a26b9ec0b8946cc7b976847a9c64c22b0498"
     },
     "initialization_checkpoint": {
-      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/bire_protocol_duration_v1/selected.pt",
-      "role": "the_step_15360_weights_this_arm_starts_from",
-      "sha256": "65c523743f06369e98f3902110dc818e8e5967861e9a1cf979277862c1ad2ab0"
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/bire_protocol_rollout_ft_v1/selected.pt",
+      "role": "the_selected_six_step_weights_this_architecture_ablation_starts_from",
+      "sha256": "113d82f6f390a94315d10c38b16e98ebb4f94d862c53c8cb0c4e99f06bdc0914"
     },
     "parent_contract": {
-      "path": "/home/mjalabert314/bire_james25_repro/archive/config/model_c_bire_protocol_duration_v1.json",
+      "path": "/home/mjalabert314/bire_james25_repro/archive/config/model_c_bire_protocol_rollout_ft_v1.json",
       "role": "the_arm_whose_selected_checkpoint_this_one_fine_tunes",
-      "sha256": "16385e7f5b9ee80957354adb9aa93a6d2b085abcd7b3dbe531750d0823754354"
+      "sha256": "f181e43620d9b6c6a2943b173171189e60f216251cf481a010cd5ccab7d47ac1"
     },
     "parent_normalization": {
-      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/bire_protocol_duration_v1/model_c_bire_protocol_duration_train_only_normalization.npz",
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/bire_protocol_rollout_ft_v1/model_c_bire_protocol_rollout_ft_train_only_normalization.npz",
       "role": "the_train_only_pointwise_normalizers_reused_without_recomputation",
       "sha256": "ad7cc8584788ccdd4e8beaae3e606b9423230552af7079f15667b93bd1abaf2f"
     },
     "parent_report": {
-      "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/bire_protocol_duration_v1/bire_protocol_duration_report.json",
-      "role": "supplies_the_46_per_channel_increment_scales_and_the_step_15360_validation_summary_the_acceptance_gate_compares_against",
-      "sha256": "0804d987e026cf7bd88d4ba823539cbf8738088d2ceba767466210dcf19b5188"
+      "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/model_c_bire_protocol_rollout_ft/bire_protocol_rollout_ft_v1/bire_protocol_rollout_ft_report.json",
+      "role": "supplies_the_46_increment_scales_and_selected_step_3840_validation_summary_for_the_incumbent_comparison",
+      "sha256": "060389f7edaa88800c1a2d2be9c27f5dec3935a41830420b3a11239f702c0407"
     }
   },
   "stages": [
@@ -413,5 +385,5 @@
     "seed": 20260724,
     "weight_decay": 0.0
   },
-  "version": "model_c_bire_protocol_rollout_ft_v2"
+  "version": "model_c_bire_protocol_rollout_ft_local24_v1"
 }
