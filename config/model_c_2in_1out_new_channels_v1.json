@@ -1,0 +1,252 @@
+{
+  "architecture": {
+    "channel_mlp_dropout": 0.0,
+    "channel_mlp_expansion": 4.0,
+    "domain_padding": 0.1,
+    "factorization": null,
+    "fno_block_precision": "full",
+    "grid_shape": [
+      62,
+      62
+    ],
+    "hidden_channels": 128,
+    "in_channels": 97,
+    "input_lag_days": 10,
+    "input_states": 2,
+    "lifting_channel_ratio": 2,
+    "lifting_in_channels": 99,
+    "local_kernel_size": 3,
+    "n_layers": 3,
+    "n_modes": [
+      32,
+      32
+    ],
+    "out_channels": 46,
+    "pointwise_layer_norm": true,
+    "positional_channels": 2,
+    "positional_embedding": null,
+    "projection_channel_ratio": 2,
+    "static_channels": [
+      "wind_stress_x",
+      "wet_mask",
+      "coriolis_parameter",
+      "zonal_grid_spacing",
+      "sst_relaxation_target"
+    ],
+    "use_channel_mlp": true
+  },
+  "architecture_notes": {
+    "added_static_channels": [
+      "coriolis_parameter",
+      "zonal_grid_spacing",
+      "sst_relaxation_target"
+    ],
+    "channel_layout": "history_46_then_present_46_then_five_statics_then_two_appended_position_channels",
+    "kept_static_channels": [
+      "wind_stress_x",
+      "wet_mask"
+    ],
+    "map": "(x_t_minus_10, x_t) -> x_t_plus_10_unchanged_from_the_parent",
+    "position_encoding": "unchanged_deterministic_alternating_sine_cosine_bire_encoder",
+    "raw_longitude_latitude_not_added": "position_already_enters_through_the_encoder_and_latitudes_physical_role_is_now_carried_by_f_and_dx",
+    "removed_static_channel": "distance_to_wall_normalized",
+    "spectral_capacity": "unchanged_at_32x32",
+    "temporal_context": "unchanged_two_states_ten_days_apart"
+  },
+  "changed_relative_to_the_initialization": {
+    "declared_architecture_change": {
+      "in_channels": {
+        "parent": 95,
+        "this_arm": 97
+      },
+      "lifting_in_channels": {
+        "parent": 97,
+        "this_arm": 99
+      },
+      "static_channels": {
+        "parent": [
+          "wind_stress_x",
+          "wet_mask",
+          "distance_to_wall_normalized"
+        ],
+        "this_arm": [
+          "wind_stress_x",
+          "wet_mask",
+          "coriolis_parameter",
+          "zonal_grid_spacing",
+          "sst_relaxation_target"
+        ]
+      }
+    },
+    "everything_else": "modes_temporal_context_dataset_normalization_training_loss_optimizer_schedule_seed_selection_and_position_encoding_are_asserted_equal_to_the_parent",
+    "function_preserving": false,
+    "migration": "copy_the_94_shared_state_wind_and_wet_columns_drop_the_trained_distance_to_wall_column_zero_the_three_new_coefficient_columns_and_copy_the_position_tail",
+    "not_function_preserving_because": "the_parent_carries_trained_weights_on_distance_to_wall_normalized_so_removing_it_necessarily_changes_the_initial_map_the_size_of_that_step_is_measured_in_preflight_and_recorded_in_the_report"
+  },
+  "contract_status": "frozen_before_any_model_c_2in_1out_new_channels_metric",
+  "freeze_date": "2026-08-10",
+  "held_evaluation": {
+    "decision": "keep_only_if_validation_and_the_same_S0_2000_day_RMSE_ACC_anomaly_amplitude_and_directional_structure_diagnostics_improve_or_remain_scientifically_acceptable",
+    "figures": "produce_the_same_six_main_and_three_anomaly_plots_after_training_selection",
+    "regime": "S0_only",
+    "status": "deferred_until_the_selected_training_checkpoint_exists"
+  },
+  "inherit_parent_fields": [
+    "dataset",
+    "normalization",
+    "training",
+    "loss",
+    "checkpoint_selection"
+  ],
+  "initialization": {
+    "checkpoint": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/model_c_2in_1out_v1/selected.pt",
+    "dropped_channel": "distance_to_wall_normalized",
+    "function_preserving": false,
+    "load_only": "model_state_dict",
+    "local_branch_bias": false,
+    "local_branch_initialization": "copied_from_parent",
+    "new_coefficient_initialization": "zeros",
+    "new_coefficient_reason": "the_three_added_columns_begin_at_zero_so_the_arm_starts_from_the_parents_map_minus_the_distance_to_wall_term_rather_than_from_a_random_one",
+    "normalization_reused": true,
+    "optimizer_state_loaded": false,
+    "optimizer_state_reason": "reset_to_keep_the_static_channel_ablation_independent_of_parent_Adam_moments",
+    "optimizer_step": 3840,
+    "static_channel_migration": "copy_the_94_shared_state_wind_and_wet_columns_drop_the_trained_distance_to_wall_column_zero_the_three_new_coefficient_columns_and_copy_the_position_tail",
+    "version": "model_c_2in_1out_v1"
+  },
+  "output": {
+    "artifacts": [
+      "model_c_2in_1out_new_channels_report.json",
+      "model_c_2in_1out_new_channels_arrays.npz",
+      "model_c_2in_1out_new_channels_selection.png",
+      "README.md",
+      "manifest.json"
+    ],
+    "project_root": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/model_c_2in_1out_new_channels_v1",
+    "scratch_root": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/model_c_2in_1out_new_channels_v1"
+  },
+  "purpose": "test_whether_replacing_the_engineered_distance_to_wall_static_with_the_coefficients_that_actually_appear_in_the_governing_equations_improves_the_emulator",
+  "read_contract": {
+    "adjoint_state": false,
+    "inference_state": false,
+    "intermediate_wind_state": false,
+    "response_state": false,
+    "training_state": true,
+    "validation_state": true
+  },
+  "scientific_motivation": {
+    "coriolis_parameter": "f_equals_2_omega_sin_phi_appears_directly_in_the_momentum_equations_and_MITgcm_builds_it_from_YC",
+    "declared_collinearity_caveat": "f_and_dx_are_pearson_minus_0p964_correlated_over_the_wet_domain_because_the_basin_spans_14p5N_to_75p5N_symmetric_about_45N_so_a_gain_cannot_be_attributed_to_one_of_them_without_a_further_ablation",
+    "declared_risk": "the_warm_start_is_not_function_preserving_so_the_arm_starts_slightly_off_the_parents_measured_skill",
+    "kept": "wind_stress_x_is_the_actual_momentum_forcing_and_wet_mask_the_actual_basin_geometry",
+    "removed": "distance_to_wall_normalized_is_an_engineered_heuristic_and_not_a_coefficient_or_forcing_in_the_governing_equations",
+    "sst_relaxation_target": "the_setup_restores_surface_temperature_towards_thetaClimFile_on_a_30_day_timescale_so_the_target_field_is_part_of_the_forcing",
+    "zonal_grid_spacing": "the_spherical_grid_is_not_physically_uniform_in_x_so_dx_equals_R_cos_phi_dlambda_is_a_real_coefficient_not_a_coordinate"
+  },
+  "source_hashes": {
+    "src/oceanfno/dataset.py": "e68817b1fad4b3a32fa4c27dc4832414b4a7c51d3b46557d63d37783ebd9ea52",
+    "src/oceanfno/model.py": "0d8305fee880a317a9d1aec81ec157a28554a08db11bba63e44374d5a6dc7b02",
+    "src/oceanfno/objective.py": "be64f0b9261afeb27236b1efef8f96203af03241e75e5caeacc190eb1d55ee9d",
+    "src/oceanfno/runtime.py": "c9d267eb708f6d1f89a72078b43e37dab2fb679d66e093371d1bb75f1c5ec20c",
+    "src/oceanfno/train.py": "69f46e2eb1047ac3c600b0f29fdc40afdf3c1cc0db4c1ace59c39e812f20f1d5",
+    "src/oceanfno/validation.py": "e08acf26aa92b2e03a996a7dd315982e834c0f9d1b2ecb4fe837c006165c7e8b"
+  },
+  "sources": {
+    "dataset": {
+      "metadata_sha256": "766cae89359311775c79103f44dc74630630ba6b7a0a8c6e9d26f73487512136",
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/trajectories_v3.zarr",
+      "role": "the_immutable_trajectory_v3_store"
+    },
+    "dataset_manifest": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/trajectories_v3.manifest.json",
+      "sha256": "cf4b531a13a38b888d1e5f8c0817a26b9ec0b8946cc7b976847a9c64c22b0498"
+    },
+    "initialization_checkpoint": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/model_c_2in_1out_v1/selected.pt",
+      "role": "the_selected_two_in_one_out_weights",
+      "sha256": "e88c026b4ac2ed4da484dd5a2795d5448f8f8342efc07e2b474df0d406183187"
+    },
+    "mitgcm_declaration": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/mitgcm/S0/spinup/years_000_010/data",
+      "role": "the_simulation_declaration_asserting_the_spherical_grid_the_relaxation_file_and_the_default_rotation_period",
+      "sha256": "766d27ac0ae257f4a8817921667b1d25a44add03966817a8561d9153ba627a58"
+    },
+    "mitgcm_sst_relaxation": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/mitgcm/S0/spinup/years_000_010/SST_relax.bin",
+      "role": "the_thetaClimFile_the_simulation_restores_surface_temperature_towards",
+      "sha256": "952f66ed928ad8c42584e5cf43d584ebb2f64c8f3876b871d3ced4ea689dc6dc"
+    },
+    "mitgcm_zonal_spacing": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/mitgcm/S0/spinup/years_000_010/DXF.data",
+      "role": "MITgcm_own_zonal_grid_spacing_at_tracer_points",
+      "sha256": "19ff882c63021105620145889630ee457af5187d669d3c5978e0d0d70b4294e6"
+    },
+    "parent_contract": {
+      "materialized_sha256": "55d705b75f7dd201aa4d8fd694b4deff86c5deb958018112e7591a417f236038",
+      "path": "/home/mjalabert314/bire_james25_repro/config/model_c_2in_1out_v1.json",
+      "role": "the_two_in_one_out_architecture_and_recursively_inherited_training_contract",
+      "sha256": "70b0a39dc6d988602a10d54e170006822dce081133fa9fc77b1bcefc60faaa24",
+      "version": "model_c_2in_1out_v1"
+    },
+    "parent_normalization": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/model_c_2in_1out_v1/model_c_2in_1out_train_only_normalization.npz",
+      "role": "the_identical_train_only_coordinates_used_by_the_parent_weights",
+      "sha256": "ad7cc8584788ccdd4e8beaae3e606b9423230552af7079f15667b93bd1abaf2f"
+    },
+    "parent_report": {
+      "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/model_c_2in_1out/model_c_2in_1out_v1/model_c_2in_1out_report.json",
+      "role": "the_two_in_one_out_increment_scales_selected_validation_baseline_and_published_artifact_chain",
+      "sha256": "9e717907242efa22ddcf56d389580cebf77bca90e5d92ea080d2bf85955001d5"
+    }
+  },
+  "stages": [
+    {
+      "first_optimizer_step": 1,
+      "inputs": "self_generated_pairs_at_steps_two_through_six",
+      "last_optimizer_step": 3840,
+      "objective": "the_inherited_group_balanced_six_step_loss",
+      "rollout_steps": 6,
+      "stage_id": "physical_static_channel_fine_tune",
+      "teacher_forcing": "initial_pair_only"
+    }
+  ],
+  "training": {
+    "adam_betas": [
+      0.9,
+      0.95
+    ],
+    "batch_size": 4,
+    "checkpoint_steps": [
+      960,
+      1920,
+      2880,
+      3840
+    ],
+    "decay_factor": 0.2,
+    "decay_fraction": 0.75,
+    "dropout_status": "frozen_at_zero_because_the_successful_incumbent_uses_zero_and_the_requested_changes_do_not_include_dropout_and_the_paper_does_not_establish_the_repository_default_of_0p5",
+    "exposure_budget": {
+      "basis": "batch_4_over_six_unrolled_calls_carries_the_same_activation_load_as_batch_8_over_three_because_4_times_6_equals_8_times_3",
+      "parent_steps_times_batch": "15360_times_8",
+      "this_arm_steps_times_batch": "3840_times_4"
+    },
+    "from_scratch": false,
+    "gradient_clipping": false,
+    "gradient_clipping_reason": "adding_a_clip_would_introduce_another_untested_stabilizing_mechanism_into_a_composite_test",
+    "initial_learning_rate": 2e-05,
+    "learning_rate_schedule": {
+      "steps_1_to_2880": 2e-05,
+      "steps_2881_to_3840": 4.000000000000001e-06
+    },
+    "load_optimizer_state": false,
+    "maximum_steps": 3840,
+    "on_non_finite": "fail_fast_and_report",
+    "optimizer": "adam",
+    "records": "pooled_split1_complete_six_step_rollout_starts_read_five_steps_deep_5940_per_regime_17820_pooled_latest_start_5939",
+    "rollout_steps": 6,
+    "schedule_status": "the_decay_schedule_is_a_separately_declared_control_not_a_claim_about_the_published_Bire_configuration",
+    "seed": 20260724,
+    "weight_decay": 0.0
+  },
+  "version": "model_c_2in_1out_new_channels_v1"
+}

@@ -1,10 +1,10 @@
-"""S0 Figures 3--8 for the two-in / one-out successor to the 32x32 model.
+"""S0 Figures 3--8 for the physical-static-channel two-in / one-out model.
 
-Publishes the frozen Bire figure suite for the selected two-input checkpoint and
-evaluates the 2,000-day half of the final acceptance gate. Figure 6 is the
-literal one-input / two-input pair: the two differ only in how many consecutive
-time levels the operator is handed, and each checkpoint is verified and built
-against its own architecture declaration.
+Publishes the frozen Bire figure suite for the selected checkpoint and evaluates
+the 2,000-day half of the final acceptance gate. Figure 6 is the literal
+old-statics / new-statics pair: both models read the same two time levels on the
+same 32x32 modes, and differ only in which environmental fields they are handed,
+each verified and built against its own architecture declaration.
 
 Held-evaluation only: no training, no checkpoint selection, no promotion.
 """
@@ -24,11 +24,11 @@ import zarr
 from .runtime import torch
 from . import plots
 from .runtime import _device, _file_sha256, _json_sha256
-from .dataset import DATASET_VERSION, HORIZON_DAYS, INFERENCE_START_RANGE, MAXIMUM_INFERENCE_ROLLOUT_DAYS, TRAIN_RANGE, _normalizers, assert_model_visible, assert_truth_available, inference_starts
+from .dataset import DATASET_VERSION, HORIZON_DAYS, INFERENCE_START_RANGE, MAXIMUM_INFERENCE_ROLLOUT_DAYS, NEW_CHANNEL_STATIC_FEATURES, TRAIN_RANGE, _normalizers, assert_model_visible, assert_truth_available, inference_starts, new_channel_static_block
 from .diagnostics import _member_acc, _member_rmse, derived_fields
-from .model import BireAlignedStepper, BireTwoInOneOutArchitecture, BireTwoInStepper, BireY32X32Architecture, build_bire_two_in_one_out_model, build_bire_y32_x32_model
+from .model import BireAlignedStepper, BireTwoInNewChannelsArchitecture, BireTwoInNewChannelsStepper, BireTwoInOneOutArchitecture, BireTwoInStepper, build_bire_two_in_new_channels_model, build_bire_two_in_one_out_model
 from .validation import _gather, train_only_climatology
-from .train import BASELINE_OPTIMIZER_STEP, CHECKPOINT_STEPS, FINE_TUNE_LOSS_CONTRACT_SHA256, NORMALIZATION_NAME as SELECTED_NORMALIZATION_NAME, PARENT_VERSION as COMPARATOR_TRAINING_VERSION, REPORT_NAME as TRAINING_REPORT_NAME, ROLLOUT_STEPS, VERSION as TRAINING_VERSION
+from .train import BASELINE_OPTIMIZER_STEP, CHECKPOINT_STEPS, FINE_TUNE_LOSS_CONTRACT_SHA256, NORMALIZATION_NAME as SELECTED_NORMALIZATION_NAME, PARENT_VERSION as COMPARATOR_TRAINING_VERSION, REPORT_NAME as TRAINING_REPORT_NAME, ROLLOUT_STEPS, VERSION as TRAINING_VERSION, physical_static_block
 
 MEMBER_COUNT = 15
 
@@ -198,16 +198,16 @@ def evaluate_regime(
                 arrays["figure7_model_streamfunction"][figure7[lead]] = selected_fields["streamfunction"][0]
     return arrays
 
-VERSION = "model_c_2in_1out_s0_figures_v1"
+VERSION = "model_c_2in_1out_new_channels_s0_figures_v1"
 
 CONTRACT_STATUS = (
-    "frozen_after_the_model_c_2in_1out_training_and_"
+    "frozen_after_the_model_c_2in_1out_new_channels_training_and_"
     "validation_and_before_any_inference_metric"
 )
 
 COMPARATOR_STEP = BASELINE_OPTIMIZER_STEP
 
-MODEL_LABEL = "Model C 2-in / 1-out (32x32 modes)"
+MODEL_LABEL = "Model C 2-in / 1-out (physical statics)"
 
 PENDING = "PENDING_AFTER_TRAINING"
 
@@ -224,7 +224,7 @@ MINIMUM_STREAMFUNCTION_SV = -33.0
 
 DAY2000_STD_RATIO_RANGE = (0.80, 1.25)
 
-GATE_NAME = "model_c_2in_1out_acceptance_gate.json"
+GATE_NAME = "model_c_2in_1out_new_channels_acceptance_gate.json"
 
 ACCEPTED_TRAINING_REPORT_VERSIONS = (TRAINING_VERSION,)
 
@@ -232,17 +232,21 @@ class BireProtocolRolloutFineTuneFigureError(RuntimeError):
     """Compatibility base for held-evaluation contract failures."""
 
 
-class ModelCTwoInFigureError(BireProtocolRolloutFineTuneFigureError):
-    """Raised when the two-input held-evaluation contract is violated."""
+class ModelCNewChannelsFigureError(BireProtocolRolloutFineTuneFigureError):
+    """Raised when the new-channel held-evaluation contract is violated."""
+
+
+# The previous arm's name, kept as an exact alias for existing callers.
+ModelCTwoInFigureError = ModelCNewChannelsFigureError
 
 
 _REPOSITORY = Path(__file__).resolve().parents[2]
 _EXPECTED_PROJECT_ROOT = str(
-    _REPOSITORY / "outputs/af_fno/C/model_c_2in_1out_s0_figures_v1"
+    _REPOSITORY / "outputs/af_fno/C/model_c_2in_1out_new_channels_s0_figures_v1"
 )
 _EXPECTED_SCRATCH_ROOT = (
     "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/"
-    "model_c_2in_1out_s0_figures_v1"
+    "model_c_2in_1out_new_channels_s0_figures_v1"
 )
 _EXPECTED_OUTPUTS = (
     *plots.FIGURE_NAMES,
@@ -413,6 +417,8 @@ def load_contract(
         and protocol.get("long_lead_days") == "0_to_2000_inclusive_by_10"
         and protocol.get("history_initial_condition")
         == expected_history(expected_starts)
+        and tuple(protocol.get("static_channels", ()))
+        == NEW_CHANNEL_STATIC_FEATURES
     )
     models_ok = (
         selected.get("version") == TRAINING_VERSION
@@ -425,8 +431,9 @@ def load_contract(
         == FINE_TUNE_LOSS_CONTRACT_SHA256
         and comparator.get("base_loss_contract_sha256")
         == FINE_TUNE_LOSS_CONTRACT_SHA256
-        and selected.get("architecture") == BireTwoInOneOutArchitecture().to_dict()
-        and comparator.get("architecture") == BireY32X32Architecture().to_dict()
+        and selected.get("architecture")
+        == BireTwoInNewChannelsArchitecture().to_dict()
+        and comparator.get("architecture") == BireTwoInOneOutArchitecture().to_dict()
     )
     output_ok = (
         output.get("project_root") == _EXPECTED_PROJECT_ROOT
@@ -453,8 +460,8 @@ def load_contract(
     ):
         raise ModelCTwoInFigureError("the two-input S0 figure contract changed")
     try:
-        BireTwoInOneOutArchitecture(**selected["architecture"])
-        BireY32X32Architecture(**comparator["architecture"])
+        BireTwoInNewChannelsArchitecture(**selected["architecture"])
+        BireTwoInOneOutArchitecture(**comparator["architecture"])
         _training_provenance(contract)
     except ModelCTwoInFigureError:
         raise
@@ -486,23 +493,31 @@ def _stepper(
     wet: np.ndarray,
     wind_mean: float,
     wind_scale: float,
+    static_block: np.ndarray,
 ) -> BireAlignedStepper:
-    """Build either the two-input model or its one-input parent, after checks."""
+    """Build either the new-channel model or its old-static parent, after checks.
+
+    The comparator reads the store's three retained statics through the shared
+    adapter; the selected model reads the five derived physical channels, which
+    is why the block is threaded in here rather than rebuilt per checkpoint.
+    """
 
     if torch is None:  # pragma: no cover - environment dependent
         raise RuntimeError("two-input figure evaluation requires PyTorch")
     if key == "selected_checkpoint":
         declared = contract["selected_model"]
         expected_version = TRAINING_VERSION
-        architecture = BireTwoInOneOutArchitecture(**declared["architecture"])
-        builder = build_bire_two_in_one_out_model
-        adapter = BireTwoInStepper
+        architecture = BireTwoInNewChannelsArchitecture(**declared["architecture"])
+        builder = build_bire_two_in_new_channels_model
+        adapter = BireTwoInNewChannelsStepper
+        extra = {"static_block": static_block}
     elif key == "comparator_checkpoint":
         declared = contract["comparator_model"]
         expected_version = COMPARATOR_TRAINING_VERSION
-        architecture = BireY32X32Architecture(**declared["architecture"])
-        builder = build_bire_y32_x32_model
-        adapter = BireAlignedStepper
+        architecture = BireTwoInOneOutArchitecture(**declared["architecture"])
+        builder = build_bire_two_in_one_out_model
+        adapter = BireTwoInStepper
+        extra = {}
     else:
         raise ModelCTwoInFigureError(f"unknown checkpoint key: {key}")
     payload = torch.load(
@@ -537,7 +552,7 @@ def _stepper(
         scale = np.asarray(artifact["pointwise_scale"], dtype=np.float32)
     return adapter(
         model=model, device=device, wet=wet, mean=mean, scale=scale,
-        wind_mean=wind_mean, wind_scale=wind_scale,
+        wind_mean=wind_mean, wind_scale=wind_scale, **extra,
     )
 
 class _S0Captions:
@@ -633,7 +648,7 @@ class _S0Captions:
         plots.METHOD_LABELS = self._method_labels
 
 class FineTuneLabels(_S0Captions):
-    """Label Figure 6 as the literal one-input / two-input comparison."""
+    """Label Figure 6 as the literal old-statics / new-statics comparison."""
 
     def __init__(self, regime: str, tau0: float, selected_step: int) -> None:
         super().__init__(regime, tau0, selected_step)
@@ -645,15 +660,15 @@ class FineTuneLabels(_S0Captions):
         self.rules = (
             (
                 "S0 architecture-direction comparison",
-                f"{regime} one-input parent vs two-input fine-tune",
+                f"{regime} engineered vs physical static channels",
             ),
             (
                 "Prior residual Model C",
-                f"1-in / 1-out, 32x32 modes (step {COMPARATOR_STEP:,})",
+                f"tau, wet, d_wall (step {COMPARATOR_STEP:,})",
             ),
             (
                 "Selected anomaly-direct Model C",
-                f"2-in / 1-out, 32x32 modes (step {selected_step:,})",
+                f"tau, wet, f, dx, theta_clim (step {selected_step:,})",
             ),
             *(rule for rule in self.rules if rule[0] not in replaced),
         )
@@ -753,21 +768,22 @@ def acceptance_gate(contract: Mapping[str, Any], regime: str = "S0") -> dict[str
 def _readme(regime: str, report: Mapping[str, Any]) -> str:
     starts = declared_inference_starts()
     selected = int(report["selected_optimizer_step"])
-    return f"""# Two-in / one-out Model C, {regime}: Figures 3--8
+    return f"""# Physical static channels, {regime}: Figures 3--8
 
 This held package evaluates the selected step-{selected:,} checkpoint of
-`{TRAINING_VERSION}` on the exact 15-member S0 inference protocol used for
-local24, Y32 and the 32x32 arm. The black Figure 6 curve is its literal
-step-{COMPARATOR_STEP:,} one-input parent; the red curve is the two-input
-fine-tune. Both carry 32x32 Fourier modes, the trained bias-free local 3x3
+`{TRAINING_VERSION}` on the exact 15-member S0 inference protocol used for every
+preceding arm. The black Figure 6 curve is its literal step-{COMPARATOR_STEP:,}
+parent; the red curve is this arm. Both read the same two time levels
+`(x_(t-10), x_t)`, carry 32x32 Fourier modes, the trained bias-free local 3x3
 path, the deterministic sine/cosine position encoder and the same six-step
-objective. The only difference is what each call is handed: the parent reads
-`x_t`, this arm reads the pair `(x_(t-10), x_t)` and slides it forward at every
-autoregressive step.
+objective. The only difference is which environmental fields they are handed:
 
-Each member therefore reads one extra initial condition, the truth state ten
-days before its start. That day is model-visible and is never a scored target,
-so the leads, truth, climatology and persistence baselines are identical to the
+    parent    tau_x, wet mask, distance to wall
+    this arm  tau_x, wet mask, f(phi), dx(phi), theta_clim(x, y)
+
+Both models read the same extra initial condition, the truth state ten days
+before each start. That day is model-visible and is never a scored target, so
+the leads, truth, climatology and persistence baselines are identical to the
 compared packages. Starts span {int(starts.min())}--{int(starts.max())}; every
 member has lead-matched truth through day 2,000. The numerical reductions, plot
 functions, filenames and lead grid are reused unchanged.
@@ -863,8 +879,20 @@ def run(contract_path: str | Path, *, device_name: str = "auto") -> dict[str, An
     if climatology_days != TRAIN_RANGE[1] - TRAIN_RANGE[0]:
         raise BireProtocolFigureError("the v3 train-only climatology did not cover 0--5039")
 
-    selected = _stepper(contract, "selected_checkpoint", device, wet, wind_mean, wind_scale)
-    comparator = _stepper(contract, "comparator_checkpoint", device, wet, wind_mean, wind_scale)
+    # Three of this arm's five statics are derived from the simulation's own
+    # inputs rather than the store, so the block is built once and shared.
+    with np.load(Path(contract["artifacts"]["selected_normalization"]["path"])) as stored:
+        point_mean = np.asarray(stored["pointwise_mean"], dtype=np.float32)
+        point_scale = np.asarray(stored["pointwise_scale"], dtype=np.float32)
+    static_block, static_provenance = physical_static_block(
+        contract["artifacts"], group, point_mean, point_scale
+    )
+    selected = _stepper(
+        contract, "selected_checkpoint", device, wet, wind_mean, wind_scale, static_block
+    )
+    comparator = _stepper(
+        contract, "comparator_checkpoint", device, wet, wind_mean, wind_scale, static_block
+    )
 
     published: dict[str, Any] = {}
     plots._style()
@@ -926,6 +954,8 @@ def run(contract_path: str | Path, *, device_name: str = "auto") -> dict[str, An
                 "arrays_sha256": _file_sha256(scratch_arrays),
                 "figures": list(plots.FIGURE_NAMES),
                 "figure6": contract["figure6"],
+                "static_channels": list(NEW_CHANNEL_STATIC_FEATURES),
+                "static_channel_provenance": static_provenance,
                 "regime_captions": "frozen S0 control-wind captions rewritten for this regime",
                 "elapsed_seconds": time.monotonic() - started,
                 "slurm_job_id": os.environ.get("SLURM_JOB_ID"),
@@ -969,6 +999,7 @@ def preflight(contract_path: str | Path) -> dict[str, Any]:
     starts = declared_inference_starts()
     return {
         "status": "pass",
+        "static_channels": list(NEW_CHANNEL_STATIC_FEATURES),
         "version": VERSION,
         "contract": str(resolved),
         "contract_sha256": digest,

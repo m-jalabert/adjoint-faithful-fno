@@ -59,6 +59,34 @@ TWO_IN_STATIC_SLICE = slice(
     2 * STATE_CHANNEL_COUNT, TWO_IN_EXTERNAL_INPUT_CHANNELS
 )
 
+#: The physically-motivated static set. Two fields are kept from the previous
+#: arm in their existing positions; the engineered distance-to-wall heuristic is
+#: dropped and three coefficients of the governing equations take its place.
+NEW_CHANNEL_STATIC_FEATURES = (
+    "wind_stress_x",
+    "wet_mask",
+    "coriolis_parameter",
+    "zonal_grid_spacing",
+    "sst_relaxation_target",
+)
+
+NEW_CHANNEL_STATIC_COUNT = len(NEW_CHANNEL_STATIC_FEATURES)
+
+#: How many leading static columns the previous arm and this one agree on.
+SHARED_STATIC_COLUMNS = 2
+
+NEW_CHANNEL_EXTERNAL_INPUT_CHANNELS = (
+    INPUT_STATE_COUNT * STATE_CHANNEL_COUNT + NEW_CHANNEL_STATIC_COUNT
+)
+
+NEW_CHANNEL_LIFTING_INPUT_CHANNELS = (
+    NEW_CHANNEL_EXTERNAL_INPUT_CHANNELS + POSITIONAL_CHANNELS
+)
+
+NEW_CHANNEL_STATIC_SLICE = slice(
+    2 * STATE_CHANNEL_COUNT, NEW_CHANNEL_EXTERNAL_INPUT_CHANNELS
+)
+
 README_NAME = "README.md"
 
 MANIFEST_NAME = "manifest.json"
@@ -574,6 +602,133 @@ class BireTwoInOneOutArchitecture:
         result["grid_shape"] = list(self.grid_shape)
         return result
 
+@dataclass(frozen=True)
+class BireTwoInNewChannelsArchitecture:
+    """The two-input 32x32 model on physically-motivated static channels.
+
+    Identical to :class:`BireTwoInOneOutArchitecture` --- same 32x32 modes, same
+    three FNO blocks, same position encoder, same bias-free local 3x3 branch,
+    same two-time-level input contract --- except for *which* static fields the
+    operator is handed::
+
+        previous  [tau_x, wet, d_wall]
+        this arm  [tau_x, wet, f(phi), dx(phi), theta_clim(x, y)]
+
+    The two kept fields are actual forcing and actual geometry. The three added
+    ones are coefficients that appear in the governing equations: the Coriolis
+    parameter, the zonal grid spacing the spherical grid makes latitude
+    dependent, and the SST relaxation target the setup restores towards on a
+    30-day timescale. The distance-to-wall field is removed because it is an
+    engineered heuristic and not a term in those equations.
+
+    That takes the external block from 95 to 97 and lifting from 97 to 99.
+    """
+
+    in_channels: int = NEW_CHANNEL_EXTERNAL_INPUT_CHANNELS
+    out_channels: int = STATE_CHANNEL_COUNT
+    input_states: int = INPUT_STATE_COUNT
+    input_lag_days: int = INPUT_LAG_DAYS
+    static_channels: tuple[str, ...] = NEW_CHANNEL_STATIC_FEATURES
+    positional_channels: int = POSITIONAL_CHANNELS
+    lifting_in_channels: int = NEW_CHANNEL_LIFTING_INPUT_CHANNELS
+    grid_shape: tuple[int, int] = (62, 62)
+    n_modes: tuple[int, int] = (32, 32)
+    hidden_channels: int = 128
+    n_layers: int = 3
+    lifting_channel_ratio: int = 2
+    projection_channel_ratio: int = 2
+    channel_mlp_expansion: float = 4.0
+    channel_mlp_dropout: float = 0.0
+    domain_padding: float = 0.1
+    positional_embedding: str | None = None
+    use_channel_mlp: bool = True
+    pointwise_layer_norm: bool = True
+    local_kernel_size: int = 3
+    fno_block_precision: str = "full"
+    factorization: str | None = None
+
+    def __post_init__(self) -> None:
+        object.__setattr__(
+            self, "n_modes", tuple(int(value) for value in self.n_modes)
+        )
+        object.__setattr__(
+            self, "grid_shape", tuple(int(value) for value in self.grid_shape)
+        )
+        object.__setattr__(
+            self, "static_channels", tuple(str(v) for v in self.static_channels)
+        )
+        if self.static_channels != NEW_CHANNEL_STATIC_FEATURES:
+            raise BireAlignedFullStateError(
+                "the new-channel arm declares exactly "
+                f"{list(NEW_CHANNEL_STATIC_FEATURES)}"
+            )
+        if self.input_states != INPUT_STATE_COUNT or (
+            self.input_lag_days != INPUT_LAG_DAYS
+        ):
+            raise BireAlignedFullStateError(
+                "the new-channel arm keeps the two states ten days apart"
+            )
+        if (
+            self.in_channels != NEW_CHANNEL_EXTERNAL_INPUT_CHANNELS
+            or self.out_channels != STATE_CHANNEL_COUNT
+            or self.positional_channels != POSITIONAL_CHANNELS
+            or self.lifting_in_channels != NEW_CHANNEL_LIFTING_INPUT_CHANNELS
+        ):
+            raise BireAlignedFullStateError(
+                "the new-channel arm maps 2x46 state + 5 static (+2 position) -> 46"
+            )
+        if self.grid_shape != (62, 62) or self.n_modes != (32, 32):
+            raise BireAlignedFullStateError(
+                "the new-channel arm keeps the 62x62 grid and the 32x32 Y,X modes"
+            )
+        if self.n_layers != 3:
+            raise BireAlignedFullStateError(
+                "the new-channel arm uses exactly three FNO blocks"
+            )
+        if self.hidden_channels != 128 or self.channel_mlp_expansion != 4.0:
+            raise BireAlignedFullStateError(
+                "the new-channel arm keeps width 128 and the 4C Channel MLP"
+            )
+        if self.lifting_channel_ratio != 2 or self.projection_channel_ratio != 2:
+            raise BireAlignedFullStateError(
+                "the new-channel arm keeps lifting and projection width 256"
+            )
+        if self.domain_padding != 0.1 or not self.use_channel_mlp:
+            raise BireAlignedFullStateError(
+                "the new-channel arm keeps 10% padding and the Channel MLP"
+            )
+        if self.channel_mlp_dropout != 0.0:
+            raise BireAlignedFullStateError(
+                "the new-channel arm freezes Channel MLP dropout at zero"
+            )
+        if self.positional_embedding is not None:
+            raise BireAlignedFullStateError(
+                "position enters only through the Bire sine/cosine encoder"
+            )
+        if not self.pointwise_layer_norm:
+            raise BireAlignedFullStateError(
+                "the new-channel arm normalizes channel-wise after both mixing operations"
+            )
+        if self.local_kernel_size != 3:
+            raise BireAlignedFullStateError(
+                "the new-channel arm retains exactly one external 3x3 correction"
+            )
+        if self.fno_block_precision != "full" or self.factorization is not None:
+            raise BireAlignedFullStateError(
+                "the new-channel arm remains a dense float32 FNO"
+            )
+
+    @property
+    def layer_norm_count(self) -> int:
+        return 2 * self.n_layers
+
+    def to_dict(self) -> dict[str, Any]:
+        result = asdict(self)
+        result["n_modes"] = list(self.n_modes)
+        result["grid_shape"] = list(self.grid_shape)
+        result["static_channels"] = list(self.static_channels)
+        return result
+
 def retained_features(batch: Any) -> Any:
     """Drop the two linear coordinate channels from a 51-channel batch."""
 
@@ -745,11 +900,18 @@ def two_in_state_unroll(
 
     if steps <= 0:
         raise ValueError("two-input rollout needs at least one step")
-    if features.shape[1] != TWO_IN_EXTERNAL_INPUT_CHANNELS:
-        raise ValueError("the two-input unroll expects N,95,Y,X features")
+    # The static block's width is the arm's own declaration, so the check is
+    # made against the model rather than against one arm's constant.
+    declared = getattr(getattr(model, "architecture", None), "in_channels", None)
+    if declared is not None and features.shape[1] != declared:
+        raise ValueError(
+            f"the two-input unroll expects N,{declared},Y,X features"
+        )
+    if features.shape[1] <= 2 * STATE_CHANNEL_COUNT:
+        raise ValueError("the two-input unroll needs two states and a static block")
     previous = features[:, HISTORY_SLICE]
     current = features[:, PRESENT_SLICE]
-    static = features[:, TWO_IN_STATIC_SLICE]
+    static = features[:, 2 * STATE_CHANNEL_COUNT :]
     predictions = []
     for _ in range(steps):
         future = model(torch.cat((previous, current, static), dim=1)) * wet
@@ -1080,12 +1242,39 @@ if nn is not None:
             global_state = self.fno(self.positional_encoding(features))
             return global_state + self.local(features)
 
+
+    class BireTwoInNewChannelsFNO(BireTwoInOneOutFNO):
+        """The two-input model on the physical static block.
+
+        Every module is built from the architecture's declared widths, so the
+        parent class needs no change: only ``in_channels`` and
+        ``lifting_in_channels`` differ, and the module names stay identical so
+        every parameter remains identifiable during migration.
+        """
+
+        def __init__(self, architecture: BireTwoInNewChannelsArchitecture) -> None:
+            if not isinstance(architecture, BireTwoInNewChannelsArchitecture):
+                raise BireAlignedFullStateError(
+                    "the new-channel model requires BireTwoInNewChannelsArchitecture"
+                )
+            super().__init__(architecture)
+
+        def forward(self, features: Any) -> Any:
+            if (
+                features.ndim != 4
+                or features.shape[1] != self.architecture.in_channels
+            ):
+                raise ValueError("new-channel Model C expects N,97,Y,X")
+            global_state = self.fno(self.positional_encoding(features))
+            return global_state + self.local(features)
+
 else:  # pragma: no cover - environment dependent
     BirePositionalEncoding = None  # type: ignore[assignment,misc]
     BireAlignedFullStateFNO = None  # type: ignore[assignment,misc]
     BireLocal24FullStateFNO = None  # type: ignore[assignment,misc]
     BireY32FullStateFNO = None  # type: ignore[assignment,misc]
     BireTwoInOneOutFNO = None  # type: ignore[assignment,misc]
+    BireTwoInNewChannelsFNO = None  # type: ignore[assignment,misc]
 
 def build_bire_aligned_model(architecture: BireAlignedArchitecture) -> Any:
     """Build the Bire-aligned map, matching ``build_successor``'s signature."""
@@ -1150,6 +1339,21 @@ def build_bire_two_in_one_out_model(
             "the two-input builder requires BireTwoInOneOutArchitecture"
         )
     return BireTwoInOneOutFNO(architecture)
+
+
+def build_bire_two_in_new_channels_model(
+    architecture: BireTwoInNewChannelsArchitecture,
+) -> Any:
+    """Build the two-input model on the physical static block."""
+
+    require_model_a_runtime()
+    if BireTwoInNewChannelsFNO is None:  # pragma: no cover
+        raise RuntimeError("the new-channel model requires PyTorch")
+    if not isinstance(architecture, BireTwoInNewChannelsArchitecture):
+        raise BireAlignedFullStateError(
+            "the new-channel builder requires BireTwoInNewChannelsArchitecture"
+        )
+    return BireTwoInNewChannelsFNO(architecture)
 
 
 _BIRE_SPECTRAL_WEIGHT_KEYS = tuple(
@@ -1761,6 +1965,230 @@ def migrate_y32_x32_state_dict(
     }
 
 
+#: The same two input-facing tensors, widened again for the new static block.
+_NEW_CHANNEL_INPUT_FACING_KEYS = {
+    "fno.lifting.fcs.0.weight": (
+        TWO_IN_LIFTING_INPUT_CHANNELS,
+        NEW_CHANNEL_LIFTING_INPUT_CHANNELS,
+    ),
+    "local.weight": (
+        TWO_IN_EXTERNAL_INPUT_CHANNELS,
+        NEW_CHANNEL_EXTERNAL_INPUT_CHANNELS,
+    ),
+}
+
+#: Columns both arms agree on: the two 46-channel states, then wind and wet.
+_SHARED_INPUT_COLUMNS = (
+    INPUT_STATE_COUNT * STATE_CHANNEL_COUNT + SHARED_STATIC_COLUMNS
+)
+
+#: Columns the previous arm had that this one does not: distance-to-wall.
+_DROPPED_INPUT_COLUMNS = 1
+
+#: Coefficients that replace it: f, dx and the SST relaxation target.
+_ADDED_INPUT_COLUMNS = NEW_CHANNEL_STATIC_COUNT - SHARED_STATIC_COLUMNS
+
+
+def migrate_two_in_static_channels_state_dict(
+    parent_state: Mapping[str, Any],
+    target_model: Any,
+) -> dict[str, Any]:
+    """Migrate the two-input state onto the physical static block.
+
+    Unlike every earlier migration in this tree, this one is **not**
+    function-preserving, and it cannot be: the parent has trained weights on
+    ``distance_to_wall_normalized`` and that channel is deliberately gone, so
+    the initial map necessarily changes by whatever that field contributed. The
+    honest handling is to make the change explicit and measurable rather than to
+    claim an exactness that does not hold --- see
+    :func:`static_channel_perturbation`, which the training preflight reports
+    before a single optimizer step is taken.
+
+    Column by column, on the two input-facing tensors::
+
+        [2x46 states][tau_x][wet]  copied unchanged   (94 columns)
+        [d_wall]                   dropped            (1 column)
+        [f][dx][theta_clim]        zero-initialized   (3 columns)
+        [pos_x][pos_y]             copied unchanged   (lifting only)
+
+    The three added columns begin at zero, so the arm starts from the parent's
+    map *minus the distance-to-wall term* rather than from a random one, and the
+    new coefficients enter only as fine-tuning learns them.
+    """
+
+    if BireTwoInNewChannelsFNO is None or not isinstance(
+        target_model, BireTwoInNewChannelsFNO
+    ):
+        raise BireAlignedFullStateError(
+            "the new-channel migration target must be BireTwoInNewChannelsFNO"
+        )
+    if target_model.architecture != BireTwoInNewChannelsArchitecture():
+        raise BireAlignedFullStateError(
+            "the new-channel migration target architecture changed"
+        )
+
+    parent = {key: value for key, value in parent_state.items() if key != "_metadata"}
+    raw_target = target_model.state_dict()
+    target = {key: value for key, value in raw_target.items() if key != "_metadata"}
+    missing = sorted(set(target) - set(parent))
+    unexpected = sorted(set(parent) - set(target))
+    if missing or unexpected:
+        raise BireAlignedFullStateError(
+            "the two-input-to-new-channel migration must retain exactly the same keys: "
+            f"missing_parent={missing!r}, unexpected_parent={unexpected!r}"
+        )
+    if "local.weight" not in parent:
+        raise BireAlignedFullStateError(
+            "the two-input checkpoint has no trained local.weight"
+        )
+
+    expected_expansions = set(_NEW_CHANNEL_INPUT_FACING_KEYS)
+    observed_expansions: set[str] = set()
+    migrated: dict[str, Any] = {}
+    records: list[dict[str, Any]] = []
+    for key in sorted(parent):
+        source, destination = parent[key], target[key]
+        if not hasattr(source, "shape") or not hasattr(destination, "shape"):
+            raise BireAlignedFullStateError(
+                f"the two-input checkpoint entry {key!r} is not a tensor"
+            )
+        source_shape = tuple(int(v) for v in source.shape)
+        destination_shape = tuple(int(v) for v in destination.shape)
+        if source.dtype != destination.dtype:
+            raise BireAlignedFullStateError(
+                f"the two-input checkpoint dtype changed for {key}: "
+                f"{source.dtype} -> {destination.dtype}"
+            )
+        if source_shape == destination_shape:
+            value = destination.detach().clone()
+            value.copy_(source)
+            migrated[key] = value
+            continue
+        if key not in expected_expansions:
+            raise BireAlignedFullStateError(
+                f"undeclared new-channel shape change for {key}: "
+                f"{source_shape} -> {destination_shape}"
+            )
+        parent_width, target_width = _NEW_CHANNEL_INPUT_FACING_KEYS[key]
+        tail = parent_width - _SHARED_INPUT_COLUMNS - _DROPPED_INPUT_COLUMNS
+        if (
+            source_shape[1] != parent_width
+            or destination_shape[1] != target_width
+            or target_width != _SHARED_INPUT_COLUMNS + _ADDED_INPUT_COLUMNS + tail
+            or tail < 0
+            or source_shape[:1] != destination_shape[:1]
+            or source_shape[2:] != destination_shape[2:]
+        ):
+            raise BireAlignedFullStateError(
+                f"the declared static-channel change has unexpected shapes for {key}: "
+                f"{source_shape} -> {destination_shape}"
+            )
+        value = destination.detach().clone()
+        value.zero_()
+        value[:, :_SHARED_INPUT_COLUMNS] = source[:, :_SHARED_INPUT_COLUMNS]
+        if tail:
+            value[:, _SHARED_INPUT_COLUMNS + _ADDED_INPUT_COLUMNS :] = source[
+                :, _SHARED_INPUT_COLUMNS + _DROPPED_INPUT_COLUMNS :
+            ]
+        migrated[key] = value
+        observed_expansions.add(key)
+        records.append(
+            {
+                "key": key,
+                "source_shape": list(source_shape),
+                "target_shape": list(destination_shape),
+                "copied_leading_columns": _SHARED_INPUT_COLUMNS,
+                "dropped_distance_to_wall_column": _SHARED_INPUT_COLUMNS,
+                "zero_initialized_new_coefficient_columns": _ADDED_INPUT_COLUMNS,
+                "copied_trailing_columns": tail,
+            }
+        )
+
+    if observed_expansions != expected_expansions:
+        raise BireAlignedFullStateError(
+            "the two-input checkpoint did not perform exactly two input rewrites: "
+            f"missing={sorted(expected_expansions - observed_expansions)!r}, "
+            f"extra={sorted(observed_expansions - expected_expansions)!r}"
+        )
+
+    local_shape = tuple(int(v) for v in migrated["local.weight"].shape)
+    if local_shape != (
+        STATE_CHANNEL_COUNT,
+        NEW_CHANNEL_EXTERNAL_INPUT_CHANNELS,
+        3,
+        3,
+    ):
+        raise BireAlignedFullStateError(
+            f"the migrated local correction has unexpected shape {local_shape!r}"
+        )
+    incompatible = target_model.load_state_dict(migrated, strict=True)
+    if incompatible.missing_keys or incompatible.unexpected_keys:
+        raise BireAlignedFullStateError(
+            "strict new-channel checkpoint loading reported incompatible keys: "
+            f"missing={incompatible.missing_keys!r}, "
+            f"unexpected={incompatible.unexpected_keys!r}"
+        )
+
+    return {
+        "state_dict": migrated,
+        "provenance": {
+            "migration": "two_in_one_out_to_two_in_one_out_new_channels",
+            "source_static_channels": list(RETAINED_STATIC_FEATURES),
+            "target_static_channels": list(NEW_CHANNEL_STATIC_FEATURES),
+            "source_external_input_channels": TWO_IN_EXTERNAL_INPUT_CHANNELS,
+            "target_external_input_channels": NEW_CHANNEL_EXTERNAL_INPUT_CHANNELS,
+            "source_lifting_input_channels": TWO_IN_LIFTING_INPUT_CHANNELS,
+            "target_lifting_input_channels": NEW_CHANNEL_LIFTING_INPUT_CHANNELS,
+            "input_rewrites": records,
+            "n_modes_tensor_order_y_x": [32, 32],
+            "spectral_capacity_unchanged": True,
+            "temporal_context_unchanged": True,
+            "function_preserving": False,
+            "not_function_preserving_because": (
+                "distance_to_wall_normalized carried trained weights and is "
+                "deliberately removed, so the initial map loses exactly that "
+                "field's contribution; the size of that change is measured and "
+                "reported rather than assumed negligible"
+            ),
+            "strict_load": True,
+            "missing_keys": [],
+            "unexpected_keys": [],
+        },
+    }
+
+
+def static_channel_perturbation(
+    parent_model: Any,
+    target_model: Any,
+    parent_features: Any,
+    new_features: Any,
+) -> dict[str, Any]:
+    """Measure what dropping distance-to-wall did to the initial map.
+
+    Both models are evaluated on the same physical situation --- the same two
+    states and the same wind and wet mask --- differing only in the static block
+    each arm defines. The result is the size of the discontinuity the warm start
+    introduces, in the normalized state units the objective is computed in.
+    """
+
+    with torch.no_grad():
+        before = parent_model(parent_features)
+        after = target_model(new_features)
+    difference = (after - before).abs()
+    reference = before.abs().mean().clamp_min(1.0e-12)
+    return {
+        "mean_abs_change": float(difference.mean()),
+        "max_abs_change": float(difference.max()),
+        "mean_abs_parent_output": float(before.abs().mean()),
+        "relative_mean_abs_change": float(difference.mean() / reference),
+        "units": "normalized_state",
+        "note": (
+            "the warm start is not function-preserving; this is the size of the "
+            "step it takes before any optimization"
+        ),
+    }
+
+
 class BireAlignedStepper(PointwiseDirectStepper):
     """Evaluation adapter that supplies only the three retained static fields."""
 
@@ -1814,3 +2242,42 @@ class BireTwoInStepper(BireAlignedStepper):
         ) * wet
         self._previous = current
         return future
+
+
+class BireTwoInNewChannelsStepper(BireTwoInStepper):
+    """Two-input stepper whose statics are the derived physical block.
+
+    Three of this arm's five static channels do not exist in the trajectory
+    store, so there is nothing to select from it. The block is built once by
+    :func:`oceanfno.dataset.new_channel_static_block` and handed here; the store
+    array the shared rollout loops still pass is checked for shape and then
+    superseded, which keeps :func:`validate_checkpoint` and ``evaluate_regime``
+    identical across every arm.
+    """
+
+    def __init__(self, *args: Any, static_block: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        block = np.ascontiguousarray(static_block, dtype=np.float32)
+        if block.ndim != 4 or block.shape[1] != NEW_CHANNEL_STATIC_COUNT or (
+            block.shape[2:] != self.wet.shape
+        ):
+            raise BireAlignedFullStateError(
+                "the new-channel stepper needs an (experiments,5,Y,X) static block"
+            )
+        self.static_block = block
+
+    def normalized_static(self, static: Any, experiments: np.ndarray) -> Any:
+        if static is not None and int(static.shape[1]) != len(STATIC_FEATURES):
+            raise BireAlignedFullStateError(
+                "the store's static contract changed underneath the derived block"
+            )
+        indices = np.asarray(experiments, dtype=np.int64)
+        if indices.size and int(indices.max()) >= self.static_block.shape[0]:
+            raise BireAlignedFullStateError(
+                "a requested regime is outside the derived static block"
+            )
+        value = np.stack([self.static_block[int(index)] for index in indices])
+        return torch.from_numpy(np.ascontiguousarray(value)).to(
+            device=self.device,
+            dtype=torch.float32,
+        )

@@ -1,15 +1,16 @@
-"""Tests for the two-in / one-out model's S0 figure package.
+"""Tests for the physical-static-channel model's S0 figure package.
 
-These figures are a temporal-context ablation, not a new evaluation protocol.
-They must therefore reuse the 32x32 arm's starts, truth, baselines, normalizers,
+These figures are a static-channel ablation, not a new evaluation protocol. They
+must therefore reuse the preceding arm's starts, truth, baselines, normalizers,
 lead grid, and six plot definitions exactly.  Only the selected checkpoint
-changes: the two-input fine-tune is red and the one-input checkpoint it started
-from is black.
+changes: the new-statics fine-tune is red and the old-statics checkpoint it
+started from is black.  Both sides read the same two time levels, so the
+temporal context is asserted equal rather than compared.
 
-The one thing the protocol *does* gain is a second initial condition per member,
-the truth state ten days before each start.  It is an initial condition and
-never a scored target, so the declared starts, leads and baselines are asserted
-identical to the compared package.
+Each member still reads a second initial condition, the truth state ten days
+before its start.  It is an initial condition and never a scored target, so the
+declared starts, leads and baselines are asserted identical to the compared
+package.
 
 The tests that bind to the training report are skipped until the arm has
 actually been trained; everything that is a property of the declaration alone
@@ -28,24 +29,21 @@ import pytest
 
 
 ROOT = Path(__file__).resolve().parents[1]
-CONTRACT = ROOT / "config/model_c_2in_1out_s0_figures_v1.json"
-COMPARED = (
-    ROOT
-    / "config/model_c_bire_protocol_rollout_ft_y32_x32_s0_figures_v1.json"
-)
-TRAINING = ROOT / "config/model_c_2in_1out_v1.json"
-COMPARATOR_TRAINING = (
-    ROOT / "config/model_c_bire_protocol_rollout_ft_y32_x32_v1.json"
-)
+CONTRACT = ROOT / "config/model_c_2in_1out_new_channels_s0_figures_v1.json"
+COMPARED = ROOT / "config/model_c_2in_1out_s0_figures_v1.json"
+TRAINING = ROOT / "config/model_c_2in_1out_new_channels_v1.json"
+COMPARATOR_TRAINING = ROOT / "config/model_c_2in_1out_v1.json"
 TRAINING_REPORT = (
-    ROOT / "outputs/af_fno/C/model_c_2in_1out_v1/model_c_2in_1out_report.json"
+    ROOT
+    / "outputs/af_fno/C/model_c_2in_1out_new_channels_v1/"
+    "model_c_2in_1out_new_channels_report.json"
 )
 MODULE = ROOT / "src/oceanfno/figures.py"
-SBATCH = ROOT / "slurm/models/c/figures_2in_1out.sbatch"
+SBATCH = ROOT / "slurm/models/c/figures_2in_1out_new_channels.sbatch"
 
-VERSION = "model_c_2in_1out_s0_figures_v1"
-TRAINING_VERSION = "model_c_2in_1out_v1"
-COMPARATOR_VERSION = "model_c_bire_protocol_rollout_ft_y32_x32_v1"
+VERSION = "model_c_2in_1out_new_channels_s0_figures_v1"
+TRAINING_VERSION = "model_c_2in_1out_new_channels_v1"
+COMPARATOR_VERSION = "model_c_2in_1out_v1"
 PENDING = "PENDING_AFTER_TRAINING"
 #: Which checkpoint selection lands on is not known before the run; only that
 #: it is one of the four declared ones. The comparator step is fixed.
@@ -55,13 +53,15 @@ COMPARATOR_STEP = 3840
 #: test rather than the arm's actual selection.
 EXAMPLE_STEP = 2880
 
-#: The four architecture fields this arm is allowed to move.
-INPUT_CONTRACT_FIELDS = {
-    "in_channels",
-    "lifting_in_channels",
-    "input_states",
-    "input_lag_days",
-}
+#: The three architecture fields this arm is allowed to move.
+STATIC_CONTRACT_FIELDS = {"in_channels", "lifting_in_channels", "static_channels"}
+NEW_STATIC_CHANNELS = [
+    "wind_stress_x",
+    "wet_mask",
+    "coriolis_parameter",
+    "zonal_grid_spacing",
+    "sst_relaxation_target",
+]
 
 STARTS = (
     6263,
@@ -93,22 +93,22 @@ FIGURE_NAMES = (
 
 PROJECT_ROOT = (
     "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/"
-    "model_c_2in_1out_s0_figures_v1"
+    "model_c_2in_1out_new_channels_s0_figures_v1"
 )
 SCRATCH_ROOT = (
     "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/"
-    "model_c_2in_1out_s0_figures_v1"
+    "model_c_2in_1out_new_channels_s0_figures_v1"
 )
 
 requires_contract = pytest.mark.skipif(
-    not CONTRACT.is_file(), reason="the two-input figure contract is absent"
+    not CONTRACT.is_file(), reason="the new-channel figure contract is absent"
 )
 requires_module = pytest.mark.skipif(
     not MODULE.is_file(), reason="the canonical figure module is absent"
 )
 requires_report = pytest.mark.skipif(
     not TRAINING_REPORT.is_file(),
-    reason="the two-input arm has not been trained yet",
+    reason="the new-channel arm has not been trained yet",
 )
 
 
@@ -148,7 +148,7 @@ def _filled() -> dict:
 
 
 def _written(contract: dict, directory: Path) -> Path:
-    path = directory / "two_in_figures.json"
+    path = directory / "new_channel_figures.json"
     path.write_text(json.dumps(contract, indent=2, sort_keys=True) + "\n")
     return path
 
@@ -158,7 +158,7 @@ def _suite():
 
 
 @requires_contract
-def test_two_in_reuses_the_exact_s0_protocol_and_six_plots() -> None:
+def test_new_channels_reuses_the_exact_s0_protocol_and_six_plots() -> None:
     mine = _raw()
     compared = json.loads(COMPARED.read_text())
     compared_protocol = compared["protocol"]
@@ -185,6 +185,7 @@ def test_two_in_reuses_the_exact_s0_protocol_and_six_plots() -> None:
     for key in shared:
         assert protocol[key] == compared_protocol[key], key
 
+    assert protocol["static_channels"] == NEW_STATIC_CHANNELS
     assert protocol["member_count"] == len(STARTS) == 15
     assert tuple(protocol["start_draw_order"]) == STARTS
     assert tuple(protocol["figure3_lead_days"]) == FIGURE3_LEADS
@@ -215,7 +216,7 @@ def test_the_extra_initial_condition_is_declared_and_is_never_a_target() -> None
 
 @requires_contract
 @requires_report
-def test_two_in_reuses_truth_baselines_dataset_and_normalization() -> None:
+def test_new_channels_reuses_truth_baselines_dataset_and_normalization() -> None:
     mine = _raw()
     compared = json.loads(COMPARED.read_text())
     report = json.loads(TRAINING_REPORT.read_text())
@@ -240,7 +241,7 @@ def test_two_in_reuses_truth_baselines_dataset_and_normalization() -> None:
 
 @requires_contract
 @requires_report
-def test_figure6_is_the_two_input_arm_against_its_literal_one_input_parent() -> None:
+def test_figure6_is_the_new_channel_arm_against_its_literal_old_static_parent() -> None:
     contract = _filled()
     training = json.loads(TRAINING.read_text())
     comparator_training = json.loads(COMPARATOR_TRAINING.read_text())
@@ -256,13 +257,17 @@ def test_figure6_is_the_two_input_arm_against_its_literal_one_input_parent() -> 
     # Spatial capacity is identical; only the input contract differs.
     assert selected["architecture"]["n_modes"] == [32, 32]
     assert comparator["architecture"]["n_modes"] == [32, 32]
+    # Temporal context is identical on both sides; only the statics differ.
     assert selected["architecture"]["input_states"] == 2
+    assert comparator["architecture"]["input_states"] == 2
     assert selected["architecture"]["input_lag_days"] == 10
-    assert selected["architecture"]["in_channels"] == 95
-    assert selected["architecture"]["lifting_in_channels"] == 97
-    assert comparator["architecture"]["in_channels"] == 49
-    assert comparator["architecture"]["lifting_in_channels"] == 51
-    assert "input_states" not in comparator["architecture"]
+    assert comparator["architecture"]["input_lag_days"] == 10
+    assert selected["architecture"]["static_channels"] == NEW_STATIC_CHANNELS
+    assert selected["architecture"]["in_channels"] == 97
+    assert selected["architecture"]["lifting_in_channels"] == 99
+    assert comparator["architecture"]["in_channels"] == 95
+    assert comparator["architecture"]["lifting_in_channels"] == 97
+    assert "static_channels" not in comparator["architecture"]
     assert selected["architecture"]["local_kernel_size"] == 3
     assert comparator["architecture"]["local_kernel_size"] == 3
     # The reverted smooth-position field must not have come back either.
@@ -271,11 +276,11 @@ def test_figure6_is_the_two_input_arm_against_its_literal_one_input_parent() -> 
     assert {
         key: value
         for key, value in selected["architecture"].items()
-        if key not in INPUT_CONTRACT_FIELDS
+        if key not in STATIC_CONTRACT_FIELDS
     } == {
         key: value
         for key, value in comparator["architecture"].items()
-        if key not in INPUT_CONTRACT_FIELDS
+        if key not in STATIC_CONTRACT_FIELDS
     }
     assert selected["optimizer_step"] in CHECKPOINT_STEPS
     assert comparator["optimizer_step"] == COMPARATOR_STEP
@@ -295,8 +300,8 @@ def test_figure6_is_the_two_input_arm_against_its_literal_one_input_parent() -> 
         assert contract["artifacts"]["comparator_checkpoint"][key] == training[
             "sources"
         ]["initialization_checkpoint"][key]
-    assert "model_c_2in_1out_v1/selected.pt" in published["checkpoint"]
-    assert "bire_protocol_rollout_ft_y32_x32_v1/selected.pt" in contract[
+    assert "model_c_2in_1out_new_channels_v1/selected.pt" in published["checkpoint"]
+    assert "model_c_2in_1out_v1/selected.pt" in contract[
         "artifacts"
     ]["comparator_checkpoint"]["path"]
     assert contract["figure6"]["literal_pretrain_finetune_pair"] is True
@@ -304,7 +309,7 @@ def test_figure6_is_the_two_input_arm_against_its_literal_one_input_parent() -> 
 
 
 @requires_contract
-def test_two_in_figure_outputs_have_exact_noncolliding_roots() -> None:
+def test_new_channel_figure_outputs_have_exact_noncolliding_roots() -> None:
     mine = _raw()
     compared = json.loads(COMPARED.read_text())
     training = json.loads(TRAINING.read_text())
@@ -324,7 +329,7 @@ def test_two_in_figure_outputs_have_exact_noncolliding_roots() -> None:
 @requires_contract
 @requires_module
 @requires_report
-def test_a_filled_two_in_figure_contract_loads_strictly(tmp_path) -> None:
+def test_a_filled_new_channel_figure_contract_loads_strictly(tmp_path) -> None:
     suite = _suite()
     contract, resolved, digest = suite.load_contract(
         _written(_filled(), tmp_path), verify_sources=False
@@ -363,8 +368,11 @@ def test_a_filled_two_in_figure_contract_loads_strictly(tmp_path) -> None:
             id="comparator_version_moved",
         ),
         pytest.param(
-            lambda c: c["selected_model"]["architecture"].update(input_states=1),
-            id="selected_temporal_context_reverted",
+            lambda c: c["selected_model"]["architecture"].update(
+                static_channels=["wind_stress_x", "wet_mask",
+                                 "distance_to_wall_normalized"]
+            ),
+            id="selected_statics_reverted",
         ),
         pytest.param(
             lambda c: c["selected_model"]["architecture"].update(n_modes=[32, 24]),
@@ -378,7 +386,7 @@ def test_a_filled_two_in_figure_contract_loads_strictly(tmp_path) -> None:
         ),
         pytest.param(
             lambda c: c["comparator_model"]["architecture"].update(
-                n_modes=[32, 24]
+                static_channels=NEW_STATIC_CHANNELS
             ),
             id="wrong_comparator_architecture",
         ),
@@ -416,7 +424,7 @@ def test_a_filled_two_in_figure_contract_loads_strictly(tmp_path) -> None:
         ),
         pytest.param(
             lambda c: c["output"].update(
-                project_root=PROJECT_ROOT.replace("2in_1out", "y32_x32")
+                project_root=PROJECT_ROOT.replace("new_channels_", "")
             ),
             id="project_root_changed",
         ),
@@ -440,20 +448,20 @@ def test_a_filled_two_in_figure_contract_loads_strictly(tmp_path) -> None:
         ),
     ],
 )
-def test_two_in_figure_contract_rejects_protocol_model_and_output_tampering(
+def test_new_channel_figure_contract_rejects_protocol_model_and_output_tampering(
     mutate, tmp_path
 ) -> None:
     suite = _suite()
     contract = _filled()
     mutate(contract)
-    with pytest.raises(suite.ModelCTwoInFigureError):
+    with pytest.raises(suite.ModelCNewChannelsFigureError):
         suite.load_contract(_written(contract, tmp_path), verify_sources=False)
 
 
 @requires_contract
 @requires_module
 @requires_report
-def test_finalize_binds_only_to_the_two_in_training_report(tmp_path) -> None:
+def test_finalize_binds_only_to_the_new_channel_training_report(tmp_path) -> None:
     suite = _suite()
     path = _written(_pending(), tmp_path)
     result = suite.finalize(path)
@@ -548,18 +556,18 @@ def test_day2000_climatology_ratio_remains_advisory() -> None:
     assert "not gated" in gate["advisory_note"]
 
 
-def test_captions_and_readme_name_the_one_input_to_two_input_comparison() -> None:
+def test_captions_and_readme_name_the_static_channel_comparison() -> None:
     suite = _suite()
     with suite.FineTuneLabels("S0", 0.1, EXAMPLE_STEP) as labels:
         assert (
             labels.rewrite("S0 architecture-direction comparison")
-            == "S0 one-input parent vs two-input fine-tune"
+            == "S0 engineered vs physical static channels"
         )
         assert labels.rewrite("Prior residual Model C") == (
-            "1-in / 1-out, 32x32 modes (step 3,840)"
+            "tau, wet, d_wall (step 3,840)"
         )
         assert labels.rewrite("Selected anomaly-direct Model C") == (
-            "2-in / 1-out, 32x32 modes (step 2,880)"
+            "tau, wet, f, dx, theta_clim (step 2,880)"
         )
     text = suite._readme(
         "S0",
@@ -569,23 +577,25 @@ def test_captions_and_readme_name_the_one_input_to_two_input_comparison() -> Non
         },
     )
     flat = " ".join(text.split())
-    assert "literal step-3,840 one-input parent" in flat
-    assert "two-input fine-tune" in flat
+    assert "literal step-3,840" in flat
+    assert "tau_x, wet mask, f(phi), dx(phi), theta_clim(x, y)" in flat
     assert "`(x_(t-10), x_t)`" in flat
     assert "6263--6979" in flat
     assert "never a scored target" in flat
     assert suite.GATE_NAME in text
 
 
-def test_the_selected_stepper_is_history_aware_and_the_comparator_is_not() -> None:
-    """Figure 6's two curves must come from the two different input contracts."""
+def test_both_steppers_are_history_aware_and_only_one_reads_the_new_block() -> None:
+    """Figure 6's two curves differ in statics, not in temporal context."""
 
     pytest.importorskip("neuralop")
-    from oceanfno.model import BireAlignedStepper, BireTwoInStepper
+    from oceanfno.model import BireTwoInNewChannelsStepper, BireTwoInStepper
 
     assert BireTwoInStepper.requires_history is True
-    assert BireAlignedStepper.requires_history is False
-    assert issubclass(BireTwoInStepper, BireAlignedStepper)
+    assert BireTwoInNewChannelsStepper.requires_history is True
+    assert issubclass(BireTwoInNewChannelsStepper, BireTwoInStepper)
+    # Only the new-channel adapter carries a derived block.
+    assert "static_block" in BireTwoInNewChannelsStepper.__init__.__code__.co_varnames
 
 
 def test_canonical_figure_module_has_no_wrapper_context() -> None:
@@ -603,5 +613,5 @@ def test_launcher_finalizes_then_runs_only_the_canonical_module() -> None:
         if " -m " in f" {line} " and "oceanfno." in line
     }
     assert invoked == {"oceanfno.figures"}
-    assert "model_c_2in_1out_s0_figures_v1.json" in text
+    assert "model_c_2in_1out_new_channels_s0_figures_v1.json" in text
     assert text.index("finalize") < text.index("  preflight") < text.index("  run")

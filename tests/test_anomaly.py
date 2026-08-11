@@ -1,9 +1,9 @@
-"""Contract and metric tests for the two-in / one-out S0 anomaly package.
+"""Contract and metric tests for the physical-static-channel S0 anomaly package.
 
 This package must change only the model values it reads.  The reference field,
 plot definitions, member, leads, and diagnostic formulas remain the retained
 local24 definitions, while every input artifact must belong to the sealed
-two-input figure package.
+new-channel figure package.
 
 The published-metric test recomputes the report's numbers from the published
 arrays rather than pinning literals: the arm's measured anomaly amplitudes are
@@ -26,28 +26,27 @@ import pytest
 
 
 ROOT = Path(__file__).resolve().parents[1]
-CONTRACT = ROOT / "config/model_c_2in_1out_s0_anomaly_v1.json"
-COMPARED = (
-    ROOT
-    / "config/model_c_bire_protocol_rollout_ft_y32_x32_s0_anomaly_v1.json"
+CONTRACT = ROOT / "config/model_c_2in_1out_new_channels_s0_anomaly_v1.json"
+COMPARED = ROOT / "config/model_c_2in_1out_s0_anomaly_v1.json"
+FIGURE_CONTRACT = (
+    ROOT / "config/model_c_2in_1out_new_channels_s0_figures_v1.json"
 )
-FIGURE_CONTRACT = ROOT / "config/model_c_2in_1out_s0_figures_v1.json"
 FIGURE_PACKAGE = (
-    ROOT / "outputs/af_fno/C/model_c_2in_1out_s0_figures_v1/S0"
+    ROOT / "outputs/af_fno/C/model_c_2in_1out_new_channels_s0_figures_v1/S0"
 )
 FIGURE_REPORT = FIGURE_PACKAGE / "model_c_bire_s0_figures_report.json"
 FIGURE_ARRAYS = FIGURE_PACKAGE / "model_c_bire_s0_figures_arrays.npz"
 FIGURE_MANIFEST = FIGURE_PACKAGE / "manifest.json"
 MODULE = ROOT / "src/oceanfno/anomaly.py"
-SBATCH = ROOT / "slurm/models/c/anomaly_2in_1out.sbatch"
-PACKAGE = ROOT / "outputs/af_fno/C/model_c_2in_1out_s0_anomaly_v1/S0"
+SBATCH = ROOT / "slurm/models/c/anomaly_2in_1out_new_channels.sbatch"
+PACKAGE = ROOT / "outputs/af_fno/C/model_c_2in_1out_new_channels_s0_anomaly_v1/S0"
 
-VERSION = "model_c_2in_1out_s0_anomaly_v1"
+VERSION = "model_c_2in_1out_new_channels_s0_anomaly_v1"
 CONTRACT_STATUS = (
-    "frozen_after_the_model_c_2in_1out_figure_package_and_before_any_"
+    "frozen_after_the_model_c_2in_1out_new_channels_figure_package_and_before_any_"
     "anomaly_metric"
 )
-FIGURE_VERSION = "model_c_2in_1out_s0_figures_v1"
+FIGURE_VERSION = "model_c_2in_1out_new_channels_s0_figures_v1"
 PENDING = "PENDING_AFTER_FIGURES"
 
 FIGURE_3_LEADS = (0, 10, 20, 30, 40)
@@ -70,11 +69,11 @@ DIAGNOSTICS = (
 
 PROJECT_ROOT = (
     "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/"
-    "model_c_2in_1out_s0_anomaly_v1"
+    "model_c_2in_1out_new_channels_s0_anomaly_v1"
 )
 SCRATCH_ROOT = (
     "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/"
-    "model_c_2in_1out_s0_anomaly_v1"
+    "model_c_2in_1out_new_channels_s0_anomaly_v1"
 )
 
 PROVENANCE = {
@@ -121,14 +120,14 @@ STRUCTURE_KEYS = {
 
 requires_contract = pytest.mark.skipif(
     not CONTRACT.is_file(),
-    reason="the two-input anomaly contract is absent until its figure package exists",
+    reason="the new-channel anomaly contract is absent until its figure package exists",
 )
 requires_module = pytest.mark.skipif(
     not MODULE.is_file(), reason="the canonical anomaly module is absent"
 )
 requires_figures = pytest.mark.skipif(
     not FIGURE_ARRAYS.is_file(),
-    reason="the two-input figure package has not been published",
+    reason="the new-channel figure package has not been published",
 )
 
 
@@ -158,7 +157,7 @@ def _filled() -> dict:
 
 
 def _written(contract: dict, directory: Path) -> Path:
-    path = directory / "two_in_anomaly.json"
+    path = directory / "new_channel_anomaly.json"
     path.write_text(json.dumps(contract, indent=2, sort_keys=True) + "\n")
     return path
 
@@ -168,7 +167,7 @@ def _suite():
 
 
 @requires_contract
-def test_two_in_uses_the_same_three_png_definitions_as_the_one_input_arm() -> None:
+def test_new_channels_uses_the_same_three_png_definitions() -> None:
     mine = _raw()
     compared = json.loads(COMPARED.read_text())
 
@@ -219,7 +218,7 @@ def test_canonical_module_exposes_the_frozen_metric_and_plot_functions() -> None
 
 @requires_contract
 @requires_figures
-def test_two_in_reads_only_the_completed_two_in_figure_package() -> None:
+def test_new_channels_reads_only_the_completed_new_channel_figure_package() -> None:
     contract = _filled()
     artifacts = contract["artifacts"]
     report = json.loads(FIGURE_REPORT.read_text())
@@ -245,7 +244,7 @@ def test_two_in_reads_only_the_completed_two_in_figure_package() -> None:
 
 
 @requires_contract
-def test_two_in_is_s0_only_and_has_exact_noncolliding_output_roots() -> None:
+def test_new_channels_is_s0_only_and_has_exact_noncolliding_output_roots() -> None:
     mine = _raw()
     compared = json.loads(COMPARED.read_text())
 
@@ -260,14 +259,14 @@ def test_two_in_is_s0_only_and_has_exact_noncolliding_output_roots() -> None:
     for key in ("project_root", "scratch_root"):
         assert mine["output"][key] != compared["output"][key]
     assert mine["retained_on_the_total_field"]["measurement_source"] == (
-        "model_c_2in_1out_acceptance_gate.json"
+        "model_c_2in_1out_new_channels_acceptance_gate.json"
     )
 
 
 @requires_contract
 @requires_module
 @requires_figures
-def test_a_filled_two_in_anomaly_contract_loads_strictly(tmp_path) -> None:
+def test_a_filled_new_channel_anomaly_contract_loads_strictly(tmp_path) -> None:
     suite = _suite()
     contract, resolved, digest = suite.load_contract(
         _written(_filled(), tmp_path), verify_sources=False
@@ -287,7 +286,7 @@ def test_pending_provenance_refuses_to_load_and_finalize_fills_it(tmp_path) -> N
     for key in PENDING_ARTIFACTS:
         assert pending["artifacts"][key]["sha256"] == PENDING
     path = _written(pending, tmp_path)
-    with pytest.raises(suite.ModelCTwoInAnomalyError):
+    with pytest.raises(suite.ModelCNewChannelsAnomalyError):
         suite.load_contract(path, verify_sources=False)
 
     result = suite.finalize(path)
@@ -309,7 +308,7 @@ def test_finalize_refuses_to_overwrite_bound_provenance(tmp_path) -> None:
     suite = _suite()
     contract = _pending()
     contract["artifacts"]["figure_package_arrays"]["sha256"] = "0" * 64
-    with pytest.raises(suite.ModelCTwoInAnomalyError, match="refus|mismatch|changed"):
+    with pytest.raises(suite.ModelCNewChannelsAnomalyError, match="refus|mismatch|changed"):
         suite.finalize(_written(contract, tmp_path))
 
 
@@ -364,13 +363,13 @@ def test_finalize_refuses_to_overwrite_bound_provenance(tmp_path) -> None:
         ),
         pytest.param(
             lambda c: c["artifacts"]["figure_package_report"].update(
-                path="/tmp/not-the-two-in-report.json"
+                path="/tmp/not-the-new-channel-report.json"
             ),
             id="figure_report_replaced",
         ),
         pytest.param(
             lambda c: c["artifacts"]["figure_package_arrays"].update(
-                path="/tmp/not-the-two-in-arrays.npz"
+                path="/tmp/not-the-new-channel-arrays.npz"
             ),
             id="figure_arrays_replaced",
         ),
@@ -386,7 +385,7 @@ def test_finalize_refuses_to_overwrite_bound_provenance(tmp_path) -> None:
         ),
         pytest.param(
             lambda c: c["output"].update(
-                project_root=PROJECT_ROOT.replace("2in_1out", "y32_x32")
+                project_root=PROJECT_ROOT.replace("new_channels_", "")
             ),
             id="project_root_collides",
         ),
@@ -405,13 +404,13 @@ def test_finalize_refuses_to_overwrite_bound_provenance(tmp_path) -> None:
         pytest.param(lambda c: c.update(adds_only=False), id="not_additive"),
     ],
 )
-def test_two_in_anomaly_contract_rejects_science_provenance_and_output_tampering(
+def test_new_channel_anomaly_contract_rejects_science_provenance_and_output_tampering(
     mutate, tmp_path
 ) -> None:
     suite = _suite()
     contract = _filled()
     mutate(contract)
-    with pytest.raises(suite.ModelCTwoInAnomalyError):
+    with pytest.raises(suite.ModelCNewChannelsAnomalyError):
         suite.load_contract(_written(contract, tmp_path), verify_sources=False)
 
 
@@ -487,7 +486,7 @@ def test_anomaly_ratio_catches_variability_hidden_by_the_total_mean() -> None:
 
 @pytest.mark.skipif(
     not (PACKAGE / REPORT_NAME).is_file(),
-    reason="the two-input anomaly package has not been produced",
+    reason="the new-channel anomaly package has not been produced",
 )
 def test_published_anomaly_metrics_are_reproduced_by_the_published_arrays() -> None:
     """Recompute rather than pin: the arm's amplitudes are not known in advance."""
@@ -531,7 +530,7 @@ def test_published_anomaly_metrics_are_reproduced_by_the_published_arrays() -> N
 
 @pytest.mark.skipif(
     not (PACKAGE / ARRAYS_NAME).is_file(),
-    reason="the two-input anomaly package has not been produced",
+    reason="the new-channel anomaly package has not been produced",
 )
 def test_published_arrays_are_one_shared_field_subtraction() -> None:
     with np.load(PACKAGE / ARRAYS_NAME) as anomaly:
@@ -572,6 +571,6 @@ def test_launcher_finalizes_preflights_then_runs_only_the_canonical_module() -> 
         if " -m " in f" {line} " and "oceanfno." in line
     }
     assert invoked == {"oceanfno.anomaly"}
-    assert "model_c_2in_1out_s0_anomaly_v1.json" in text
+    assert "model_c_2in_1out_new_channels_s0_anomaly_v1.json" in text
     assert text.index("finalize") < text.index("  preflight") < text.index("  run")
     assert "--gres=gpu" not in text

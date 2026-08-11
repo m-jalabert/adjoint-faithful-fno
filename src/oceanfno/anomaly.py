@@ -20,10 +20,10 @@ from .diagnostics import derived_fields
 from .model import MANIFEST_NAME, README_NAME
 from .plots import FIGURE_3_LEADS, FIGURE_7_LEADS, _finite_bound, _masked, _style
 
-VERSION = "model_c_2in_1out_s0_anomaly_v1"
+VERSION = "model_c_2in_1out_new_channels_s0_anomaly_v1"
 
 CONTRACT_STATUS = (
-    "frozen_after_the_model_c_2in_1out_figure_package_and_before_any_"
+    "frozen_after_the_model_c_2in_1out_new_channels_figure_package_and_before_any_"
     "anomaly_metric"
 )
 
@@ -57,8 +57,12 @@ class BireProtocolRolloutFineTuneAnomalyError(RuntimeError):
     """Compatibility base for anomaly-package contract failures."""
 
 
-class ModelCTwoInAnomalyError(BireProtocolRolloutFineTuneAnomalyError):
-    """Raised when the two-input anomaly package loses its frozen provenance."""
+class ModelCNewChannelsAnomalyError(BireProtocolRolloutFineTuneAnomalyError):
+    """Raised when the new-channel anomaly package loses its frozen provenance."""
+
+
+# The previous arm's name, kept as an exact alias for existing callers.
+ModelCTwoInAnomalyError = ModelCNewChannelsAnomalyError
 
 
 PENDING = "PENDING_AFTER_FIGURES"
@@ -70,11 +74,11 @@ PENDING_PATHS: tuple[tuple[str, ...], ...] = (
 
 _REPOSITORY = Path(__file__).resolve().parents[2]
 _EXPECTED_PROJECT_ROOT = str(
-    _REPOSITORY / "outputs/af_fno/C/model_c_2in_1out_s0_anomaly_v1"
+    _REPOSITORY / "outputs/af_fno/C/model_c_2in_1out_new_channels_s0_anomaly_v1"
 )
 _EXPECTED_SCRATCH_ROOT = (
     "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/"
-    "model_c_2in_1out_s0_anomaly_v1"
+    "model_c_2in_1out_new_channels_s0_anomaly_v1"
 )
 _EXPECTED_REQUIRED = (
     FIGURE_3A,
@@ -202,7 +206,7 @@ def _sealed_figure_provenance(contract: Mapping[str, Any]) -> dict[str, str]:
         contract
     )
     expected_names = (
-        "model_c_2in_1out_s0_figures_v1.json",
+        "model_c_2in_1out_new_channels_s0_figures_v1.json",
         plots.REPORT_NAME,
         plots.ARRAYS_NAME,
         plots.MANIFEST_NAME,
@@ -666,7 +670,7 @@ def _readme(report: Mapping[str, Any]) -> str:
     spectrum = structure[
         "hann_directional_power_fraction_above_0p2_cycles_per_cell"
     ]
-    return f"""# Two-in / one-out streamfunction anomalies, S0 — companions to figures 3 and 7
+    return f"""# Physical-static-channel streamfunction anomalies, S0 — companions to figures 3 and 7
 
 These plates reuse the frozen anomaly definition exactly:
 
@@ -674,11 +678,11 @@ These plates reuse the frozen anomaly definition exactly:
 
 `psi_bar_S0` is MITgcm's two-dimensional time-mean barotropic streamfunction
 over training days {TRAIN_RANGE[0]}--{TRAIN_RANGE[1] - 1}. The identical field
-is subtracted from truth and the selected two-input model; the model's own mean
-is never subtracted. The three PNG definitions and member 0 inputs are unchanged
-from the 32x32 arm, while this package writes to its own output root.
+is subtracted from truth and the selected new-channel model; the model's own
+mean is never subtracted. The three PNG definitions and member 0 inputs are
+unchanged from the preceding arm, while this package writes to its own root.
 
-| lead | truth anomaly RMS | 2-in / 1-out anomaly RMS | ratio |
+| lead | truth anomaly RMS | physical-statics anomaly RMS | ratio |
 | --- | --- | --- | --- |
 | day 60 | {day60['truth_anomaly_rms_sv']:.3f} Sv | {day60['model_anomaly_rms_sv']:.3f} Sv | {day60['anomaly_rms_ratio']:.3f} |
 | day 2,000 | {day2000['truth_anomaly_rms_sv']:.3f} Sv | {day2000['model_anomaly_rms_sv']:.3f} Sv | {day2000['anomaly_rms_ratio']:.3f} |
@@ -689,7 +693,7 @@ At day 2,000, normalized first-difference RMS is
 are {spectrum['model_meridional']:.5f} and {spectrum['model_zonal']:.5f}.
 The report also retains western-four-cell and interior anomaly RMS diagnostics.
 
-This package reads the sealed two-input figure arrays and model-visible MITgcm
+This package reads the sealed new-channel figure arrays and model-visible MITgcm
 training state only. It rolls out no model, promotes nothing, and does not
 modify the total-field figures or acceptance gate.
 

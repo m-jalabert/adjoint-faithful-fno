@@ -1,22 +1,30 @@
-"""Canonical six-step fine-tuning pipeline for the two-in / one-out Model C.
+"""Canonical six-step fine-tuning pipeline for the two-in / one-out Model C
+on physically-motivated static channels.
 
-The one-input arm learned ``x_t -> x_{t+10}``. This arm learns
+The retained arm reads ``(x_{t-10}, x_t) -> x_{t+10}`` with the statics
 
-    (x_{t-10}, x_t) -> x_{t+10},
+    [tau_x, wet mask, distance to wall].
 
-and autoregresses by sliding the pair forward, so the operator is given two
-consecutive time levels --- and therefore an empirical tendency
-``(x_t - x_{t-10}) / 10 days`` --- instead of the current state alone. Nothing
-else moves: the 32x32 modes, the trained bias-free local 3x3 branch, the
-position encoder, the dataset, the normalizers, the six-step objective, the
-optimizer schedule, the seed and the checkpoint-selection rule are all
-inherited from the 32x32 parent this arm warm-starts.
+This arm keeps that map and that temporal context exactly, and changes only
+*which* fields describe the environment::
+
+    [tau_x, wet mask, f(phi), dx(phi), theta_clim(x, y)]
+
+The two kept channels are real forcing and real geometry. The three added ones
+are coefficients that appear in the governing equations: the Coriolis parameter,
+the latitude-dependent zonal grid spacing of the spherical grid, and the SST
+relaxation target the setup restores towards on a 30-day timescale. The
+distance-to-wall field is removed as an engineered heuristic.
+
+Unlike every earlier arm in this tree the warm start is **not**
+function-preserving: the parent has trained weights on the removed channel, so
+the initial map necessarily loses that field's contribution. That is measured
+in :func:`preflight` and recorded, rather than papered over.
 
 The raw contract inherits the frozen dataset, objective, schedule and selection
-fields from that parent, which is itself compact and inherits them from Y32,
-which inherits them from local24. This module resolves that inheritance chain to
-its root, audits it, performs the function-preserving history-channel migration,
-then trains and selects the two-input arm.
+fields from the two-input parent, which inherits them in turn along a chain
+reaching back to local24. This module resolves that chain to its root, audits
+it, performs the static-channel migration, then trains and selects the arm.
 """
 from __future__ import annotations
 
@@ -36,23 +44,23 @@ import zarr
 
 from .runtime import DataLoader, torch
 from .runtime import AUDIT_TERMS, ChunkAwareBatchSampler, GROUP_SLICES, STATE_CHANNEL_COUNT, _checkpoint_state_dict, _device, _file_sha256, _json_sha256, require_model_a_runtime, seed_everything
-from .dataset import DATASET_VERSION, EXPERIMENTS, HORIZON_DAYS, INFERENCE_RANGE, ModelCTwoInRolloutDataset, TRAIN_RANGE, _normalizers, records_for_two_in_rollout_split, store_codes, validation_records, validation_starts, verify, western_boundary_mask
+from .dataset import DATASET_VERSION, EXPERIMENTS, HORIZON_DAYS, INFERENCE_RANGE, ModelCTwoInNewChannelsDataset, NEW_CHANNEL_STATIC_FEATURES, TRAIN_RANGE, _normalizers, new_channel_static_block, records_for_two_in_rollout_split, store_codes, validation_records, validation_starts, verify, western_boundary_mask
 from .objective import MODEL_C_LOSS_V1_CONTRACT_SHA256, ModelCLossConfig, model_c_loss_terms
-from .model import BireAlignedDivergenceError, BireTwoInOneOutArchitecture, BireTwoInStepper, BireY32X32Architecture, CHECKPOINT_DIRECTORY, INPUT_LAG_DAYS, INPUT_STATE_COUNT, MANIFEST_NAME, PRESENT_SLICE, README_NAME, TWO_IN_EXTERNAL_INPUT_CHANNELS, TWO_IN_LIFTING_INPUT_CHANNELS, build_bire_two_in_one_out_model, migrate_y32_x32_state_dict, retained_two_in_features, two_in_state_unroll
+from .model import BireAlignedDivergenceError, BireTwoInNewChannelsArchitecture, BireTwoInNewChannelsStepper, BireTwoInOneOutArchitecture, CHECKPOINT_DIRECTORY, INPUT_LAG_DAYS, INPUT_STATE_COUNT, MANIFEST_NAME, NEW_CHANNEL_EXTERNAL_INPUT_CHANNELS, NEW_CHANNEL_LIFTING_INPUT_CHANNELS, PRESENT_SLICE, README_NAME, RETAINED_STATIC_FEATURES, RETAINED_STATIC_INDICES, TWO_IN_EXTERNAL_INPUT_CHANNELS, TWO_IN_LIFTING_INPUT_CHANNELS, build_bire_two_in_new_channels_model, build_bire_two_in_one_out_model, migrate_two_in_static_channels_state_dict, static_channel_perturbation, two_in_state_unroll
 from .validation import PRIMARY_FIELDS, _assert_store_is_v3, _plot, select_by_validation, train_only_climatology, validate_checkpoint
 
-VERSION = "model_c_2in_1out_v1"
+VERSION = "model_c_2in_1out_new_channels_v1"
 
-CONTRACT_STATUS = "frozen_before_any_model_c_2in_1out_metric"
+CONTRACT_STATUS = "frozen_before_any_model_c_2in_1out_new_channels_metric"
 
-PARENT_VERSION = "model_c_bire_protocol_rollout_ft_y32_x32_v1"
+PARENT_VERSION = "model_c_2in_1out_v1"
 
 PARENT_CONTRACT_SHA256 = (
-    "edb9058740e8d6fe25e2b0693d35503045a9e23452675af3b8ea317e97fcd553"
+    "70b0a39dc6d988602a10d54e170006822dce081133fa9fc77b1bcefc60faaa24"
 )
 
 PARENT_MATERIALIZED_CONTRACT_SHA256 = (
-    "21e663937ef638283ccd3b825abea969d69a39bcfbf5c3136f0d94fedbccc1df"
+    "55d705b75f7dd201aa4d8fd694b4deff86c5deb958018112e7591a417f236038"
 )
 
 BASELINE_OPTIMIZER_STEP = 3840
@@ -94,7 +102,7 @@ WORST_LONG_RATIO_CEILING = 0.85
 
 LONG_AUC_TOLERANCE_TO_BASELINE = 1.0
 
-SLUG = "model_c_2in_1out"
+SLUG = "model_c_2in_1out_new_channels"
 
 NORMALIZATION_NAME = f"{SLUG}_train_only_normalization.npz"
 
@@ -122,17 +130,16 @@ INHERITED_FIELDS = (
     "checkpoint_selection",
 )
 
-#: The only architecture fields that may differ from the 32x32 parent.
+#: The only architecture fields that may differ from the two-input parent.
 DECLARED_ARCHITECTURE_CHANGES = (
     "in_channels",
     "lifting_in_channels",
-    "input_states",
-    "input_lag_days",
+    "static_channels",
 )
 
-INPUT_MIGRATION = (
-    "prepend_46_zero_history_input_channels_to_the_lifting_and_local_weights_"
-    "and_copy_the_parent_state_static_and_position_columns_into_the_trailing_slice"
+STATIC_CHANNEL_MIGRATION = (
+    "copy_the_94_shared_state_wind_and_wet_columns_drop_the_trained_distance_to_"
+    "wall_column_zero_the_three_new_coefficient_columns_and_copy_the_position_tail"
 )
 
 OUTPUT_ARTIFACTS = (
@@ -151,8 +158,21 @@ REQUIRED_SOURCE_HASHES = frozenset(
     }
 )
 
-class ModelCTwoInTrainingError(RuntimeError):
-    """Raised when the two-in / one-out arm violates its contract."""
+#: The simulation's own inputs this arm reads. They are not in the trajectory
+#: store, so each is pinned by digest and the declaration is parsed as well.
+REQUIRED_MITGCM_SOURCES = (
+    "mitgcm_zonal_spacing",
+    "mitgcm_sst_relaxation",
+    "mitgcm_declaration",
+)
+
+class ModelCNewChannelsTrainingError(RuntimeError):
+    """Raised when the physical-static-channel arm violates its contract."""
+
+
+# Historical callers used the previous arm's name. Keep both as exact aliases so
+# every canonical training failure is catchable through either public API.
+ModelCTwoInTrainingError = ModelCNewChannelsTrainingError
 
 
 # Historical callers used the generic arm name. Keep it as an exact alias so
@@ -204,7 +224,7 @@ def fine_tune_loss_contract(config: ModelCLossConfig) -> dict[str, Any]:
     """
 
     if not isinstance(config, BireProtocolRolloutFineTuneLossConfig):
-        raise ModelCTwoInTrainingError(
+        raise ModelCNewChannelsTrainingError(
             "the six-step loss contract describes only the fine-tune configuration"
         )
     return {
@@ -289,10 +309,10 @@ def _resolve_contract(path: Path, *, depth: int = 0) -> dict[str, Any]:
     """
 
     if depth > 8:
-        raise ModelCTwoInTrainingError("the contract inheritance chain does not terminate")
+        raise ModelCNewChannelsTrainingError("the contract inheritance chain does not terminate")
     resolved = Path(path).resolve()
     if not resolved.is_file():
-        raise ModelCTwoInTrainingError(f"an ancestor contract is missing: {resolved}")
+        raise ModelCNewChannelsTrainingError(f"an ancestor contract is missing: {resolved}")
     raw = json.loads(resolved.read_text())
     fields = tuple(raw.get("inherit_parent_fields", ()))
     if not fields:
@@ -300,13 +320,13 @@ def _resolve_contract(path: Path, *, depth: int = 0) -> dict[str, Any]:
     record = raw.get("sources", {}).get("parent_contract", {})
     ancestor = Path(str(record.get("path", ""))).resolve()
     if not ancestor.is_file() or _file_sha256(ancestor) != record.get("sha256"):
-        raise ModelCTwoInTrainingError(
+        raise ModelCNewChannelsTrainingError(
             f"the contract {resolved.name} no longer pins its own parent's bytes"
         )
     parent = _resolve_contract(ancestor, depth=depth + 1)
     for field in fields:
         if field in raw and raw[field] != parent[field]:
-            raise ModelCTwoInTrainingError(
+            raise ModelCNewChannelsTrainingError(
                 f"{resolved.name} overrides inherited field {field}"
             )
     return _materialize(raw, parent, fields)
@@ -321,12 +341,12 @@ def _parent_contract(record: Mapping[str, Any]) -> dict[str, Any]:
         or _file_sha256(path) != record.get("sha256")
         or record.get("sha256") != PARENT_CONTRACT_SHA256
     ):
-        raise ModelCTwoInTrainingError("the selected 32x32 parent contract changed")
+        raise ModelCNewChannelsTrainingError("the selected 32x32 parent contract changed")
     raw_parent = json.loads(path.read_text())
     if raw_parent.get("version") != PARENT_VERSION:
-        raise ModelCTwoInTrainingError("the parent is not the 32x32 one-input arm")
+        raise ModelCNewChannelsTrainingError("the parent is not the 32x32 one-input arm")
     if tuple(raw_parent.get("inherit_parent_fields", ())) != INHERITED_FIELDS:
-        raise ModelCTwoInTrainingError(
+        raise ModelCNewChannelsTrainingError(
             "the 32x32 parent's own inherited-field declaration changed"
         )
     parent = _resolve_contract(path)
@@ -335,39 +355,42 @@ def _parent_contract(record: Mapping[str, Any]) -> dict[str, Any]:
         materialized != PARENT_MATERIALIZED_CONTRACT_SHA256
         or record.get("materialized_sha256") != materialized
     ):
-        raise ModelCTwoInTrainingError("the resolved 32x32 parent contract changed")
+        raise ModelCNewChannelsTrainingError("the resolved 32x32 parent contract changed")
     return parent
 
 
 def _assert_only_the_declared_changes(
     contract: Mapping[str, Any],
 ) -> Mapping[str, Any]:
-    """Prove that temporal context is the sole scientific change."""
+    """Prove that the static channel set is the sole scientific change."""
 
     parent = _parent_contract(contract["sources"]["parent_contract"])
     parent_architecture = dict(parent["architecture"])
     if (
         tuple(parent_architecture.get("n_modes", ())) != MODES
         or parent_architecture.get("local_kernel_size") != LOCAL_KERNEL_SIZE
-        or "input_states" in parent_architecture
+        or int(parent_architecture.get("input_states", -1)) != INPUT_STATE_COUNT
+        or int(parent_architecture.get("input_lag_days", -1)) != INPUT_LAG_DAYS
+        or int(parent_architecture.get("in_channels", -1))
+        != TWO_IN_EXTERNAL_INPUT_CHANNELS
+        or "static_channels" in parent_architecture
     ):
-        raise ModelCTwoInTrainingError(
-            "the parent is not the audited one-input 32x32 model with a trained 3x3 branch"
+        raise ModelCNewChannelsTrainingError(
+            "the parent is not the audited two-input 32x32 model with a trained 3x3 branch"
         )
-    BireY32X32Architecture(**parent_architecture)
+    BireTwoInOneOutArchitecture(**parent_architecture)
     expected = dict(parent_architecture)
-    expected["in_channels"] = TWO_IN_EXTERNAL_INPUT_CHANNELS
-    expected["lifting_in_channels"] = TWO_IN_LIFTING_INPUT_CHANNELS
-    expected["input_states"] = INPUT_STATE_COUNT
-    expected["input_lag_days"] = INPUT_LAG_DAYS
+    expected["in_channels"] = NEW_CHANNEL_EXTERNAL_INPUT_CHANNELS
+    expected["lifting_in_channels"] = NEW_CHANNEL_LIFTING_INPUT_CHANNELS
+    expected["static_channels"] = list(NEW_CHANNEL_STATIC_FEATURES)
     if contract.get("architecture") != expected:
-        raise ModelCTwoInTrainingError(
-            "only the input contract may move from the 32x32 parent: "
+        raise ModelCNewChannelsTrainingError(
+            "only the static channel set may move from the two-input parent: "
             f"{', '.join(DECLARED_ARCHITECTURE_CHANGES)}"
         )
     for field in INHERITED_FIELDS:
         if contract.get(field) != parent.get(field):
-            raise ModelCTwoInTrainingError(
+            raise ModelCNewChannelsTrainingError(
                 f"the two-input arm moved the parent's {field} contract"
             )
     return parent
@@ -382,12 +405,12 @@ def load_contract(
     resolved = Path(path).resolve()
     raw = json.loads(resolved.read_text())
     if tuple(raw.get("inherit_parent_fields", ())) != INHERITED_FIELDS:
-        raise ModelCTwoInTrainingError("the exact inherited-field declaration changed")
+        raise ModelCNewChannelsTrainingError("the exact inherited-field declaration changed")
     sources = raw.get("sources", {})
     parent = _parent_contract(sources.get("parent_contract", {}))
     for field in INHERITED_FIELDS:
         if field in raw and raw[field] != parent[field]:
-            raise ModelCTwoInTrainingError(
+            raise ModelCNewChannelsTrainingError(
                 f"the raw two-input declaration overrides inherited field {field}"
             )
 
@@ -403,7 +426,7 @@ def load_contract(
     if not report_path.is_file() or _file_sha256(report_path) != report_record.get(
         "sha256"
     ):
-        raise ModelCTwoInTrainingError("the 32x32 parent report changed")
+        raise ModelCNewChannelsTrainingError("the 32x32 parent report changed")
     parent_report = json.loads(report_path.read_text())
     published = parent_report.get("published_checkpoint", {})
     normalization_record = sources.get("parent_normalization", {})
@@ -416,16 +439,20 @@ def load_contract(
         or architecture.get("local_kernel_size") != LOCAL_KERNEL_SIZE
         or int(architecture.get("input_states", -1)) != INPUT_STATE_COUNT
         or int(architecture.get("input_lag_days", -1)) != INPUT_LAG_DAYS
+        or tuple(architecture.get("static_channels", ()))
+        != NEW_CHANNEL_STATIC_FEATURES
         or int(architecture.get("in_channels", -1))
-        != TWO_IN_EXTERNAL_INPUT_CHANNELS
+        != NEW_CHANNEL_EXTERNAL_INPUT_CHANNELS
         or int(architecture.get("lifting_in_channels", -1))
-        != TWO_IN_LIFTING_INPUT_CHANNELS
+        != NEW_CHANNEL_LIFTING_INPUT_CHANNELS
         or initialization.get("load_only") != "model_state_dict"
         or int(initialization.get("optimizer_step", -1))
         != BASELINE_OPTIMIZER_STEP
         or initialization.get("version") != PARENT_VERSION
-        or initialization.get("input_migration") != INPUT_MIGRATION
-        or initialization.get("history_branch_initialization") != "zeros"
+        or initialization.get("static_channel_migration") != STATIC_CHANNEL_MIGRATION
+        or initialization.get("new_coefficient_initialization") != "zeros"
+        or initialization.get("dropped_channel") != "distance_to_wall_normalized"
+        or initialization.get("function_preserving") is not False
         or initialization.get("local_branch_initialization")
         != "copied_from_parent"
         or initialization.get("local_branch_bias") is not False
@@ -446,6 +473,7 @@ def load_contract(
         or output.get("scratch_root") == parent.get("output", {}).get("scratch_root")
         or tuple(output.get("artifacts", ())) != OUTPUT_ARTIFACTS
         or not REQUIRED_SOURCE_HASHES.issubset(hashes)
+        or not set(REQUIRED_MITGCM_SOURCES).issubset(sources)
         or parent_report.get("version") != PARENT_VERSION
         or int(
             parent_report.get("selection_decision", {}).get(
@@ -460,33 +488,72 @@ def load_contract(
         or published.get("normalization_sha256")
         != normalization_record.get("sha256")
     ):
-        raise ModelCTwoInTrainingError("the two-in / one-out training contract changed")
+        raise ModelCNewChannelsTrainingError("the two-in / one-out training contract changed")
 
     _assert_only_the_declared_changes(contract)
-    BireTwoInOneOutArchitecture(**architecture)
+    BireTwoInNewChannelsArchitecture(**architecture)
     if verify_sources:
         root = resolved.parents[1]
         for relative, expected in hashes.items():
             source = root / relative
             if not source.is_file() or _file_sha256(source) != expected:
-                raise ModelCTwoInTrainingError(f"two-input source changed: {source}")
+                raise ModelCNewChannelsTrainingError(f"two-input source changed: {source}")
     return contract, resolved, _file_sha256(resolved)
 
 def _verify_file(record: Mapping[str, Any], label: str) -> Path:
     path = Path(record["path"]).resolve()
     if not path.exists():
-        raise ModelCTwoInTrainingError(f"{label} is missing: {path}")
+        raise ModelCNewChannelsTrainingError(f"{label} is missing: {path}")
     digest = _file_sha256(path / ".zmetadata" if path.is_dir() else path)
     if digest != record["sha256"]:
-        raise ModelCTwoInTrainingError(f"{label} changed on disk: {path}")
+        raise ModelCNewChannelsTrainingError(f"{label} changed on disk: {path}")
     return path
 
 def _verify_dataset(contract: Mapping[str, Any]) -> Path:
     record = contract["sources"]["dataset"]
     dataset = Path(record["path"]).resolve()
     if not dataset.is_dir() or _file_sha256(dataset / ".zmetadata") != record["metadata_sha256"]:
-        raise ModelCTwoInTrainingError("trajectory-v3 dataset source changed")
+        raise ModelCNewChannelsTrainingError("trajectory-v3 dataset source changed")
     return dataset
+
+def physical_static_block(
+    sources: Mapping[str, Any],
+    group: Any,
+    pointwise_mean: np.ndarray,
+    pointwise_scale: np.ndarray,
+) -> tuple[np.ndarray, dict[str, Any]]:
+    """Build the five physical static channels from pinned MITgcm sources.
+
+    Three of the five do not exist in the trajectory store, so they are derived
+    from the simulation's own inputs: the zonal grid spacing MITgcm dumped, the
+    ``thetaClimFile`` it restores towards, and the Coriolis parameter its
+    spherical-polar defaults imply. All three files are pinned by SHA-256 and the
+    ``data`` declaration is parsed, so a setup change cannot silently alter what
+    the network is told about the ocean.
+    """
+
+    spacing = _verify_file(sources["mitgcm_zonal_spacing"], "MITgcm zonal spacing")
+    relaxation = _verify_file(
+        sources["mitgcm_sst_relaxation"], "MITgcm SST relaxation target"
+    )
+    declaration = _verify_file(sources["mitgcm_declaration"], "MITgcm declaration")
+    block, provenance = new_channel_static_block(
+        group,
+        zonal_spacing_path=spacing,
+        sst_relax_path=relaxation,
+        data_path=declaration,
+        pointwise_mean=pointwise_mean,
+        pointwise_scale=pointwise_scale,
+    )
+    if tuple(provenance["channels"]) != NEW_CHANNEL_STATIC_FEATURES:
+        raise ModelCNewChannelsTrainingError("the derived static channel set changed")
+    provenance["sha256"] = {
+        "zonal_grid_spacing": _file_sha256(spacing),
+        "sst_relaxation_target": _file_sha256(relaxation),
+        "mitgcm_declaration": _file_sha256(declaration),
+    }
+    return block, provenance
+
 
 def reused_normalization(contract: Mapping[str, Any]) -> dict[str, Any]:
     """Read the parent's published normalizers instead of recomputing them.
@@ -520,7 +587,7 @@ def reused_normalization(contract: Mapping[str, Any]) -> dict[str, Any]:
         or not np.all(np.isfinite(increment))
         or np.any(increment <= 0.0)
     ):
-        raise ModelCTwoInTrainingError("the reused normalizers are not the 46-channel set")
+        raise ModelCNewChannelsTrainingError("the reused normalizers are not the 46-channel set")
     summary = dict(report["normalization"]["summary"])
     return {
         "mean": mean,
@@ -538,7 +605,7 @@ def load_initial_state_dict(
     device: Any,
     target_model: Any,
 ) -> dict[str, Any]:
-    """Load and audit the function-preserving one-input -> two-input migration."""
+    """Load and audit the static-channel migration onto the physical block."""
 
     path = _verify_file(contract["sources"]["initialization_checkpoint"], "initialization checkpoint")
     payload = torch.load(path, map_location=device, weights_only=False)
@@ -548,17 +615,19 @@ def load_initial_state_dict(
         or payload.get("dataset_version") != DATASET_VERSION
         or payload.get("base_loss_contract_sha256") != FINE_TUNE_LOSS_CONTRACT_SHA256
     ):
-        raise ModelCTwoInTrainingError(
-            "the initialization checkpoint is not the 32x32 one-input model"
+        raise ModelCNewChannelsTrainingError(
+            "the initialization checkpoint is not the retained two-input model"
         )
     if "model_state_dict" not in payload:
-        raise ModelCTwoInTrainingError("the initialization checkpoint has no weights")
+        raise ModelCNewChannelsTrainingError("the initialization checkpoint has no weights")
     parent_contract = _assert_only_the_declared_changes(contract)
     if payload.get("architecture") != parent_contract["architecture"]:
-        raise ModelCTwoInTrainingError(
+        raise ModelCNewChannelsTrainingError(
             "the initialization architecture does not match its archived contract"
         )
-    migration = migrate_y32_x32_state_dict(payload["model_state_dict"], target_model)
+    migration = migrate_two_in_static_channels_state_dict(
+        payload["model_state_dict"], target_model
+    )
     return {
         "state_dict": migration["state_dict"],
         "provenance": {
@@ -585,7 +654,7 @@ def baseline_validation_summary(report: Mapping[str, Any]) -> dict[str, Any]:
     for summary in report["validation_summaries"]:
         if int(summary["optimizer_step"]) == BASELINE_OPTIMIZER_STEP:
             return dict(summary)
-    raise ModelCTwoInTrainingError(
+    raise ModelCNewChannelsTrainingError(
         "the parent report carries no selected step-3,840 validation summary"
     )
 
@@ -648,6 +717,7 @@ def fine_tune_split_summary() -> dict[str, Any]:
     summary["input_lag_days"] = INPUT_LAG_DAYS
     summary["earliest_training_rollout_start"] = INPUT_LAG_DAYS
     summary["latest_training_rollout_start"] = TRAIN_RANGE[1] - 1 - 10 * ROLLOUT_STEPS
+    summary["static_channels"] = list(NEW_CHANNEL_STATIC_FEATURES)
     summary["history_note"] = (
         "the record's time index is still the present state t; the pair adds the "
         "t-10 state as an initial condition, so no target moves and days 0-9 are "
@@ -673,12 +743,15 @@ def preflight(contract_path: str | Path) -> dict[str, Any]:
         pair_split, 1, rollout_steps=ROLLOUT_STEPS
     )
     if len(records) != TRAINING_RECORDS:
-        raise ModelCTwoInTrainingError(
+        raise ModelCNewChannelsTrainingError(
             f"the two-input training set is {len(records)} records, not {TRAINING_RECORDS}"
         )
     normalization = reused_normalization(contract)
     baseline = baseline_validation_summary(normalization["report"])
-    architecture = BireTwoInOneOutArchitecture(**contract["architecture"])
+    static_block, static_provenance = physical_static_block(
+        contract["sources"], group, normalization["mean"], normalization["scale"]
+    )
+    architecture = BireTwoInNewChannelsArchitecture(**contract["architecture"])
     result: dict[str, Any] = {
         "status": "ready",
         "version": VERSION,
@@ -692,8 +765,11 @@ def preflight(contract_path: str | Path) -> dict[str, Any]:
         "rollout_weight": ROLLOUT_WEIGHT,
         "input_states": INPUT_STATE_COUNT,
         "input_lag_days": INPUT_LAG_DAYS,
-        "external_input_channels": TWO_IN_EXTERNAL_INPUT_CHANNELS,
-        "lifting_input_channels": TWO_IN_LIFTING_INPUT_CHANNELS,
+        "static_channels": list(NEW_CHANNEL_STATIC_FEATURES),
+        "removed_static_channel": "distance_to_wall_normalized",
+        "external_input_channels": NEW_CHANNEL_EXTERNAL_INPUT_CHANNELS,
+        "lifting_input_channels": NEW_CHANNEL_LIFTING_INPUT_CHANNELS,
+        "static_channel_provenance": static_provenance,
         "training_rollout_records": len(records),
         "training_starts_per_regime": len(records) // len(EXPERIMENTS),
         "earliest_training_start": int(min(t for _, t in records)),
@@ -709,12 +785,72 @@ def preflight(contract_path: str | Path) -> dict[str, Any]:
     }
     if torch is not None:
         device = _device("cpu")
-        model = build_bire_two_in_one_out_model(architecture)
-        initialization = load_initial_state_dict(contract, device, model)
-        model.load_state_dict(initialization["state_dict"])
-        result["parameter_count"] = int(sum(p.numel() for p in model.parameters()))
+        model = build_bire_two_in_one_out_model(BireTwoInOneOutArchitecture())
+        successor = build_bire_two_in_new_channels_model(architecture)
+        initialization = load_initial_state_dict(contract, device, successor)
+        successor.load_state_dict(initialization["state_dict"])
+        parent_payload = torch.load(
+            Path(contract["sources"]["initialization_checkpoint"]["path"]),
+            map_location=device,
+            weights_only=False,
+        )
+        model.load_state_dict(parent_payload["model_state_dict"])
+        model.eval()
+        successor.eval()
+        # The warm start is not function-preserving, so its size is measured on
+        # a real pair before any optimizer step rather than assumed negligible.
+        result["parameter_count"] = int(
+            sum(p.numel() for p in successor.parameters())
+        )
         result["initialization"] = initialization["provenance"]
+        result["static_channel_perturbation"] = static_channel_perturbation(
+            model,
+            successor,
+            *_perturbation_features(
+                group, normalization, static_block, static_provenance
+            ),
+        )
     return result
+
+def _perturbation_features(
+    group: Any,
+    normalization: Mapping[str, Any],
+    static_block: np.ndarray,
+    static_provenance: Mapping[str, Any],
+) -> tuple[Any, Any]:
+    """The same physical situation in both arms' input layouts.
+
+    One S0 pair at the first validation start: identical states, identical wind
+    and wet mask, differing only in the static fields each arm defines. That is
+    exactly the comparison that isolates what removing distance-to-wall cost.
+    """
+
+    wet = np.asarray(group["wet_mask"][:], dtype=bool)
+    mean, scale = normalization["mean"], normalization["scale"]
+
+    def normalized(day: int) -> np.ndarray:
+        raw = np.asarray(group["state"][0, day], dtype=np.float32)
+        value = (raw - mean) / scale
+        value[:, ~wet] = 0.0
+        return np.ascontiguousarray(value, dtype=np.float32)
+
+    start = int(validation_records()[0][1])
+    states = np.concatenate((normalized(start - HORIZON_DAYS), normalized(start)))
+    parent_static = np.asarray(group["static_features"][0], dtype=np.float32).copy()
+    wind = np.asarray(group["static_features"][:, 0], dtype=np.float32)
+    wind_mean = float(wind[:, wet].mean())
+    wind_scale = float(wind[:, wet].std())
+    parent_static[0] = (parent_static[0] - wind_mean) / wind_scale
+    parent_static[0, ~wet] = 0.0
+    parent_features = np.concatenate(
+        (states, parent_static[list(RETAINED_STATIC_INDICES)])
+    )
+    new_features = np.concatenate((states, static_block[0]))
+    return (
+        torch.from_numpy(np.ascontiguousarray(parent_features))[None],
+        torch.from_numpy(np.ascontiguousarray(new_features))[None],
+    )
+
 
 def selected_step_text(decision: Mapping[str, Any]) -> str:
     return f"{int(decision['selected_optimizer_step']):,}"
@@ -750,47 +886,53 @@ def _readme(report: Mapping[str, Any]) -> str:
         for summary in report["validation_summaries"]
     )
     baseline = report["baseline_validation_summary"]
-    return f"""# Two-in / one-out continuation of the 32 x 32 Model C
+    channels = report["static_channels"]
+    perturbation = report["initialization"].get("static_channel_perturbation", {})
+    return f"""# Physical static channels for the two-in / one-out Model C
 
 This model warm-starts `{PARENT_VERSION}` at optimizer step
-{BASELINE_OPTIMIZER_STEP:,}. Only the input contract changes:
+{BASELINE_OPTIMIZER_STEP:,}. The map, the temporal context and the spatial
+bandwidth are all unchanged --- still `(x_(t-10), x_t) -> x_(t+10)` on 32 x 32
+Fourier modes with the trained bias-free local 3 x 3 branch and the
+deterministic sine/cosine position encoder. Only the description of the
+environment moves:
 
-    one-in / one-out:   x_t                -> x_(t+10)
-    two-in / one-out:  (x_(t-10), x_t)     -> x_(t+10)
+    parent    [tau_x, wet mask, distance to wall]
+    this arm  [tau_x, wet mask, f(phi), dx(phi), theta_clim(x, y)]
 
-and autoregression slides the pair forward, so a self-generated rollout reads
-`(x_t, xhat_(t+10)) -> xhat_(t+20)` and then
-`(xhat_(t+10), xhat_(t+20)) -> xhat_(t+30)`. The pair gives the operator an
-empirical tendency `(x_t - x_(t-10)) / 10 days`, which is the multistep idea
-behind Adams--Bashforth in spirit; it is not AB-II's algebra, since MITgcm
-extrapolates from two stored *tendencies* rather than two states.
+`tau_x` is the actual momentum forcing and the wet mask the actual basin
+geometry, so both are kept. The three added fields are coefficients that appear
+in the governing equations: the Coriolis parameter `f = 2 Omega sin(phi)`, the
+zonal grid spacing `dx = R cos(phi) dlambda` that makes the spherical grid
+physically non-uniform in x, and the SST relaxation target the setup restores
+towards on a 30-day timescale. `distance_to_wall_normalized` is removed as an
+engineered heuristic rather than a term in those equations. Raw longitude and
+latitude are deliberately not added: position already enters through the
+encoder, and latitude's physical role is now carried by `f` and `dx`.
 
-The external input block therefore grows from 46 + 3 = 49 channels to
-2 x 46 + 3 = {TWO_IN_EXTERNAL_INPUT_CHANNELS}, and lifting from 51 to
-{TWO_IN_LIFTING_INPUT_CHANNELS}. The two input-facing tensors --- the lifting
-weight and the bias-free local 3 x 3 weight --- gain 46 leading input channels
-that begin at exact zero, and the parent's state, static and position columns
-are copied into the trailing slice. At initialization the model therefore
-*ignores* the history state and reproduces the parent's map on `x_t` for any
-history whatsoever, up to float32 summation order.
+The external block therefore grows from {TWO_IN_EXTERNAL_INPUT_CHANNELS} to
+{NEW_CHANNEL_EXTERNAL_INPUT_CHANNELS} channels and lifting from
+{TWO_IN_LIFTING_INPUT_CHANNELS} to {NEW_CHANNEL_LIFTING_INPUT_CHANNELS}.
 
-The 32 x 32 Fourier modes, the trained local branch, the deterministic
-sine/cosine position encoder, the dataset, the normalizers, the six-step
-autoregressive loss, the optimizer reset, the schedule, the seed, the validation
-starts and the checkpoint-selection rule are inherited unchanged, so temporal
-context is the only thing this arm tests.
+**The warm start is not function-preserving, and could not be.** The parent
+carries trained weights on the removed channel, so the initial map loses exactly
+that field's contribution. The three new coefficient columns begin at zero, the
+94 shared state/wind/wet columns and the position tail are copied unchanged, and
+the size of the resulting step is measured rather than assumed: mean absolute
+change {perturbation.get('mean_abs_change', float('nan')):.5f} against a mean
+absolute output of {perturbation.get('mean_abs_parent_output', float('nan')):.5f}
+in normalized state units, i.e.
+{100.0 * perturbation.get('relative_mean_abs_change', float('nan')):.2f}%.
 
-Training draws {report['counts']['training_starts_per_regime']:,} starts per
-regime ({report['counts']['training_rollout_records']:,} pooled), from
-{report['counts']['earliest_training_start']:,} to
-{report['counts']['latest_training_start']:,}: days 0--9 are the only starts the
-one-input arm had that the history requirement removes, and no target moved.
+Dataset, split, normalizers, six-step autoregressive loss, optimizer reset,
+schedule, seed, validation starts and checkpoint-selection rule are inherited
+byte-for-byte from the two-input parent.
 
 | step | short AUC 10--90 (speed / SST / pressure) | long / climatology |
 | --- | --- | --- |
 {rows}
 
-The step-{BASELINE_OPTIMIZER_STEP:,} one-input baseline scores
+The step-{BASELINE_OPTIMIZER_STEP:,} parent scores
 {" / ".join(f"{baseline['short_auc_10_90'][f]:.3f}" for f in PRIMARY_FIELDS)} short and
 {" / ".join(f"{baseline['long_ratio_to_climatology'][f]:.3f}" for f in PRIMARY_FIELDS)} long on the
 same {report['counts']['validation_records']} pooled rollouts, in the order
@@ -798,10 +940,9 @@ same {report['counts']['validation_records']} pooled rollouts, in the order
 
 Selected step {int(decision['selected_optimizer_step']):,} via
 `{decision['branch']}`. Validation gate:
-**{'pass' if gate['validation_conditions_pass'] else 'fail'}**. The S0-only
-2,000-day figures and anomaly diagnostics are evaluated by the canonical
-held-inference package.
+**{'pass' if gate['validation_conditions_pass'] else 'fail'}**.
 
+Static channels: {", ".join(channels['channels'])}.
 Parameter count: {int(report['parameter_count']):,}.
 Report content SHA-256: `{report['content_sha256']}`.
 """
@@ -837,6 +978,9 @@ def run(contract_path: str | Path, *, device_name: str = "auto") -> dict[str, An
     normalization = reused_normalization(contract)
     point_mean = normalization["mean"]
     point_scale = normalization["scale"]
+    static_block, static_provenance = physical_static_block(
+        contract["sources"], group, point_mean, point_scale
+    )
     increment_values = normalization["increment_scale"]
     baseline = baseline_validation_summary(normalization["report"])
     climatology_state, climatology_derived, climatology_days = train_only_climatology(
@@ -845,17 +989,17 @@ def run(contract_path: str | Path, *, device_name: str = "auto") -> dict[str, An
 
     loss_config = fine_tune_loss_config()
     if fine_tune_loss_contract_sha256(loss_config) != FINE_TUNE_LOSS_CONTRACT_SHA256:
-        raise ModelCTwoInTrainingError("the six-step objective changed")
+        raise ModelCNewChannelsTrainingError("the six-step objective changed")
     if loss_config.rollout_steps != ROLLOUT_STEPS or loss_config.rollout_weight != ROLLOUT_WEIGHT:
-        raise ModelCTwoInTrainingError("the fine-tune objective is not the six-step one")
+        raise ModelCNewChannelsTrainingError("the fine-tune objective is not the six-step one")
 
     training_records = records_for_two_in_rollout_split(
         pair_split, 1, rollout_steps=loss_config.rollout_steps
     )
     if len(training_records) != TRAINING_RECORDS:
-        raise ModelCTwoInTrainingError("the two-input training record count changed")
-    training_dataset = ModelCTwoInRolloutDataset(
-        dataset, training_records, point_mean, point_scale,
+        raise ModelCNewChannelsTrainingError("the two-input training record count changed")
+    training_dataset = ModelCTwoInNewChannelsDataset(
+        dataset, training_records, point_mean, point_scale, static_block,
         rollout_steps=loss_config.rollout_steps,
     )
     batch_size = int(training["batch_size"])
@@ -865,12 +1009,35 @@ def run(contract_path: str | Path, *, device_name: str = "auto") -> dict[str, An
         num_workers=0,
         pin_memory=device.type == "cuda",
     )
-    architecture = BireTwoInOneOutArchitecture(**contract["architecture"])
-    model = build_bire_two_in_one_out_model(architecture).to(device)
+    architecture = BireTwoInNewChannelsArchitecture(**contract["architecture"])
+    model = build_bire_two_in_new_channels_model(architecture).to(device)
     initialization = load_initial_state_dict(contract, device, model)
     model.load_state_dict(initialization["state_dict"])
     parameter_count = int(sum(p.numel() for p in model.parameters()))
-    # A fresh Adam keeps the temporal-context ablation independent of parent moments.
+    # The warm start is not function-preserving; record how far it moved before
+    # the first optimizer step, on the same pair preflight measured.
+    parent_probe = build_bire_two_in_one_out_model(BireTwoInOneOutArchitecture()).to(device)
+    parent_probe.load_state_dict(
+        torch.load(
+            Path(contract["sources"]["initialization_checkpoint"]["path"]),
+            map_location=device, weights_only=False,
+        )["model_state_dict"]
+    )
+    parent_probe.eval()
+    model.eval()
+    parent_features, new_features = _perturbation_features(
+        group, normalization, static_block, static_provenance
+    )
+    initialization["provenance"]["static_channel_perturbation"] = (
+        static_channel_perturbation(
+            parent_probe, model,
+            parent_features.to(device), new_features.to(device),
+        )
+    )
+    del parent_probe
+    if device.type == "cuda":
+        torch.cuda.empty_cache()
+    # A fresh Adam keeps the static-channel ablation independent of parent moments.
     optimizer = torch.optim.Adam(
         model.parameters(),
         lr=float(training["initial_learning_rate"]),
@@ -929,9 +1096,10 @@ def run(contract_path: str | Path, *, device_name: str = "auto") -> dict[str, An
         except StopIteration:
             iterator = iter(loader)
             raw_features, futures = next(iterator)
-        raw_features = raw_features.to(device=device, dtype=torch.float32, non_blocking=True)
+        # The dataset already emits this arm's final 97-channel layout: three of
+        # the five statics are not in the store, so there is nothing to select.
+        features = raw_features.to(device=device, dtype=torch.float32, non_blocking=True)
         futures = futures.to(device=device, dtype=torch.float32, non_blocking=True)
-        features = retained_two_in_features(raw_features)
         model.train()
         # Six calls; the pair is self-generated from the second onward.
         predictions = two_in_state_unroll(model, features, wet, loss_config.rollout_steps)
@@ -978,6 +1146,7 @@ def run(contract_path: str | Path, *, device_name: str = "auto") -> dict[str, An
                 "rollout_steps": loss_config.rollout_steps,
                 "input_states": INPUT_STATE_COUNT,
                 "input_lag_days": INPUT_LAG_DAYS,
+                "static_channels": list(NEW_CHANNEL_STATIC_FEATURES),
                 "initialized_from": initialization["provenance"],
                 "training_history_record": history_record,
                 "model_state_dict": _checkpoint_state_dict(model),
@@ -992,7 +1161,7 @@ def run(contract_path: str | Path, *, device_name: str = "auto") -> dict[str, An
         samples = 0
 
     if len(checkpoints) != len(CHECKPOINT_STEPS):
-        raise ModelCTwoInTrainingError("not every declared checkpoint was written")
+        raise ModelCNewChannelsTrainingError("not every declared checkpoint was written")
 
     records = validation_records()
     summaries = []
@@ -1001,12 +1170,13 @@ def run(contract_path: str | Path, *, device_name: str = "auto") -> dict[str, An
         payload = torch.load(
             checkpoint_directory / record["checkpoint"], map_location=device, weights_only=False
         )
-        probe = build_bire_two_in_one_out_model(architecture).to(device)
+        probe = build_bire_two_in_new_channels_model(architecture).to(device)
         probe.load_state_dict(payload["model_state_dict"])
         probe.eval()
-        stepper = BireTwoInStepper(
+        stepper = BireTwoInNewChannelsStepper(
             model=probe, device=device, wet=wet_array, mean=point_mean, scale=point_scale,
             wind_mean=float(wind_mean), wind_scale=float(wind_scale),
+            static_block=static_block,
         )
         value = validate_checkpoint(
             stepper, state, static, records, climatology_state, climatology_derived, wet_array
@@ -1082,8 +1252,14 @@ def run(contract_path: str | Path, *, device_name: str = "auto") -> dict[str, An
             "input_lag_days": INPUT_LAG_DAYS,
             "map": "(x_t_minus_10, x_t) -> x_t_plus_10",
             "autoregression": "the_pair_slides_forward_so_no_step_after_the_first_sees_truth",
-            "external_input_channels": TWO_IN_EXTERNAL_INPUT_CHANNELS,
-            "lifting_input_channels": TWO_IN_LIFTING_INPUT_CHANNELS,
+            "unchanged_from_the_parent": True,
+        },
+        "static_channels": {
+            "channels": list(NEW_CHANNEL_STATIC_FEATURES),
+            "previous_channels": list(RETAINED_STATIC_FEATURES),
+            "external_input_channels": NEW_CHANNEL_EXTERNAL_INPUT_CHANNELS,
+            "lifting_input_channels": NEW_CHANNEL_LIFTING_INPUT_CHANNELS,
+            "provenance": static_provenance,
         },
         "optimizer": {
             "name": "adam",

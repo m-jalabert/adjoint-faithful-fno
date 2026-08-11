@@ -43,7 +43,7 @@ from oceanfno.train import (
     CONTRACT_STATUS,
     FINE_TUNE_LOSS_CONTRACT_SHA256,
     INCREMENT_WEIGHT,
-    INPUT_MIGRATION,
+    STATIC_CHANNEL_MIGRATION,
     LEARNING_RATE,
     LOCAL_KERNEL_SIZE,
     MAXIMUM_STEPS,
@@ -58,7 +58,7 @@ from oceanfno.train import (
     WORST_LONG_RATIO_CEILING,
     BireProtocolRolloutFineTuneError,
     BireProtocolRolloutFineTuneLossConfig,
-    ModelCTwoInTrainingError,
+    ModelCNewChannelsTrainingError,
     _materialize,
     _readme,
     _resolve_contract,
@@ -71,18 +71,26 @@ from oceanfno.train import (
 )
 
 ROOT = Path(__file__).resolve().parents[1]
-CONTRACT = ROOT / "config/model_c_2in_1out_v1.json"
-PARENT = ROOT / "config/model_c_bire_protocol_rollout_ft_y32_x32_v1.json"
-GRANDPARENT = ROOT / "config/model_c_bire_protocol_rollout_ft_local24_y32_v1.json"
+CONTRACT = ROOT / "config/model_c_2in_1out_new_channels_v1.json"
+PARENT = ROOT / "config/model_c_2in_1out_v1.json"
+GREATGRANDPARENT = ROOT / "config/model_c_bire_protocol_rollout_ft_local24_y32_v1.json"
+GRANDPARENT = ROOT / "config/model_c_bire_protocol_rollout_ft_y32_x32_v1.json"
 ROOT_CONTRACT = ROOT / "config/model_c_bire_protocol_rollout_ft_local24_v1.json"
-SBATCH = ROOT / "slurm/models/c/train_2in_1out.sbatch"
+SBATCH = ROOT / "slurm/models/c/train_2in_1out_new_channels.sbatch"
 
-TWO_IN_EXTERNAL_CHANNELS = 95
-TWO_IN_LIFTING_CHANNELS = 97
-PARENT_EXTERNAL_CHANNELS = 49
-PARENT_LIFTING_CHANNELS = 51
-PARAMETER_COUNT = 27_327_440
-PARENT_PARAMETER_COUNT = 27_296_620
+NEW_EXTERNAL_CHANNELS = 97
+NEW_LIFTING_CHANNELS = 99
+PARENT_EXTERNAL_CHANNELS = 95
+PARENT_LIFTING_CHANNELS = 97
+PARAMETER_COUNT = 27_328_780
+PARENT_PARAMETER_COUNT = 27_327_440
+NEW_STATIC_CHANNELS = (
+    "wind_stress_x",
+    "wet_mask",
+    "coriolis_parameter",
+    "zonal_grid_spacing",
+    "sst_relaxation_target",
+)
 
 
 def _parent() -> dict:
@@ -96,9 +104,11 @@ def _parent() -> dict:
     """
 
     y32 = _materialize(
-        json.loads(GRANDPARENT.read_text()), json.loads(ROOT_CONTRACT.read_text())
+        json.loads(GREATGRANDPARENT.read_text()),
+        json.loads(ROOT_CONTRACT.read_text()),
     )
-    return _materialize(json.loads(PARENT.read_text()), y32)
+    x32 = _materialize(json.loads(GRANDPARENT.read_text()), y32)
+    return _materialize(json.loads(PARENT.read_text()), x32)
 
 torch = pytest.importorskip("torch", reason="the objective algebra needs PyTorch")
 
@@ -177,7 +187,7 @@ def test_the_six_step_objective_has_its_own_hash() -> None:
         fine_tune_loss_contract(model_c_loss_config("v1"))
 
 
-@pytest.mark.skipif(not PARENT.is_file(), reason="the 32x32 parent contract is absent")
+@pytest.mark.skipif(not PARENT.is_file(), reason="the two-input parent contract is absent")
 def test_the_objective_is_literally_the_one_input_arms() -> None:
     """A moved objective would make the two runs' losses incomparable."""
 
@@ -283,202 +293,202 @@ def test_the_rollout_term_is_not_the_three_step_one() -> None:
 # --------------------------------------------------------------------------
 
 
-def test_the_active_model_reads_two_states_and_keeps_32x32_modes() -> None:
+def test_the_active_model_reads_five_physical_statics() -> None:
+    pytest.importorskip("neuralop")
+    from oceanfno.model import (
+        BireTwoInNewChannelsArchitecture,
+        build_bire_two_in_new_channels_model,
+    )
+
+    architecture = BireTwoInNewChannelsArchitecture()
+    assert architecture.static_channels == NEW_STATIC_CHANNELS
+    assert "distance_to_wall_normalized" not in architecture.static_channels
+    assert architecture.n_modes == MODES == (32, 32)
+    assert architecture.input_states == 2 and architecture.input_lag_days == 10
+    assert architecture.in_channels == NEW_EXTERNAL_CHANNELS == 2 * 46 + 5
+    assert architecture.lifting_in_channels == NEW_LIFTING_CHANNELS == 97 + 2
+    assert architecture.out_channels == 46
+    assert architecture.local_kernel_size == LOCAL_KERNEL_SIZE == 3
+    model = build_bire_two_in_new_channels_model(architecture)
+
+    for index, convolution in enumerate(model.fno.fno_blocks.convs):
+        # Spectral capacity is untouched by a static-channel change.
+        assert tuple(convolution.n_modes) == (32, 17), index
+    assert tuple(model.fno.lifting.fcs[0].weight.shape) == (256, 99, 1)
+    assert tuple(model.local.weight.shape) == (46, 97, 3, 3)
+    assert model.local.bias is None
+    assert sum(p.numel() for p in model.parameters()) == PARAMETER_COUNT
+    # The whole cost of the change is two input columns on two tensors.
+    assert PARAMETER_COUNT - PARENT_PARAMETER_COUNT == 256 * 2 + 46 * 2 * 9
+
+def test_the_two_input_parent_is_untouched() -> None:
+    """The comparator must still be the exact old-statics model."""
+
     pytest.importorskip("neuralop")
     from oceanfno.model import (
         BireTwoInOneOutArchitecture,
+        RETAINED_STATIC_FEATURES,
         build_bire_two_in_one_out_model,
     )
 
     architecture = BireTwoInOneOutArchitecture()
-    assert architecture.n_modes == MODES == (32, 32)
-    assert architecture.input_states == 2
-    assert architecture.input_lag_days == 10
-    assert architecture.in_channels == TWO_IN_EXTERNAL_CHANNELS == 2 * 46 + 3
-    assert architecture.lifting_in_channels == TWO_IN_LIFTING_CHANNELS == 95 + 2
-    assert architecture.out_channels == 46
-    assert architecture.local_kernel_size == LOCAL_KERNEL_SIZE == 3
-    model = build_bire_two_in_one_out_model(architecture)
-
-    convolutions = model.fno.fno_blocks.convs
-    assert len(convolutions) == 3
-    for index, convolution in enumerate(convolutions):
-        # Spectral capacity is untouched: the zonal axis is the real-transform
-        # axis, so 32 requested modes are still 17 stored coefficients.
-        assert tuple(convolution.n_modes) == (32, 17), index
-        weight = model.state_dict()[
-            f"fno.fno_blocks.convs.{index}.weight.tensor"
-        ]
-        assert tuple(weight.shape) == (128, 128, 32, 17)
-
-    assert tuple(model.fno.lifting.fcs[0].weight.shape) == (256, 97, 1)
-    local = model.local
-    assert tuple(local.weight.shape) == (46, 95, 3, 3)
-    assert local.padding == (1, 1)
-    assert local.bias is None
-    assert sum(p.numel() for p in model.parameters()) == PARAMETER_COUNT
-
-
-def test_the_one_input_parent_is_untouched() -> None:
-    """The comparator must still be the exact 32x32 model that was retained."""
-
-    pytest.importorskip("neuralop")
-    from oceanfno.model import BireY32X32Architecture, build_bire_y32_x32_model
-
-    architecture = BireY32X32Architecture()
     assert architecture.n_modes == (32, 32)
     assert architecture.in_channels == PARENT_EXTERNAL_CHANNELS
     assert architecture.lifting_in_channels == PARENT_LIFTING_CHANNELS
-    assert "input_states" not in architecture.to_dict()
-    model = build_bire_y32_x32_model(architecture)
-    assert tuple(model.fno.lifting.fcs[0].weight.shape) == (256, 51, 1)
+    assert "static_channels" not in architecture.to_dict()
+    assert RETAINED_STATIC_FEATURES == (
+        "wind_stress_x",
+        "wet_mask",
+        "distance_to_wall_normalized",
+    )
+    model = build_bire_two_in_one_out_model(architecture)
+    assert tuple(model.fno.lifting.fcs[0].weight.shape) == (256, 97, 1)
     assert sum(p.numel() for p in model.parameters()) == PARENT_PARAMETER_COUNT
 
-
-def test_two_in_migration_zeroes_only_the_new_history_block() -> None:
+def test_static_channel_migration_drops_d_wall_and_zeroes_the_coefficients() -> None:
     pytest.importorskip("neuralop")
     from oceanfno.model import (
+        BireTwoInNewChannelsArchitecture,
         BireTwoInOneOutArchitecture,
-        BireY32X32Architecture,
+        build_bire_two_in_new_channels_model,
         build_bire_two_in_one_out_model,
-        build_bire_y32_x32_model,
-        migrate_y32_x32_state_dict,
+        migrate_two_in_static_channels_state_dict,
     )
 
     torch.manual_seed(19)
-    parent = build_bire_y32_x32_model(BireY32X32Architecture()).eval()
-    # A real parent has a trained, nonzero local correction.  Seeding it here
-    # catches a migration that silently re-zeroes that learned branch.
+    parent = build_bire_two_in_one_out_model(BireTwoInOneOutArchitecture()).eval()
     with torch.no_grad():
         parent.local.weight.normal_(mean=0.0, std=0.02)
+        parent.fno.lifting.fcs[0].weight.normal_(mean=0.0, std=0.02)
     parent_state = _portable_state_dict(parent)
-    parent_before = {key: value.clone() for key, value in parent_state.items()}
-    target = build_bire_two_in_one_out_model(BireTwoInOneOutArchitecture()).eval()
-    result = migrate_y32_x32_state_dict(parent_state, target)
-    state = result["state_dict"]
-    provenance = result["provenance"]
+    before = {k: v.clone() for k, v in parent_state.items()}
+    target = build_bire_two_in_new_channels_model(
+        BireTwoInNewChannelsArchitecture()
+    ).eval()
+    result = migrate_two_in_static_channels_state_dict(parent_state, target)
+    state, provenance = result["state_dict"], result["provenance"]
 
-    assert provenance["source_external_input_channels"] == PARENT_EXTERNAL_CHANNELS
-    assert provenance["target_external_input_channels"] == TWO_IN_EXTERNAL_CHANNELS
-    assert provenance["source_lifting_input_channels"] == PARENT_LIFTING_CHANNELS
-    assert provenance["target_lifting_input_channels"] == TWO_IN_LIFTING_CHANNELS
+    assert provenance["source_static_channels"] == [
+        "wind_stress_x", "wet_mask", "distance_to_wall_normalized",
+    ]
+    assert provenance["target_static_channels"] == list(NEW_STATIC_CHANNELS)
     assert provenance["spectral_capacity_unchanged"] is True
-    assert provenance["n_modes_tensor_order_y_x"] == [32, 32]
-    assert {record["key"] for record in provenance["input_expansions"]} == {
-        "fno.lifting.fcs.0.weight",
-        "local.weight",
+    assert provenance["temporal_context_unchanged"] is True
+    # The one migration in this tree that must NOT claim exactness.
+    assert provenance["function_preserving"] is False
+    assert "distance_to_wall" in provenance["not_function_preserving_because"]
+    assert {r["key"] for r in provenance["input_rewrites"]} == {
+        "fno.lifting.fcs.0.weight", "local.weight",
     }
-    assert all(
-        record["zero_initialized_history_input_channels"] == 46
-        for record in provenance["input_expansions"]
-    )
-    assert provenance["strict_load"] is True
-    assert provenance["missing_keys"] == []
-    assert provenance["unexpected_keys"] == []
-    assert provenance["initial_map_ignores_history_and_equals_the_parent"] is True
 
-    target_keys = {key for key in target.state_dict() if key != "_metadata"}
-    assert set(state) == set(parent_state) == target_keys
     widened = {"fno.lifting.fcs.0.weight", "local.weight"}
-    for key, parent_value in parent_state.items():
+    for key, value in parent_state.items():
         if key not in widened:
-            assert torch.equal(state[key], parent_value), key
+            assert torch.equal(state[key], value), key
     for key in widened:
-        # The parent block keeps its order and simply moves 46 channels right.
-        assert torch.equal(state[key][:, 46:], parent_state[key]), key
-        assert torch.count_nonzero(state[key][:, :46]).item() == 0, key
-    for index in range(3):
-        key = f"fno.fno_blocks.convs.{index}.weight.tensor"
-        assert tuple(state[key].shape) == (128, 128, 32, 17)
-    assert torch.count_nonzero(parent_state["local.weight"]).item() > 0
-    assert all(torch.equal(parent_state[key], parent_before[key]) for key in parent_state)
+        # 94 shared columns copied: two 46-channel states, then wind and wet.
+        assert torch.equal(state[key][:, :94], parent_state[key][:, :94]), key
+        # the three new coefficient columns start at exact zero
+        assert torch.count_nonzero(state[key][:, 94:97]).item() == 0, key
+    # lifting keeps its two position columns, shifted past the new coefficients
+    lifting = "fno.lifting.fcs.0.weight"
+    assert torch.equal(state[lifting][:, 97:99], parent_state[lifting][:, 95:97])
+    assert state[lifting].shape[1] == 99 and state["local.weight"].shape[1] == 97
+    # the dropped column is genuinely gone, not smuggled in somewhere
+    dropped = parent_state[lifting][:, 94:95]
+    assert torch.count_nonzero(dropped).item() > 0
+    assert all(torch.equal(parent_state[k], before[k]) for k in parent_state)
 
-
-def test_the_warm_start_ignores_history_and_reproduces_the_parent() -> None:
-    """This is what makes the arm start at the incumbent's measured skill."""
+def test_the_warm_start_is_measurably_not_function_preserving() -> None:
+    """Removing a channel the parent uses must change the map, and be measured."""
 
     pytest.importorskip("neuralop")
     from oceanfno.model import (
+        BireTwoInNewChannelsArchitecture,
         BireTwoInOneOutArchitecture,
-        BireY32X32Architecture,
+        build_bire_two_in_new_channels_model,
         build_bire_two_in_one_out_model,
-        build_bire_y32_x32_model,
-        migrate_y32_x32_state_dict,
+        migrate_two_in_static_channels_state_dict,
+        static_channel_perturbation,
     )
 
     torch.manual_seed(23)
-    parent = build_bire_y32_x32_model(BireY32X32Architecture()).eval()
+    parent = build_bire_two_in_one_out_model(BireTwoInOneOutArchitecture()).eval()
     with torch.no_grad():
         parent.local.weight.normal_(mean=0.0, std=0.02)
-    target = build_bire_two_in_one_out_model(BireTwoInOneOutArchitecture()).eval()
-    migrate_y32_x32_state_dict(_portable_state_dict(parent), target)
+    target = build_bire_two_in_new_channels_model(
+        BireTwoInNewChannelsArchitecture()
+    ).eval()
+    migrate_two_in_static_channels_state_dict(_portable_state_dict(parent), target)
 
-    present = torch.randn(1, 46, 62, 62)
-    static = torch.randn(1, 3, 62, 62)
-    quiet = torch.randn(1, 46, 62, 62)
-    wild = torch.randn(1, 46, 62, 62) * 500.0
+    states = torch.randn(1, 92, 62, 62)
+    shared = torch.randn(1, 2, 62, 62)
+    d_wall = torch.randn(1, 1, 62, 62)
+    coefficients = torch.randn(1, 3, 62, 62)
+    parent_features = torch.cat((states, shared, d_wall), dim=1)
+    new_features = torch.cat((states, shared, coefficients), dim=1)
+
+    # The three new columns are zero, so the new coefficients cannot yet matter.
     with torch.inference_mode():
-        expected = parent(torch.cat((present, static), dim=1))
-        with_quiet = target(torch.cat((quiet, present, static), dim=1))
-        with_wild = target(torch.cat((wild, present, static), dim=1))
+        first = target(new_features)
+        second = target(torch.cat((states, shared, coefficients * 99.0), dim=1))
+    assert torch.equal(first, second)
 
-    # Exactly invariant to the history state: the new input columns are zero.
-    assert torch.equal(with_quiet, with_wild)
-    # Equal to the parent up to float32 summation order --- the lifting
-    # reduction now sums 46 additional exact zeros, which is not bit-identical.
-    assert torch.allclose(with_quiet, expected, rtol=1e-5, atol=1e-5)
+    measured = static_channel_perturbation(
+        parent, target, parent_features, new_features
+    )
+    assert set(measured) >= {
+        "mean_abs_change", "max_abs_change",
+        "mean_abs_parent_output", "relative_mean_abs_change",
+    }
+    assert measured["units"] == "normalized_state"
+    # It is a real change, not a rounding difference.
+    assert measured["mean_abs_change"] > 0.0
 
-
-def test_two_in_migration_rejects_missing_unexpected_and_wrong_shape_state() -> None:
+def test_static_channel_migration_rejects_missing_unexpected_and_wrong_shapes() -> None:
     pytest.importorskip("neuralop")
     from oceanfno.model import (
         BireAlignedFullStateError,
+        BireTwoInNewChannelsArchitecture,
         BireTwoInOneOutArchitecture,
-        BireY32X32Architecture,
+        build_bire_two_in_new_channels_model,
         build_bire_two_in_one_out_model,
-        build_bire_y32_x32_model,
-        migrate_y32_x32_state_dict,
+        migrate_two_in_static_channels_state_dict,
     )
 
-    parent = build_bire_y32_x32_model(BireY32X32Architecture())
+    parent = build_bire_two_in_one_out_model(BireTwoInOneOutArchitecture())
     state = _portable_state_dict(parent)
-    target = build_bire_two_in_one_out_model(BireTwoInOneOutArchitecture())
+    target = build_bire_two_in_new_channels_model(BireTwoInNewChannelsArchitecture())
 
-    missing = dict(state)
-    missing.pop("fno.projection.fcs.1.bias")
-    unexpected = dict(state)
-    unexpected["undeclared.weight"] = torch.zeros(1)
-    wrong_shape = dict(state)
-    wrong_shape["local.weight"] = state["local.weight"][:, :40]
+    missing = dict(state); missing.pop("fno.projection.fcs.1.bias")
+    unexpected = dict(state); unexpected["undeclared.weight"] = torch.zeros(1)
+    wrong_shape = dict(state); wrong_shape["local.weight"] = state["local.weight"][:, :40]
     undeclared = dict(state)
     undeclared["fno.fno_blocks.convs.0.weight.tensor"] = state[
         "fno.fno_blocks.convs.0.weight.tensor"
     ][..., :13]
     for tampered in (missing, unexpected, wrong_shape, undeclared):
         with pytest.raises(BireAlignedFullStateError):
-            migrate_y32_x32_state_dict(tampered, target)
-
+            migrate_two_in_static_channels_state_dict(tampered, target)
 
 def test_the_builders_refuse_each_others_architecture() -> None:
     pytest.importorskip("neuralop")
     from oceanfno.model import (
         BireAlignedFullStateError,
+        BireTwoInNewChannelsArchitecture,
         BireTwoInOneOutArchitecture,
-        BireY32X32Architecture,
+        build_bire_two_in_new_channels_model,
         build_bire_two_in_one_out_model,
-        build_bire_y32_x32_model,
     )
 
     with pytest.raises(BireAlignedFullStateError):
-        build_bire_two_in_one_out_model(BireY32X32Architecture())
+        build_bire_two_in_new_channels_model(BireTwoInOneOutArchitecture())
     with pytest.raises(BireAlignedFullStateError):
-        build_bire_y32_x32_model(BireTwoInOneOutArchitecture())
-
-
-# --------------------------------------------------------------------------
-# The autoregression
-# --------------------------------------------------------------------------
-
+        build_bire_two_in_one_out_model(BireTwoInNewChannelsArchitecture())
+    with pytest.raises(BireAlignedFullStateError):
+        BireTwoInNewChannelsArchitecture(
+            static_channels=("wind_stress_x", "wet_mask", "distance_to_wall_normalized")
+        )
 
 def test_the_pair_slides_forward_and_no_step_after_the_first_sees_truth() -> None:
     pytest.importorskip("neuralop")
@@ -493,7 +503,7 @@ def test_the_pair_slides_forward_and_no_step_after_the_first_sees_truth() -> Non
             self.call = 0
 
         def forward(self, features):
-            assert features.shape[1] == TWO_IN_EXTERNAL_CHANNELS
+            assert features.shape[1] == 95
             self.seen.append((features[:, :46].clone(), features[:, 46:92].clone()))
             self.call += 1
             return torch.full_like(features[:, :46], float(self.call))
@@ -579,7 +589,7 @@ def test_the_one_input_stepper_still_ignores_history() -> None:
 # --------------------------------------------------------------------------
 
 
-@pytest.mark.skipif(not CONTRACT.is_file(), reason="the two-input contract is absent")
+@pytest.mark.skipif(not CONTRACT.is_file(), reason="the new-channel contract is absent")
 def test_the_contract_moves_only_the_declared_quantities() -> None:
     contract, _, _ = load_contract(CONTRACT, verify_sources=False)
     parent = _parent()
@@ -596,22 +606,27 @@ def test_the_contract_moves_only_the_declared_quantities() -> None:
     assert architecture_changes == {
         "in_channels",
         "lifting_in_channels",
-        "input_states",
-        "input_lag_days",
+        "static_channels",
     }
-    # In particular the Fourier bandwidth did not move with the input contract.
+    # Neither the Fourier bandwidth nor the temporal context moved with them.
     assert tuple(parent["architecture"]["n_modes"]) == MODES == (32, 32)
     assert tuple(contract["architecture"]["n_modes"]) == MODES
+    assert parent["architecture"]["input_states"] == (
+        contract["architecture"]["input_states"]
+    ) == 2
+    assert parent["architecture"]["input_lag_days"] == (
+        contract["architecture"]["input_lag_days"]
+    ) == 10
     assert parent["architecture"]["local_kernel_size"] == (
         contract["architecture"]["local_kernel_size"]
     ) == LOCAL_KERNEL_SIZE == 3
-    assert contract["architecture"]["input_states"] == 2
-    assert contract["architecture"]["input_lag_days"] == 10
-    assert contract["architecture"]["in_channels"] == TWO_IN_EXTERNAL_CHANNELS
-    assert contract["architecture"]["lifting_in_channels"] == TWO_IN_LIFTING_CHANNELS
+    assert "static_channels" not in parent["architecture"]
+    assert tuple(contract["architecture"]["static_channels"]) == NEW_STATIC_CHANNELS
+    assert contract["architecture"]["in_channels"] == NEW_EXTERNAL_CHANNELS
+    assert contract["architecture"]["lifting_in_channels"] == NEW_LIFTING_CHANNELS
 
 
-@pytest.mark.skipif(not CONTRACT.is_file(), reason="the two-input contract is absent")
+@pytest.mark.skipif(not CONTRACT.is_file(), reason="the new-channel contract is absent")
 def test_the_optimizer_matches_the_declaration() -> None:
     contract, _, _ = load_contract(CONTRACT, verify_sources=False)
     training = contract["training"]
@@ -632,8 +647,8 @@ def test_the_optimizer_matches_the_declaration() -> None:
     assert BATCH_SIZE * ROLLOUT_STEPS == 8 * 3
 
 
-@pytest.mark.skipif(not CONTRACT.is_file(), reason="the two-input contract is absent")
-def test_initialization_is_the_32x32_checkpoint_with_a_zero_history_block() -> None:
+@pytest.mark.skipif(not CONTRACT.is_file(), reason="the new-channel contract is absent")
+def test_initialization_is_the_two_input_checkpoint_with_zeroed_coefficients() -> None:
     contract, _, _ = load_contract(CONTRACT, verify_sources=False)
     initialization = contract["initialization"]
     assert initialization["version"] == PARENT_VERSION
@@ -643,11 +658,12 @@ def test_initialization_is_the_32x32_checkpoint_with_a_zero_history_block() -> N
     assert initialization["normalization_reused"] is True
     assert contract["training"]["from_scratch"] is False
     assert contract["training"]["load_optimizer_state"] is False
-    assert initialization["checkpoint"].endswith(
-        "bire_protocol_rollout_ft_y32_x32_v1/selected.pt"
-    )
-    assert initialization["input_migration"] == INPUT_MIGRATION
-    assert initialization["history_branch_initialization"] == "zeros"
+    assert initialization["checkpoint"].endswith("model_c_2in_1out_v1/selected.pt")
+    assert initialization["static_channel_migration"] == STATIC_CHANNEL_MIGRATION
+    assert initialization["new_coefficient_initialization"] == "zeros"
+    assert initialization["dropped_channel"] == "distance_to_wall_normalized"
+    # This arm must not claim an exactness it does not have.
+    assert initialization["function_preserving"] is False
     assert initialization["local_branch_initialization"] == "copied_from_parent"
     assert initialization["local_branch_bias"] is False
     assert (
@@ -656,9 +672,7 @@ def test_initialization_is_the_32x32_checkpoint_with_a_zero_history_block() -> N
     )
     assert (
         contract["sources"]["parent_normalization"]["path"]
-        .endswith(
-            "model_c_bire_protocol_rollout_ft_y32_x32_train_only_normalization.npz"
-        )
+        .endswith("model_c_2in_1out_train_only_normalization.npz")
     )
     # The parent is compact, so both its raw bytes and its resolved document
     # are pinned; no level of the three-deep inheritance can move unnoticed.
@@ -668,7 +682,7 @@ def test_initialization_is_the_32x32_checkpoint_with_a_zero_history_block() -> N
     assert record["sha256"] != record["materialized_sha256"]
 
 
-@pytest.mark.skipif(not PARENT.is_file(), reason="the 32x32 parent contract is absent")
+@pytest.mark.skipif(not PARENT.is_file(), reason="the two-input parent contract is absent")
 def test_the_resolver_walks_the_whole_chain_to_its_root() -> None:
     resolved = _resolve_contract(PARENT)
     assert resolved == _parent()
@@ -678,7 +692,7 @@ def test_the_resolver_walks_the_whole_chain_to_its_root() -> None:
     assert _resolve_contract(ROOT_CONTRACT) == root
 
 
-@pytest.mark.skipif(not CONTRACT.is_file(), reason="the two-input contract is absent")
+@pytest.mark.skipif(not CONTRACT.is_file(), reason="the new-channel contract is absent")
 def test_the_loss_block_declares_the_six_step_objective() -> None:
     contract, _, _ = load_contract(CONTRACT, verify_sources=False)
     parent = _parent()
@@ -691,13 +705,13 @@ def test_the_loss_block_declares_the_six_step_objective() -> None:
     assert loss["state"] == parent["loss"]["state"]
 
 
-@pytest.mark.skipif(not CONTRACT.is_file(), reason="the two-input contract is absent")
+@pytest.mark.skipif(not CONTRACT.is_file(), reason="the new-channel contract is absent")
 def test_the_output_roots_are_this_arms_own_and_do_not_collide() -> None:
     contract, _, _ = load_contract(CONTRACT, verify_sources=False)
     scratch = Path(contract["output"]["scratch_root"])
     project = Path(contract["output"]["project_root"])
     parent = _parent()
-    assert scratch.name == project.name == "model_c_2in_1out_v1"
+    assert scratch.name == project.name == "model_c_2in_1out_new_channels_v1"
     assert project != Path(parent["output"]["project_root"])
     assert scratch != Path(parent["output"]["scratch_root"])
 
@@ -706,10 +720,10 @@ def test_the_output_roots_are_this_arms_own_and_do_not_collide() -> None:
     not (
         Path(
             "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/"
-            "model_c_2in_1out_v1"
+            "model_c_2in_1out_new_channels_v1"
         ).exists()
     ),
-    reason="the two-input arm has not been trained yet",
+    reason="the new-channel arm has not been trained yet",
 )
 def test_completed_outputs_are_pinned_and_a_rerun_would_be_refused() -> None:
     contract, _, _ = load_contract(CONTRACT, verify_sources=False)
@@ -721,7 +735,7 @@ def test_completed_outputs_are_pinned_and_a_rerun_would_be_refused() -> None:
 
 
 
-@pytest.mark.skipif(not CONTRACT.is_file(), reason="the two-input contract is absent")
+@pytest.mark.skipif(not CONTRACT.is_file(), reason="the new-channel contract is absent")
 @pytest.mark.parametrize(
     "mutate",
     [
@@ -733,9 +747,27 @@ def test_completed_outputs_are_pinned_and_a_rerun_would_be_refused() -> None:
             id="modes_moved_with_the_inputs",
         ),
         pytest.param(
-            lambda c: c["architecture"].update(input_states=1, in_channels=49,
-                                               lifting_in_channels=51),
+            lambda c: c["architecture"].update(input_states=1),
             id="temporal_context_reverted",
+        ),
+        pytest.param(
+            lambda c: c["architecture"].update(
+                static_channels=["wind_stress_x", "wet_mask",
+                                 "distance_to_wall_normalized"],
+                in_channels=95, lifting_in_channels=97,
+            ),
+            id="static_channels_reverted",
+        ),
+        pytest.param(
+            lambda c: c["architecture"].update(
+                static_channels=["wind_stress_x", "wet_mask", "coriolis_parameter",
+                                 "zonal_grid_spacing", "distance_to_wall_normalized"],
+            ),
+            id="d_wall_smuggled_back_in",
+        ),
+        pytest.param(
+            lambda c: c["sources"].pop("mitgcm_sst_relaxation"),
+            id="relaxation_source_dropped",
         ),
         pytest.param(
             lambda c: c["architecture"].update(input_states=3),
@@ -747,7 +779,7 @@ def test_completed_outputs_are_pinned_and_a_rerun_would_be_refused() -> None:
         ),
         pytest.param(
             lambda c: c["architecture"].update(in_channels=141),
-            id="input_width_disagrees_with_the_state_count",
+            id="input_width_disagrees_with_the_static_count",
         ),
         pytest.param(
             lambda c: c["architecture"].update(position_encoding="smooth_xy"),
@@ -764,15 +796,15 @@ def test_completed_outputs_are_pinned_and_a_rerun_would_be_refused() -> None:
         ),
         pytest.param(
             lambda c: c["initialization"].update(
-                input_migration="copy_the_parent_columns_into_the_leading_slice"
+                static_channel_migration="copy_every_parent_column_including_d_wall"
             ),
-            id="wrong_input_migration",
+            id="wrong_static_migration",
         ),
         pytest.param(
             lambda c: c["initialization"].update(
-                history_branch_initialization="random"
+                new_coefficient_initialization="random"
             ),
-            id="history_branch_not_zeroed",
+            id="new_coefficients_not_zeroed",
         ),
         pytest.param(
             lambda c: c["initialization"].update(local_branch_initialization="zeros"),
@@ -785,7 +817,7 @@ def test_completed_outputs_are_pinned_and_a_rerun_would_be_refused() -> None:
     ],
 )
 def test_a_tampered_contract_is_rejected(mutate, tmp_path) -> None:
-    with pytest.raises(ModelCTwoInTrainingError):
+    with pytest.raises(ModelCNewChannelsTrainingError):
         load_contract(_tampered(mutate, tmp_path), verify_sources=False)
 
 
@@ -824,38 +856,70 @@ def test_two_input_starts_keep_the_whole_pair_and_target_sequence_inside_trainin
     assert len(one_input) - len(records) == 30
 
 
-def test_the_static_reduction_keeps_both_state_blocks_and_three_statics() -> None:
-    """97 -> 95 must drop the two linear coordinate fields and nothing else."""
+def test_the_derived_static_block_is_built_from_the_simulations_own_inputs() -> None:
+    """Three of the five channels are not in the store at all."""
 
-    from oceanfno.model import (
-        HISTORY_SLICE,
-        PRESENT_SLICE,
-        TWO_IN_STATIC_SLICE,
-        retained_two_in_features,
+    import numpy as np
+
+    from oceanfno.dataset import (
+        MITGCM_OMEGA,
+        NEW_CHANNEL_STATIC_FEATURES,
+        NewChannelStaticError,
+        assert_mitgcm_coriolis_defaults,
+        coriolis_parameter,
+        read_mitgcm_2d,
     )
     from oceanfno.runtime import STATIC_FEATURES
 
-    assert HISTORY_SLICE == slice(0, 46)
-    assert PRESENT_SLICE == slice(46, 92)
-    assert TWO_IN_STATIC_SLICE == slice(92, 95)
+    assert NEW_CHANNEL_STATIC_FEATURES == NEW_STATIC_CHANNELS
+    # Only two of the five can come from the store.
+    assert set(NEW_STATIC_CHANNELS) & set(STATIC_FEATURES) == {
+        "wind_stress_x", "wet_mask",
+    }
 
-    batch = torch.arange(97, dtype=torch.float32).view(1, 97, 1, 1).expand(1, 97, 4, 4)
-    reduced = retained_two_in_features(batch.clone())
-    assert reduced.shape == (1, TWO_IN_EXTERNAL_CHANNELS, 4, 4)
-    assert torch.equal(reduced[:, :92], batch[:, :92])
-    kept = [
-        92 + STATIC_FEATURES.index(name)
-        for name in ("wind_stress_x", "wet_mask", "distance_to_wall_normalized")
-    ]
-    assert [int(reduced[0, 92 + i, 0, 0]) for i in range(3)] == kept
-    with pytest.raises(ValueError):
-        retained_two_in_features(batch[:, :51])
+    # f = 2 omega sin(phi) with MITgcm's default sidereal rotation period.
+    assert MITGCM_OMEGA == pytest.approx(2.0 * np.pi / 86164.0)
+    equator = coriolis_parameter(np.zeros((2, 2)))
+    assert np.allclose(equator, 0.0)
+    pole = coriolis_parameter(np.full((1, 1), 90.0))
+    assert pole[0, 0] == pytest.approx(2.0 * MITGCM_OMEGA)
+    assert coriolis_parameter(np.full((1, 1), 45.0))[0, 0] > 0.0
+
+    with pytest.raises(NewChannelStaticError):
+        read_mitgcm_2d(__file__)
 
 
-# --------------------------------------------------------------------------
-# The gate and the report
-# --------------------------------------------------------------------------
+@pytest.mark.skipif(
+    not Path(
+        "/bigscratch/mjalabert314/bire_james25_repro/af_fno/mitgcm/S0/spinup/"
+        "years_000_010/data"
+    ).is_file(),
+    reason="the MITgcm run directory is not mounted",
+)
+def test_the_declaration_audit_refuses_a_setup_that_moved() -> None:
+    from oceanfno.dataset import NewChannelStaticError, assert_mitgcm_coriolis_defaults
 
+    run = Path(
+        "/bigscratch/mjalabert314/bire_james25_repro/af_fno/mitgcm/S0/spinup/"
+        "years_000_010"
+    )
+    provenance = assert_mitgcm_coriolis_defaults(run / "data")
+    assert provenance["rotation_period_seconds"] == 86164.0
+    assert "thetaClimFile='SST_relax.bin'" in provenance["asserted_settings"]
+    assert "rotationPeriod" in provenance["asserted_absent"]
+
+    # An f-plane override would invalidate the derived Coriolis channel.
+    tampered = Path(str(run / "data"))
+    text = tampered.read_text().replace(
+        "usingSphericalPolarGrid=.TRUE.,", "usingSphericalPolarGrid=.TRUE.,\n f0=1.E-4,"
+    )
+    import tempfile
+
+    with tempfile.TemporaryDirectory() as directory:
+        moved = Path(directory) / "data"
+        moved.write_text(text)
+        with pytest.raises(NewChannelStaticError):
+            assert_mitgcm_coriolis_defaults(moved)
 
 def _summary(step: int, short: float, long: float) -> dict:
     fields = ("surface_speed", "sst", "phihyd_surface")
@@ -919,6 +983,14 @@ def _report() -> dict:
         "content_sha256": "a" * 64,
         "parameter_count": PARAMETER_COUNT,
         "optimizer": {"decay_step": 2880},
+        "static_channels": {"channels": list(NEW_STATIC_CHANNELS)},
+        "initialization": {
+            "static_channel_perturbation": {
+                "mean_abs_change": 0.00988,
+                "mean_abs_parent_output": 0.48719,
+                "relative_mean_abs_change": 0.02028,
+            }
+        },
         "counts": {
             "training_rollout_records": TRAINING_RECORDS,
             "training_starts_per_regime": TRAINING_STARTS_PER_REGIME,
@@ -943,18 +1015,21 @@ def test_the_readme_renders_before_the_job_is_ever_submitted() -> None:
     """Regression guard: the duration arm lost a finished job to a README KeyError."""
 
     text = _readme(_report())
-    assert "Two-in / one-out" in text
+    assert "Physical static channels" in text
     assert f"{BASELINE_OPTIMIZER_STEP:,}" in text
     assert "Selected step 3,840" in text and "primary_rule" in text
     for step in CHECKPOINT_STEPS:
         assert f"{step:,}" in text
     flat = " ".join(text.split())
-    assert "(x_(t-10), x_t) -> x_(t+10)" in flat
-    assert "Adams--Bashforth" in flat
-    assert "2 x 46 + 3 = 95" in flat
-    assert "lifting from 51 to 97" in flat
-    assert "5,930 starts per regime" in flat
-    for stale in ("32 x 24 to 32 x 32", "zonal half-spectrum", "from scratch"):
+    assert "f(phi), dx(phi), theta_clim(x, y)" in flat
+    assert "distance to wall" in flat
+    assert "95 to 97" in flat and "97 to 99" in flat
+    # The README must state the one thing this arm cannot claim.
+    assert "not function-preserving" in flat
+    assert "2.03%" in flat
+    for channel in NEW_STATIC_CHANNELS:
+        assert channel in text
+    for stale in ("zonal half-spectrum", "from scratch", "Adams--Bashforth"):
         assert stale not in text
 
 
@@ -979,7 +1054,7 @@ def test_artifact_names_are_distinct_and_name_this_arm() -> None:
                                        "NORMALIZATION_NAME", "DIVERGENCE_NAME",
                                        "CHECKPOINT_STEM")]
     assert len(set(names)) == len(names)
-    assert all("2in_1out" in n for n in names)
+    assert all("2in_1out_new_channels" in n for n in names)
     checkpoints = {f"{arm.CHECKPOINT_STEM}_{s:05d}.pt" for s in CHECKPOINT_STEPS}
     assert len(checkpoints) == len(CHECKPOINT_STEPS)
 
@@ -994,7 +1069,7 @@ def test_launcher_invokes_its_own_module_and_contract() -> None:
         if " -m " in f" {line} " and "oceanfno." in line
     }
     assert invoked == {"oceanfno.train"}
-    assert "model_c_2in_1out_v1.json" in text
+    assert "model_c_2in_1out_new_channels_v1.json" in text
 
 
 def test_the_package_carries_no_module_rebinding_machinery() -> None:

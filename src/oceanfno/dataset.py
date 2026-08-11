@@ -2,9 +2,10 @@
 from __future__ import annotations
 
 import copy
+import math
 import random
 from pathlib import Path
-from typing import Any, Sequence
+from typing import Any, Mapping, Sequence
 from dataclasses import asdict, dataclass, field
 
 import numpy as np
@@ -398,6 +399,332 @@ def records_for_two_in_rollout_split(
         for time_index in starts
     )
 
+#: MITgcm's own defaults, which this setup does not override. `data` sets
+#: `usingSphericalPolarGrid=.TRUE.` and declares neither `rotationPeriod` nor an
+#: f-plane/beta-plane pair, so the model integrates fCori = 2 omega sin(phi)
+#: with omega = 2 pi / 86164 s. :func:`assert_mitgcm_coriolis_defaults` refuses
+#: to derive the channel if that ever stops being true.
+MITGCM_ROTATION_PERIOD_SECONDS = 86164.0
+
+MITGCM_OMEGA = 2.0 * math.pi / MITGCM_ROTATION_PERIOD_SECONDS
+
+#: The relaxation timescale the setup declares, kept only as an audited constant:
+#: the *target* field is a model input, the timescale is not.
+MITGCM_THETA_RELAX_SECONDS = 2592000.0
+
+GRID_SHAPE = (62, 62)
+
+#: Index of Theta_01, the surface temperature the model predicts. The SST
+#: relaxation target is a temperature at the same points, so it is normalized in
+#: this channel's own pointwise coordinates rather than standardized on its own.
+SURFACE_TEMPERATURE_INDEX = STATE_CHANNELS.index("Theta_01")
+
+#: The physically-motivated static set: two forcing/geometry fields taken from
+#: the store, and three coefficients of the governing equations. The engineered
+#: distance-to-wall heuristic the earlier arms carried is deliberately absent.
+NEW_CHANNEL_STATIC_FEATURES = (
+    "wind_stress_x",
+    "wet_mask",
+    "coriolis_parameter",
+    "zonal_grid_spacing",
+    "sst_relaxation_target",
+)
+
+NEW_CHANNEL_STATIC_COUNT = len(NEW_CHANNEL_STATIC_FEATURES)
+
+#: Which of the five come from the trajectory store, and at which store index.
+_STORE_SOURCED_STATIC_INDICES = {
+    "wind_stress_x": STATIC_FEATURES.index("wind_stress_x"),
+    "wet_mask": STATIC_FEATURES.index("wet_mask"),
+}
+
+#: Settings in `data` that would invalidate the derived channels if they moved.
+_REQUIRED_MITGCM_SETTINGS = (
+    ("usingSphericalPolarGrid", ".TRUE."),
+    ("thetaClimFile", "'SST_relax.bin'"),
+    ("tauThetaClimRelax", f"{MITGCM_THETA_RELAX_SECONDS:.0f}."),
+)
+
+#: Settings whose *presence* would mean the defaults above no longer hold.
+_FORBIDDEN_MITGCM_SETTINGS = ("rotationPeriod", "f0", "beta", "fPrime")
+
+
+class NewChannelStaticError(RuntimeError):
+    """Raised when the physically-motivated static channels cannot be trusted."""
+
+
+def read_mitgcm_2d(path: str | Path) -> np.ndarray:
+    """Read one big-endian float32 62x62 MITgcm record.
+
+    MITgcm writes its grid dumps and forcing files as raw big-endian arrays with
+    the shape declared in the companion ``.meta``; every field this module reads
+    is a single 62x62 record, so the size check below is the whole contract.
+    """
+
+    resolved = Path(path)
+    values = np.fromfile(resolved, dtype=">f4")
+    if values.size != GRID_SHAPE[0] * GRID_SHAPE[1]:
+        raise NewChannelStaticError(
+            f"{resolved} holds {values.size} float32 values, not one 62x62 record"
+        )
+    result = np.ascontiguousarray(values.reshape(GRID_SHAPE), dtype=np.float32)
+    if not np.all(np.isfinite(result)):
+        raise NewChannelStaticError(f"{resolved} contains non-finite values")
+    return result
+
+
+def assert_mitgcm_coriolis_defaults(data_path: str | Path) -> dict[str, Any]:
+    """Confirm the run really integrates the coefficients this module derives.
+
+    Coriolis is not dumped by MITgcm, so it is computed here from latitude. That
+    is only correct while the setup keeps the spherical-polar grid and MITgcm's
+    default rotation period, and while the relaxation target is the file being
+    read. Rather than trust that, the declaration is parsed and any override is
+    a hard failure.
+    """
+
+    resolved = Path(data_path)
+    text = resolved.read_text()
+    stripped = "".join(text.split())
+    missing = [
+        f"{key}={value}"
+        for key, value in _REQUIRED_MITGCM_SETTINGS
+        if f"{key}={value}" not in stripped
+    ]
+    overridden = [key for key in _FORBIDDEN_MITGCM_SETTINGS if f"{key}=" in stripped]
+    if missing or overridden:
+        raise NewChannelStaticError(
+            "the MITgcm declaration no longer matches the derived static channels: "
+            f"missing={missing!r}, overridden_defaults={overridden!r}"
+        )
+    return {
+        "data_file": str(resolved),
+        "rotation_period_seconds": MITGCM_ROTATION_PERIOD_SECONDS,
+        "omega_rad_per_second": MITGCM_OMEGA,
+        "coriolis_definition": "2*omega*sin(latitude), MITgcm spherical-polar default",
+        "theta_relax_seconds": MITGCM_THETA_RELAX_SECONDS,
+        "asserted_settings": [f"{k}={v}" for k, v in _REQUIRED_MITGCM_SETTINGS],
+        "asserted_absent": list(_FORBIDDEN_MITGCM_SETTINGS),
+    }
+
+
+def coriolis_parameter(latitude_deg: np.ndarray) -> np.ndarray:
+    """f = 2 omega sin(phi), the coefficient MITgcm itself builds from YC."""
+
+    latitude = np.asarray(latitude_deg, dtype=np.float64)
+    return np.ascontiguousarray(
+        2.0 * MITGCM_OMEGA * np.sin(np.deg2rad(latitude)), dtype=np.float32
+    )
+
+
+def _standardize(field: np.ndarray, wet: np.ndarray) -> tuple[np.ndarray, float, float]:
+    """Center and scale a static coefficient over wet cells, then mask the land.
+
+    These fields are geometry and boundary forcing, not model state, so there is
+    no train/validation distinction to preserve: the same deterministic array is
+    present at every day of the record.
+    """
+
+    values = np.asarray(field, dtype=np.float64)
+    wet_values = values[wet]
+    mean = float(wet_values.mean())
+    scale = float(wet_values.std())
+    if not np.isfinite(mean) or not np.isfinite(scale) or scale <= 0.0:
+        raise NewChannelStaticError("a derived static channel has no usable spread")
+    result = ((values - mean) / scale).astype(np.float32)
+    result[~wet] = 0.0
+    return np.ascontiguousarray(result), mean, scale
+
+
+def new_channel_static_block(
+    group: Any,
+    *,
+    zonal_spacing_path: str | Path,
+    sst_relax_path: str | Path,
+    data_path: str | Path,
+    pointwise_mean: np.ndarray,
+    pointwise_scale: np.ndarray,
+) -> tuple[np.ndarray, dict[str, Any]]:
+    """Build the normalized ``(experiments, 5, Y, X)`` physical static block.
+
+    ``wind_stress_x`` and ``wet_mask`` are taken from the store and normalized
+    exactly as the earlier arms normalized them, so those two channels are
+    unchanged. The three added channels are coefficients of the governing
+    equations:
+
+    ``coriolis_parameter``
+        derived from the store's own latitude, which is asserted equal to
+        MITgcm's ``YC``;
+    ``zonal_grid_spacing``
+        MITgcm's own ``DXF`` at tracer points, read rather than recomputed, so
+        the spherical-grid convergence the model integrates is the one the
+        network sees;
+    ``sst_relaxation_target``
+        the ``thetaClimFile`` field, standardized over wet cells like the other
+        two.
+
+    A note on that last choice, because the elegant alternative is wrong here.
+    Normalizing the target in the *surface temperature channel's* pointwise
+    coordinates would make the relaxation difference exactly representable: with
+    both divided by the same ``scale(x, y)``, one lifting weight pair forms
+    ``theta_hat - theta_clim_hat = (theta - theta_clim) / scale(x, y)``. But that
+    pointwise scale falls to 0.011 degC where the simulated SST is pinned and
+    barely varies, and dividing a fixed climatology by it yields a channel with
+    standard deviation 12 and a range of -110 to +34 --- two orders of magnitude
+    above every other input into the same 1x1 lifting. Standardizing on its own
+    keeps the channel at unit variance; the network reconstructs the difference
+    through the lifting's 128 output features instead of through one weight pair.
+    """
+
+    provenance = assert_mitgcm_coriolis_defaults(data_path)
+    static = np.asarray(group["static_features"][:], dtype=np.float32)
+    wet = np.asarray(group["wet_mask"][:], dtype=bool)
+    latitude = np.asarray(group["latitude_deg"][:], dtype=np.float32)
+    mean = np.asarray(pointwise_mean, dtype=np.float32)
+    scale = np.asarray(pointwise_scale, dtype=np.float32)
+    experiments = int(static.shape[0])
+    if (
+        static.shape[1] != len(STATIC_FEATURES)
+        or wet.shape != GRID_SHAPE
+        or latitude.shape != GRID_SHAPE
+        or mean.shape != (STATE_CHANNEL_COUNT, *GRID_SHAPE)
+        or scale.shape != mean.shape
+    ):
+        raise NewChannelStaticError("the store or normalizer contract changed")
+
+    spacing = read_mitgcm_2d(zonal_spacing_path)
+    target = read_mitgcm_2d(sst_relax_path)
+    # MITgcm builds DXF from the same latitudes the store carries; if the two
+    # ever describe different grids the channel would be silently wrong.
+    predicted = 6.370e6 * np.cos(np.deg2rad(latitude.astype(np.float64))) * np.deg2rad(1.0)
+    if float(np.abs(spacing - predicted).max()) > 1.0:
+        raise NewChannelStaticError(
+            "DXF disagrees with R cos(phi) d(lambda) on the store's own latitudes"
+        )
+
+    coriolis, coriolis_mean, coriolis_scale = _standardize(
+        coriolis_parameter(latitude), wet
+    )
+    spacing_normalized, spacing_mean, spacing_scale = _standardize(spacing, wet)
+    relax, relax_mean, relax_scale = _standardize(target, wet)
+    # Recorded, not applied: the size of the channel the pointwise-coordinate
+    # alternative would have produced, which is why it was rejected.
+    rejected = (
+        (target.astype(np.float64) - mean[SURFACE_TEMPERATURE_INDEX])
+        / scale[SURFACE_TEMPERATURE_INDEX]
+    )[wet]
+
+    wind_source = static[:, _STORE_SOURCED_STATIC_INDICES["wind_stress_x"]]
+    wind_values = wind_source[:, wet]
+    wind_mean = float(wind_values.mean())
+    wind_scale = float(wind_values.std())
+    if not np.isfinite(wind_scale) or wind_scale <= 0.0:
+        raise NewChannelStaticError("the store's wind forcing has no usable spread")
+
+    block = np.zeros(
+        (experiments, NEW_CHANNEL_STATIC_COUNT, *GRID_SHAPE), dtype=np.float32
+    )
+    for experiment in range(experiments):
+        wind = (wind_source[experiment] - wind_mean) / wind_scale
+        wind[~wet] = 0.0
+        block[experiment, 0] = wind
+        block[experiment, 1] = static[
+            experiment, _STORE_SOURCED_STATIC_INDICES["wet_mask"]
+        ]
+        block[experiment, 2] = coriolis
+        block[experiment, 3] = spacing_normalized
+        block[experiment, 4] = relax
+    if not np.all(np.isfinite(block)):
+        raise NewChannelStaticError("the derived static block is not finite")
+
+    provenance.update(
+        {
+            "channels": list(NEW_CHANNEL_STATIC_FEATURES),
+            "removed_from_the_previous_arm": ["distance_to_wall_normalized"],
+            "removal_reason": (
+                "an engineered heuristic rather than a coefficient or forcing in "
+                "the governing equations"
+            ),
+            "sources": {
+                "wind_stress_x": "trajectory_v3_static_features_index_0",
+                "wet_mask": "trajectory_v3_static_features_index_3",
+                "coriolis_parameter": "derived_from_trajectory_v3_latitude_deg",
+                "zonal_grid_spacing": str(Path(zonal_spacing_path)),
+                "sst_relaxation_target": str(Path(sst_relax_path)),
+            },
+            "normalization": {
+                "wind_stress_x": {
+                    "method": "wet_cell_standardization_unchanged_from_the_parent_arm",
+                    "mean": wind_mean,
+                    "scale": wind_scale,
+                },
+                "wet_mask": {"method": "raw_zero_one_indicator"},
+                "coriolis_parameter": {
+                    "method": "wet_cell_standardization",
+                    "mean": coriolis_mean,
+                    "scale": coriolis_scale,
+                },
+                "zonal_grid_spacing": {
+                    "method": "wet_cell_standardization",
+                    "mean": spacing_mean,
+                    "scale": spacing_scale,
+                },
+                "sst_relaxation_target": {
+                    "method": "wet_cell_standardization",
+                    "mean": relax_mean,
+                    "scale": relax_scale,
+                    "rejected_alternative": (
+                        "pointwise_surface_temperature_coordinates_would_make_the_"
+                        "relaxation_difference_exactly_representable_but_the_"
+                        "pointwise_scale_falls_to_0p011_degC_where_SST_is_pinned"
+                    ),
+                    "rejected_alternative_channel_std": float(rejected.std()),
+                    "rejected_alternative_channel_range": [
+                        float(rejected.min()),
+                        float(rejected.max()),
+                    ],
+                    "compared_state_channel": STATE_CHANNELS[
+                        SURFACE_TEMPERATURE_INDEX
+                    ],
+                },
+            },
+            "collinearity_note": {
+                "measured_pearson_correlation_f_and_zonal_spacing": float(
+                    np.corrcoef(
+                        coriolis_parameter(latitude)[wet].astype(np.float64),
+                        spacing[wet].astype(np.float64),
+                    )[0, 1]
+                ),
+                "reason": (
+                    "the basin spans 14.5N to 75.5N, symmetric about 45N, so "
+                    "cos(phi) traverses the same value set as sin(phi) reversed "
+                    "and the two coefficients are near mirror images"
+                ),
+                "consequence": (
+                    "both are declared because both appear in the governing "
+                    "equations, but a gain from this arm cannot be attributed to "
+                    "one of them without a further ablation"
+                ),
+            },
+            "physical_ranges": {
+                "coriolis_parameter_per_second": [
+                    float(coriolis_parameter(latitude)[wet].min()),
+                    float(coriolis_parameter(latitude)[wet].max()),
+                ],
+                "zonal_grid_spacing_metres": [
+                    float(spacing[wet].min()),
+                    float(spacing[wet].max()),
+                ],
+                "sst_relaxation_target_degc": [
+                    float(target[wet].min()),
+                    float(target[wet].max()),
+                ],
+            },
+        }
+    )
+    return block, provenance
+
+
 def western_boundary_mask(wet_mask: np.ndarray, width: int = 4) -> np.ndarray:
     """Select the first ``width`` wet cells east of each row's western wall."""
 
@@ -561,6 +888,81 @@ class ModelCTwoInRolloutDataset(ModelCAnomalyRolloutDataset):
         static[0] = (static[0] - self.wind_mean) / self.wind_scale
         static[0, ~self.wet] = 0.0
         features = np.concatenate((previous, present, static), axis=0)
+        return (
+            torch.from_numpy(np.ascontiguousarray(features, dtype=np.float32)),
+            torch.from_numpy(np.ascontiguousarray(futures, dtype=np.float32)),
+        )
+
+
+class ModelCTwoInNewChannelsDataset(ModelCTwoInRolloutDataset):
+    """The two-input pair with the physically-motivated static block.
+
+    Unlike every earlier arm this emits the model's *final* channel layout ---
+    ``(x_{t-10}, x_t, five statics)`` = 97 channels --- rather than the store's
+    raw five statics for the model to reduce. Three of the five are not in the
+    store at all, so there is nothing to select from; the block is built once,
+    up front, and simply indexed by regime here.
+    """
+
+    def __init__(
+        self,
+        dataset_path: str | Path,
+        records: Sequence[tuple[int, int]],
+        pointwise_mean: np.ndarray,
+        pointwise_scale: np.ndarray,
+        static_block: np.ndarray,
+        *,
+        horizon_days: int = HORIZON_DAYS,
+        rollout_steps: int = 3,
+    ) -> None:
+        self.static_block = np.ascontiguousarray(static_block, dtype=np.float32)
+        super().__init__(
+            dataset_path,
+            records,
+            pointwise_mean,
+            pointwise_scale,
+            horizon_days=horizon_days,
+            rollout_steps=rollout_steps,
+        )
+
+    def _open(self) -> None:
+        super()._open()
+        if self.static_block.shape[1:] != (
+            NEW_CHANNEL_STATIC_COUNT,
+            *self.wet.shape,
+        ) or self.static_block.shape[0] <= max(e for e, _ in self.records):
+            raise NewChannelStaticError(
+                "the physical static block does not cover the requested regimes"
+            )
+
+    def __getitem__(self, index: int) -> tuple[Any, Any]:
+        experiment, time_index = self.records[index]
+        previous = self._normalise_state(
+            np.asarray(
+                self._state[experiment, time_index - self.horizon_days],
+                dtype=np.float32,
+            )
+        )
+        present = self._normalise_state(
+            np.asarray(self._state[experiment, time_index], dtype=np.float32)
+        )
+        futures = np.stack(
+            [
+                self._normalise_state(
+                    np.asarray(
+                        self._state[
+                            experiment,
+                            time_index + step * self.horizon_days,
+                        ],
+                        dtype=np.float32,
+                    )
+                )
+                for step in range(1, self.rollout_steps + 1)
+            ]
+        )
+        features = np.concatenate(
+            (previous, present, self.static_block[experiment]), axis=0
+        )
         return (
             torch.from_numpy(np.ascontiguousarray(features, dtype=np.float32)),
             torch.from_numpy(np.ascontiguousarray(futures, dtype=np.float32)),

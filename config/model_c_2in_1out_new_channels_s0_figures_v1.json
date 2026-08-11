@@ -1,0 +1,361 @@
+{
+  "acceptance_gate": {
+    "advisory": "report_day2000_RMSE_relative_to_both_climatology_and_persistence_alongside_transient_anomaly_amplitude_and_directional_structure",
+    "artifact": "model_c_2in_1out_new_channels_acceptance_gate.json",
+    "by_inspection": "western_boundary_sharp_gyre_identifiable_and_the_physical_coefficients_do_not_introduce_new_banding",
+    "decision": "compare_against_the_engineered_static_two_input_arm_before_retaining_or_reverting",
+    "evaluated_here": [
+      "all_values_finite",
+      "maximum_normalized_magnitude_at_most_8",
+      "day2000_streamfunction_minimum_at_least_minus_33_sv",
+      "day2000_total_field_standard_deviation_ratio",
+      "day2000_RMSE_relative_to_climatology_and_persistence"
+    ],
+    "evaluated_next": [
+      "day2000_streamfunction_anomaly_RMS_ratio",
+      "western_band_and_interior_anomaly_RMS",
+      "directional_gradient_and_high_wavenumber_power"
+    ]
+  },
+  "artifacts": {
+    "comparator_checkpoint": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/model_c_2in_1out_v1/selected.pt",
+      "sha256": "e88c026b4ac2ed4da484dd5a2795d5448f8f8342efc07e2b474df0d406183187"
+    },
+    "dataset_metadata": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/trajectories_v3.zarr/.zmetadata",
+      "sha256": "766cae89359311775c79103f44dc74630630ba6b7a0a8c6e9d26f73487512136"
+    },
+    "mitgcm_declaration": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/mitgcm/S0/spinup/years_000_010/data",
+      "role": "the_simulation_declaration_asserting_the_spherical_grid_the_relaxation_file_and_the_default_rotation_period",
+      "sha256": "766d27ac0ae257f4a8817921667b1d25a44add03966817a8561d9153ba627a58"
+    },
+    "mitgcm_sst_relaxation": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/mitgcm/S0/spinup/years_000_010/SST_relax.bin",
+      "role": "the_thetaClimFile_the_simulation_restores_surface_temperature_towards",
+      "sha256": "952f66ed928ad8c42584e5cf43d584ebb2f64c8f3876b871d3ced4ea689dc6dc"
+    },
+    "mitgcm_zonal_spacing": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/mitgcm/S0/spinup/years_000_010/DXF.data",
+      "role": "MITgcm_own_zonal_grid_spacing_at_tracer_points",
+      "sha256": "19ff882c63021105620145889630ee457af5187d669d3c5978e0d0d70b4294e6"
+    },
+    "selected_checkpoint": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/model_c_2in_1out_new_channels_v1/selected.pt",
+      "sha256": "3ed10ea621c0002bf7622e91756f01898e5dee0c906231c9037323b2035f4ffb"
+    },
+    "selected_normalization": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/model_c_2in_1out_new_channels_v1/model_c_2in_1out_new_channels_train_only_normalization.npz",
+      "sha256": "ad7cc8584788ccdd4e8beaae3e606b9423230552af7079f15667b93bd1abaf2f"
+    },
+    "selected_report": {
+      "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/model_c_2in_1out_new_channels_v1/model_c_2in_1out_new_channels_report.json",
+      "sha256": "c7a53540d5ec34e3cefb0756fb356aaf696c8f86ac1a4c28f519057299eb01ff"
+    }
+  },
+  "baselines": {
+    "climatology": "pointwise_S0_mean_over_the_bire_training_block_0_5999_only",
+    "ensemble_summary": "mean_and_10th_90th_percentiles_across_15_member_metrics",
+    "persistence": "each_members_initial_physical_field_held_fixed_at_every_lead",
+    "rmse": "square_root_of_mean_squared_error_over_wet_cells_for_each_member"
+  },
+  "comparability": {
+    "basis": "same_15_starts_seed_leads_truth_baselines_normalizers_and_plot_definitions_as_the_two_input_package",
+    "compared_package": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/model_c_2in_1out/model_c_2in_1out_s0_figures_v1/S0",
+    "directly_comparable_with_one_input_package": true,
+    "protocol_addition": "none_beyond_the_two_input_arms_own_second_initial_condition_which_both_models_here_read"
+  },
+  "comparator_model": {
+    "architecture": {
+      "channel_mlp_dropout": 0.0,
+      "channel_mlp_expansion": 4.0,
+      "domain_padding": 0.1,
+      "factorization": null,
+      "fno_block_precision": "full",
+      "grid_shape": [
+        62,
+        62
+      ],
+      "hidden_channels": 128,
+      "in_channels": 95,
+      "input_lag_days": 10,
+      "input_states": 2,
+      "lifting_channel_ratio": 2,
+      "lifting_in_channels": 97,
+      "local_kernel_size": 3,
+      "n_layers": 3,
+      "n_modes": [
+        32,
+        32
+      ],
+      "out_channels": 46,
+      "pointwise_layer_norm": true,
+      "positional_channels": 2,
+      "positional_embedding": null,
+      "projection_channel_ratio": 2,
+      "use_channel_mlp": true
+    },
+    "base_loss_contract_sha256": "0cc75764a6eec7c7e82bb4cdb97e51929b57b1fbf765a7ee50c290ba3593bdbb",
+    "input_lag_days": 10,
+    "input_states": 2,
+    "map": "(x_t_minus_10, x_t) -> x_t_plus_10",
+    "name": "model_c_2in_1out_Model_C",
+    "objective": "group_balanced_model_c_loss_v1_with_a_six_step_rollout",
+    "optimizer_step": 3840,
+    "role": "the_engineered_static_model_the_new_channel_arm_started_from",
+    "rollout_steps": 6,
+    "rollout_weight": 0.5,
+    "static_channels": [
+      "wind_stress_x",
+      "wet_mask",
+      "distance_to_wall_normalized"
+    ],
+    "training_contract": "/home/mjalabert314/bire_james25_repro/config/model_c_2in_1out_v1.json",
+    "version": "model_c_2in_1out_v1"
+  },
+  "contract_status": "frozen_after_the_model_c_2in_1out_new_channels_training_and_validation_and_before_any_inference_metric",
+  "dataset": {
+    "evaluation_truth_note": "never_trained_on_validated_on_or_used_as_an_inference_start_bire_figure_7_carries_a_ground_truth_column_at_the_2000th_day_obtained_because_their_simulations_2_and_4_are_entirely_held_out_we_obtain_the_same_separation_along_time",
+    "evaluation_truth_only_days": [
+      7200,
+      8999
+    ],
+    "inference": [
+      6200,
+      7200
+    ],
+    "metadata_sha256": "766cae89359311775c79103f44dc74630630ba6b7a0a8c6e9d26f73487512136",
+    "model_visible_days": [
+      0,
+      7199
+    ],
+    "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/trajectories_v3.zarr",
+    "tau0_n_m2": {
+      "S0": 0.1
+    },
+    "train": [
+      0,
+      6000
+    ],
+    "validation": [
+      6000,
+      7200
+    ],
+    "version": "trajectories_v3"
+  },
+  "figure6": {
+    "black": "the_engineered_static_two_input_step3840_checkpoint",
+    "comparator_optimizer_step": 3840,
+    "literal_pretrain_finetune_pair": true,
+    "reason": "both_models_read_the_same_two_time_levels_on_the_same_32x32_modes_so_the_gap_is_the_effect_of_the_static_channel_set_alone",
+    "red": "the_selected_physical_static_channel_checkpoint",
+    "required_label": "engineered_vs_physical_static_channels",
+    "shared_objective_hash": "both_models_carry_the_same_six_step_objective_contract"
+  },
+  "output": {
+    "one_folder_per_regime": true,
+    "overwrite": false,
+    "project_root": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/model_c_2in_1out_new_channels_s0_figures_v1",
+    "required": [
+      "model_c_bire_figure3_streamfunction_1deg_s0_dt10.png",
+      "model_c_bire_figure4_dt10_rmse_0_200_days_s0.png",
+      "model_c_bire_figure5_dt10_single_member_rmse_s0.png",
+      "model_c_bire_figure6_dt10_acc_0_200_days_s0.png",
+      "model_c_bire_figure7_dt10_streamfunction_day060_day2000_s0.png",
+      "model_c_bire_figure8_dt10_rmse_0_2000_days_s0.png",
+      "model_c_bire_s0_figures_report.json",
+      "model_c_bire_s0_figures_arrays.npz",
+      "model_c_bire_s0_figures_summary.json",
+      "model_c_bire_s0_ensemble_curves.csv",
+      "manifest.json",
+      "README.md"
+    ],
+    "scratch_root": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/model_c_2in_1out_new_channels_s0_figures_v1"
+  },
+  "pending_after_training": {
+    "fields": [
+      "selected_model.optimizer_step",
+      "artifacts.selected_checkpoint.sha256",
+      "artifacts.selected_normalization.sha256",
+      "artifacts.selected_report.sha256"
+    ],
+    "filled_by": "python -m oceanfno.figures finalize --contract <this file>",
+    "reason": "the_selected_checkpoint_is_not_known_until_validation_selection_runs_and_finalize_is_an_idempotent_provenance_bind_to_the_completed_report",
+    "sentinel": "PENDING_AFTER_TRAINING"
+  },
+  "protocol": {
+    "acc_fields": [
+      "surface_u",
+      "surface_v",
+      "phihyd_surface",
+      "sst"
+    ],
+    "figure3_lead_days": [
+      0,
+      10,
+      20,
+      30,
+      40
+    ],
+    "figure7_lead_days": [
+      60,
+      2000
+    ],
+    "figure_names": [
+      "model_c_bire_figure3_streamfunction_1deg_s0_dt10.png",
+      "model_c_bire_figure4_dt10_rmse_0_200_days_s0.png",
+      "model_c_bire_figure5_dt10_single_member_rmse_s0.png",
+      "model_c_bire_figure6_dt10_acc_0_200_days_s0.png",
+      "model_c_bire_figure7_dt10_streamfunction_day060_day2000_s0.png",
+      "model_c_bire_figure8_dt10_rmse_0_2000_days_s0.png"
+    ],
+    "history_initial_condition": {
+      "earliest_history_day": 6253,
+      "is_scored_target": false,
+      "lag_days": 10,
+      "leads_unchanged": true,
+      "states_per_call": 2
+    },
+    "inference_set": [
+      6200,
+      7200
+    ],
+    "long_lead_days": "0_to_2000_inclusive_by_10",
+    "maximum_lead_days": 2000,
+    "member_count": 15,
+    "prediction_interval_days": 10,
+    "primary_regime": "S0",
+    "regimes": [
+      "S0"
+    ],
+    "rmse_fields": [
+      "surface_speed",
+      "phihyd_surface",
+      "sst"
+    ],
+    "short_lead_days": "0_to_200_inclusive_by_10",
+    "start_draw_order": [
+      6263,
+      6293,
+      6331,
+      6389,
+      6579,
+      6593,
+      6598,
+      6601,
+      6651,
+      6661,
+      6694,
+      6707,
+      6711,
+      6968,
+      6979
+    ],
+    "start_seed": 20260802,
+    "start_selection": "numpy_default_rng_seed_20260802_choice_without_replacement_from_6200_6999_then_sorted",
+    "start_window": [
+      6200,
+      7000
+    ],
+    "static_channels": [
+      "wind_stress_x",
+      "wet_mask",
+      "coriolis_parameter",
+      "zonal_grid_spacing",
+      "sst_relaxation_target"
+    ]
+  },
+  "purpose": "same_S0_Bire_figures_for_the_selected_physical_static_channel_model_with_the_engineered_static_model_as_its_literal_comparator",
+  "read_contract": {
+    "adjoint_state": false,
+    "inference_state": true,
+    "intermediate_wind_state": false,
+    "promotes_no_checkpoint": true,
+    "response_state": false,
+    "training_state": false,
+    "validation_state": false
+  },
+  "selected_model": {
+    "architecture": {
+      "channel_mlp_dropout": 0.0,
+      "channel_mlp_expansion": 4.0,
+      "domain_padding": 0.1,
+      "factorization": null,
+      "fno_block_precision": "full",
+      "grid_shape": [
+        62,
+        62
+      ],
+      "hidden_channels": 128,
+      "in_channels": 97,
+      "input_lag_days": 10,
+      "input_states": 2,
+      "lifting_channel_ratio": 2,
+      "lifting_in_channels": 99,
+      "local_kernel_size": 3,
+      "n_layers": 3,
+      "n_modes": [
+        32,
+        32
+      ],
+      "out_channels": 46,
+      "pointwise_layer_norm": true,
+      "positional_channels": 2,
+      "positional_embedding": null,
+      "projection_channel_ratio": 2,
+      "static_channels": [
+        "wind_stress_x",
+        "wet_mask",
+        "coriolis_parameter",
+        "zonal_grid_spacing",
+        "sst_relaxation_target"
+      ],
+      "use_channel_mlp": true
+    },
+    "base_loss_contract_sha256": "0cc75764a6eec7c7e82bb4cdb97e51929b57b1fbf765a7ee50c290ba3593bdbb",
+    "initialized_from": {
+      "dropped_channel": "distance_to_wall_normalized",
+      "function_preserving": false,
+      "load_only": "model_state_dict",
+      "optimizer_step": 3840,
+      "static_channel_migration": "copy_the_94_shared_state_wind_and_wet_columns_drop_the_trained_distance_to_wall_column_zero_the_three_new_coefficient_columns_and_copy_the_position_tail",
+      "version": "model_c_2in_1out_v1"
+    },
+    "input_lag_days": 10,
+    "input_states": 2,
+    "map": "(x_t_minus_10, x_t) -> x_t_plus_10",
+    "name": "model_c_2in_1out_new_channels_Model_C",
+    "objective": "group_balanced_model_c_loss_v1_with_a_six_step_rollout",
+    "optimizer_step": 3840,
+    "rollout_steps": 6,
+    "rollout_weight": 0.5,
+    "seed": 20260724,
+    "selected_by": "pooled_validation_6000_6199_min_worst_long_climatology_ratio_subject_to_short_guard",
+    "static_channels": [
+      "wind_stress_x",
+      "wet_mask",
+      "coriolis_parameter",
+      "zonal_grid_spacing",
+      "sst_relaxation_target"
+    ],
+    "training_contract": "/home/mjalabert314/bire_james25_repro/config/model_c_2in_1out_new_channels_v1.json",
+    "version": "model_c_2in_1out_new_channels_v1"
+  },
+  "source_hashes": {
+    "src/oceanfno/dataset.py": "e68817b1fad4b3a32fa4c27dc4832414b4a7c51d3b46557d63d37783ebd9ea52",
+    "src/oceanfno/diagnostics.py": "cbd2fac4af73441b0a3c45a0e339b71e6bd2ccbe2631b0881be38adcc06d2ef6",
+    "src/oceanfno/figures.py": "c8b2453953eb87d3b467bd9a5a3a1dc2337ecd5a9ddadc5afc52e3b22a9430c3",
+    "src/oceanfno/model.py": "0d8305fee880a317a9d1aec81ec157a28554a08db11bba63e44374d5a6dc7b02",
+    "src/oceanfno/plots.py": "84a39e112fe6bfbddfdcff8ff102ed6cb9fb04ea0370eecad99fc55a1dd1be3a",
+    "src/oceanfno/runtime.py": "c9d267eb708f6d1f89a72078b43e37dab2fb679d66e093371d1bb75f1c5ec20c",
+    "src/oceanfno/train.py": "69f46e2eb1047ac3c600b0f29fdc40afdf3c1cc0db4c1ace59c39e812f20f1d5",
+    "src/oceanfno/validation.py": "e08acf26aa92b2e03a996a7dd315982e834c0f9d1b2ecb4fe837c006165c7e8b"
+  },
+  "truth": {
+    "continuation_required": false,
+    "lead_matched_to_day": 2000,
+    "source": "trajectory_v3_store"
+  },
+  "version": "model_c_2in_1out_new_channels_s0_figures_v1"
+}
