@@ -83,6 +83,10 @@
       "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/model_c_2in_1out_new_channels_v1/selected.pt",
       "sha256": "3ed10ea621c0002bf7622e91756f01898e5dee0c906231c9037323b2035f4ffb"
     },
+    "initialization_checkpoint": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/model_c_2in_1out_new_channels_v1/selected.pt",
+      "sha256": "3ed10ea621c0002bf7622e91756f01898e5dee0c906231c9037323b2035f4ffb"
+    },
     "parent_normalization": {
       "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/model_c_2in_1out_new_channels_v1/model_c_2in_1out_new_channels_train_only_normalization.npz",
       "sha256": "ad7cc8584788ccdd4e8beaae3e606b9423230552af7079f15667b93bd1abaf2f"
