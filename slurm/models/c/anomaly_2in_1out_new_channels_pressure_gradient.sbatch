@@ -1,0 +1,23 @@
+#!/bin/bash -l
+#SBATCH --job-name=af-c-pganom
+#SBATCH --account=pod-users
+#SBATCH --partition=cpu
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=4
+#SBATCH --time=01:00:00
+
+set -euo pipefail
+module purge
+module load gnu12/12.2.0
+export OMP_NUM_THREADS="${SLURM_CPUS_PER_TASK}"
+export MKL_NUM_THREADS="${SLURM_CPUS_PER_TASK}"
+
+AF_PROJECT_ROOT="${AF_PROJECT_ROOT:-${SLURM_SUBMIT_DIR:?Submit from repository root or set AF_PROJECT_ROOT}}"
+AF_CONTRACT="${AF_CONTRACT:-${AF_PROJECT_ROOT}/config/model_c_2in_1out_new_channels_pressure_gradient_s0_anomaly_v1.json}"
+AF_PYTHON="${AF_PYTHON:-${AF_PROJECT_ROOT}/.venv/bin/python}"
+cd "${AF_PROJECT_ROOT}"
+
+"${AF_PYTHON}" -m oceanfno.anomaly_pressure_gradient finalize --contract "${AF_CONTRACT}"
+"${AF_PYTHON}" -m oceanfno.anomaly_pressure_gradient preflight --contract "${AF_CONTRACT}"
+"${AF_PYTHON}" -m oceanfno.anomaly_pressure_gradient run --contract "${AF_CONTRACT}"
