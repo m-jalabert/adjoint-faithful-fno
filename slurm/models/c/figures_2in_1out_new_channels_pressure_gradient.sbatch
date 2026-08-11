@@ -19,6 +19,6 @@ AF_CONTRACT="${AF_CONTRACT:-${AF_PROJECT_ROOT}/config/model_c_2in_1out_new_chann
 AF_PYTHON="${AF_PYTHON:-${AF_PROJECT_ROOT}/.venv/bin/python}"
 cd "${AF_PROJECT_ROOT}"
 
-"${AF_PYTHON}" -m oceanfno.figures_pressure_gradient finalize --contract "${AF_CONTRACT}"
-"${AF_PYTHON}" -m oceanfno.figures_pressure_gradient preflight --contract "${AF_CONTRACT}"
-"${AF_PYTHON}" -m oceanfno.figures_pressure_gradient run --contract "${AF_CONTRACT}" --device cuda
+"${AF_PYTHON}" -m oceanfno.figures finalize --contract "${AF_CONTRACT}"
+"${AF_PYTHON}" -m oceanfno.figures preflight --contract "${AF_CONTRACT}"
+"${AF_PYTHON}" -m oceanfno.figures run --contract "${AF_CONTRACT}" --device cuda
