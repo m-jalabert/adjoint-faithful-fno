@@ -32,5 +32,5 @@ fi
 
 nvidia-smi --query-gpu=name,driver_version,memory.total --format=csv,noheader
 
-"${AF_PYTHON}" -m oceanfno.train_pressure_gradient preflight --contract "${AF_CONTRACT}"
-"${AF_PYTHON}" -m oceanfno.train_pressure_gradient run --contract "${AF_CONTRACT}" --device cuda
+"${AF_PYTHON}" -m oceanfno.train preflight --contract "${AF_CONTRACT}"
+"${AF_PYTHON}" -m oceanfno.train run --contract "${AF_CONTRACT}" --device cuda
