@@ -92,7 +92,7 @@
       "sha256": "ad7cc8584788ccdd4e8beaae3e606b9423230552af7079f15667b93bd1abaf2f"
     },
     "parent_report": {
-      "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/model_c_2in_1out_new_channels_v1/model_c_2in_1out_new_channels_report.json",
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/model_c_2in_1out_new_channels_v1/model_c_2in_1out_new_channels_report.json",
       "sha256": "c7a53540d5ec34e3cefb0756fb356aaf696c8f86ac1a4c28f519057299eb01ff"
     },
     "mitgcm_zonal_spacing": {

@@ -155,7 +155,14 @@ def pressure_gradient_relative_l2(
         masked_truth = truth.square() * mask
         numerator = masked_error.sum(dim=(-2, -1))
         denominator = masked_truth.sum(dim=(-2, -1)).clamp_min(epsilon)
+        ratio = numerator / denominator
+        # sqrt has an infinite slope at zero, so a level the prediction matches
+        # exactly backpropagates NaN instead of the finite subgradient 0.  Root
+        # a substitute value there and discard it, keeping an exact zero loss.
+        matched = ratio > 0.0
+        safe = torch.where(matched, ratio, torch.ones_like(ratio))
+        rooted = torch.where(matched, torch.sqrt(safe), torch.zeros_like(ratio))
         # Equal status to all 15 levels and all six rollout calls.
-        return torch.sqrt(numerator / denominator).mean()
+        return rooted.mean()
 
     return 0.5 * (relative(pred_x, true_x, mask_x) + relative(pred_y, true_y, mask_y))

@@ -1,125 +1,166 @@
 {
-  "version": "model_c_2in_1out_new_channels_pressure_gradient_s0_figures_v1",
-  "contract_status": "frozen_before_any_pressure_gradient_inference_metric",
-  "purpose": "usual_S0_figures_for_pressure_gradient_loss_fine_tune_with_current_best_as_literal_comparator",
-  "dataset": {
-    "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/trajectories_v3.zarr",
-    "version": "trajectories_v3",
-    "train": [0, 6000],
-    "validation": [6000, 7200],
-    "inference": [6200, 7200],
-    "tau0_n_m2": {"S0": 0.1}
-  },
-  "selected_model": {
-    "version": "model_c_2in_1out_new_channels_pressure_gradient_v1",
-    "optimizer_step": "PENDING_AFTER_TRAINING",
-    "architecture": {
-      "channel_mlp_dropout": 0.0,
-      "channel_mlp_expansion": 4.0,
-      "domain_padding": 0.1,
-      "factorization": null,
-      "fno_block_precision": "full",
-      "grid_shape": [62, 62],
-      "hidden_channels": 128,
-      "in_channels": 97,
-      "input_lag_days": 10,
-      "input_states": 2,
-      "lifting_channel_ratio": 2,
-      "lifting_in_channels": 99,
-      "local_kernel_size": 3,
-      "n_layers": 3,
-      "n_modes": [32, 32],
-      "out_channels": 46,
-      "pointwise_layer_norm": true,
-      "positional_channels": 2,
-      "positional_embedding": null,
-      "projection_channel_ratio": 2,
-      "static_channels": ["wind_stress_x", "wet_mask", "coriolis_parameter", "zonal_grid_spacing", "sst_relaxation_target"],
-      "use_channel_mlp": true
-    },
-    "training_contract": "/home/mjalabert314/bire_james25_repro/config/model_c_2in_1out_new_channels_pressure_gradient_v1.json",
-    "rollout_steps": 6,
-    "objective": "parent_six_step_objective_plus_pressure_gradient_consistency"
-  },
-  "comparator_model": {
-    "version": "model_c_2in_1out_new_channels_v1",
-    "optimizer_step": 3840,
-    "architecture": {
-      "channel_mlp_dropout": 0.0,
-      "channel_mlp_expansion": 4.0,
-      "domain_padding": 0.1,
-      "factorization": null,
-      "fno_block_precision": "full",
-      "grid_shape": [62, 62],
-      "hidden_channels": 128,
-      "in_channels": 97,
-      "input_lag_days": 10,
-      "input_states": 2,
-      "lifting_channel_ratio": 2,
-      "lifting_in_channels": 99,
-      "local_kernel_size": 3,
-      "n_layers": 3,
-      "n_modes": [32, 32],
-      "out_channels": 46,
-      "pointwise_layer_norm": true,
-      "positional_channels": 2,
-      "positional_embedding": null,
-      "projection_channel_ratio": 2,
-      "static_channels": ["wind_stress_x", "wet_mask", "coriolis_parameter", "zonal_grid_spacing", "sst_relaxation_target"],
-      "use_channel_mlp": true
-    }
-  },
-  "figure6": {
-    "black": "selected_model_c_2in_1out_new_channels_v1",
-    "red": "pressure_gradient_loss_fine_tune",
-    "literal_pretrain_finetune_pair": true,
-    "required_label": "current_best_vs_pressure_gradient_loss"
-  },
   "artifacts": {
-    "dataset_metadata": {
-      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/trajectories_v3.zarr/.zmetadata",
-      "sha256": "766cae89359311775c79103f44dc74630630ba6b7a0a8c6e9d26f73487512136"
-    },
-    "selected_checkpoint": {
-      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/model_c_2in_1out_new_channels_pressure_gradient_v1/selected.pt",
-      "sha256": "PENDING_AFTER_TRAINING"
-    },
-    "selected_normalization": {
-      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/model_c_2in_1out_new_channels_pressure_gradient_v1/model_c_2in_1out_new_channels_pressure_gradient_train_only_normalization.npz",
-      "sha256": "PENDING_AFTER_TRAINING"
-    },
-    "selected_report": {
-      "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/model_c_2in_1out_new_channels_pressure_gradient_v1/model_c_2in_1out_new_channels_pressure_gradient_report.json",
-      "sha256": "PENDING_AFTER_TRAINING"
-    },
     "comparator_checkpoint": {
       "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/model_c_2in_1out_new_channels_v1/selected.pt",
       "sha256": "3ed10ea621c0002bf7622e91756f01898e5dee0c906231c9037323b2035f4ffb"
     },
-    "mitgcm_zonal_spacing": {
-      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/mitgcm/S0/spinup/years_000_010/DXF.data",
-      "sha256": "19ff882c63021105620145889630ee457af5187d669d3c5978e0d0d70b4294e6"
+    "dataset_metadata": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/trajectories_v3.zarr/.zmetadata",
+      "sha256": "766cae89359311775c79103f44dc74630630ba6b7a0a8c6e9d26f73487512136"
+    },
+    "mitgcm_declaration": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/mitgcm/S0/spinup/years_000_010/data",
+      "sha256": "766d27ac0ae257f4a8817921667b1d25a44add03966817a8561d9153ba627a58"
     },
     "mitgcm_sst_relaxation": {
       "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/mitgcm/S0/spinup/years_000_010/SST_relax.bin",
       "sha256": "952f66ed928ad8c42584e5cf43d584ebb2f64c8f3876b871d3ced4ea689dc6dc"
     },
-    "mitgcm_declaration": {
-      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/mitgcm/S0/spinup/years_000_010/data",
-      "sha256": "766d27ac0ae257f4a8817921667b1d25a44add03966817a8561d9153ba627a58"
+    "mitgcm_zonal_spacing": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/mitgcm/S0/spinup/years_000_010/DXF.data",
+      "sha256": "19ff882c63021105620145889630ee457af5187d669d3c5978e0d0d70b4294e6"
+    },
+    "selected_checkpoint": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/model_c_2in_1out_new_channels_pressure_gradient_v1/selected.pt",
+      "sha256": "8e7e64e5afdf37d8899d6b1ef4a1d5a36f468c9bd3020250fe1badb2adeb5cdc"
+    },
+    "selected_normalization": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/model_c_2in_1out_new_channels_pressure_gradient_v1/model_c_2in_1out_new_channels_pressure_gradient_train_only_normalization.npz",
+      "sha256": "ad7cc8584788ccdd4e8beaae3e606b9423230552af7079f15667b93bd1abaf2f"
+    },
+    "selected_report": {
+      "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/model_c_2in_1out_new_channels_pressure_gradient_v1/model_c_2in_1out_new_channels_pressure_gradient_report.json",
+      "sha256": "be3e8253aa8229929f16ca1f7ddfb51b71e67b26a166696205d3359f9c310e51"
     }
   },
-  "protocol": {
-    "member_count": 15,
-    "start_seed": 20260802,
-    "maximum_lead_days": 2000,
-    "prediction_interval_days": 10,
-    "static_channels": ["wind_stress_x", "wet_mask", "coriolis_parameter", "zonal_grid_spacing", "sst_relaxation_target"]
+  "comparator_model": {
+    "architecture": {
+      "channel_mlp_dropout": 0.0,
+      "channel_mlp_expansion": 4.0,
+      "domain_padding": 0.1,
+      "factorization": null,
+      "fno_block_precision": "full",
+      "grid_shape": [
+        62,
+        62
+      ],
+      "hidden_channels": 128,
+      "in_channels": 97,
+      "input_lag_days": 10,
+      "input_states": 2,
+      "lifting_channel_ratio": 2,
+      "lifting_in_channels": 99,
+      "local_kernel_size": 3,
+      "n_layers": 3,
+      "n_modes": [
+        32,
+        32
+      ],
+      "out_channels": 46,
+      "pointwise_layer_norm": true,
+      "positional_channels": 2,
+      "positional_embedding": null,
+      "projection_channel_ratio": 2,
+      "static_channels": [
+        "wind_stress_x",
+        "wet_mask",
+        "coriolis_parameter",
+        "zonal_grid_spacing",
+        "sst_relaxation_target"
+      ],
+      "use_channel_mlp": true
+    },
+    "optimizer_step": 3840,
+    "version": "model_c_2in_1out_new_channels_v1"
+  },
+  "contract_status": "frozen_before_any_pressure_gradient_inference_metric",
+  "dataset": {
+    "inference": [
+      6200,
+      7200
+    ],
+    "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/trajectories_v3.zarr",
+    "tau0_n_m2": {
+      "S0": 0.1
+    },
+    "train": [
+      0,
+      6000
+    ],
+    "validation": [
+      6000,
+      7200
+    ],
+    "version": "trajectories_v3"
+  },
+  "figure6": {
+    "black": "selected_model_c_2in_1out_new_channels_v1",
+    "literal_pretrain_finetune_pair": true,
+    "red": "pressure_gradient_loss_fine_tune",
+    "required_label": "current_best_vs_pressure_gradient_loss"
   },
   "output": {
-    "overwrite": false,
     "one_folder_per_regime": true,
+    "overwrite": false,
     "project_root": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/model_c_2in_1out_new_channels_pressure_gradient_s0_figures_v1",
     "scratch_root": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/model_c_2in_1out_new_channels_pressure_gradient_s0_figures_v1"
-  }
+  },
+  "protocol": {
+    "maximum_lead_days": 2000,
+    "member_count": 15,
+    "prediction_interval_days": 10,
+    "start_seed": 20260802,
+    "static_channels": [
+      "wind_stress_x",
+      "wet_mask",
+      "coriolis_parameter",
+      "zonal_grid_spacing",
+      "sst_relaxation_target"
+    ]
+  },
+  "purpose": "usual_S0_figures_for_pressure_gradient_loss_fine_tune_with_current_best_as_literal_comparator",
+  "selected_model": {
+    "architecture": {
+      "channel_mlp_dropout": 0.0,
+      "channel_mlp_expansion": 4.0,
+      "domain_padding": 0.1,
+      "factorization": null,
+      "fno_block_precision": "full",
+      "grid_shape": [
+        62,
+        62
+      ],
+      "hidden_channels": 128,
+      "in_channels": 97,
+      "input_lag_days": 10,
+      "input_states": 2,
+      "lifting_channel_ratio": 2,
+      "lifting_in_channels": 99,
+      "local_kernel_size": 3,
+      "n_layers": 3,
+      "n_modes": [
+        32,
+        32
+      ],
+      "out_channels": 46,
+      "pointwise_layer_norm": true,
+      "positional_channels": 2,
+      "positional_embedding": null,
+      "projection_channel_ratio": 2,
+      "static_channels": [
+        "wind_stress_x",
+        "wet_mask",
+        "coriolis_parameter",
+        "zonal_grid_spacing",
+        "sst_relaxation_target"
+      ],
+      "use_channel_mlp": true
+    },
+    "objective": "parent_six_step_objective_plus_pressure_gradient_consistency",
+    "optimizer_step": 3840,
+    "rollout_steps": 6,
+    "training_contract": "/home/mjalabert314/bire_james25_repro/config/model_c_2in_1out_new_channels_pressure_gradient_v1.json",
+    "version": "model_c_2in_1out_new_channels_pressure_gradient_v1"
+  },
+  "version": "model_c_2in_1out_new_channels_pressure_gradient_s0_figures_v1"
 }
