@@ -24,6 +24,6 @@ if [ ! -x "${AF_PYTHON}" ]; then
   exit 1
 fi
 
-"${AF_PYTHON}" -m oceanfno.anomaly_pressure_gradient finalize --contract "${AF_CONTRACT}"
-"${AF_PYTHON}" -m oceanfno.anomaly_pressure_gradient preflight --contract "${AF_CONTRACT}"
-"${AF_PYTHON}" -m oceanfno.anomaly_pressure_gradient run --contract "${AF_CONTRACT}"
+"${AF_PYTHON}" -m oceanfno.anomaly finalize --contract "${AF_CONTRACT}"
+"${AF_PYTHON}" -m oceanfno.anomaly preflight --contract "${AF_CONTRACT}"
+"${AF_PYTHON}" -m oceanfno.anomaly run --contract "${AF_CONTRACT}"
