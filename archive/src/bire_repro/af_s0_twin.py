@@ -23,6 +23,7 @@ import shutil
 import socket
 import subprocess
 import time
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Mapping, Sequence
 
@@ -64,6 +65,39 @@ TWIN_SEGMENTS = (
 )
 TWIN_START_ITERATION = TWIN_START_YEAR * STEPS_PER_YEAR  # 2_592_000
 
+
+@dataclass(frozen=True)
+class TwinSpec:
+    """Identity of one twin experiment: all that differs between amplitudes.
+
+    The physics, the segment plan, the pickup record layout and every
+    verification step are shared, so a twin is described completely by its
+    name, its perturbation amplitude, and where its segments live on scratch.
+    Running both amplitudes through one code path is the point: the epsilon
+    comparison is only clean if nothing else about the two runs can differ.
+    """
+
+    experiment: str
+    epsilon: float
+    root_name: str
+    label: str
+
+    @property
+    def scale(self) -> float:
+        """The multiplicative factor applied to the perturbed velocity records."""
+
+        return 1.0 + self.epsilon
+
+
+#: The original twin.  Every function below defaults to it, so existing callers
+#: and the manifests already written to scratch are unaffected.
+DEFAULT_SPEC = TwinSpec(
+    experiment=EXPERIMENT,
+    epsilon=EPSILON,
+    root_name=TWIN_ROOT_NAME,
+    label=TWIN_LABEL,
+)
+
 #: Record layout of the S0 pickup, asserted against the control ``.meta``.
 PICKUP_FIELD_LAYOUT = (
     ("Uvel", 15),
@@ -87,7 +121,7 @@ class TwinExperimentError(RuntimeError):
     """Raised when the twin experiment design or its inputs are violated."""
 
 
-def segment_plan() -> dict[str, Any]:
+def segment_plan(spec: TwinSpec = DEFAULT_SPEC) -> dict[str, Any]:
     """Return the immutable twin segment plan and its iteration boundaries."""
 
     segments = []
@@ -112,12 +146,12 @@ def segment_plan() -> dict[str, Any]:
     ):
         raise TwinExperimentError("twin segment plan is not contiguous")
     return {
-        "experiment": EXPERIMENT,
+        "experiment": spec.experiment,
         "control_regime": CONTROL_REGIME,
         "start_year": TWIN_START_YEAR,
         "end_year": TWIN_END_YEAR,
         "years": covered,
-        "epsilon": EPSILON,
+        "epsilon": spec.epsilon,
         "perturbed_fields": list(PERTURBED_FIELDS),
         "perturbation": PERTURBATION,
         "formula": PERTURBATION_FORMULA,
@@ -161,7 +195,9 @@ def _pickup_record_slices(meta_path: Path) -> tuple[Any, dict[str, slice]]:
     return meta, slices
 
 
-def write_perturbed_pickup(source_meta: Path, run_dir: Path) -> dict[str, Any]:
+def write_perturbed_pickup(
+    source_meta: Path, run_dir: Path, spec: TwinSpec = DEFAULT_SPEC
+) -> dict[str, Any]:
     """Copy the year-100 pickup into ``run_dir`` and scale only ``Uvel``/``Vvel``.
 
     The ``.meta`` file is copied byte for byte so MITgcm's pickup-format check
@@ -194,7 +230,7 @@ def write_perturbed_pickup(source_meta: Path, run_dir: Path) -> dict[str, Any]:
             f"{source_data} Theta range {float(theta.min())}..{float(theta.max())} is implausible"
         )
 
-    scale = 1.0 + EPSILON
+    scale = spec.scale
     twin = control.copy()
     statistics: dict[str, Any] = {}
     for name in PERTURBED_FIELDS:
@@ -234,7 +270,7 @@ def write_perturbed_pickup(source_meta: Path, run_dir: Path) -> dict[str, Any]:
 
     return {
         "applied": True,
-        "epsilon": EPSILON,
+        "epsilon": spec.epsilon,
         "mode": PERTURBATION,
         "formula": PERTURBATION_FORMULA,
         "fields": list(PERTURBED_FIELDS),
@@ -260,6 +296,7 @@ def prepare_segment(
     executable: Path,
     start_year: int,
     years: int,
+    spec: TwinSpec = DEFAULT_SPEC,
 ) -> dict[str, Any]:
     """Create one immutable twin segment and its provenance manifest."""
 
@@ -271,15 +308,15 @@ def prepare_segment(
     if not executable.is_file():
         raise FileNotFoundError(f"AF--FNO executable is missing: {executable}")
 
-    experiment_root = scratch_root / TWIN_ROOT_NAME / TWIN_LABEL
+    experiment_root = scratch_root / spec.root_name / spec.label
     run_dir = experiment_root / TWIN_PHASE / f"years_{start_year:03d}_{start_year + years:03d}"
     manifest_path = run_dir / "segment_manifest.json"
     expected_identity = {
-        "experiment": EXPERIMENT,
+        "experiment": spec.experiment,
         "phase": TWIN_PHASE,
         "start_year": start_year,
         "years": years,
-        "epsilon": EPSILON,
+        "epsilon": spec.epsilon,
         "executable_sha256": _sha256(executable),
     }
     if manifest_path.is_file():
@@ -319,7 +356,9 @@ def prepare_segment(
             raise TwinExperimentError("control S0 iteration does not match the twin start year")
         if control_parent.get("experiment") != CONTROL_REGIME:
             raise TwinExperimentError("twin start pickup does not come from the S0 control")
-        perturbation = write_perturbed_pickup(Path(str(control_parent["pickup_meta"])), run_dir)
+        perturbation = write_perturbed_pickup(
+            Path(str(control_parent["pickup_meta"])), run_dir, spec=spec
+        )
         parent_result = str(control_parent["_result_path"])
         parent_pickups = [
             perturbation["twin_pickup_meta"],
@@ -329,13 +368,13 @@ def prepare_segment(
         parent = _find_parent(experiment_root, start_year)
         if int(parent["end_iteration"]) != start_iteration:
             raise TwinExperimentError("parent twin iteration does not match the requested start year")
-        if parent.get("experiment") != EXPERIMENT:
+        if parent.get("experiment") != spec.experiment:
             raise TwinExperimentError("twin restart pickup does not come from the twin trajectory")
         parent_pickups = _link_parent_pickups(parent, run_dir, start_iteration)
         parent_result = str(parent["_result_path"])
         perturbation = {
             "applied": False,
-            "epsilon": EPSILON,
+            "epsilon": spec.epsilon,
             "mode": PERTURBATION,
             "formula": PERTURBATION_FORMULA,
             "fields": list(PERTURBED_FIELDS),
@@ -437,7 +476,9 @@ def run_segment(manifest: Mapping[str, Any], launcher: Sequence[str] | None = No
         )
 
     result = {
-        "experiment": EXPERIMENT,
+        # Taken from the manifest, not the module constant, so a segment always
+        # reports the experiment it was actually prepared as.
+        "experiment": manifest["experiment"],
         "control_regime": CONTROL_REGIME,
         "phase": manifest["phase"],
         "epsilon": manifest["epsilon"],

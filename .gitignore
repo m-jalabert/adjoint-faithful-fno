@@ -17,6 +17,12 @@ dist/
 # Reproducible products and scheduler logs; source manifests remain tracked.
 outputs/*
 !outputs/.gitkeep
+# Track only plot PNGs from af_fno; arrays/metrics/reports stay untracked.
+!outputs/af_fno/
+outputs/af_fno/**/*.json
+outputs/af_fno/**/*.csv
+outputs/af_fno/**/*.md
+outputs/af_fno/S0/raw_mitgcm
 work/*
 !work/.gitkeep
 logs/
