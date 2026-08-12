@@ -1,0 +1,143 @@
+{
+  "version": "model_c_2in_1out_new_channels_pressure_gradient_continuity_v1",
+  "contract_status": "frozen_before_any_continuity_metric",
+  "purpose": "fine_tune_the_selected_pressure_gradient_model_with_only_an_added_MITgcm_consistent_free_surface_transport_continuity_loss",
+  "architecture": {
+    "channel_mlp_dropout": 0.0,
+    "channel_mlp_expansion": 4.0,
+    "domain_padding": 0.1,
+    "factorization": null,
+    "fno_block_precision": "full",
+    "grid_shape": [62, 62],
+    "hidden_channels": 128,
+    "in_channels": 97,
+    "input_lag_days": 10,
+    "input_states": 2,
+    "lifting_channel_ratio": 2,
+    "lifting_in_channels": 99,
+    "local_kernel_size": 3,
+    "n_layers": 3,
+    "n_modes": [32, 32],
+    "out_channels": 46,
+    "pointwise_layer_norm": true,
+    "positional_channels": 2,
+    "positional_embedding": null,
+    "projection_channel_ratio": 2,
+    "static_channels": [
+      "wind_stress_x",
+      "wet_mask",
+      "coriolis_parameter",
+      "zonal_grid_spacing",
+      "sst_relaxation_target"
+    ],
+    "use_channel_mlp": true
+  },
+  "initialization": {
+    "version": "model_c_2in_1out_new_channels_pressure_gradient_v1",
+    "checkpoint": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/model_c_2in_1out_new_channels_pressure_gradient_v1/selected.pt",
+    "checkpoint_sha256": "8e7e64e5afdf37d8899d6b1ef4a1d5a36f468c9bd3020250fe1badb2adeb5cdc",
+    "optimizer_step": 3840,
+    "load_only": "model_state_dict",
+    "strict_same_shape_load": true,
+    "function_preserving": true,
+    "optimizer_state_loaded": false,
+    "normalization_reused": true
+  },
+  "training": {
+    "optimizer": "adam",
+    "initial_learning_rate": 2e-5,
+    "adam_betas": [0.9, 0.95],
+    "weight_decay": 0.0,
+    "batch_size": 4,
+    "maximum_steps": 3840,
+    "checkpoint_steps": [960, 1920, 2880, 3840],
+    "decay_fraction": 0.75,
+    "decay_factor": 0.2,
+    "rollout_steps": 6,
+    "seed": 20260724,
+    "load_optimizer_state": false,
+    "from_scratch": false,
+    "gradient_clipping": false
+  },
+  "loss": {
+    "base": "unchanged_model_c_six_step_objective_from_model_c_2in_1out_new_channels_v1",
+    "pressure_gradient_weight": 0.05,
+    "pressure_gradient": {
+      "quantity": "horizontal_gradient_of_total_PHIHYD",
+      "formula": "PHIHYD_equals_g_ETAN_plus_MITgcm_finite_difference_hydrostatic_integral_of_linear_EOS_density_anomaly",
+      "state_sources": ["THETA_levels_0_to_14", "ETAN"],
+      "horizontal_discretization": "neighboring_tracer_point_differences_on_C_grid_velocity_faces",
+      "x_metric": "MITgcm_DXF",
+      "y_metric": "R_earth_times_one_degree",
+      "normalization": "relative_L2_truth_gradient_energy_equal_weight_x_y_equal_weight_15_levels_and_6_rollout_calls",
+      "physical_units_before_gradient": true,
+      "new_model_output_channels": 0,
+      "inherited_unchanged_from_parent": true
+    },
+    "continuity_weight": 0.05,
+    "continuity": {
+      "quantity": "free_surface_transport_continuity_residual",
+      "formula": "R_equals_ten_day_ETAN_tendency_plus_divergence_of_time_centered_depth_integrated_transport",
+      "state_sources": ["UVEL_levels_0_to_14", "VVEL_levels_0_to_14", "ETAN"],
+      "depth_integral": "sum_over_15_levels_of_velocity_times_MITgcm_delR",
+      "time_discretization": "trapezoidal_transport_average_over_one_ten_day_step",
+      "step_seconds": 864000.0,
+      "horizontal_discretization": "centered_tracer_point_differences_at_interior_points",
+      "x_metric": "MITgcm_DXF",
+      "y_metric": "R_earth_times_one_degree",
+      "mask": "interior_points_whose_five_point_divergence_stencil_is_wet",
+      "reference": "truth_referenced_not_driven_to_zero",
+      "reference_reason": "ten_day_sampling_and_centered_UV_only_approximate_the_native_MITgcm_discrete_continuity_operator",
+      "normalization": "ratio_of_squared_L2_norms_of_residual_error_to_truth_residual_energy_equal_weight_6_rollout_calls",
+      "residual_chaining": "first_step_referenced_to_observed_present_state_later_steps_to_the_preceding_predicted_state",
+      "physical_units_before_divergence": true,
+      "new_model_output_channels": 0
+    }
+  },
+  "sources": {
+    "dataset": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/trajectories_v3.zarr",
+      "metadata_sha256": "766cae89359311775c79103f44dc74630630ba6b7a0a8c6e9d26f73487512136"
+    },
+    "parent_checkpoint": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/model_c_2in_1out_new_channels_pressure_gradient_v1/selected.pt",
+      "sha256": "8e7e64e5afdf37d8899d6b1ef4a1d5a36f468c9bd3020250fe1badb2adeb5cdc"
+    },
+    "initialization_checkpoint": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/model_c_2in_1out_new_channels_pressure_gradient_v1/selected.pt",
+      "sha256": "8e7e64e5afdf37d8899d6b1ef4a1d5a36f468c9bd3020250fe1badb2adeb5cdc"
+    },
+    "parent_normalization": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/model_c_2in_1out_new_channels_pressure_gradient_v1/model_c_2in_1out_new_channels_pressure_gradient_train_only_normalization.npz",
+      "sha256": "ad7cc8584788ccdd4e8beaae3e606b9423230552af7079f15667b93bd1abaf2f"
+    },
+    "parent_report": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/model_c_2in_1out_new_channels_pressure_gradient_v1/model_c_2in_1out_new_channels_pressure_gradient_report.json",
+      "sha256": "be3e8253aa8229929f16ca1f7ddfb51b71e67b26a166696205d3359f9c310e51"
+    },
+    "mitgcm_zonal_spacing": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/mitgcm/S0/spinup/years_000_010/DXF.data",
+      "sha256": "19ff882c63021105620145889630ee457af5187d669d3c5978e0d0d70b4294e6"
+    },
+    "mitgcm_sst_relaxation": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/mitgcm/S0/spinup/years_000_010/SST_relax.bin",
+      "sha256": "952f66ed928ad8c42584e5cf43d584ebb2f64c8f3876b871d3ced4ea689dc6dc"
+    },
+    "mitgcm_declaration": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/mitgcm/S0/spinup/years_000_010/data",
+      "sha256": "766d27ac0ae257f4a8817921667b1d25a44add03966817a8561d9153ba627a58"
+    }
+  },
+  "read_contract": {
+    "training_state": true,
+    "validation_state": true,
+    "inference_state": false,
+    "adjoint_state": false,
+    "response_state": false,
+    "intermediate_wind_state": false
+  },
+  "output": {
+    "scratch_root": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/model_c_2in_1out_new_channels_pressure_gradient_continuity_v1",
+    "project_root": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/model_c_2in_1out_new_channels_pressure_gradient_continuity_v1"
+  }
+}

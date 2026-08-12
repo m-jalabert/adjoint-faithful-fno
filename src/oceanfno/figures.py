@@ -1,9 +1,9 @@
-"""Canonical S0 Figures 3--8 for the retained pressure-gradient-loss model.
+"""Canonical S0 Figures 3--8 for the retained continuity-loss model.
 
 Evaluation is intentionally unchanged from the proven figure engine preserved
 in :mod:`oceanfno._figures_core`. Both selected and comparator use the
-physical-static 2-in/1-out architecture: black is the retained parent and red is
-its loss-only pressure-gradient fine-tune.
+physical-static 2-in/1-out architecture: black is the retained pressure-gradient
+parent and red is its loss-only continuity fine-tune.
 """
 from __future__ import annotations
 
@@ -23,12 +23,12 @@ from .model import (
 from . import _figures_core as base
 from ._figures_core import *  # noqa: F401,F403
 
-VERSION = "model_c_2in_1out_new_channels_pressure_gradient_s0_figures_v1"
-TRAINING_VERSION = "model_c_2in_1out_new_channels_pressure_gradient_v1"
-COMPARATOR_VERSION = "model_c_2in_1out_new_channels_v1"
+VERSION = "model_c_2in_1out_new_channels_pressure_gradient_continuity_s0_figures_v1"
+TRAINING_VERSION = "model_c_2in_1out_new_channels_pressure_gradient_continuity_v1"
+COMPARATOR_VERSION = "model_c_2in_1out_new_channels_pressure_gradient_v1"
 COMPARATOR_STEP = 3840
 PENDING = "PENDING_AFTER_TRAINING"
-GATE_NAME = "model_c_2in_1out_new_channels_pressure_gradient_acceptance_gate.json"
+GATE_NAME = "model_c_2in_1out_new_channels_pressure_gradient_continuity_acceptance_gate.json"
 
 
 class PressureGradientFigureError(RuntimeError):

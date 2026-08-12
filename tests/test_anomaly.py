@@ -1,4 +1,4 @@
-"""Tests for the canonical retained pressure-gradient anomaly package."""
+"""Tests for the canonical retained continuity anomaly package."""
 from __future__ import annotations
 
 import json
@@ -7,8 +7,8 @@ from pathlib import Path
 import oceanfno.anomaly as anomaly
 
 ROOT = Path(__file__).resolve().parents[1]
-CONTRACT = ROOT / "config/model_c_2in_1out_new_channels_pressure_gradient_s0_anomaly_v1.json"
-SBATCH = ROOT / "slurm/models/c/anomaly_2in_1out_new_channels_pressure_gradient.sbatch"
+CONTRACT = ROOT / "config/model_c_2in_1out_new_channels_pressure_gradient_continuity_s0_anomaly_v1.json"
+SBATCH = ROOT / "slurm/models/c/anomaly_2in_1out_new_channels_pressure_gradient_continuity.sbatch"
 
 
 def test_anomaly_reads_sealed_figure_arrays_and_no_weights() -> None:
@@ -20,7 +20,8 @@ def test_anomaly_reads_sealed_figure_arrays_and_no_weights() -> None:
     assert contract["adds_only"] is True
 
 
-def test_anomaly_contract_is_finalized() -> None:
+def test_anomaly_contract_digests_are_pending_or_sealed() -> None:
+    # ``anomaly finalize`` stamps these after the figure package is published.
     contract = json.loads(CONTRACT.read_text())
     for key in (
         "figure_package_contract",
@@ -30,9 +31,10 @@ def test_anomaly_contract_is_finalized() -> None:
     ):
         digest = contract["artifacts"][key]["sha256"]
         assert isinstance(digest, str)
-        assert len(digest) == 64
-        assert not digest.startswith("PENDING")
-    assert "pressure_gradient_s0_figures_v1" in contract["artifacts"]["figure_package_arrays"]["path"]
+        assert digest == anomaly.PENDING or len(digest) == 64
+    assert "pressure_gradient_continuity_s0_figures_v1" in (
+        contract["artifacts"]["figure_package_arrays"]["path"]
+    )
 
 
 def test_anomaly_protocol_is_scientifically_unchanged() -> None:
@@ -48,4 +50,4 @@ def test_slurm_uses_canonical_anomaly_entrypoint() -> None:
     text = SBATCH.read_text()
     assert "-m oceanfno.anomaly" in text
     assert "oceanfno.anomaly_pressure_gradient" not in text
-    assert "model_c_2in_1out_new_channels_pressure_gradient_s0_anomaly_v1.json" in text
+    assert "model_c_2in_1out_new_channels_pressure_gradient_continuity_s0_anomaly_v1.json" in text

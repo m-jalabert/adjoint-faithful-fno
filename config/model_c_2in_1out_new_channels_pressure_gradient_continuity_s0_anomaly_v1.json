@@ -1,0 +1,84 @@
+{
+  "adds_only": true,
+  "artifacts": {
+    "dataset_metadata": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/trajectories_v3.zarr/.zmetadata",
+      "sha256": "766cae89359311775c79103f44dc74630630ba6b7a0a8c6e9d26f73487512136"
+    },
+    "figure_package_arrays": {
+      "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/model_c_2in_1out_new_channels_pressure_gradient_continuity_s0_figures_v1/S0/model_c_bire_s0_figures_arrays.npz",
+      "sha256": "0a8e18da53ad55d427b2f1ff959e394ed8a65db5ed6464d0d829202f771ceb04"
+    },
+    "figure_package_contract": {
+      "path": "/home/mjalabert314/bire_james25_repro/config/model_c_2in_1out_new_channels_pressure_gradient_continuity_s0_figures_v1.json",
+      "sha256": "78243798fcc5c75f6f00f58a3d6da65c6830baa68790431980d619a889615598"
+    },
+    "figure_package_manifest": {
+      "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/model_c_2in_1out_new_channels_pressure_gradient_continuity_s0_figures_v1/S0/manifest.json",
+      "sha256": "82049e1e86477fb36aa9e86ca4f85e27adf3a25f826e00a65ee5fab193dbef77"
+    },
+    "figure_package_report": {
+      "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/model_c_2in_1out_new_channels_pressure_gradient_continuity_s0_figures_v1/S0/model_c_bire_s0_figures_report.json",
+      "sha256": "59233e62e847ce28df2d4b055135f69e8b55b4bc61bae6f6b08164531876f7b6"
+    }
+  },
+  "contract_status": "frozen_after_continuity_figure_protocol_and_before_any_anomaly_metric",
+  "dataset": {
+    "tau0_n_m2": {
+      "S0": 0.1
+    },
+    "train": [
+      0,
+      6000
+    ],
+    "version": "trajectories_v3"
+  },
+  "modifies_published_figures": false,
+  "output": {
+    "one_folder_per_regime": true,
+    "overwrite": false,
+    "project_root": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/model_c_2in_1out_new_channels_pressure_gradient_continuity_s0_anomaly_v1",
+    "scratch_root": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/model_c_2in_1out_new_channels_pressure_gradient_continuity_s0_anomaly_v1"
+  },
+  "protocol": {
+    "day2000_structure_diagnostics": [
+      "anomaly_rms_ratio",
+      "amplitude_normalized_meridional_and_zonal_first_difference_rms",
+      "hann_directional_power_fraction_above_0p2_cycles_per_cell",
+      "western_first_4_wet_cells_rms_and_boundary_to_interior_ratio"
+    ],
+    "figure3_lead_days": [
+      0,
+      10,
+      20,
+      30,
+      40
+    ],
+    "figure7_lead_days": [
+      60,
+      2000
+    ],
+    "figure_names": [
+      "model_c_bire_figure3a_streamfunction_anomaly_1deg_s0_dt10.png",
+      "model_c_bire_figure7a_streamfunction_anomaly_day060_day2000_s0.png"
+    ],
+    "member": 0,
+    "primary_regime": "S0",
+    "reads_model_weights": false,
+    "rolls_nothing_out": true
+  },
+  "purpose": "usual_streamfunction_anomaly_companions_for_continuity_loss_model",
+  "reference": {
+    "days": [
+      0,
+      6000
+    ],
+    "is_two_dimensional_field": true,
+    "model_own_mean_used": false,
+    "not_a_scalar_spatial_mean": true,
+    "regime": "S0",
+    "source": "mitgcm",
+    "subtracted_from": "both_truth_and_prediction"
+  },
+  "version": "model_c_2in_1out_new_channels_pressure_gradient_continuity_s0_anomaly_v1"
+}
