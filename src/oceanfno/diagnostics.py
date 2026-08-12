@@ -128,6 +128,119 @@ def _barotropic_streamfunction(states: np.ndarray, wet: np.ndarray) -> np.ndarra
     value[:, ~wet] = 0.0
     return value.astype(np.float32)
 
+V = slice(15, 30)
+
+SVERDRUP_M3_S = 1.0e6
+
+
+def depth_integrated_transport(states: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    """Return barotropic transports ``(U_BT, V_BT)`` in m2 s-1.
+
+    ``states`` has shape ``(batch, 46, y, x)``; each output is ``(batch, y, x)``.
+    """
+
+    values = np.asarray(states, dtype=np.float64)
+    if values.ndim != 4 or values.shape[1] != 46:
+        raise ValueError("states must have shape (batch, 46, y, x)")
+    thickness = DRF_M[None, :, None, None]
+    return (
+        np.sum(values[:, U] * thickness, axis=1),
+        np.sum(values[:, V] * thickness, axis=1),
+    )
+
+
+def streamfunction_from_u(transport_x: np.ndarray, wet: np.ndarray, dy_m: float) -> np.ndarray:
+    """Meridional cumulative integral of ``-U_BT``: the published reconstruction."""
+
+    value = np.cumsum(-np.asarray(transport_x, dtype=np.float64) * dy_m, axis=1)
+    value[:, ~wet] = 0.0
+    return (value / SVERDRUP_M3_S).astype(np.float32)
+
+
+def streamfunction_from_v(transport_y: np.ndarray, wet: np.ndarray, dx_m: np.ndarray) -> np.ndarray:
+    """Zonal cumulative integral of ``+V_BT``, the independent counterpart.
+
+    Uses the same sign convention as :func:`streamfunction_from_u`, for which
+    ``u = -d(psi)/dy`` and ``v = +d(psi)/dx``.
+    """
+
+    spacing = np.asarray(dx_m, dtype=np.float64)
+    value = np.cumsum(np.asarray(transport_y, dtype=np.float64) * spacing[None], axis=2)
+    value[:, ~wet] = 0.0
+    return (value / SVERDRUP_M3_S).astype(np.float32)
+
+
+def streamfunction_least_squares(
+    transport_x: np.ndarray,
+    transport_y: np.ndarray,
+    wet: np.ndarray,
+    dx_m: np.ndarray,
+    dy_m: float,
+) -> np.ndarray:
+    """Least-squares streamfunction using both transports.
+
+    Minimizes ``|d(psi)/dy + U_BT|^2 + |d(psi)/dx - V_BT|^2`` over wet cells,
+    with the gauge fixed by forcing the wet-cell mean to zero.  Solved on the
+    face-difference stencil, so no derivative of the transport is taken and the
+    two components are weighted equally per face.
+    """
+
+    from scipy.sparse import coo_matrix
+    from scipy.sparse.linalg import lsqr
+
+    mask = np.asarray(wet, dtype=bool)
+    spacing = np.asarray(dx_m, dtype=np.float64)
+    index = -np.ones(mask.shape, dtype=np.int64)
+    index[mask] = np.arange(int(mask.sum()))
+    unknowns = int(mask.sum())
+
+    rows: list[int] = []
+    cols: list[int] = []
+    data: list[float] = []
+    equation = 0
+    pairs: list[tuple[tuple, tuple, str]] = []
+    # Meridional faces: psi[j+1,i] - psi[j,i] = -U_BT_face * dy
+    both = mask[:-1, :] & mask[1:, :]
+    for j, i in zip(*np.nonzero(both)):
+        rows += [equation, equation]
+        cols += [index[j + 1, i], index[j, i]]
+        data += [1.0, -1.0]
+        pairs.append(((j, i), (j + 1, i), "y"))
+        equation += 1
+    # Zonal faces: psi[j,i+1] - psi[j,i] = +V_BT_face * dx
+    both = mask[:, :-1] & mask[:, 1:]
+    for j, i in zip(*np.nonzero(both)):
+        rows += [equation, equation]
+        cols += [index[j, i + 1], index[j, i]]
+        data += [1.0, -1.0]
+        pairs.append(((j, i), (j, i + 1), "x"))
+        equation += 1
+    # Gauge: the wet-cell mean is zero, so the null space is removed.
+    rows += [equation] * unknowns
+    cols += list(range(unknowns))
+    data += [1.0 / unknowns] * unknowns
+    equation += 1
+    operator = coo_matrix((data, (rows, cols)), shape=(equation, unknowns)).tocsr()
+
+    batch = np.asarray(transport_x, dtype=np.float64).shape[0]
+    result = np.zeros((batch,) + mask.shape, dtype=np.float64)
+    for member in range(batch):
+        u_bt = np.asarray(transport_x, dtype=np.float64)[member]
+        v_bt = np.asarray(transport_y, dtype=np.float64)[member]
+        target = np.empty(equation, dtype=np.float64)
+        for row, (low, high, axis) in enumerate(pairs):
+            if axis == "y":
+                face = 0.5 * (u_bt[low] + u_bt[high])
+                target[row] = -face * dy_m
+            else:
+                face = 0.5 * (v_bt[low] + v_bt[high])
+                target[row] = face * 0.5 * (spacing[low] + spacing[high])
+        target[-1] = 0.0
+        solution = lsqr(operator, target, atol=1e-12, btol=1e-12, iter_lim=20000)[0]
+        result[member][mask] = solution
+    return (result / SVERDRUP_M3_S).astype(np.float32)
+
+
 def derived_fields(states: np.ndarray, wet: np.ndarray) -> dict[str, np.ndarray]:
     """Return the seven Bire-facing two-dimensional diagnostics."""
 
