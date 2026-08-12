@@ -9,7 +9,7 @@
 #SBATCH --time=01:00:00
 
 # Inference-only three-way streamfunction reconstruction audit of the retained
-# continuity model. Retrains nothing, promotes nothing, and rewrites no
+# Model C. Retrains nothing, promotes nothing, and rewrites no
 # published figure package.
 set -euo pipefail
 module purge
@@ -26,9 +26,9 @@ if [ ! -x "${AF_PYTHON}" ]; then
   exit 1
 fi
 
-AF_GROUP="${AF_PROJECT_ROOT}/outputs/af_fno/C/model_c_2in_1out_new_channels_pressure_continuity_loss"
-AF_FIGURES="${AF_GROUP}/model_c_2in_1out_new_channels_pressure_gradient_continuity_s0_figures_v1/S0"
-AF_OUTPUT="${AF_GROUP}/model_c_2in_1out_new_channels_pressure_gradient_continuity_s0_streamfunction_audit_v1/S0"
+AF_GROUP="${AF_PROJECT_ROOT}/outputs/af_fno/C"
+AF_FIGURES="${AF_GROUP}/model_c_2in_1out_new_channels_p_cont_BT_loss_s0_figures_v1/S0"
+AF_OUTPUT="${AF_GROUP}/model_c_2in_1out_new_channels_p_cont_BT_loss_s0_streamfunction_audit_v1/S0"
 
 nvidia-smi --query-gpu=name,memory.total --format=csv,noheader
 

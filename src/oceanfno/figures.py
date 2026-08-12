@@ -1,9 +1,9 @@
-"""Canonical S0 Figures 3--8 for the retained continuity-loss model.
+"""Canonical S0 Figures 3--8 for the retained barotropic-transport-loss model.
 
 Evaluation is intentionally unchanged from the proven figure engine preserved
 in :mod:`oceanfno._figures_core`. Both selected and comparator use the
-physical-static 2-in/1-out architecture: black is the retained pressure-gradient
-parent and red is its loss-only continuity fine-tune.
+physical-static 2-in/1-out architecture: black is the retained continuity parent
+and red is its loss-only barotropic-transport fine-tune.
 """
 from __future__ import annotations
 
@@ -23,12 +23,12 @@ from .model import (
 from . import _figures_core as base
 from ._figures_core import *  # noqa: F401,F403
 
-VERSION = "model_c_2in_1out_new_channels_pressure_gradient_continuity_s0_figures_v1"
-TRAINING_VERSION = "model_c_2in_1out_new_channels_pressure_gradient_continuity_v1"
-COMPARATOR_VERSION = "model_c_2in_1out_new_channels_pressure_gradient_v1"
+VERSION = "model_c_2in_1out_new_channels_p_cont_BT_loss_s0_figures_v1"
+TRAINING_VERSION = "model_c_2in_1out_new_channels_p_cont_BT_loss_v1"
+COMPARATOR_VERSION = "model_c_2in_1out_new_channels_pressure_gradient_continuity_v1"
 COMPARATOR_STEP = 3840
 PENDING = "PENDING_AFTER_TRAINING"
-GATE_NAME = "model_c_2in_1out_new_channels_pressure_gradient_continuity_acceptance_gate.json"
+GATE_NAME = "model_c_2in_1out_new_channels_p_cont_BT_loss_acceptance_gate.json"
 
 
 class PressureGradientFigureError(RuntimeError):
@@ -176,9 +176,9 @@ class PressureGradientLabels(base._S0Captions):
             "Selected anomaly-direct Model C",
         }
         self.rules = (
-            ("S0 architecture-direction comparison", f"{regime} current best vs pressure-gradient loss"),
-            ("Prior residual Model C", "2-in/1-out physical statics (current best)"),
-            ("Selected anomaly-direct Model C", f"+ pressure-gradient loss (step {selected_step:,})"),
+            ("S0 architecture-direction comparison", f"{regime} current best vs barotropic-transport loss"),
+            ("Prior residual Model C", "+ pressure gradient + continuity (current best)"),
+            ("Selected anomaly-direct Model C", f"+ barotropic-transport loss (step {selected_step:,})"),
             *(rule for rule in self.rules if rule[0] not in replaced),
         )
 
@@ -190,7 +190,7 @@ def _install() -> None:
     base.COMPARATOR_STEP = COMPARATOR_STEP
     base.GATE_NAME = GATE_NAME
     base.ACCEPTED_TRAINING_REPORT_VERSIONS = (TRAINING_VERSION,)
-    base.MODEL_LABEL = "Model C 2-in / 1-out + pressure-gradient loss"
+    base.MODEL_LABEL = "Model C 2-in / 1-out + barotropic-transport loss"
     base.load_contract = load_contract
     base._stepper = _stepper
     base.FineTuneLabels = PressureGradientLabels

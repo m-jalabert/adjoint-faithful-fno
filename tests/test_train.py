@@ -1,12 +1,14 @@
-"""Tests for the canonical retained continuity training pipeline."""
+"""Tests for the canonical retained barotropic-transport training pipeline."""
 from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 import pytest
 
+from oceanfno.barotropic_transport import barotropic_transport_relative_l2
 from oceanfno.continuity import (
     ContinuityContext,
     continuity_relative_l2,
@@ -23,13 +25,13 @@ from oceanfno.runtime import torch
 import oceanfno.train as train
 
 ROOT = Path(__file__).resolve().parents[1]
-CONTRACT = ROOT / "config/model_c_2in_1out_new_channels_pressure_gradient_continuity_v1.json"
-PARENT = ROOT / "config/model_c_2in_1out_new_channels_pressure_gradient_v1.json"
+CONTRACT = ROOT / "config/model_c_2in_1out_new_channels_p_cont_BT_loss_v1.json"
+PARENT = ROOT / "config/model_c_2in_1out_new_channels_pressure_gradient_continuity_v1.json"
 GRANDPARENT = ROOT / "config/model_c_2in_1out_new_channels_v1.json"
-SBATCH = ROOT / "slurm/models/c/train_2in_1out_new_channels_pressure_gradient_continuity.sbatch"
+SBATCH = ROOT / "slurm/models/c/train_2in_1out_new_channels_p_cont_BT_loss.sbatch"
 
 
-def test_continuity_successor_has_no_architecture_change() -> None:
+def test_barotropic_successor_has_no_architecture_change() -> None:
     child = json.loads(CONTRACT.read_text())
     parent = json.loads(PARENT.read_text())
     assert child["version"] == train.VERSION
@@ -47,16 +49,25 @@ def test_architecture_is_unchanged_along_the_whole_fine_tune_chain() -> None:
     assert child["architecture"] == grandparent["architecture"]
 
 
-def test_only_declared_scientific_change_is_continuity_loss() -> None:
+def test_only_declared_scientific_change_is_barotropic_transport_loss() -> None:
     child = json.loads(CONTRACT.read_text())
     parent = json.loads(PARENT.read_text())
-    # The pressure-gradient term is retained verbatim at the parent's weight.
+    # Both inherited physics terms are retained verbatim at the parent's weights.
     assert child["loss"]["pressure_gradient_weight"] == train.DEFAULT_PRESSURE_WEIGHT
     assert child["loss"]["pressure_gradient_weight"] == parent["loss"]["pressure_gradient_weight"]
     assert child["loss"]["continuity_weight"] == train.DEFAULT_CONTINUITY_WEIGHT
-    assert child["loss"]["continuity"]["new_model_output_channels"] == 0
-    assert child["loss"]["continuity"]["reference"] == "truth_referenced_not_driven_to_zero"
-    assert "continuity" not in parent["loss"]
+    assert child["loss"]["continuity_weight"] == parent["loss"]["continuity_weight"]
+    assert child["loss"]["continuity"] == parent["loss"]["continuity"]
+    assert child["loss"]["pressure_gradient"] == parent["loss"]["pressure_gradient"]
+    # The new term mirrors the auxiliary weight the other two already carry.
+    assert child["loss"]["barotropic_transport_weight"] == train.DEFAULT_BAROTROPIC_WEIGHT
+    assert child["loss"]["barotropic_transport_weight"] == 0.05
+    assert child["loss"]["barotropic_transport"]["new_model_output_channels"] == 0
+    assert child["loss"]["barotropic_transport"]["supervised_quantity"] == (
+        "increment_not_absolute_transport"
+    )
+    assert child["loss"]["barotropic_transport"]["horizontal_derivatives_taken"] is False
+    assert "barotropic_transport" not in parent["loss"]
     assert child["training"] == parent["training"]
     assert child["training"]["rollout_steps"] == 6
     assert child["training"]["maximum_steps"] == 3840
@@ -72,20 +83,20 @@ def test_contract_loads_without_cluster_source_verification() -> None:
     assert len(digest) == 64
 
 
-def test_contract_initializes_from_the_selected_pressure_gradient_checkpoint() -> None:
+def test_contract_initializes_from_the_selected_continuity_checkpoint() -> None:
     child = json.loads(CONTRACT.read_text())
     checkpoint = child["sources"]["parent_checkpoint"]
     assert child["initialization"]["checkpoint"] == checkpoint["path"]
     assert child["initialization"]["checkpoint_sha256"] == checkpoint["sha256"]
     assert child["sources"]["initialization_checkpoint"] == checkpoint
-    assert "model_c_2in_1out_new_channels_pressure_gradient_v1" in checkpoint["path"]
+    assert "model_c_2in_1out_new_channels_pressure_gradient_continuity_v1" in checkpoint["path"]
 
 
 def test_slurm_uses_canonical_training_entrypoint() -> None:
     text = SBATCH.read_text()
     assert "-m oceanfno.train" in text
     assert "oceanfno.train_pressure_gradient" not in text
-    assert "model_c_2in_1out_new_channels_pressure_gradient_continuity_v1.json" in text
+    assert "model_c_2in_1out_new_channels_p_cont_BT_loss_v1.json" in text
 
 
 pytestmark_pressure = pytest.mark.skipif(torch is None, reason="PyTorch is optional")
@@ -196,6 +207,74 @@ def test_uniform_transport_offset_is_divergence_free() -> None:
     prediction[:, :, 0:15] += 0.25
     value = continuity_relative_l2(prediction, truth, present, context)
     assert float(value) == pytest.approx(0.0, abs=1.0e-8)
+
+
+def _ramped_truth(amplitude: float, meridional: bool = False) -> Any:
+    """Truth whose transport grows by a fixed increment on every rollout step."""
+
+    truth = torch.zeros((1, 6, 46, 8, 8), dtype=torch.float32)
+    for step in range(6):
+        truth[:, step, 0:15] = (step + 1) * amplitude
+        if meridional:
+            truth[:, step, 15:30] = (step + 1) * amplitude
+    return truth
+
+
+@pytestmark_pressure
+def test_barotropic_identity_loss_is_exactly_zero() -> None:
+    context = _continuity_context()
+    state = torch.zeros((2, 6, 46, 8, 8), dtype=torch.float32)
+    present = torch.zeros((2, 46, 8, 8), dtype=torch.float32)
+    assert float(barotropic_transport_relative_l2(state, state, present, context)) == 0.0
+
+
+@pytestmark_pressure
+def test_barotropic_term_scores_the_tendency_not_the_absolute_transport() -> None:
+    # A constant transport offset is invisible to every predicted-to-predicted
+    # increment, so only the first call -- measured from the observed present
+    # state -- can see it.  That pins the arithmetic exactly.
+    context = _continuity_context()
+    amplitude, offset = 0.01, 0.001
+    truth = _ramped_truth(amplitude)
+    present = torch.zeros((1, 46, 8, 8), dtype=torch.float32)
+    prediction = truth.clone()
+    prediction[:, :, 0:15] += offset
+    value = barotropic_transport_relative_l2(prediction, truth, present, context)
+    expected = 0.5 * (offset / amplitude) ** 2 / 6.0
+    assert float(value) == pytest.approx(expected, rel=1.0e-4)
+
+
+@pytestmark_pressure
+def test_barotropic_term_weights_zonal_and_meridional_equally() -> None:
+    context = _continuity_context()
+    amplitude, error = 0.01, 0.002
+    truth = _ramped_truth(amplitude, meridional=True)
+    present = torch.zeros((1, 46, 8, 8), dtype=torch.float32)
+
+    zonal = truth.clone()
+    zonal[:, :, 0:15] += error
+    meridional = truth.clone()
+    meridional[:, :, 15:30] += error
+    assert float(barotropic_transport_relative_l2(zonal, truth, present, context)) == (
+        pytest.approx(float(barotropic_transport_relative_l2(meridional, truth, present, context)))
+    )
+
+
+@pytestmark_pressure
+def test_barotropic_term_touches_only_the_velocity_channels() -> None:
+    context = _continuity_context()
+    truth = _ramped_truth(0.01)
+    present = torch.zeros((1, 46, 8, 8), dtype=torch.float32)
+    prediction = torch.zeros_like(truth, requires_grad=True)
+    value = barotropic_transport_relative_l2(prediction, truth, present, context)
+    assert bool(torch.isfinite(value).item())
+    assert float(value) > 0.0
+    value.backward()
+    assert prediction.grad is not None
+    assert bool(torch.isfinite(prediction.grad).all().item())
+    assert float(prediction.grad[:, :, 0:15].abs().sum()) > 0.0
+    # Temperature and the free surface are not part of the transport integral.
+    assert float(prediction.grad[:, :, 30:46].abs().sum()) == 0.0
 
 
 @pytestmark_pressure

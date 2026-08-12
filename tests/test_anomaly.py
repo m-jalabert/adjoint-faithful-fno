@@ -1,4 +1,4 @@
-"""Tests for the canonical retained continuity anomaly package."""
+"""Tests for the canonical retained barotropic-transport anomaly package."""
 from __future__ import annotations
 
 import json
@@ -7,8 +7,8 @@ from pathlib import Path
 import oceanfno.anomaly as anomaly
 
 ROOT = Path(__file__).resolve().parents[1]
-CONTRACT = ROOT / "config/model_c_2in_1out_new_channels_pressure_gradient_continuity_s0_anomaly_v1.json"
-SBATCH = ROOT / "slurm/models/c/anomaly_2in_1out_new_channels_pressure_gradient_continuity.sbatch"
+CONTRACT = ROOT / "config/model_c_2in_1out_new_channels_p_cont_BT_loss_s0_anomaly_v1.json"
+SBATCH = ROOT / "slurm/models/c/anomaly_2in_1out_new_channels_p_cont_BT_loss.sbatch"
 
 
 def test_anomaly_reads_sealed_figure_arrays_and_no_weights() -> None:
@@ -32,7 +32,7 @@ def test_anomaly_contract_digests_are_pending_or_sealed() -> None:
         digest = contract["artifacts"][key]["sha256"]
         assert isinstance(digest, str)
         assert digest == anomaly.PENDING or len(digest) == 64
-    assert "pressure_gradient_continuity_s0_figures_v1" in (
+    assert "p_cont_BT_loss_s0_figures_v1" in (
         contract["artifacts"]["figure_package_arrays"]["path"]
     )
 
@@ -50,4 +50,4 @@ def test_slurm_uses_canonical_anomaly_entrypoint() -> None:
     text = SBATCH.read_text()
     assert "-m oceanfno.anomaly" in text
     assert "oceanfno.anomaly_pressure_gradient" not in text
-    assert "model_c_2in_1out_new_channels_pressure_gradient_continuity_s0_anomaly_v1.json" in text
+    assert "model_c_2in_1out_new_channels_p_cont_BT_loss_s0_anomaly_v1.json" in text

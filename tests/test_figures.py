@@ -1,4 +1,4 @@
-"""Tests for the canonical retained continuity S0 figure package."""
+"""Tests for the canonical retained barotropic-transport S0 figure package."""
 from __future__ import annotations
 
 import json
@@ -7,8 +7,8 @@ from pathlib import Path
 import oceanfno.figures as figures
 
 ROOT = Path(__file__).resolve().parents[1]
-CONTRACT = ROOT / "config/model_c_2in_1out_new_channels_pressure_gradient_continuity_s0_figures_v1.json"
-SBATCH = ROOT / "slurm/models/c/figures_2in_1out_new_channels_pressure_gradient_continuity.sbatch"
+CONTRACT = ROOT / "config/model_c_2in_1out_new_channels_p_cont_BT_loss_s0_figures_v1.json"
+SBATCH = ROOT / "slurm/models/c/figures_2in_1out_new_channels_p_cont_BT_loss.sbatch"
 
 
 def test_figure_comparison_changes_only_training_loss() -> None:
@@ -22,10 +22,10 @@ def test_figure_comparison_changes_only_training_loss() -> None:
     assert contract["protocol"]["member_count"] == 15
 
 
-def test_comparator_is_the_retained_pressure_gradient_parent() -> None:
+def test_comparator_is_the_retained_continuity_parent() -> None:
     contract = json.loads(CONTRACT.read_text())
     assert contract["comparator_model"]["optimizer_step"] == figures.COMPARATOR_STEP
-    assert "model_c_2in_1out_new_channels_pressure_gradient_v1" in (
+    assert "model_c_2in_1out_new_channels_pressure_gradient_continuity_v1" in (
         contract["artifacts"]["comparator_checkpoint"]["path"]
     )
 
@@ -53,4 +53,4 @@ def test_slurm_uses_canonical_figure_entrypoint() -> None:
     text = SBATCH.read_text()
     assert "-m oceanfno.figures" in text
     assert "oceanfno.figures_pressure_gradient" not in text
-    assert "model_c_2in_1out_new_channels_pressure_gradient_continuity_s0_figures_v1.json" in text
+    assert "model_c_2in_1out_new_channels_p_cont_BT_loss_s0_figures_v1.json" in text

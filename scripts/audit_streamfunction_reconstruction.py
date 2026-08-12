@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Three-way streamfunction reconstruction audit of the continuity model.
+"""Three-way streamfunction reconstruction audit of the retained Model C.
 
 The published barotropic streamfunction is reconstructed from the predicted
 velocities *after* the forecast, by depth-integrating the 15 ``U`` levels and
@@ -71,7 +71,7 @@ from oceanfno.runtime import torch
 from oceanfno.validation import _gather
 
 ROOT = Path(__file__).resolve().parents[1]
-CONTRACT = ROOT / "config/model_c_2in_1out_new_channels_pressure_gradient_continuity_s0_figures_v1.json"
+CONTRACT = ROOT / "config/model_c_2in_1out_new_channels_p_cont_BT_loss_s0_figures_v1.json"
 CAPTURE_LEADS = (0, 10, 20, 30, 40, 60, 200, 1000, 2000)
 MAP_LEADS = (60, 2000)
 RECONSTRUCTIONS = ("psi_U", "psi_V", "psi_UV")

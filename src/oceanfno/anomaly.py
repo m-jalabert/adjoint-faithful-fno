@@ -1,4 +1,4 @@
-"""Canonical anomaly diagnostics for the retained continuity-loss model."""
+"""Canonical anomaly diagnostics for the retained barotropic-transport-loss model."""
 from __future__ import annotations
 
 import argparse
@@ -13,7 +13,7 @@ from ._anomaly_core import *  # noqa: F401,F403
 from . import figures as pgfig
 from . import plots
 
-VERSION = "model_c_2in_1out_new_channels_pressure_gradient_continuity_s0_anomaly_v1"
+VERSION = "model_c_2in_1out_new_channels_p_cont_BT_loss_s0_anomaly_v1"
 FIGURE_VERSION = pgfig.VERSION
 PENDING = "PENDING_AFTER_FIGURES"
 
