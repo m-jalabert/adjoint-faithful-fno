@@ -22,3 +22,10 @@ CEOP
       PARAMETER ( MAX_OLX = OLx,
      &            MAX_OLY = OLy )
 
+C     for pkg/ctrl:  CTRL_OBCS.h is pulled in unconditionally by ctrl_init.F,
+C     grdchk_init.F and others whenever pkg/ctrl or pkg/grdchk is compiled,
+C     regardless of whether pkg/obcs itself is enabled (it is not, here).
+C     4 matches every other AD verification experiment in this checkout.
+      INTEGER     nobcs
+      PARAMETER ( nobcs = 4 )
+

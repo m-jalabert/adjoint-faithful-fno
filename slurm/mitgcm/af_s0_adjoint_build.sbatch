@@ -1,7 +1,7 @@
 #!/bin/bash -l
 #SBATCH --job-name=af-s0-adj-build
 #SBATCH --account=pod-users
-#SBATCH --partition=short
+#SBATCH --partition=batch
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1

@@ -17,15 +17,12 @@ C     HEADER TAMC
 C     ================================================================
 #ifdef ALLOW_AUTODIFF_TAMC
 
-  These lines are here to deliberately cause a compile-time error.
-  If you see these lines in your .f files or the compiler shows them
-  as an error then it means you have not placed your customized "tamc.h"
-  file in the appropriate place.
-  You need to place you own copy of tamc.h in the include path for the
-  model (e.g., where your SIZE.h is), and comment out these lines.
-  In particular the parameters nchklev_1/2/3 (and possibly also maxpass
-   and maxcube in case you are using seaice or cubed sphere grid)
-  need to be set correctly.
+C     AF--FNO: this file IS the customized tamc.h -- nchklev_1/2/3 are set
+C     below.  The stock pkg/autodiff/tamc.h ships with a deliberately broken,
+C     unindented warning block here (no column-1 comment marker) that fails to
+C     compile unless removed, as a forcing function to notice this file needs
+C     editing.  It has been removed; do not restore it verbatim if this file
+C     is ever regenerated from the stock header.
 
 C     TAMC checkpointing parameters:
 C     ==============================

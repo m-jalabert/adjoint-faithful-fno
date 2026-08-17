@@ -186,4 +186,20 @@ c#ifdef PACKAGES_CONFIG_H
 c# include "ECCO_CPPOPTIONS.h"
 c#endif
 
+C   AF--FNO: ALLOW_BULK_OFFLINE guards a second set of unconditional calls in
+C   pkg/autodiff/addummy_in_stepping.F -- ADEXCH_3D_RL / ADEXCH_UV_3D_RL for
+C   adTheta/adSalt/adwVel/aduVel/advVel -- for which no hand-written adjoint
+C   ships in this checkout (eesupp/src/exch1_ad.flow declares an ADNAME
+C   override to adexch_3d_rl/adexch_uv_3d_rl, but no file in the c68j tree,
+C   including every verification/*/code_ad reference experiment, defines
+C   them).  This flag is otherwise referenced only in pkg/exf, which is not
+C   in packages.conf, so it has no other effect on this build.
+C
+C   The calls it removes are provably dead at runtime regardless: they sit
+C   inside a block gated on dumpAdVarExch.EQ.1, and autodiff_readparms.F
+C   defaults dumpAdVarExch to 2, which input_ad/data.autodiff does not
+C   override.  This flag only resolves a link-time symbol requirement for
+C   code that never executes.
+#define ALLOW_BULK_OFFLINE
+
 #endif /* CPP_OPTIONS_H */

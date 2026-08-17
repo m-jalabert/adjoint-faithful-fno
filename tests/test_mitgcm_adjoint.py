@@ -10,6 +10,7 @@ options that the adjoint build depends on.
 from __future__ import annotations
 
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -270,10 +271,30 @@ def test_packages_conf_carries_the_ad_stack() -> None:
 
 
 def test_size_h_matches_the_forward_build() -> None:
-    """The adjoint must run the same decomposition as the forward trajectory."""
+    """The adjoint must run the same domain decomposition as the forward run.
+
+    Not byte-identical: the AD build legitimately needs parameters (nobcs)
+    that pkg/ctrl and pkg/grdchk require unconditionally -- CTRL_OBCS.h is
+    pulled in by ctrl_init.F and grdchk_init.F regardless of whether pkg/obcs
+    itself is enabled -- and the forward-only SIZE.h has no reason to carry
+    them. What must match is the grid: sNx/sNy/OLx/OLy/nSx/nSy/nPx/nPy/Nr.
+    """
+
+    grid_params = ("sNx", "sNy", "OLx", "OLy", "nSx", "nSy", "nPx", "nPy", "Nr")
+
+    def extract(text: str) -> dict[str, str]:
+        found = {}
+        for name in grid_params:
+            match = re.search(rf"\b{re.escape(name)}\s*=\s*([^,)\n]+)", text)
+            assert match is not None, f"{name} not found"
+            found[name] = match.group(1).strip()
+        return found
 
     forward = (PROJECT_ROOT / "af_fno" / "mitgcm" / "code" / "SIZE.h").read_text()
-    assert (CODE_AD / "SIZE.h").read_text() == forward
+    adjoint = (CODE_AD / "SIZE.h").read_text()
+    assert extract(adjoint) == extract(forward)
+
+    assert "PARAMETER ( nobcs = 4 )" in adjoint, "pkg/ctrl needs nobcs even with pkg/obcs disabled"
 
 
 # --- 7. the runtime namelists ----------------------------------------------
