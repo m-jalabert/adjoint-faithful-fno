@@ -1,0 +1,18 @@
+# AF--FNO adjoint cost function.
+#
+# mult_test = 1. exactly, so fc = J and adxx_etan = dJ/deta with no rescaling.
+#
+# afCostWeightFile names the runtime weight field w that defines the quantity
+# of interest:  J = sum_ij w_ij * etaN_ij(T).  Built by
+# scripts/make_cost_weight.py, 62x62 big-endian float32.
+#
+#   costWeight_ssh_anomaly.bin  SSH anomaly at p* = (i=2, j=17)   <- production
+#   costWeight_mean_only.bin    area-weighted wet mean alone      <- gate G3
+#   costWeight_point_only.bin   bare point value at p*            <- diagnostic
+#
+# Changing the target cell or the functional means staging a different file
+# here.  It never requires a rebuild, and so never a new TAF submission.
+ &COST_NML
+ mult_test        = 1.,
+ afCostWeightFile = 'costWeight.bin',
+ &

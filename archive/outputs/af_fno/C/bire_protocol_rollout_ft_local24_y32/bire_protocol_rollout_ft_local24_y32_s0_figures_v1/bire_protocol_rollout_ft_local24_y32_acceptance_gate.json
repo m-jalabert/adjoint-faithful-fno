@@ -1,0 +1,73 @@
+{
+  "comparator_optimizer_step": 3840,
+  "content_sha256": "6e61caa8614e199beb8a2e221dfda617190d9eedf3b6c902ff48fd7107f4ade5",
+  "decision_note": "these measurable diagnostics and visual inspection support the keep-or-revert decision; this package promotes no checkpoint",
+  "long_rollout_half": {
+    "advisory_day2000_rmse_ratio_to_climatology": {
+      "phihyd_surface": 0.38711024325215315,
+      "sst": 1.6892653164628137,
+      "surface_speed": 1.852914418445043
+    },
+    "advisory_note": "a ratio at or near 1.0 means the day-2,000 field is indistinguishable from climatology; it is not gated, but is reported alongside persistence and the anomaly diagnostics for the Y32 keep-or-revert decision",
+    "conditions": {
+      "all_values_finite": true,
+      "day2000_spatial_std_ratio_in_range": true,
+      "maximum_normalized_magnitude_at_most_8": true,
+      "streamfunction_minimum_at_least_minus_33_sv": true
+    },
+    "long_rollout_conditions_pass": true,
+    "measured": {
+      "all_values_finite": true,
+      "day2000_spatial_std_ratio_to_truth": 1.000400656063275,
+      "day2000_streamfunction_maximum_sv": 31.748876571655273,
+      "day2000_streamfunction_minimum_sv": -31.517290115356445,
+      "day2000_truth_streamfunction_minimum_sv": -30.00731086730957,
+      "maximum_normalized_magnitude": 7.185186386108398
+    },
+    "streamfunction_basis": "member 0's day-2,000 barotropic streamfunction, the field figure 7 publishes and the visual criterion inspects",
+    "thresholds": {
+      "day2000_spatial_std_ratio": [
+        0.8,
+        1.25
+      ],
+      "maximum_normalized_magnitude": 8.0,
+      "streamfunction_minimum_sv": -33.0
+    },
+    "visual_criterion": "by_inspection_of_figures_3_and_7"
+  },
+  "measurable_conditions_pass": true,
+  "regime": "S0",
+  "remaining_by_inspection": "western boundary sharp, gyre structure identifiable, no basin-wide smoothing -- figures 3 and 7",
+  "selected_optimizer_step": 3840,
+  "validation_half": {
+    "baseline_optimizer_step": 3840,
+    "baseline_short_auc_10_90": {
+      "phihyd_surface": 0.43296532287129985,
+      "sst": 1.1938157550050128,
+      "surface_speed": 0.10847256080630947
+    },
+    "baseline_worst_long_ratio_to_climatology": 0.6688703930466208,
+    "deferred_to_the_figure_package": [
+      "2000_day_all_values_finite",
+      "2000_day_maximum_normalized_magnitude_at_most_8",
+      "2000_day_streamfunction_minimum_at_least_minus_33_sv",
+      "day_2000_streamfunction_anomaly_rms_ratio_near_one",
+      "day_2000_western_band_to_interior_anomaly_ratio_controlled",
+      "day_2000_directional_spectrum_and_gradient_sharpness",
+      "western_boundary_sharp_and_gyre_identifiable_by_inspection"
+    ],
+    "short_auc_10_90_ratio_to_baseline": {
+      "phihyd_surface": 0.9375982296529835,
+      "sst": 0.9498068715618524,
+      "surface_speed": 0.9537341890566045
+    },
+    "short_auc_no_field_worsens_by_more_than_5_percent": true,
+    "short_auc_tolerance": 1.05,
+    "validation_conditions_pass": true,
+    "worst_long_ratio_at_or_below_ceiling": true,
+    "worst_long_ratio_ceiling": 0.85,
+    "worst_long_ratio_no_worse_than_parent": true,
+    "worst_long_ratio_to_climatology": 0.6188377746419491
+  },
+  "version": "model_c_bire_protocol_rollout_ft_local24_y32_s0_figures_v1"
+}

@@ -1,0 +1,101 @@
+{
+  "adds_only": true,
+  "artifacts": {
+    "dataset_metadata": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/trajectories_v3.zarr/.zmetadata",
+      "sha256": "766cae89359311775c79103f44dc74630630ba6b7a0a8c6e9d26f73487512136"
+    },
+    "figure_package_arrays": {
+      "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/model_c_production_1in_1out_v3_s0_figures_v1/S0/model_c_bire_s0_figures_arrays.npz",
+      "sha256": "PENDING_AFTER_FIGURES"
+    },
+    "figure_package_contract": {
+      "path": "/home/mjalabert314/bire_james25_repro/config/model_c_production_1in_1out_v3_s0_figures_v1.json",
+      "sha256": "PENDING_AFTER_FIGURES"
+    },
+    "figure_package_manifest": {
+      "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/model_c_production_1in_1out_v3_s0_figures_v1/S0/manifest.json",
+      "sha256": "PENDING_AFTER_FIGURES"
+    },
+    "figure_package_report": {
+      "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/model_c_production_1in_1out_v3_s0_figures_v1/S0/model_c_bire_s0_figures_report.json",
+      "sha256": "PENDING_AFTER_FIGURES"
+    }
+  },
+  "contract_status": "frozen_after_the_production_figure_package_and_before_any_anomaly_metric",
+  "dataset": {
+    "tau0_n_m2": {
+      "S0": 0.1
+    },
+    "train": [
+      0,
+      6000
+    ],
+    "version": "trajectories_v3"
+  },
+  "modifies_published_figures": false,
+  "output": {
+    "one_folder_per_regime": true,
+    "overwrite": false,
+    "project_root": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/model_c_production_1in_1out_v3_s0_anomaly_v1",
+    "required": [
+      "model_c_bire_figure3a_streamfunction_anomaly_1deg_s0_dt10.png",
+      "model_c_bire_figure7a_streamfunction_anomaly_day060_day2000_s0.png",
+      "model_c_bire_reference_time_mean_streamfunction_s0.png",
+      "model_c_bire_s0_anomaly_report.json",
+      "model_c_bire_s0_anomaly_arrays.npz",
+      "README.md",
+      "manifest.json"
+    ],
+    "scratch_root": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/model_c_production_1in_1out_v3_s0_anomaly_v1"
+  },
+  "protocol": {
+    "day2000_structure_diagnostics": [
+      "anomaly_rms_ratio",
+      "amplitude_normalized_meridional_and_zonal_first_difference_rms",
+      "hann_directional_power_fraction_above_0p2_cycles_per_cell",
+      "western_first_4_wet_cells_rms_and_boundary_to_interior_ratio"
+    ],
+    "figure3_lead_days": [
+      0,
+      10,
+      20,
+      30,
+      40
+    ],
+    "figure7_lead_days": [
+      60,
+      2000
+    ],
+    "figure_names": [
+      "model_c_bire_figure3a_streamfunction_anomaly_1deg_s0_dt10.png",
+      "model_c_bire_figure7a_streamfunction_anomaly_day060_day2000_s0.png"
+    ],
+    "member": 0,
+    "primary_regime": "S0",
+    "reads_model_weights": false,
+    "rolls_nothing_out": true
+  },
+  "purpose": "streamfunction-anomaly companions to figures 3 and 7 for the production emulator, about the MITgcm S0 training-block time mean",
+  "reference": {
+    "days": [
+      0,
+      6000
+    ],
+    "is_two_dimensional_field": true,
+    "model_own_mean_used": false,
+    "not_a_scalar_spatial_mean": true,
+    "regime": "S0",
+    "source": "mitgcm",
+    "subtracted_from": "both_truth_and_prediction"
+  },
+  "source_hashes": {
+    "src/oceanfno/anomaly.py": "cc2973cca57d2d5112ac8039afe5cf7f3fc675421ac061bb4c75763db5da1e19",
+    "src/oceanfno/dataset.py": "9abbabb73b9f7fd0093314061305ca52ec65d4439e22f764ce142d7afa90e820",
+    "src/oceanfno/diagnostics.py": "149cca17b714b535a1d60e83c3548adaaaa338f483434f28cdd476103644c844",
+    "src/oceanfno/figures.py": "60dee2217163f420e336772cfbc678449bbad8aae24d1fcc25ef2b8708d0bd7c",
+    "src/oceanfno/plots.py": "fd3d65a4bb6e65a9302c63631ae13431ebf3a4c845babd29fba3c7cd0f3e32ea",
+    "src/oceanfno/runtime.py": "038b04a634a8c7d4937d2343856d746f06ef4382d05336dcae78f25667828f7d"
+  },
+  "version": "model_c_production_1in_1out_v3_s0_anomaly_v1"
+}

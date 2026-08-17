@@ -1,0 +1,297 @@
+{
+  "architecture": {
+    "channel_mlp_dropout": 0.0,
+    "channel_mlp_expansion": 4.0,
+    "domain_padding": 0.1,
+    "factorization": null,
+    "fno_block_precision": "full",
+    "grid_shape": [
+      62,
+      62
+    ],
+    "hidden_channels": 128,
+    "in_channels": 51,
+    "input_states": 1,
+    "lifting_channel_ratio": 2,
+    "lifting_in_channels": 53,
+    "local_bias": false,
+    "local_kernel_size": 3,
+    "n_layers": 3,
+    "n_modes": [
+      32,
+      32
+    ],
+    "out_channels": 46,
+    "pointwise_layer_norm": true,
+    "positional_channels": 2,
+    "positional_embedding": null,
+    "projection_channel_ratio": 2,
+    "static_channels": [
+      "wind_stress_x",
+      "wet_mask",
+      "coriolis_parameter",
+      "zonal_grid_spacing",
+      "sst_relaxation_target"
+    ],
+    "use_channel_mlp": true
+  },
+  "checkpoint_selection": {
+    "fallback_pool": "short_feasible_only; the short-AUC guard stays a hard constraint and the growth ceiling is the second filter. In the v2 run step 5760 was the least unstable at 1.0036 but its short AUCs were 1.58x/1.55x/2.57x the best, so it was never eligible",
+    "growth_rate_calls": 200,
+    "growth_rate_ceiling": 1.0,
+    "growth_rate_epsilon_relative": 0.01,
+    "growth_rate_fit_from_call": 50,
+    "growth_rate_is_diagnostic_only": true,
+    "growth_rate_rationale": "every v1 checkpoint had a growth rate above one (1.0146-1.0227) and the RMSE-only rule still returned one of them; a criterion that cannot see the failure cannot avoid selecting it",
+    "growth_rate_regime": "S0",
+    "long_auc_window_days": [
+      90,
+      360
+    ],
+    "primary_fields": [
+      "surface_speed",
+      "sst",
+      "phihyd_surface"
+    ],
+    "rollout_days": 360,
+    "rule": "keep every checkpoint within 5 percent of the best short AUC in each primary field, then keep only those whose measured perturbation growth rate is at or below 1.0, then minimize the worst 90-360 day RMSE-AUC ratio to climatology; publish exactly one selected.pt",
+    "short_auc_tolerance": 1.05,
+    "short_auc_window_days": [
+      10,
+      90
+    ],
+    "starts": "validation days 6000-6198 stride 6, 34 per regime, 102 pooled",
+    "worst_long_ratio_ceiling": 0.85
+  },
+  "constrained_relative_to": {
+    "changed": [
+      "per_mode_spectral_normalization_of_the_three_fourier_convolutions",
+      "contraction_penalty_removed_from_the_objective"
+    ],
+    "measured_growth_rate_per_call": 1.0168,
+    "penalty_arm_growth_rates": {
+      "model_c_production_1in_1out_v2": 1.01126,
+      "model_c_production_1in_1out_v3": 1.01361
+    },
+    "rejected_alternatives": {
+      "reduce_modes_32_to_24": "the day-2000 high-k power fraction is already 0.0004 against truth 0.028, so truncation would stabilize by removing structure that is already missing",
+      "remove_the_local_3x3_branch": "the day-2000 boundary/interior anomaly ratio is 5.4 against truth 23.1, so the western boundary is under- not over-represented",
+      "tanh_stabilizer": "saturating regions drive tanh' toward zero, which would buy bounded rollouts by manufacturing artificially small sensitivities -- the wrong trade for an adjoint-faithful emulator"
+    },
+    "success_criterion": "lambda_hat at or below 1.0 with 0-360 day RMSE and ACC essentially unchanged, day-2000 anomaly amplitude order one, western-boundary structure retained and no excessive spectral damping",
+    "unchanged": [
+      "architecture",
+      "static_channels",
+      "modes",
+      "width",
+      "blocks",
+      "local_branch",
+      "dataset",
+      "split",
+      "normalization_procedure",
+      "rollout_steps",
+      "batch_size",
+      "maximum_steps",
+      "learning_rate",
+      "schedule",
+      "seed",
+      "the_eight_loss_terms",
+      "validation_protocol",
+      "inference_protocol"
+    ],
+    "version": "model_c_production_1in_1out_v1",
+    "weight_lineage": "none; this run is from scratch"
+  },
+  "contract_status": "frozen_before_any_production_metric",
+  "data": {
+    "evaluation_truth_only": [
+      7200,
+      9000
+    ],
+    "horizon_days": 10,
+    "inference": [
+      6200,
+      7200
+    ],
+    "regimes": [
+      "S0",
+      "S1",
+      "S2"
+    ],
+    "start_note": "one time level, so day 0 is a valid start and the ten starts the two-input contract lost are recovered",
+    "train": [
+      0,
+      6000
+    ],
+    "training_sequences": 17820,
+    "training_starts_per_regime": 5940,
+    "validation": [
+      6000,
+      7200
+    ]
+  },
+  "expected_parameter_count": 27297960,
+  "initialization": {
+    "fno_weights": "neuraloperator_default_random_initialization",
+    "from_scratch": true,
+    "layer_norm_bias": 0.0,
+    "layer_norm_scale": 1.0,
+    "lifting_projection_and_channel_mlp": "random_initialization",
+    "lineage": "none; this arm has no parent, no migration, no function-preserving load and no fine-tuning stage",
+    "load_model_state": false,
+    "load_optimizer_state": false,
+    "local_branch_bias": false,
+    "local_branch_initialization": "zeros",
+    "normalization_reused": false,
+    "parent_checkpoint": null,
+    "spectral_weights": "random_initialization"
+  },
+  "loss": {
+    "all_terms_active_from_step_1": true,
+    "barotropic_transport_weight": 0.05,
+    "boundary_weight": 0.065,
+    "continuity_weight": 0.05,
+    "contract_sha256": "6a233883b3c9a6347f0d343f295bee2aa841b143b547acc9f71fea05e8e8d2e1",
+    "contraction_penalty": false,
+    "increment_weight": 0.001,
+    "physics_terms_add_no_output_channels": true,
+    "pressure_gradient_weight": 0.05,
+    "rollout_weight": 0.5,
+    "spectral_bins": 12,
+    "spectral_weight": 1e-05,
+    "staged_fine_tuning": false,
+    "total": "L_state + 0.001 L_inc + 0.50 L_rollout + 1e-5 L_spectral + 0.065 L_boundary + 0.05 L_pressure + 0.05 L_continuity + 0.05 L_barotropic_transport",
+    "western_boundary_width": 4
+  },
+  "normalization": {
+    "absolute_scale_floor": 1e-06,
+    "channel_scale_floor_quantile": 0.05,
+    "definition": "x_hat_c(y,x) = (x_c(y,x) - mu_c(y,x)) / sigma_c(y,x), land set to zero",
+    "increment_scale": "per_channel_rms_of_the_normalized_ten_day_increment_over_training_pairs",
+    "pointwise_shape": [
+      46,
+      62,
+      62
+    ],
+    "recomputed_from_training_days_only": true,
+    "regimes": [
+      "S0",
+      "S1",
+      "S2"
+    ],
+    "reused_from_a_previous_run": false,
+    "static_channel_normalization": "wet_mask stays a raw 0/1 indicator; the four physical coefficient fields are standardized over wet cells",
+    "train_days": [
+      0,
+      6000
+    ]
+  },
+  "output": {
+    "artifacts": [
+      "model_c_production_1in_1out_spectralnorm_v1_report.json",
+      "model_c_production_1in_1out_spectralnorm_v1_arrays.npz",
+      "model_c_production_1in_1out_spectralnorm_v1_selection.png",
+      "README.md",
+      "manifest.json"
+    ],
+    "project_root": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/model_c_production_1in_1out_spectralnorm_v1",
+    "scratch_root": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/model_c_production_1in_1out_spectralnorm_v1"
+  },
+  "prediction": {
+    "map": "x_hat_t_plus_10 = F_theta(x_t, S)",
+    "rollout": "x_t -> x_t+10 -> x_t+20 -> ... every input after the first is self-generated",
+    "target": "direct_state_not_residual"
+  },
+  "purpose": "constrain the operator instead of the trajectory. Architecture, data, split, schedule, optimizer and the eight loss terms are exactly the unconstrained arm's; the single change is a per-mode spectral normalization of the three Fourier convolutions, which hold 97.95 percent of the parameters and were previously unconstrained. The contraction penalty of the two preceding arms is removed so the run isolates the operator constraint",
+  "read_contract": {
+    "adjoint_state": false,
+    "inference_state": false,
+    "intermediate_wind_state": false,
+    "response_state": false,
+    "training_state": true,
+    "validation_state": true
+  },
+  "source_hashes": {
+    "src/oceanfno/barotropic_transport.py": "2588dd31567b84dc62a4784849cba57d96d19116c73de87f6d91b7ff9fdc2ed1",
+    "src/oceanfno/continuity.py": "5f1fdce39fe6157c8ed08b7ea8e2ccc5b3033107f49d4f926a969d2f11456df7",
+    "src/oceanfno/dataset.py": "9abbabb73b9f7fd0093314061305ca52ec65d4439e22f764ce142d7afa90e820",
+    "src/oceanfno/model.py": "21504077fce004bf89fee5e57d96ca5bfb9c77f5331d41835544cdd2b6c03908",
+    "src/oceanfno/objective.py": "ec474e5bc146c0382fd33d550f3df8d3b2e53dc7fac6b214f09b8ed9efcc8a4f",
+    "src/oceanfno/perturbation_growth.py": "0943adf80ac18bf162ac65ca53bf6c67415654c6e233763768bdcfcd46c334c2",
+    "src/oceanfno/pressure_gradient.py": "2d8116984ad015aa573cac852800e0fdc6956f300470b8a265bb2468316e17dc",
+    "src/oceanfno/runtime.py": "d099a7b878fc4c32e88d073c02fc3ec4a1a3e9c152a59d4acff878dfe2f13c06",
+    "src/oceanfno/spectral_norm.py": "5c0fc223e3562f748b2c423a7e50d8caeba1621032625f37be025779cf222188",
+    "src/oceanfno/train.py": "71c7c025a2dfea931c47a43b584fd626867a7ca2f33ff0e4d7d95885ddf79098",
+    "src/oceanfno/validation.py": "a489854d72727c8ee8e8dd3a2adb55cf171a3734a8c7e3be35a9f3730a628684"
+  },
+  "sources": {
+    "dataset": {
+      "metadata_sha256": "766cae89359311775c79103f44dc74630630ba6b7a0a8c6e9d26f73487512136",
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/trajectories_v3.zarr"
+    },
+    "mitgcm_declaration": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/mitgcm/S0/spinup/years_000_010/data",
+      "sha256": "766d27ac0ae257f4a8817921667b1d25a44add03966817a8561d9153ba627a58"
+    },
+    "mitgcm_sst_relaxation": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/mitgcm/S0/spinup/years_000_010/SST_relax.bin",
+      "sha256": "952f66ed928ad8c42584e5cf43d584ebb2f64c8f3876b871d3ced4ea689dc6dc"
+    },
+    "mitgcm_zonal_spacing": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/mitgcm/S0/spinup/years_000_010/DXF.data",
+      "sha256": "19ff882c63021105620145889630ee457af5187d669d3c5978e0d0d70b4294e6"
+    }
+  },
+  "spectral_normalization": {
+    "adds_parameters": 0,
+    "applied": true,
+    "applies_to": "spectral_convolutions_only",
+    "blocks": 3,
+    "checkpoints_materialized": true,
+    "does_not_impose": "a global bound on the emulator Jacobian",
+    "estimator": "persistent alternating power iteration on J",
+    "form": "R_k <- R_k * min(1, 1 / sigma_max(R_k))",
+    "materialization_note": "the normalized weights are baked into the tensor before a checkpoint is written, so a published checkpoint loads into an unmodified model and the inference layer is y_hat(k) = R_k_tilde x_hat(k) with adjoint R_k_tilde^H",
+    "matrices_total": 1632,
+    "modes_per_block": 544,
+    "one_sided": true,
+    "one_sided_note": "a mode already at or below one is left exactly alone and its scale is then a constant, so no gradient flows through it",
+    "operator": "the dense complex 128x128 channel mixing at each Fourier mode",
+    "power_iterations_per_forward": 2,
+    "reference": "McCabe et al., Towards Stability of Autoregressive Neural Operators, arXiv:2306.10619",
+    "warmup_iterations": 400
+  },
+  "training": {
+    "adam_betas": [
+      0.9,
+      0.95
+    ],
+    "batch_size": 8,
+    "budget_note": "7680 x 8 x 6 = 368,640 autoregressive state transitions, the same exposure as the earlier 15,360 x 8 x 3 full-training budget at twice the unroll depth",
+    "checkpoint_steps": [
+      1920,
+      3840,
+      5760,
+      7680
+    ],
+    "decay_factor": 0.2,
+    "decay_fraction": 0.75,
+    "dropout": 0.0,
+    "from_scratch": true,
+    "gradient_accumulation_steps": 2,
+    "gradient_clipping": false,
+    "initial_learning_rate": 0.0005,
+    "load_optimizer_state": false,
+    "maximum_steps": 7680,
+    "microbatch_note": "the effective batch is 8; it is realized as two microbatches of 4 so the six-step recurrent activation load fits a single GPU. Every loss term is a per-sample quantity averaged over the batch and the two microbatches are exactly equal in size, so this is arithmetically identical to a single batch of 8",
+    "microbatch_size": 4,
+    "optimizer": "adam",
+    "rollout_steps": 6,
+    "schedule_note": "steps 1-5760 at 0.0005, steps 5761-7680 at 0.0001",
+    "seed": 20260724,
+    "state_transitions": 368640,
+    "teacher_forcing_after_the_initial_state": false,
+    "weight_decay": 0.0
+  },
+  "version": "model_c_production_1in_1out_spectralnorm_v1"
+}

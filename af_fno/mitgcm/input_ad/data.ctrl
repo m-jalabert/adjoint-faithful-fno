@@ -1,0 +1,20 @@
+# AF--FNO adjoint control variables.
+#
+# The single control is the initial sea surface height, enabled by
+# ALLOW_ETAN0_CONTROL in code_ad/CTRL_OPTIONS.h.  ctrl_map_ini.F reads
+# xx_etan.<optimcycle> through ACTIVE_READ_XY and adds it to both etaN and
+# etaH, which is the physically consistent meaning of "perturb the initial sea
+# surface": at nIter0 the two are equal.
+#
+# The gradient comes back as adxx_etan.<optimcycle>.data, 62x62.
+ &CTRL_NML
+ xx_etan_file = 'xx_etan',
+ &
+#
+# names for ctrl_pack / ctrl_unpack
+ &CTRL_PACKNAMES
+ &
+#
+# names for CTRL_GENARR / CTRL_GENTIM -- unused here
+ &CTRL_NML_GENARR
+ &

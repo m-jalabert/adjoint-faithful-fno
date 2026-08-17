@@ -1,0 +1,33 @@
+{
+  "artifacts": {
+    "README.md": {
+      "bytes": 1269,
+      "sha256": "4bda299a7809722e87191e2246d9547f0ffdd561241ff4322572ae0de481e06c"
+    },
+    "model_c_bire_figure3a_streamfunction_anomaly_1deg_s0_dt10.png": {
+      "bytes": 174236,
+      "sha256": "e381a3ba8e49b2ef60fdb2266932741928e0418d1095782b59be0c77e85cf3c9"
+    },
+    "model_c_bire_figure7a_streamfunction_anomaly_day060_day2000_s0.png": {
+      "bytes": 130065,
+      "sha256": "71cab378451e0042886459e653d491654cebf7769818e35b4a5d50af75697d25"
+    },
+    "model_c_bire_reference_time_mean_streamfunction_s0.png": {
+      "bytes": 49317,
+      "sha256": "713b71bcc89efc7ea219cef9e2be365c8876b92c5f7ec9f55c5032f11611b320"
+    },
+    "model_c_bire_rollout_ft_anomaly_arrays.npz": {
+      "bytes": 174307,
+      "sha256": "5796d3b0f38e5b175fc7740c6a1add375192d9cc1ab1bcb3b9e80828921adf2d"
+    },
+    "model_c_bire_rollout_ft_anomaly_report.json": {
+      "bytes": 5624,
+      "sha256": "7a58c7000cae5556bf442dff9858154145873c02041357151f8128ac6073d02d"
+    }
+  },
+  "contract_sha256": "1908944f05477031d725177ce42977c5ac066318befcef3372d1898b97064fa6",
+  "manifest_content_sha256": "bddde77ee1d39cb056a2d77e44852401cb2bb3b8da37dcb62f3bd2cd49f12118",
+  "regime": "S0",
+  "report_content_sha256": "f638780c64ecc51ddc7fbf13d10c88cd1620ad0055514cc40cbdc78abbe1eba8",
+  "version": "model_c_2in_1out_new_channels_s0_anomaly_v1"
+}

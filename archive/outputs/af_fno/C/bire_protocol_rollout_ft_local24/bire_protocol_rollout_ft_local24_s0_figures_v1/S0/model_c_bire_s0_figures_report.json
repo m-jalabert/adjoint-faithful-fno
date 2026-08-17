@@ -1,0 +1,173 @@
+{
+  "arrays": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/bire_protocol_rollout_ft_local24_s0_figures_v1/S0/model_c_bire_s0_figures_arrays.npz",
+  "arrays_sha256": "4dc1ae86415496c9b7772b54ddb81b2e318a60082e03755d1a83e1e68a4295c4",
+  "comparator_optimizer_step": 3840,
+  "contract": "/home/mjalabert314/bire_james25_repro/config/model_c_bire_protocol_rollout_ft_local24_s0_figures_v1.json",
+  "contract_sha256": "12fc2ea7844c257b98e946fc1896793e9426996800eac562bc21e33368c2a341",
+  "dataset": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/trajectories_v3.zarr",
+  "dataset_version": "trajectories_v3",
+  "elapsed_seconds": 84.3059464879334,
+  "figure6": {
+    "black": "the_selected_six_step_24x16_checkpoint_the_fine_tune_started_from",
+    "comparator_optimizer_step": 3840,
+    "first_literal_pair_in_this_project": true,
+    "literal_pretrain_finetune_pair": true,
+    "reason": "the_new_capacity_starts_function_preserving_so_the_gap_is_the_effect_of_learning_with_added_local_and_zonal_capacity",
+    "red": "the_selected_local24_fine_tuned_checkpoint",
+    "required_label": "parent_rollout_model_vs_local24_fine_tune",
+    "shared_objective_hash": "both_models_carry_the_same_six_step_objective_contract"
+  },
+  "figures": [
+    "model_c_bire_figure3_streamfunction_1deg_s0_dt10.png",
+    "model_c_bire_figure4_dt10_rmse_0_200_days_s0.png",
+    "model_c_bire_figure5_dt10_single_member_rmse_s0.png",
+    "model_c_bire_figure6_dt10_acc_0_200_days_s0.png",
+    "model_c_bire_figure7_dt10_streamfunction_day060_day2000_s0.png",
+    "model_c_bire_figure8_dt10_rmse_0_2000_days_s0.png"
+  ],
+  "inference_start_range": [
+    6200,
+    7000
+  ],
+  "regime": "S0",
+  "regime_captions": "frozen S0 control-wind captions rewritten for this regime",
+  "report_content_sha256": "d6566b5ddc81978bd993e42cf5bbbcd8ef73e20e50bab8f7bd1406056ba42208",
+  "role": "primary",
+  "selected_optimizer_step": 3840,
+  "slurm_job_id": "325486",
+  "start_draw_order": [
+    6263,
+    6293,
+    6331,
+    6389,
+    6579,
+    6593,
+    6598,
+    6601,
+    6651,
+    6661,
+    6694,
+    6707,
+    6711,
+    6968,
+    6979
+  ],
+  "status": "complete",
+  "summary": {
+    "acc": {
+      "phihyd_surface": {
+        "prior": {
+          "day200_mean": 0.9893524448076884,
+          "minimum_mean_0_200": 0.9893524448076884
+        },
+        "selected": {
+          "day200_mean": 0.992392365137736,
+          "minimum_mean_0_200": 0.992392365137736
+        }
+      },
+      "sst": {
+        "prior": {
+          "day200_mean": 0.8155109723409016,
+          "minimum_mean_0_200": 0.8155109723409016
+        },
+        "selected": {
+          "day200_mean": 0.8491933584213257,
+          "minimum_mean_0_200": 0.8491933584213257
+        }
+      },
+      "surface_u": {
+        "prior": {
+          "day200_mean": 0.7972108284632365,
+          "minimum_mean_0_200": 0.7951984484990438
+        },
+        "selected": {
+          "day200_mean": 0.8383424798647563,
+          "minimum_mean_0_200": 0.8354628920555115
+        }
+      },
+      "surface_v": {
+        "prior": {
+          "day200_mean": 0.891978899637858,
+          "minimum_mean_0_200": 0.8869227210680644
+        },
+        "selected": {
+          "day200_mean": 0.9113309343655904,
+          "minimum_mean_0_200": 0.9059821605682373
+        }
+      }
+    },
+    "all_selected_states_finite": true,
+    "lead_days": {
+      "interval": 10,
+      "long": 2000,
+      "short": 200
+    },
+    "maximum_selected_normalized_abs": 7.164225101470947,
+    "member_count": 15,
+    "rmse": {
+      "phihyd_surface": {
+        "climatology": {
+          "day2000_mean": 0.0824887494246165,
+          "day2000_p10": 0.07873230576515197,
+          "day2000_p90": 0.08563082069158554,
+          "day200_mean": 0.05977260222037633
+        },
+        "model": {
+          "day2000_mean": 0.034095192700624465,
+          "day2000_p10": 0.0317204587161541,
+          "day2000_p90": 0.03609134256839752,
+          "day200_mean": 0.008698260535796483
+        },
+        "persistence": {
+          "day2000_mean": 0.038242372870445254,
+          "day2000_p10": 0.036230454593896864,
+          "day2000_p90": 0.040171122550964354,
+          "day200_mean": 0.019039624805251756
+        }
+      },
+      "sst": {
+        "climatology": {
+          "day2000_mean": 0.04045771807432175,
+          "day2000_p10": 0.03911134675145149,
+          "day2000_p90": 0.04228607416152954,
+          "day200_mean": 0.0394647940993309
+        },
+        "model": {
+          "day2000_mean": 0.0757307916879654,
+          "day2000_p10": 0.06918424516916274,
+          "day2000_p90": 0.08131372481584549,
+          "day200_mean": 0.023053919523954393
+        },
+        "persistence": {
+          "day2000_mean": 0.05954834868510564,
+          "day2000_p10": 0.05638449937105179,
+          "day2000_p90": 0.06244913339614868,
+          "day200_mean": 0.04716278339425723
+        }
+      },
+      "surface_speed": {
+        "climatology": {
+          "day2000_mean": 0.003586794187625249,
+          "day2000_p10": 0.003061279933899641,
+          "day2000_p90": 0.004096773359924555,
+          "day200_mean": 0.0038475769106298685
+        },
+        "model": {
+          "day2000_mean": 0.007192185707390308,
+          "day2000_p10": 0.006984914559870959,
+          "day2000_p90": 0.007481951639056206,
+          "day200_mean": 0.0025207282975316047
+        },
+        "persistence": {
+          "day2000_mean": 0.005100472581883272,
+          "day2000_p10": 0.004923991486430168,
+          "day2000_p90": 0.005275088641792536,
+          "day200_mean": 0.004690920903036992
+        }
+      }
+    },
+    "status": "complete"
+  },
+  "tau0_n_m2": 0.1,
+  "version": "model_c_bire_protocol_rollout_ft_local24_s0_figures_v1"
+}

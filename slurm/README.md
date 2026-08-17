@@ -4,10 +4,16 @@
   expansion.
 - `data/`: dataset conversion, validation, and coverage jobs.
 - `models/a/`, `models/b/`, `models/c/`: model-specific training and diagnostics.
-  In `models/c/`, the arm-suffixed scripts (`*_2in_1out.sbatch`) are the current
-  canonical launchers. The unsuffixed `train`/`figures`/`anomaly.sbatch` are the
-  32x32 one-input arm's and name that arm's contracts, which the canonical
-  modules no longer accept; they are kept as the record of how that arm ran.
+  `models/c/` holds the production emulator's three launchers, to be submitted in
+  order:
+
+      train_production_1in_1out.sbatch      GPU, ~36 h
+      figures_production_1in_1out.sbatch    GPU, after training completes
+      anomaly_production_1in_1out.sbatch    CPU, after the figures complete
+
+  The figure and anomaly jobs each begin with a `finalize` step that stamps the
+  preceding stage's digests into their contract, so neither can be run early
+  against a half-written artifact.
 - `evaluation/`: shared forward-evaluation jobs.
 - Slurm root: scripts whose historical paths and bytes are fixed by immutable
   experiment contracts.

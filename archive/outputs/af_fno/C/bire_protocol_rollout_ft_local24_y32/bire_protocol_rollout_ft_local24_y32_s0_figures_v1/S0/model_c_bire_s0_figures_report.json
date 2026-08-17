@@ -1,0 +1,172 @@
+{
+  "arrays": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/bire_protocol_rollout_ft_local24_y32_s0_figures_v1/S0/model_c_bire_s0_figures_arrays.npz",
+  "arrays_sha256": "71d9a6b136b99d9fb694d2204ff70dc7655b45ea4a77af24a5091cf3e85a4839",
+  "comparator_optimizer_step": 3840,
+  "contract": "/home/mjalabert314/bire_james25_repro/config/model_c_bire_protocol_rollout_ft_local24_y32_s0_figures_v1.json",
+  "contract_sha256": "d982ee544427c2e8d5256524121437d10816f7fd04ba3b375174e26505beb52a",
+  "dataset": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/trajectories_v3.zarr",
+  "dataset_version": "trajectories_v3",
+  "elapsed_seconds": 71.04050555080175,
+  "figure6": {
+    "black": "the_retained_local24_step3840_checkpoint",
+    "comparator_optimizer_step": 3840,
+    "literal_pretrain_finetune_pair": true,
+    "reason": "the_Y32_warm_start_was_function_preserving_so_the_gap_is_the_effect_of_learning_the_new_meridional_band",
+    "red": "the_selected_Y32_step3840_checkpoint",
+    "required_label": "local24_parent_vs_meridional32_fine_tune",
+    "shared_objective_hash": "both_models_carry_the_same_six_step_objective_contract"
+  },
+  "figures": [
+    "model_c_bire_figure3_streamfunction_1deg_s0_dt10.png",
+    "model_c_bire_figure4_dt10_rmse_0_200_days_s0.png",
+    "model_c_bire_figure5_dt10_single_member_rmse_s0.png",
+    "model_c_bire_figure6_dt10_acc_0_200_days_s0.png",
+    "model_c_bire_figure7_dt10_streamfunction_day060_day2000_s0.png",
+    "model_c_bire_figure8_dt10_rmse_0_2000_days_s0.png"
+  ],
+  "inference_start_range": [
+    6200,
+    7000
+  ],
+  "regime": "S0",
+  "regime_captions": "frozen S0 control-wind captions rewritten for this regime",
+  "report_content_sha256": "55a7cf0001e721d3b8a890201fc5777a6de4bda9cea50b4685d88a0ada04c768",
+  "role": "primary",
+  "selected_optimizer_step": 3840,
+  "slurm_job_id": "325515",
+  "start_draw_order": [
+    6263,
+    6293,
+    6331,
+    6389,
+    6579,
+    6593,
+    6598,
+    6601,
+    6651,
+    6661,
+    6694,
+    6707,
+    6711,
+    6968,
+    6979
+  ],
+  "status": "complete",
+  "summary": {
+    "acc": {
+      "phihyd_surface": {
+        "prior": {
+          "day200_mean": 0.992392365137736,
+          "minimum_mean_0_200": 0.992392365137736
+        },
+        "selected": {
+          "day200_mean": 0.9937520345052083,
+          "minimum_mean_0_200": 0.9937520345052083
+        }
+      },
+      "sst": {
+        "prior": {
+          "day200_mean": 0.8491933584213257,
+          "minimum_mean_0_200": 0.8491933584213257
+        },
+        "selected": {
+          "day200_mean": 0.8660062432289124,
+          "minimum_mean_0_200": 0.8660062432289124
+        }
+      },
+      "surface_u": {
+        "prior": {
+          "day200_mean": 0.8383424798647563,
+          "minimum_mean_0_200": 0.8354628920555115
+        },
+        "selected": {
+          "day200_mean": 0.8607968171437581,
+          "minimum_mean_0_200": 0.8585385759671529
+        }
+      },
+      "surface_v": {
+        "prior": {
+          "day200_mean": 0.9113309343655904,
+          "minimum_mean_0_200": 0.9059821605682373
+        },
+        "selected": {
+          "day200_mean": 0.9208097497622172,
+          "minimum_mean_0_200": 0.9156700253486634
+        }
+      }
+    },
+    "all_selected_states_finite": true,
+    "lead_days": {
+      "interval": 10,
+      "long": 2000,
+      "short": 200
+    },
+    "maximum_selected_normalized_abs": 7.185186386108398,
+    "member_count": 15,
+    "rmse": {
+      "phihyd_surface": {
+        "climatology": {
+          "day2000_mean": 0.0824887494246165,
+          "day2000_p10": 0.07873230576515197,
+          "day2000_p90": 0.08563082069158554,
+          "day200_mean": 0.05977260222037633
+        },
+        "model": {
+          "day2000_mean": 0.0319322398553292,
+          "day2000_p10": 0.029617365822196005,
+          "day2000_p90": 0.03464031368494034,
+          "day200_mean": 0.008333394769579172
+        },
+        "persistence": {
+          "day2000_mean": 0.038242372870445254,
+          "day2000_p10": 0.036230454593896864,
+          "day2000_p90": 0.040171122550964354,
+          "day200_mean": 0.019039624805251756
+        }
+      },
+      "sst": {
+        "climatology": {
+          "day2000_mean": 0.04045771807432175,
+          "day2000_p10": 0.03911134675145149,
+          "day2000_p90": 0.04228607416152954,
+          "day200_mean": 0.0394647940993309
+        },
+        "model": {
+          "day2000_mean": 0.06834381992618242,
+          "day2000_p10": 0.06339114606380462,
+          "day2000_p90": 0.07486429363489151,
+          "day200_mean": 0.021528377756476404
+        },
+        "persistence": {
+          "day2000_mean": 0.05954834868510564,
+          "day2000_p10": 0.05638449937105179,
+          "day2000_p90": 0.06244913339614868,
+          "day200_mean": 0.04716278339425723
+        }
+      },
+      "surface_speed": {
+        "climatology": {
+          "day2000_mean": 0.003586794187625249,
+          "day2000_p10": 0.003061279933899641,
+          "day2000_p90": 0.004096773359924555,
+          "day200_mean": 0.0038475769106298685
+        },
+        "model": {
+          "day2000_mean": 0.006646022666245699,
+          "day2000_p10": 0.006370211485773325,
+          "day2000_p90": 0.006944475136697293,
+          "day200_mean": 0.0023634890094399452
+        },
+        "persistence": {
+          "day2000_mean": 0.005100472581883272,
+          "day2000_p10": 0.004923991486430168,
+          "day2000_p90": 0.005275088641792536,
+          "day200_mean": 0.004690920903036992
+        }
+      }
+    },
+    "status": "complete"
+  },
+  "tau0_n_m2": 0.1,
+  "version": "model_c_bire_protocol_rollout_ft_local24_y32_s0_figures_v1"
+}

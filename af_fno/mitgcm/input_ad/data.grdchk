@@ -1,0 +1,46 @@
+# AF--FNO adjoint gradient check -- Stage 7, acceptance gate G1.
+#
+# Requires useGrdchk=.TRUE. in data.pkg.  grdchk perturbs one control element
+# by +/- grdchk_eps, runs the forward model twice, and compares the centred
+# finite difference against the adjoint gradient.  This is the only thing
+# standing between "a 62x62 array of plausible numbers" and ground truth.
+#
+# grdchkvarindex = 29 is xx_etan; the id is set in ctrl_init.F and accepted by
+# grdchk_getxx.F:602.
+#
+# iGloPos / jGloPos are TILE-LOCAL positions (grdchk_get_position.F:81 sets
+# itilepos = iGloPos, and grdchk_readparms.F:116 rejects iGloPos > sNx).  With
+# sNx = sNy = 31 on a 2x2 decomposition the tiles cover:
+#
+#     iGloTile=1, jGloTile=1  ->  global i=1..31,  j=1..31
+#     iGloTile=2, jGloTile=1  ->  global i=32..62, j=1..31
+#     iGloTile=1, jGloTile=2  ->  global i=1..31,  j=32..62
+#     iGloTile=2, jGloTile=2  ->  global i=32..62, j=32..62
+#
+# so global (i,j) in tile (1,1) is simply (iGloPos, jGloPos) = (i, j).
+#
+# The settings below are test point 1 of the plan's eight: p* itself,
+# global (i=2, j=17), the self-sensitivity and the largest value on the map.
+# Sweep grdchk_eps over {1e-3, 1e-4, 1e-5, 1e-6} and look for the plateau --
+# a single epsilon agreeing is weak evidence, the plateau is strong evidence.
+#
+# The remaining seven points (plan section 8):
+#   2-3  upstream in the boundary current   (i=2, j=14) and (i=2, j=11)
+#   4    offshore of the current            (i=4, j=17)
+#   5    mid-basin interior                 (i=31, j=17) -> tile (1,1) local (31,17)
+#   6    eastern boundary                   (i=61, j=17) -> tile (2,1) local (30,17)
+#   7    a convecting column                to be identified from the forward run
+#   8    a land cell                        (i=1, j=1)   -> must return exactly 0
+ &GRDCHK_NML
+ grdchk_eps     = 1.d-4,
+ grdchkvarindex = 29,
+ useCentralDiff = .TRUE.,
+ iGloPos        = 2,
+ jGloPos        = 17,
+ kGloPos        = 1,
+ iGloTile       = 1,
+ jGloTile       = 1,
+ nbeg           = 1,
+ nstep          = 1,
+ nend           = 1,
+ &

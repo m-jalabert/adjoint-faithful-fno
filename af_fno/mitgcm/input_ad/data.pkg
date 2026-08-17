@@ -1,0 +1,8 @@
+# AF--FNO adjoint packages.
+# useGrdchk is .FALSE. for the production adjoint runs and .TRUE. only for
+# the Stage 7 gradient check (plan section 8).
+ &PACKAGES
+ useMNC=.FALSE.,
+ useDiagnostics=.TRUE.,
+ useGrdchk=.FALSE.,
+ &

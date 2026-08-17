@@ -1,0 +1,173 @@
+{
+  "arrays": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/bire_protocol_rollout_ft_s0_figures_v1/S0/model_c_bire_s0_figures_arrays.npz",
+  "arrays_sha256": "b531630753b8f6623a0dc1488609a5df08b6d4fcac28b2c225cb54fd2390cf34",
+  "comparator_optimizer_step": 15360,
+  "contract": "/home/mjalabert314/bire_james25_repro/config/model_c_bire_protocol_rollout_ft_s0_figures_v1.json",
+  "contract_sha256": "f187791a9bdc3ac042906f21d6f72e0f3226d427e5a8917d0d06dd23513027e2",
+  "dataset": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/trajectories_v3.zarr",
+  "dataset_version": "trajectories_v3",
+  "elapsed_seconds": 72.31855549290776,
+  "figure6": {
+    "black": "the_step_15360_checkpoint_the_fine_tune_started_from",
+    "comparator_optimizer_step": 15360,
+    "differing_objective_hashes": "the_comparator_carries_model_c_loss_v1_over_three_steps_and_the_selected_model_the_six_step_contract_each_is_verified_against_its_own",
+    "first_literal_pair_in_this_project": true,
+    "literal_pretrain_finetune_pair": true,
+    "reason": "both_curves_were_trained_on_the_same_data_in_the_same_normalized_coordinates_by_the_same_code_path_so_the_gap_is_what_deepening_the_rollout_bought_and_nothing_else",
+    "red": "the_selected_six_step_fine_tuned_checkpoint",
+    "required_label": "three_step_model_vs_six_step_fine_tune"
+  },
+  "figures": [
+    "model_c_bire_figure3_streamfunction_1deg_s0_dt10.png",
+    "model_c_bire_figure4_dt10_rmse_0_200_days_s0.png",
+    "model_c_bire_figure5_dt10_single_member_rmse_s0.png",
+    "model_c_bire_figure6_dt10_acc_0_200_days_s0.png",
+    "model_c_bire_figure7_dt10_streamfunction_day060_day2000_s0.png",
+    "model_c_bire_figure8_dt10_rmse_0_2000_days_s0.png"
+  ],
+  "inference_start_range": [
+    6200,
+    7000
+  ],
+  "regime": "S0",
+  "regime_captions": "frozen S0 control-wind captions rewritten for this regime",
+  "report_content_sha256": "e54675e2a5bc0932ef673e2b6fb827e95ade807790fc47bfd597ed8869e3b57f",
+  "role": "primary",
+  "selected_optimizer_step": 3840,
+  "slurm_job_id": "319867",
+  "start_draw_order": [
+    6263,
+    6293,
+    6331,
+    6389,
+    6579,
+    6593,
+    6598,
+    6601,
+    6651,
+    6661,
+    6694,
+    6707,
+    6711,
+    6968,
+    6979
+  ],
+  "status": "complete",
+  "summary": {
+    "acc": {
+      "phihyd_surface": {
+        "prior": {
+          "day200_mean": 0.9766671180725097,
+          "minimum_mean_0_200": 0.9766671180725097
+        },
+        "selected": {
+          "day200_mean": 0.9893524448076884,
+          "minimum_mean_0_200": 0.9893524448076884
+        }
+      },
+      "sst": {
+        "prior": {
+          "day200_mean": 0.7240268031756083,
+          "minimum_mean_0_200": 0.7240268031756083
+        },
+        "selected": {
+          "day200_mean": 0.8155109723409016,
+          "minimum_mean_0_200": 0.8155109723409016
+        }
+      },
+      "surface_u": {
+        "prior": {
+          "day200_mean": 0.7354028065999348,
+          "minimum_mean_0_200": 0.7336827198664347
+        },
+        "selected": {
+          "day200_mean": 0.7972108284632365,
+          "minimum_mean_0_200": 0.7951984484990438
+        }
+      },
+      "surface_v": {
+        "prior": {
+          "day200_mean": 0.8439664999643962,
+          "minimum_mean_0_200": 0.8350344737370808
+        },
+        "selected": {
+          "day200_mean": 0.891978899637858,
+          "minimum_mean_0_200": 0.8869227210680644
+        }
+      }
+    },
+    "all_selected_states_finite": true,
+    "lead_days": {
+      "interval": 10,
+      "long": 2000,
+      "short": 200
+    },
+    "maximum_selected_normalized_abs": 7.266008377075195,
+    "member_count": 15,
+    "rmse": {
+      "phihyd_surface": {
+        "climatology": {
+          "day2000_mean": 0.0824887494246165,
+          "day2000_p10": 0.07873230576515197,
+          "day2000_p90": 0.08563082069158554,
+          "day200_mean": 0.05977260222037633
+        },
+        "model": {
+          "day2000_mean": 0.039980585873126986,
+          "day2000_p10": 0.036703597754240036,
+          "day2000_p90": 0.042095518112182616,
+          "day200_mean": 0.00949551494171222
+        },
+        "persistence": {
+          "day2000_mean": 0.038242372870445254,
+          "day2000_p10": 0.036230454593896864,
+          "day2000_p90": 0.040171122550964354,
+          "day200_mean": 0.019039624805251756
+        }
+      },
+      "sst": {
+        "climatology": {
+          "day2000_mean": 0.04045771807432175,
+          "day2000_p10": 0.03911134675145149,
+          "day2000_p90": 0.04228607416152954,
+          "day200_mean": 0.0394647940993309
+        },
+        "model": {
+          "day2000_mean": 0.09053262025117874,
+          "day2000_p10": 0.08236041367053985,
+          "day2000_p90": 0.09909896999597549,
+          "day200_mean": 0.02615871901313464
+        },
+        "persistence": {
+          "day2000_mean": 0.05954834868510564,
+          "day2000_p10": 0.05638449937105179,
+          "day2000_p90": 0.06244913339614868,
+          "day200_mean": 0.04716278339425723
+        }
+      },
+      "surface_speed": {
+        "climatology": {
+          "day2000_mean": 0.003586794187625249,
+          "day2000_p10": 0.003061279933899641,
+          "day2000_p90": 0.004096773359924555,
+          "day200_mean": 0.0038475769106298685
+        },
+        "model": {
+          "day2000_mean": 0.008217270486056805,
+          "day2000_p10": 0.007536072656512261,
+          "day2000_p90": 0.00929025337100029,
+          "day200_mean": 0.0028467594335476556
+        },
+        "persistence": {
+          "day2000_mean": 0.005100472581883272,
+          "day2000_p10": 0.004923991486430168,
+          "day2000_p90": 0.005275088641792536,
+          "day200_mean": 0.004690920903036992
+        }
+      }
+    },
+    "status": "complete"
+  },
+  "tau0_n_m2": 0.1,
+  "version": "model_c_bire_protocol_rollout_ft_s0_figures_v1"
+}

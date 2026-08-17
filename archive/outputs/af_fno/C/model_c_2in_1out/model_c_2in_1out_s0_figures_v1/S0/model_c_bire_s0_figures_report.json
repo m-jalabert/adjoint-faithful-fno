@@ -1,0 +1,172 @@
+{
+  "arrays": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/model_c_2in_1out_s0_figures_v1/S0/model_c_bire_s0_figures_arrays.npz",
+  "arrays_sha256": "0f9ce382404569862183d7bf2673c2409ed45f40a4e485098bd3fd88c4aec714",
+  "comparator_optimizer_step": 3840,
+  "contract": "/home/mjalabert314/bire_james25_repro/config/model_c_2in_1out_s0_figures_v1.json",
+  "contract_sha256": "1542026a2f2496bee73f1d2c5a73110510d442abb87cd24032e711f1fc5863a3",
+  "dataset": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/trajectories_v3.zarr",
+  "dataset_version": "trajectories_v3",
+  "elapsed_seconds": 75.02429649233818,
+  "figure6": {
+    "black": "the_32x32_one_input_step3840_checkpoint",
+    "comparator_optimizer_step": 3840,
+    "literal_pretrain_finetune_pair": true,
+    "reason": "the_two_input_warm_start_ignores_the_history_state_so_the_gap_is_the_effect_of_learning_to_use_the_second_time_level",
+    "red": "the_selected_two_input_checkpoint",
+    "required_label": "one_input_parent_vs_two_input_fine_tune",
+    "shared_objective_hash": "both_models_carry_the_same_six_step_objective_contract"
+  },
+  "figures": [
+    "model_c_bire_figure3_streamfunction_1deg_s0_dt10.png",
+    "model_c_bire_figure4_dt10_rmse_0_200_days_s0.png",
+    "model_c_bire_figure5_dt10_single_member_rmse_s0.png",
+    "model_c_bire_figure6_dt10_acc_0_200_days_s0.png",
+    "model_c_bire_figure7_dt10_streamfunction_day060_day2000_s0.png",
+    "model_c_bire_figure8_dt10_rmse_0_2000_days_s0.png"
+  ],
+  "inference_start_range": [
+    6200,
+    7000
+  ],
+  "regime": "S0",
+  "regime_captions": "frozen S0 control-wind captions rewritten for this regime",
+  "report_content_sha256": "df37a7625d9fc428faa1c100d4ff9a139de7c2f70e979304b43fc20934d78458",
+  "role": "primary",
+  "selected_optimizer_step": 3840,
+  "slurm_job_id": "327173",
+  "start_draw_order": [
+    6263,
+    6293,
+    6331,
+    6389,
+    6579,
+    6593,
+    6598,
+    6601,
+    6651,
+    6661,
+    6694,
+    6707,
+    6711,
+    6968,
+    6979
+  ],
+  "status": "complete",
+  "summary": {
+    "acc": {
+      "phihyd_surface": {
+        "prior": {
+          "day200_mean": 0.9946590860684713,
+          "minimum_mean_0_200": 0.9946590860684713
+        },
+        "selected": {
+          "day200_mean": 0.9952272375424703,
+          "minimum_mean_0_200": 0.9952272375424703
+        }
+      },
+      "sst": {
+        "prior": {
+          "day200_mean": 0.8775292754173278,
+          "minimum_mean_0_200": 0.8775059978167216
+        },
+        "selected": {
+          "day200_mean": 0.8857452909151713,
+          "minimum_mean_0_200": 0.8857149759928385
+        }
+      },
+      "surface_u": {
+        "prior": {
+          "day200_mean": 0.8755331476529439,
+          "minimum_mean_0_200": 0.8739520271619161
+        },
+        "selected": {
+          "day200_mean": 0.8852410634358724,
+          "minimum_mean_0_200": 0.8847979029019674
+        }
+      },
+      "surface_v": {
+        "prior": {
+          "day200_mean": 0.9287046710650126,
+          "minimum_mean_0_200": 0.9235793352127075
+        },
+        "selected": {
+          "day200_mean": 0.9348286390304565,
+          "minimum_mean_0_200": 0.9293736418088278
+        }
+      }
+    },
+    "all_selected_states_finite": true,
+    "lead_days": {
+      "interval": 10,
+      "long": 2000,
+      "short": 200
+    },
+    "maximum_selected_normalized_abs": 7.188582420349121,
+    "member_count": 15,
+    "rmse": {
+      "phihyd_surface": {
+        "climatology": {
+          "day2000_mean": 0.0824887494246165,
+          "day2000_p10": 0.07873230576515197,
+          "day2000_p90": 0.08563082069158554,
+          "day200_mean": 0.05977260222037633
+        },
+        "model": {
+          "day2000_mean": 0.02973054684698582,
+          "day2000_p10": 0.027692606672644615,
+          "day2000_p90": 0.03173463195562363,
+          "day200_mean": 0.007427906865874926
+        },
+        "persistence": {
+          "day2000_mean": 0.038242372870445254,
+          "day2000_p10": 0.036230454593896864,
+          "day2000_p90": 0.040171122550964354,
+          "day200_mean": 0.019039624805251756
+        }
+      },
+      "sst": {
+        "climatology": {
+          "day2000_mean": 0.04045771807432175,
+          "day2000_p10": 0.03911134675145149,
+          "day2000_p90": 0.04228607416152954,
+          "day200_mean": 0.0394647940993309
+        },
+        "model": {
+          "day2000_mean": 0.06203827957312266,
+          "day2000_p10": 0.05912183001637459,
+          "day2000_p90": 0.06476063281297684,
+          "day200_mean": 0.0196481188138326
+        },
+        "persistence": {
+          "day2000_mean": 0.05954834868510564,
+          "day2000_p10": 0.05638449937105179,
+          "day2000_p90": 0.06244913339614868,
+          "day200_mean": 0.04716278339425723
+        }
+      },
+      "surface_speed": {
+        "climatology": {
+          "day2000_mean": 0.003586794187625249,
+          "day2000_p10": 0.003061279933899641,
+          "day2000_p90": 0.004096773359924555,
+          "day200_mean": 0.0038475769106298685
+        },
+        "model": {
+          "day2000_mean": 0.006346303503960371,
+          "day2000_p10": 0.005830945633351803,
+          "day2000_p90": 0.006897506769746542,
+          "day200_mean": 0.002159839069160322
+        },
+        "persistence": {
+          "day2000_mean": 0.005100472581883272,
+          "day2000_p10": 0.004923991486430168,
+          "day2000_p90": 0.005275088641792536,
+          "day200_mean": 0.004690920903036992
+        }
+      }
+    },
+    "status": "complete"
+  },
+  "tau0_n_m2": 0.1,
+  "version": "model_c_2in_1out_s0_figures_v1"
+}

@@ -1,0 +1,13 @@
+{
+  "artifacts": {
+    "README.md": "56fa6c921ac0862ce3d0d11214342c29d3e753197d6075623fff38c2ee3fbdab",
+    "bire_protocol_rollout_ft_smoothpos_arrays.npz": "fdf3a83a64a62c765cd83507a435dbde51517298e615ae05f783099d99301580",
+    "bire_protocol_rollout_ft_smoothpos_report.json": "32cba9edb96887e3049a1f80428ffbfca6f517c6305e210b7c6632ba4d361efc",
+    "model_c_bire_protocol_rollout_ft_smoothpos_selection.png": "5f5900dff7b4e1978777224bcbb3746ff5110c1fa10da4a9b257f2514532dbd9"
+  },
+  "content_sha256": "8b27de3699b836d2caf61b5f212a3aba4e81cde4bfbd988114bc2250121f4855",
+  "contract_sha256": "247bb2d21e87924e47ba84a8980953191768801777cda04e2bcb558fd4cdd078",
+  "inference_state_opened": false,
+  "status": "complete",
+  "version": "model_c_bire_protocol_rollout_ft_smoothpos_v1"
+}

@@ -1,0 +1,53 @@
+{
+  "artifacts": {
+    "README.md": {
+      "bytes": 1332,
+      "sha256": "bb58b9e0829953c45f43dd3d0362afbe88d3576a41bf1459f83013230ff7a14f"
+    },
+    "model_c_bire_figure3_streamfunction_1deg_s0_dt10.png": {
+      "bytes": 174180,
+      "sha256": "ab23eb4e62848c7a1bda1370ab94105154aa45d1286918967fd1c82418648410"
+    },
+    "model_c_bire_figure4_dt10_rmse_0_200_days_s0.png": {
+      "bytes": 190204,
+      "sha256": "3fb02d19ae14c577158d45297463a0718b5b6eb4ef20bebd4d196fad109e92de"
+    },
+    "model_c_bire_figure5_dt10_single_member_rmse_s0.png": {
+      "bytes": 85346,
+      "sha256": "86420745a19ace22957e1822d46a1b9cc0cbdac74177aa79a264450ea2b154d2"
+    },
+    "model_c_bire_figure6_dt10_acc_0_200_days_s0.png": {
+      "bytes": 136800,
+      "sha256": "df96c6c940734bfeb2e47c43f2f5be8f877636a3b4652b38370d6ba064eac799"
+    },
+    "model_c_bire_figure7_dt10_streamfunction_day060_day2000_s0.png": {
+      "bytes": 116824,
+      "sha256": "9e600145c80946cd6146889c6d85a3a372a5c8746eff82b877b887f69ca53d24"
+    },
+    "model_c_bire_figure8_dt10_rmse_0_2000_days_s0.png": {
+      "bytes": 345207,
+      "sha256": "f2343b41c6728a599c220c454b543513c0814a223129eaa54d13ec02c4fbfa6f"
+    },
+    "model_c_bire_s0_ensemble_curves.csv": {
+      "bytes": 181960,
+      "sha256": "bd7e23d428d6116a3b2ed0f3fe8a188f51addb83d0b32715f3fca52b466bfc99"
+    },
+    "model_c_bire_s0_figures_arrays.npz": {
+      "bytes": 292951,
+      "sha256": "0f9ce382404569862183d7bf2673c2409ed45f40a4e485098bd3fd88c4aec714"
+    },
+    "model_c_bire_s0_figures_report.json": {
+      "bytes": 5600,
+      "sha256": "e3ce719831096697a3fecc28e006daa1104a9d9a0e3bd19e1b073ec1c4e5c25c"
+    },
+    "model_c_bire_s0_figures_summary.json": {
+      "bytes": 3254,
+      "sha256": "763ce118c5f085ffadb3a129efff03de3ac0f843d9554d68a32e5b3979a44246"
+    }
+  },
+  "contract_sha256": "1542026a2f2496bee73f1d2c5a73110510d442abb87cd24032e711f1fc5863a3",
+  "manifest_content_sha256": "028c2ad8491ff9bbc95cafe372203358812948a85a2e58428b642865d1352c3e",
+  "regime": "S0",
+  "report_content_sha256": "df37a7625d9fc428faa1c100d4ff9a139de7c2f70e979304b43fc20934d78458",
+  "version": "model_c_2in_1out_s0_figures_v1"
+}

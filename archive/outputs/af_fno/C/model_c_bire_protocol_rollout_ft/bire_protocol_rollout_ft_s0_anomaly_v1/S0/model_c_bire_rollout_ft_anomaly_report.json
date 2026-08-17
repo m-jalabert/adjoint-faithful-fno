@@ -1,0 +1,142 @@
+{
+  "arrays": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/bire_protocol_rollout_ft_s0_anomaly_v1/S0/model_c_bire_rollout_ft_anomaly_arrays.npz",
+  "arrays_sha256": "7b994d508f65bbd99529f03796da289bb4e85498f6f59715ea369d7e14e3ec68",
+  "content_sha256": "29bb8a0072cf1864d7f31abddd7c7af418c24834adfb5845d501490c613f0825",
+  "contract": "/home/mjalabert314/bire_james25_repro/config/model_c_bire_protocol_rollout_ft_s0_anomaly_v1.json",
+  "contract_sha256": "e0f6a70b030b6f52758a8d649064ffbc5779dd6da7b494c946ed0f153f2a6953",
+  "dataset_version": "trajectories_v3",
+  "elapsed_seconds": 28.859982019057497,
+  "figures": [
+    "model_c_bire_figure3a_streamfunction_anomaly_1deg_s0_dt10.png",
+    "model_c_bire_figure7a_streamfunction_anomaly_day060_day2000_s0.png"
+  ],
+  "member": "member_0_of_15_the_same_member_figures_3_and_7_plot",
+  "modifies_published_figures": false,
+  "reference": {
+    "days": [
+      0,
+      6000
+    ],
+    "days_averaged": 6000,
+    "definition": "mitgcm_time_mean_barotropic_streamfunction",
+    "is_two_dimensional_field": true,
+    "model_own_mean_used": false,
+    "range_sv": [
+      -30.010730743408203,
+      30.866880416870117
+    ],
+    "regime": "S0",
+    "rms_sv": 10.672352248864,
+    "subtracted_from": "both_truth_and_prediction"
+  },
+  "regime": "S0",
+  "slurm_job_id": null,
+  "status": "complete",
+  "tau0_n_m2": 0.1,
+  "total_field_note": "amplitude diagnostics including the day-2000 streamfunction minimum remain defined on the total field and are unaffected by this package",
+  "variability": {
+    "figure3": {
+      "0": {
+        "anomaly_error_rms_sv": 0.0,
+        "anomaly_rms_ratio": 1.0,
+        "model_anomaly_range_sv": [
+          -3.938934326171875,
+          5.115104675292969
+        ],
+        "model_anomaly_rms_sv": 0.21722259437399757,
+        "truth_anomaly_range_sv": [
+          -3.938934326171875,
+          5.115104675292969
+        ],
+        "truth_anomaly_rms_sv": 0.21722259437399757
+      },
+      "10": {
+        "anomaly_error_rms_sv": 0.09284985050178973,
+        "anomaly_rms_ratio": 1.0965287298501738,
+        "model_anomaly_range_sv": [
+          -3.961902618408203,
+          3.9338035583496094
+        ],
+        "model_anomaly_rms_sv": 0.21779871551260432,
+        "truth_anomaly_range_sv": [
+          -3.951711654663086,
+          4.618844985961914
+        ],
+        "truth_anomaly_rms_sv": 0.1986256352283297
+      },
+      "20": {
+        "anomaly_error_rms_sv": 0.1137835674859384,
+        "anomaly_rms_ratio": 1.0999109161272016,
+        "model_anomaly_range_sv": [
+          -4.371070861816406,
+          4.383487701416016
+        ],
+        "model_anomaly_rms_sv": 0.2572853100997127,
+        "truth_anomaly_range_sv": [
+          -3.787607192993164,
+          4.836648941040039
+        ],
+        "truth_anomaly_rms_sv": 0.2339146801139288
+      },
+      "30": {
+        "anomaly_error_rms_sv": 0.1593677416966145,
+        "anomaly_rms_ratio": 1.1607428408656002,
+        "model_anomaly_range_sv": [
+          -4.890964508056641,
+          6.67247200012207
+        ],
+        "model_anomaly_rms_sv": 0.29975781177253163,
+        "truth_anomaly_range_sv": [
+          -4.99699592590332,
+          6.480245590209961
+        ],
+        "truth_anomaly_rms_sv": 0.2582465307724779
+      },
+      "40": {
+        "anomaly_error_rms_sv": 0.1303583760128382,
+        "anomaly_rms_ratio": 1.1047630764904672,
+        "model_anomaly_range_sv": [
+          -4.252439498901367,
+          5.265956878662109
+        ],
+        "model_anomaly_rms_sv": 0.26685270158886015,
+        "truth_anomaly_range_sv": [
+          -4.5832977294921875,
+          5.583423614501953
+        ],
+        "truth_anomaly_rms_sv": 0.2415474478352217
+      }
+    },
+    "figure7": {
+      "2000": {
+        "anomaly_error_rms_sv": 1.3874923985199332,
+        "anomaly_rms_ratio": 7.212444928703089,
+        "model_anomaly_range_sv": [
+          -10.216148376464844,
+          3.005784157638118
+        ],
+        "model_anomaly_rms_sv": 1.4027382141040592,
+        "truth_anomaly_range_sv": [
+          -3.9899673461914062,
+          3.315977096557617
+        ],
+        "truth_anomaly_rms_sv": 0.1944885857667538
+      },
+      "60": {
+        "anomaly_error_rms_sv": 0.1271479314095068,
+        "anomaly_rms_ratio": 1.1198463952421718,
+        "model_anomaly_range_sv": [
+          -4.811822891235352,
+          6.403968811035156
+        ],
+        "model_anomaly_rms_sv": 0.27010101983701024,
+        "truth_anomaly_range_sv": [
+          -5.053138732910156,
+          6.039175033569336
+        ],
+        "truth_anomaly_rms_sv": 0.24119470400991888
+      }
+    }
+  },
+  "version": "model_c_bire_protocol_rollout_ft_s0_anomaly_v1"
+}

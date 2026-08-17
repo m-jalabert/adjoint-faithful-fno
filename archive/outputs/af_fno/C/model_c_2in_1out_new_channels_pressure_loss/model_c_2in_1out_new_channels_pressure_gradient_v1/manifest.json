@@ -1,0 +1,13 @@
+{
+  "artifacts": {
+    "README.md": "bba8a77f4ad63a8e785e9680b3c3cef520f715a80bc6593b9f71ee3f16d2230d",
+    "model_c_2in_1out_new_channels_pressure_gradient_arrays.npz": "2481fcff5f4a90edf304f5673d8010a247022cf74411dcf107b6957bb5112f41",
+    "model_c_2in_1out_new_channels_pressure_gradient_report.json": "be3e8253aa8229929f16ca1f7ddfb51b71e67b26a166696205d3359f9c310e51",
+    "model_c_2in_1out_new_channels_pressure_gradient_selection.png": "fd005c09dd59f2804bac5328e722d3a5a02453230c1cf35850ea48f7fe85f78a"
+  },
+  "content_sha256": "2918db2ab95603b51abcfc6554bfb38e6f0cd9b5c0876cddc7fb6b7326c621f9",
+  "contract_sha256": "0f18f319153dbb9c63d08126a76cbfbe613088d577baf7704565073448197b79",
+  "inference_state_opened": false,
+  "status": "complete",
+  "version": "model_c_2in_1out_new_channels_pressure_gradient_v1"
+}

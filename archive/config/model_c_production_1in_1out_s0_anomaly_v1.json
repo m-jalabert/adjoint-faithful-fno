@@ -1,0 +1,101 @@
+{
+  "adds_only": true,
+  "artifacts": {
+    "dataset_metadata": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/trajectories_v3.zarr/.zmetadata",
+      "sha256": "766cae89359311775c79103f44dc74630630ba6b7a0a8c6e9d26f73487512136"
+    },
+    "figure_package_arrays": {
+      "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/model_c_production_1in_1out_s0_figures_v1/S0/model_c_bire_s0_figures_arrays.npz",
+      "sha256": "ae389b358c8b3856098e88b81fa43f20272483cc3bc4eaad4fb483ba715a44b6"
+    },
+    "figure_package_contract": {
+      "path": "/home/mjalabert314/bire_james25_repro/config/model_c_production_1in_1out_s0_figures_v1.json",
+      "sha256": "5225af0e940393e599c579f7de6ff7d0ae5af64ef14e950fe8b0d034f66878f9"
+    },
+    "figure_package_manifest": {
+      "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/model_c_production_1in_1out_s0_figures_v1/S0/manifest.json",
+      "sha256": "895456fe8381227cefb3106d49a460940fdb6f1c2c6c256a53ffc9458e6924ff"
+    },
+    "figure_package_report": {
+      "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/model_c_production_1in_1out_s0_figures_v1/S0/model_c_bire_s0_figures_report.json",
+      "sha256": "48076cc520163ef2b8a3aecb2ca7ac1c5f655266c7cd99cfc1331ac713fc5e9a"
+    }
+  },
+  "contract_status": "frozen_after_the_production_figure_package_and_before_any_anomaly_metric",
+  "dataset": {
+    "tau0_n_m2": {
+      "S0": 0.1
+    },
+    "train": [
+      0,
+      6000
+    ],
+    "version": "trajectories_v3"
+  },
+  "modifies_published_figures": false,
+  "output": {
+    "one_folder_per_regime": true,
+    "overwrite": false,
+    "project_root": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/model_c_production_1in_1out_s0_anomaly_v1",
+    "required": [
+      "model_c_bire_figure3a_streamfunction_anomaly_1deg_s0_dt10.png",
+      "model_c_bire_figure7a_streamfunction_anomaly_day060_day2000_s0.png",
+      "model_c_bire_reference_time_mean_streamfunction_s0.png",
+      "model_c_bire_s0_anomaly_report.json",
+      "model_c_bire_s0_anomaly_arrays.npz",
+      "README.md",
+      "manifest.json"
+    ],
+    "scratch_root": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/model_c_production_1in_1out_s0_anomaly_v1"
+  },
+  "protocol": {
+    "day2000_structure_diagnostics": [
+      "anomaly_rms_ratio",
+      "amplitude_normalized_meridional_and_zonal_first_difference_rms",
+      "hann_directional_power_fraction_above_0p2_cycles_per_cell",
+      "western_first_4_wet_cells_rms_and_boundary_to_interior_ratio"
+    ],
+    "figure3_lead_days": [
+      0,
+      10,
+      20,
+      30,
+      40
+    ],
+    "figure7_lead_days": [
+      60,
+      2000
+    ],
+    "figure_names": [
+      "model_c_bire_figure3a_streamfunction_anomaly_1deg_s0_dt10.png",
+      "model_c_bire_figure7a_streamfunction_anomaly_day060_day2000_s0.png"
+    ],
+    "member": 0,
+    "primary_regime": "S0",
+    "reads_model_weights": false,
+    "rolls_nothing_out": true
+  },
+  "purpose": "streamfunction-anomaly companions to figures 3 and 7 for the production emulator, about the MITgcm S0 training-block time mean",
+  "reference": {
+    "days": [
+      0,
+      6000
+    ],
+    "is_two_dimensional_field": true,
+    "model_own_mean_used": false,
+    "not_a_scalar_spatial_mean": true,
+    "regime": "S0",
+    "source": "mitgcm",
+    "subtracted_from": "both_truth_and_prediction"
+  },
+  "source_hashes": {
+    "src/oceanfno/anomaly.py": "72d485e593549d6a9c62896d3a8f737333936c88576de2c61cf16286eda8e772",
+    "src/oceanfno/dataset.py": "9abbabb73b9f7fd0093314061305ca52ec65d4439e22f764ce142d7afa90e820",
+    "src/oceanfno/diagnostics.py": "149cca17b714b535a1d60e83c3548adaaaa338f483434f28cdd476103644c844",
+    "src/oceanfno/figures.py": "f1e31d73d652280f09288af669888bde74c7075fe84b56541ceb6ecfeafac969",
+    "src/oceanfno/plots.py": "fd3d65a4bb6e65a9302c63631ae13431ebf3a4c845babd29fba3c7cd0f3e32ea",
+    "src/oceanfno/runtime.py": "e0388431204f5a1730ecbd593c3cdef00f8aa43e7dc97fde9401d28b6d4486bb"
+  },
+  "version": "model_c_production_1in_1out_s0_anomaly_v1"
+}

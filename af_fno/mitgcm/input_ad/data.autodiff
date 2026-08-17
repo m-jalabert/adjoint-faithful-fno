@@ -1,0 +1,8 @@
+# AF--FNO adjoint options.
+#
+# inAdExact = .TRUE. (the default) requests the exact adjoint with no
+# approximation.  Do not relax it: the whole point of this dataset is that it
+# is exact.
+ &AUTODIFF_PARM01
+ inAdExact = .TRUE.,
+ &

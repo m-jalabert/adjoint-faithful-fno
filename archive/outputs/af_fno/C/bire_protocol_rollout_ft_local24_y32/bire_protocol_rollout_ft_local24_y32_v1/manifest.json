@@ -1,0 +1,13 @@
+{
+  "artifacts": {
+    "README.md": "d3985f9e890e0cd784b2006cf461bcf3e4ded6ffc03e8f00cf12272842e5b8a9",
+    "bire_protocol_rollout_ft_local24_y32_arrays.npz": "50029c6f303bfc99189615bf4b49aa3c6b0926aaa3322de52d1e5f645a03b219",
+    "bire_protocol_rollout_ft_local24_y32_report.json": "194fb35552ebfd3d7cdbbc1d96516568612143398299790900ca06bdedb52891",
+    "model_c_bire_protocol_rollout_ft_local24_y32_selection.png": "2f63392718cb95fb27e2e4f68db4eefca6c4c71803b1aba370e27f1e5950b8bb"
+  },
+  "content_sha256": "c923479faf2004ab6c43e7e126e01f3754bbd504bd32c6b43e9d34f1aedcf9c8",
+  "contract_sha256": "a839bf25948989fd693c600f1554d42907cceb5d519a8b51f1b60adc326db277",
+  "inference_state_opened": false,
+  "status": "complete",
+  "version": "model_c_bire_protocol_rollout_ft_local24_y32_v1"
+}

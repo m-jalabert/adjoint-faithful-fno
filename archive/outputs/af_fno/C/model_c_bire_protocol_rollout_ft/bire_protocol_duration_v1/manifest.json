@@ -1,0 +1,13 @@
+{
+  "artifacts": {
+    "README.md": "8e167d2146708f36e131c1c58012e6ae7b994fb975df8c03d9e97729d078507e",
+    "bire_protocol_duration_arrays.npz": "3c73216377ab456ffcf9fa7d73937fde44ab4f40f163c7fa3cc45b059f90bfee",
+    "bire_protocol_duration_report.json": "0804d987e026cf7bd88d4ba823539cbf8738088d2ceba767466210dcf19b5188",
+    "model_c_bire_protocol_duration_selection.png": "fc2d75fdee38bcac6edca00df6ebbb41b0a22ae0237c9342b784c130c314b38e"
+  },
+  "content_sha256": "e1fd69ab52fb26720a41c557454dc2949da07453d53cc79a684682837f8a31ea",
+  "contract_sha256": "7b5954b104cf2ac354b61bc285e3fa8fd6f7c4a3316a9a0e0adecd140f3aff33",
+  "inference_state_opened": false,
+  "status": "complete",
+  "version": "model_c_bire_protocol_duration_v1"
+}

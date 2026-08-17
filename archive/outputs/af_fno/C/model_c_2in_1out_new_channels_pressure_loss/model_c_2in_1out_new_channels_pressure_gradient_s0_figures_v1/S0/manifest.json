@@ -1,0 +1,53 @@
+{
+  "artifacts": {
+    "README.md": {
+      "bytes": 1416,
+      "sha256": "a85f95c482db969db099de5174883a1d581108afaf74e76ac7fa0a16ad79c1b6"
+    },
+    "model_c_bire_figure3_streamfunction_1deg_s0_dt10.png": {
+      "bytes": 173405,
+      "sha256": "54637ca0c9bdcaf88421646e8fbf869af9af6d158d2034dbf69f0078225bcc95"
+    },
+    "model_c_bire_figure4_dt10_rmse_0_200_days_s0.png": {
+      "bytes": 190338,
+      "sha256": "c48744193af77101cf664a1baae3acaa6466eab0acb3135cecefa3be05901e0b"
+    },
+    "model_c_bire_figure5_dt10_single_member_rmse_s0.png": {
+      "bytes": 82632,
+      "sha256": "d5e6ac39edbac5b5968be7f6299fbbcb10129c13acaae2eee58d61f80a802a01"
+    },
+    "model_c_bire_figure6_dt10_acc_0_200_days_s0.png": {
+      "bytes": 132828,
+      "sha256": "a6a1a0a38ee4a61b95b10d97ad909774d56f8b6dd982f7cbc3aad90aab98f52e"
+    },
+    "model_c_bire_figure7_dt10_streamfunction_day060_day2000_s0.png": {
+      "bytes": 116340,
+      "sha256": "013e31040c21553e5ddc2871609952a6f215400cf8686e62c6f816ccdeadb907"
+    },
+    "model_c_bire_figure8_dt10_rmse_0_2000_days_s0.png": {
+      "bytes": 342128,
+      "sha256": "1c7a058bcb67b28947c2f1977244051f7408c697d399b6617e21d71a74bb07d7"
+    },
+    "model_c_bire_s0_ensemble_curves.csv": {
+      "bytes": 182010,
+      "sha256": "03fcd724dfa4074d9420e476cfbb90f41c4f3cc67ea7b216ef00c1266a4aa60b"
+    },
+    "model_c_bire_s0_figures_arrays.npz": {
+      "bytes": 293037,
+      "sha256": "45810bbe680b0ca63b4632845f247240eaf78f425991a01b2021faf1a3aacfb3"
+    },
+    "model_c_bire_s0_figures_report.json": {
+      "bytes": 9248,
+      "sha256": "6f02f524893324962db45e663d601ec8b366fb1cf9b0e6b205b18d67af8ccd1e"
+    },
+    "model_c_bire_s0_figures_summary.json": {
+      "bytes": 3255,
+      "sha256": "4cfe44a586a09b42e7ecd5e0e906948c34694550234a74e5a45dfd7adf06027d"
+    }
+  },
+  "contract_sha256": "cbee10dcb868f989aa9cb2bbf3bd282c959ee439b2880b18afba058de181f11b",
+  "manifest_content_sha256": "aa33da3868b20cbe3a70137a5b18da615754bbe8804ce032e5f06c7bf43c4425",
+  "regime": "S0",
+  "report_content_sha256": "6f5cc7496ec6212dc8e981399943b33a7485edc639c0b31c40ac66c6e45f332e",
+  "version": "model_c_2in_1out_new_channels_pressure_gradient_s0_figures_v1"
+}

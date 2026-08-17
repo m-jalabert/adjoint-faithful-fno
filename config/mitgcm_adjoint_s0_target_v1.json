@@ -1,0 +1,39 @@
+{
+  "dataset": "trajectories_v3",
+  "grid": {
+    "nx": 62,
+    "ny": 62,
+    "rac_sha256": "9c5f819dd09b595aed4449e6799c0361f321bcc0413fd306eea48849ebed151b",
+    "rac_source": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/mitgcm_long_truth_v1/S0/production/years_120_126/RAC.meta",
+    "wet_cell_count": 3600
+  },
+  "i_global": 2,
+  "i_index0": 1,
+  "iteration_of_day": {
+    "base_iteration": 2592000,
+    "day_7200": 3110400,
+    "day_7210": 3111120,
+    "day_7220": 3111840,
+    "steps_per_day": 72
+  },
+  "j_global": 17,
+  "j_index0": 16,
+  "mean_surface_speed_m_s": 0.8414202169577281,
+  "mean_surface_speed_region_max_rank": 1,
+  "mean_wet_cell_area_m2": 8346223001.6,
+  "regime": "S0",
+  "regime_index": 0,
+  "search_region": {
+    "candidate_cells": 1064,
+    "exclude_first_wet_column": false,
+    "exclude_rows_from_each_meridional_end": 2,
+    "i_max": 20,
+    "i_min": 2
+  },
+  "selection_days": [
+    0,
+    6000
+  ],
+  "version": "mitgcm_adjoint_s0_target_v1",
+  "wet_area_m2": 30046402805760.0
+}

@@ -1,0 +1,33 @@
+{
+  "artifacts": {
+    "README.md": {
+      "bytes": 1226,
+      "sha256": "5460ce34238c78863fd3ad3e948232b3fb61f7215a778d429e5d5de5213a842f"
+    },
+    "model_c_bire_figure3a_streamfunction_anomaly_1deg_s0_dt10.png": {
+      "bytes": 167135,
+      "sha256": "3d31faec85e6dac63299c919554c0b95199b7bbc48fec3f2b45976836fb6dd64"
+    },
+    "model_c_bire_figure7a_streamfunction_anomaly_day060_day2000_s0.png": {
+      "bytes": 136014,
+      "sha256": "2e3708ed4dc9e654f6490d22ebac9f1571371f1b41f39d7e7e972e0c4f6b166b"
+    },
+    "model_c_bire_reference_time_mean_streamfunction_s0.png": {
+      "bytes": 49317,
+      "sha256": "713b71bcc89efc7ea219cef9e2be365c8876b92c5f7ec9f55c5032f11611b320"
+    },
+    "model_c_bire_rollout_ft_anomaly_arrays.npz": {
+      "bytes": 174785,
+      "sha256": "22f7fa04918defa7dde37ef6647af16195f6b88477ec366a3e0551b8db140434"
+    },
+    "model_c_bire_rollout_ft_anomaly_report.json": {
+      "bytes": 5662,
+      "sha256": "92dcb35f2f9a7df211caf3fb7a7ce654789f60cb1c56b128258798fdf94e9234"
+    }
+  },
+  "contract_sha256": "fc988a25b70e440731b74851ed48fb56bca5952bb326c36417a0cc0d70f90da6",
+  "manifest_content_sha256": "942fce90bf4c652687fe5cce43b7af63a9c458250691603838b73258691580e6",
+  "regime": "S0",
+  "report_content_sha256": "a730a03b9ff05becf0cc63471490e3bf8400c1622642540fa708a98504c72047",
+  "version": "model_c_bire_protocol_rollout_ft_local24_y32_s0_anomaly_v1"
+}

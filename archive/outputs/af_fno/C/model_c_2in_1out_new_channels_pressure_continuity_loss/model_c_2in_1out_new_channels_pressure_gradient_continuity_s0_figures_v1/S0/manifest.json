@@ -1,0 +1,53 @@
+{
+  "artifacts": {
+    "README.md": {
+      "bytes": 1438,
+      "sha256": "6dd8610265b1c0203bc739f9280faf4c9d4d7c6633d918ab1ae4f0d903ae531d"
+    },
+    "model_c_bire_figure3_streamfunction_1deg_s0_dt10.png": {
+      "bytes": 176230,
+      "sha256": "c027254e30e872719c5f0e64ec300347525de8b0e4451ce781f4dcc27dc225db"
+    },
+    "model_c_bire_figure4_dt10_rmse_0_200_days_s0.png": {
+      "bytes": 189542,
+      "sha256": "3aca524ca1dafa586432355763dbcad86d4fc91b5f518a2de513290e036998c7"
+    },
+    "model_c_bire_figure5_dt10_single_member_rmse_s0.png": {
+      "bytes": 85749,
+      "sha256": "39cba2c37fb53d555ba0e524964642d73a8f9e09702445b410f79492da061198"
+    },
+    "model_c_bire_figure6_dt10_acc_0_200_days_s0.png": {
+      "bytes": 133145,
+      "sha256": "034e3e9cdf40b324f06be8eb0563dcf4fc7d786605c104c317187be6cdc5eea4"
+    },
+    "model_c_bire_figure7_dt10_streamfunction_day060_day2000_s0.png": {
+      "bytes": 116149,
+      "sha256": "43a34e5d8447c375a87381f9f9114253ca0094b9a7fa16b90239b8ed6f6f5a6c"
+    },
+    "model_c_bire_figure8_dt10_rmse_0_2000_days_s0.png": {
+      "bytes": 343198,
+      "sha256": "7b4d2db280752c4d6d30b65f463c156ca512f046673e9d1c3a73449ba8a51f59"
+    },
+    "model_c_bire_s0_ensemble_curves.csv": {
+      "bytes": 182079,
+      "sha256": "18f173fd09fbf17f30c0acceae2120ab26de86025a07d1bcd164022dcd7b695b"
+    },
+    "model_c_bire_s0_figures_arrays.npz": {
+      "bytes": 292969,
+      "sha256": "0a8e18da53ad55d427b2f1ff959e394ed8a65db5ed6464d0d829202f771ceb04"
+    },
+    "model_c_bire_s0_figures_report.json": {
+      "bytes": 9288,
+      "sha256": "59233e62e847ce28df2d4b055135f69e8b55b4bc61bae6f6b08164531876f7b6"
+    },
+    "model_c_bire_s0_figures_summary.json": {
+      "bytes": 3257,
+      "sha256": "003a016ec98dff5e6e47b62f97a6e8b25ce98cd58379ef7b22ffcb030165ea83"
+    }
+  },
+  "contract_sha256": "78243798fcc5c75f6f00f58a3d6da65c6830baa68790431980d619a889615598",
+  "manifest_content_sha256": "8ac339b16b333cf0233068a3580bb1d076a53166ee4bb783f2c4d0721b898273",
+  "regime": "S0",
+  "report_content_sha256": "e5b5b8c487a585fca7438ce35b6a0df46cc020a2ca439a0a88e39e2464b0c384",
+  "version": "model_c_2in_1out_new_channels_pressure_gradient_continuity_s0_figures_v1"
+}

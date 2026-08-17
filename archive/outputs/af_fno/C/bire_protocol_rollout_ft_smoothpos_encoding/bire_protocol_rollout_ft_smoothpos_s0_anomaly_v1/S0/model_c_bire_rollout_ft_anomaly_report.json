@@ -1,0 +1,164 @@
+{
+  "arrays": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/bire_protocol_rollout_ft_smoothpos_s0_anomaly_v1/S0/model_c_bire_rollout_ft_anomaly_arrays.npz",
+  "arrays_sha256": "fdfc336c60ca8bc0ed4c485771b12a9e362803412e010615bb28586e17195c4b",
+  "content_sha256": "8eeec291b0f2fb37be8e5a6212d98afa8dc59e46da7c68bca3570bcd85684bcb",
+  "contract": "/home/mjalabert314/bire_james25_repro/config/model_c_bire_protocol_rollout_ft_smoothpos_s0_anomaly_v1.json",
+  "contract_sha256": "de8242dce8a3359cbef8bf77d2a539930767bf1290f8b0406e4914436f841f5d",
+  "dataset_version": "trajectories_v3",
+  "day2000_structure": {
+    "basis": "member_0_day_2000_streamfunction_anomaly_about_the_S0_MITgcm_training_mean",
+    "hann_directional_power_fraction_above_0p2_cycles_per_cell": {
+      "model_meridional": 0.0016314482274862202,
+      "model_zonal": 0.044750439468959666,
+      "truth_meridional": 0.02763470465687459,
+      "truth_zonal": 0.005084964649634374
+    },
+    "normalized_first_difference_rms": {
+      "model_meridional": 0.2914327373842377,
+      "model_zonal": 0.8535832060597784,
+      "truth_meridional": 1.2212329258247157,
+      "truth_zonal": 0.5526219434406737
+    },
+    "western_first_4_wet_cells": {
+      "model_boundary_to_interior_rms_ratio": 8.001171006298934,
+      "model_rms_sv": 3.7605885040904985,
+      "model_to_truth_rms_ratio": 5.057555195373916,
+      "truth_boundary_to_interior_rms_ratio": 23.098211684067127,
+      "truth_rms_sv": 0.7435585690750866
+    }
+  },
+  "elapsed_seconds": 25.994734165258706,
+  "figures": [
+    "model_c_bire_figure3a_streamfunction_anomaly_1deg_s0_dt10.png",
+    "model_c_bire_figure7a_streamfunction_anomaly_day060_day2000_s0.png"
+  ],
+  "member": "member_0_of_15_the_same_member_figures_3_and_7_plot",
+  "modifies_published_figures": false,
+  "reference": {
+    "days": [
+      0,
+      6000
+    ],
+    "days_averaged": 6000,
+    "definition": "mitgcm_time_mean_barotropic_streamfunction",
+    "is_two_dimensional_field": true,
+    "model_own_mean_used": false,
+    "range_sv": [
+      -30.010730743408203,
+      30.866880416870117
+    ],
+    "regime": "S0",
+    "rms_sv": 10.672352248864,
+    "subtracted_from": "both_truth_and_prediction"
+  },
+  "regime": "S0",
+  "slurm_job_id": "326241",
+  "status": "complete",
+  "tau0_n_m2": 0.1,
+  "total_field_note": "amplitude diagnostics including the day-2000 streamfunction minimum remain defined on the total field and are unaffected by this package",
+  "variability": {
+    "figure3": {
+      "0": {
+        "anomaly_error_rms_sv": 0.0,
+        "anomaly_rms_ratio": 1.0,
+        "model_anomaly_range_sv": [
+          -3.938934326171875,
+          5.115104675292969
+        ],
+        "model_anomaly_rms_sv": 0.21722259437399757,
+        "truth_anomaly_range_sv": [
+          -3.938934326171875,
+          5.115104675292969
+        ],
+        "truth_anomaly_rms_sv": 0.21722259437399757
+      },
+      "10": {
+        "anomaly_error_rms_sv": 0.07388732891769109,
+        "anomaly_rms_ratio": 1.0577523079223843,
+        "model_anomaly_range_sv": [
+          -3.865314483642578,
+          4.1260223388671875
+        ],
+        "model_anomaly_rms_sv": 0.21009672407531538,
+        "truth_anomaly_range_sv": [
+          -3.951711654663086,
+          4.618844985961914
+        ],
+        "truth_anomaly_rms_sv": 0.1986256352283297
+      },
+      "20": {
+        "anomaly_error_rms_sv": 0.09008619518160042,
+        "anomaly_rms_ratio": 1.0586389261671287,
+        "model_anomaly_range_sv": [
+          -3.844135284423828,
+          4.6926422119140625
+        ],
+        "model_anomaly_rms_sv": 0.247631185770537,
+        "truth_anomaly_range_sv": [
+          -3.787607192993164,
+          4.836648941040039
+        ],
+        "truth_anomaly_rms_sv": 0.2339146801139288
+      },
+      "30": {
+        "anomaly_error_rms_sv": 0.1648795649072466,
+        "anomaly_rms_ratio": 1.1730322947978788,
+        "model_anomaly_range_sv": [
+          -4.505817413330078,
+          6.985692977905273
+        ],
+        "model_anomaly_rms_sv": 0.3029315206156308,
+        "truth_anomaly_range_sv": [
+          -4.99699592590332,
+          6.480245590209961
+        ],
+        "truth_anomaly_rms_sv": 0.2582465307724779
+      },
+      "40": {
+        "anomaly_error_rms_sv": 0.1355663992628214,
+        "anomaly_rms_ratio": 1.118981025029911,
+        "model_anomaly_range_sv": [
+          -4.092588424682617,
+          5.622219085693359
+        ],
+        "model_anomaly_rms_sv": 0.27028701077201533,
+        "truth_anomaly_range_sv": [
+          -4.5832977294921875,
+          5.583423614501953
+        ],
+        "truth_anomaly_rms_sv": 0.2415474478352217
+      }
+    },
+    "figure7": {
+      "2000": {
+        "anomaly_error_rms_sv": 1.0643274673812586,
+        "anomaly_rms_ratio": 5.511400518554025,
+        "model_anomaly_range_sv": [
+          -9.838836669921875,
+          3.1169586181640625
+        ],
+        "model_anomaly_rms_sv": 1.0719044924477257,
+        "truth_anomaly_range_sv": [
+          -3.9899673461914062,
+          3.315977096557617
+        ],
+        "truth_anomaly_rms_sv": 0.1944885857667538
+      },
+      "60": {
+        "anomaly_error_rms_sv": 0.1703867466730002,
+        "anomaly_rms_ratio": 1.2219588700760944,
+        "model_anomaly_range_sv": [
+          -4.562952041625977,
+          6.761964797973633
+        ],
+        "model_anomaly_rms_sv": 0.2947300079802985,
+        "truth_anomaly_range_sv": [
+          -5.053138732910156,
+          6.039175033569336
+        ],
+        "truth_anomaly_rms_sv": 0.24119470400991888
+      }
+    }
+  },
+  "version": "model_c_bire_protocol_rollout_ft_smoothpos_s0_anomaly_v1"
+}

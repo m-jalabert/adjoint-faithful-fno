@@ -1,0 +1,8 @@
+# AF--FNO adjoint optimisation cycle.
+#
+# optimcycle = 0 fixes the control filename to xx_etan.0000000000.data and the
+# gradient to adxx_etan.0000000000.data.  There is no optimisation here: this
+# is a pure sensitivity calculation, one cycle only.
+ &OPTIM
+ optimcycle = 0,
+ &
