@@ -5,8 +5,13 @@
 # finite difference against the adjoint gradient.  This is the only thing
 # standing between "a 62x62 array of plausible numbers" and ground truth.
 #
-# grdchkvarindex = 29 is xx_etan; the id is set in ctrl_init.F and accepted by
-# grdchk_getxx.F:602.
+# grdchkvarindex = 100 + iarr selects the iarr-th generic 2-D control, so 101
+# is xx_genarr2d_file(1) = 'xx_etan' (ctrl_init.F:807 registers it as
+# 100+iarr / 200+iarr, grdchk_getxx.F:614 accepts the range).
+#
+# NOT 29.  That index belongs to ALLOW_ETAN0_CONTROL, whose entire
+# implementation is inside #ifdef ECCO_CTRL_DEPRECATED and is not compiled --
+# see the note in code_ad/CTRL_OPTIONS.h.
 #
 # iGloPos / jGloPos are TILE-LOCAL positions (grdchk_get_position.F:81 sets
 # itilepos = iGloPos, and grdchk_readparms.F:116 rejects iGloPos > sNx).  With
@@ -30,17 +35,29 @@
 #   5    mid-basin interior                 (i=31, j=17) -> tile (1,1) local (31,17)
 #   6    eastern boundary                   (i=61, j=17) -> tile (2,1) local (30,17)
 #   7    a convecting column                to be identified from the forward run
-#   8    a land cell                        (i=1, j=1)   -> must return exactly 0
+#
+# nbeg MUST be 0.  grdchk_main.F:213 calls GRDCHK_GET_POSITION only when
+# nbeg .EQ. 0; with any other value iGloPos/jGloPos are ignored entirely and
+# icomp indexes the packed control vector directly, so nbeg=1 silently tests
+# the FIRST WET CELL (i=2, j=2) no matter what position is requested here.
+# GRDCHK_GET_POSITION then counts wet cells up to the requested position, sets
+# nbeg to that count, and does nend = nbeg + nend -- so the namelist nend is an
+# OFFSET, not an absolute index.  nend = 0 means exactly one test point.
+#
+# The land cell of the plan's eight-point table is not reachable from here:
+# GRDCHK_GET_POSITION only ever lands on cells with wetlocal .NE. 0.  Land is
+# covered by gate G4 on the extracted map instead, which is the stronger
+# statement anyway (all 244 land cells, not one).
  &GRDCHK_NML
  grdchk_eps     = 1.d-4,
- grdchkvarindex = 29,
+ grdchkvarindex = 101,
  useCentralDiff = .TRUE.,
  iGloPos        = 2,
  jGloPos        = 17,
  kGloPos        = 1,
  iGloTile       = 1,
  jGloTile       = 1,
- nbeg           = 1,
+ nbeg           = 0,
  nstep          = 1,
- nend           = 1,
+ nend           = 0,
  &

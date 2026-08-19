@@ -17,6 +17,155 @@ reads no `outputs/af_fno/C/**`, and writes nothing into the FNO tree.
 
 ---
 
+## Status — 2026-08-17
+
+TAF is licensed and working (`staf`, TAF **6.8.11**). `mitgcmuv_ad` is built. Gate G0 passes.
+
+Four things in the plan below were wrong and are corrected in place; this section records
+what they were, because three of them fail *silently*.
+
+**1. `ALLOW_ETAN0_CONTROL` is dead code in c68j — this was the big one.**
+Every block of that flag — `ctrl_init.F:552`, `ctrl_map_ini.F:531`, `ctrl_pack.F:613`,
+`ctrl_unpack.F:703`, `grdchk_getxx.F:601` — sits inside `#ifdef ECCO_CTRL_DEPRECATED`,
+which is defined nowhere in this checkout. So §4.6 below was reading real line numbers in
+code that never compiles. `CTRL_MAP_INI` reduced to an empty subroutine, `xx_etan_dummy`
+never reached `etaN`, and TAF returned
+
+```
+ independent variable(s) =
+TAF WARNING the independent variables have no influence on the variables : fc
+```
+
+— a complete, valid build whose gradient is identically zero. It cost a TAF submission to
+find out. The live path in c68j is the generic-array control: `#define
+ALLOW_GENARR2D_CONTROL`, `xx_genarr2d_file(1)='xx_etan'` in `CTRL_NML_GENARR`, and
+`grdchkvarindex = 101` (= 100 + iarr). `CTRL_MAP_INI_GENARR` then calls
+`CTRL_MAP_GENARR2D( etaN, ... )`, which does the `ACTIVE_READ_XY` against
+`xx_genarr2d_dummy(1)`. After the switch TAF reports `independent variable(s) =
+xx_genarr2d_dummy` and the generated source grows from 3.1 MB to 5.6 MB.
+
+Two traps inside the generic path, both silent:
+
+- `xx_genarr2d_weight` must be **non-blank** or `ctrl_init.F:807` never registers the
+  control and `ctrl_map_ini_genarr.F:117` never matches it — a second route to a zero
+  gradient. The named file is read unconditionally at `ctrlprec` (= 64).
+- `xx_genarr2d_preproc(1,1)='noscaling'` is **required**. Without it
+  `ctrl_map_genarr.F:142` divides the control by `SQRT(wgenarr2d)`, which rescales the
+  returned gradient by the same factor. The staged weight is exact ones so that dropping
+  `noscaling` is a no-op rather than a corruption.
+
+**Pre-flight that would have caught it, for any future change:** `make ad_input_code.f`
+needs no licence. Grep the payload for the chain `CALL CTRL_MAP_GENARR2D( etaN` →
+`ACTIVE_READ_XY( ..., xx_genarr2d_dummy(iarr) )` → `fld = fld + xx_gen*mask2D` before
+spending a submission.
+
+**2. `etaH` is not a second control, and does not need to be.** §12.4 flagged that the
+deprecated path perturbed both `etaN` and `etaH` while the FNO has no `etaH` counterpart.
+The generic path perturbs `etaN` only, and that is strictly better: `INITIALISE_VARIA`
+calls `INTEGR_CONTINUITY` *after* `PACKAGES_INIT_VARIABLES`, and with `implicDiv2Dflow = 1`
+(the default here) `UPDATE_ETAH` sets `etaH = etaN` before the first timestep. `etaH` is a
+dependent diagnostic. The caveat in §12.4 is withdrawn.
+
+**3. The adjoint sbatches launched MPI with a bare `srun`,** which fails at `MPI_Init`
+("PML add procs failed"). Every S0 forward segment was launched by `af_s0.py:270` as
+`srun --mpi=pmix -n 4`. All three adjoint sbatches now match it.
+
+**4. Gate G0 was comparing staggered against centred.** `trajectories_v3.zarr` stores U
+and V at **cell centres** — `af_data.py:178-179` applies
+`0.5*(u + roll(u,-1,-1))` and `0.5*(v + roll(v,-1,-2))` — while the raw MDS `dynState`
+holds C-grid face values. Comparing the two made every wet velocity differ by O(1e-1)
+while `THETA` and `ETAN` matched bit-for-bit, which was a statement about the C grid and
+not about the restart. `verify_gate_g0.py` now applies the dataset's own operator.
+Relatedly, `data.diagnostics` sets `dumpAtLast=.FALSE.`, so the state at the final
+iteration is never dumped; the archive only holds day 7220 because that day is interior to
+a six-year production block. The pickup run therefore steps one day past day 7220
+(`tail_days = 1`, 1512 steps) so the day-7220 snapshot is produced by the same mechanism
+that produced the archived one.
+
+**5. `grdchk` ignored the requested test cell.** `grdchk_main.F:213` calls
+`GRDCHK_GET_POSITION` *only* when `nbeg .EQ. 0`; with any other value `icomp` indexes the
+packed control vector directly. The plan's `nbeg = 1` therefore tested the first wet cell,
+(i=2, j=2), while printing a perfectly plausible `grad-res` block — it never touched p⋆.
+With `nbeg = 0` the log reads `grad-res exact position met`. Note also that
+`GRDCHK_GET_POSITION` does `nend = nbeg + nend`, so the namelist `nend` is an *offset*, not
+an absolute index: `nend = 0` means exactly one point. And the plan's land test point is
+unreachable here — the search only ever lands on cells with `wetlocal .NE. 0` — so land is
+covered by G4 over all 244 land cells instead, which is the stronger statement.
+
+**6. `ADJetan` was being dumped at float32.** `DUMP_ADJ_XY` writes through
+`WRITE_FLD_XY_RL`, which honours `writeBinaryPrec`, default 32 — putting a float32 floor
+directly under G2 and G3, while `adxx_etan` came back at float64 via `ctrlprec`. The two
+halves of G2 were not even the same precision. The adjoint runs now set
+`writeBinaryPrec = 64`; this is safe for the forward snapshots because `data.diagnostics`
+sets `fileFlags='R'`, which `diagnostics_out.F:396` lets override `writeBinaryPrec`, so
+`dynState`/`surfState` stay float32 and stay comparable to the archive.
+
+**7. G5's 1e-10 tolerance is unreachable, for a reason worth stating.** `fc` is accumulated
+from the model's float64 state; the archived η is the **float32** diagnostic snapshot. The
+residual is 1.54e-08 against a computed float32 half-ulp bound of 1.26e-07 on this
+particular weighted sum — 12% of the floor. The gate now compares against that computed
+bound rather than a constant, which is the same discipline `s0-twin-float32-floor` forced
+on the daily diagnostics.
+
+## Results
+
+| Gate | Result |
+|---|---|
+| **G0** | **PASS** — all 21 days, all 46 channels, `max\|diff\| = 0` |
+| **G1** | **PASS at all 7 points**, once the finite difference is computed accurately enough to be a fair reference; worst 2.0e-06 against a 1e-4 tolerance, plateau visible. At the production solver tolerance the *finite difference* is too noisy to certify anything — see below |
+| **G2** | **PASS** — relative L2 **exactly 0**: Run B's day-7210 `ADJetan` is bit-identical to Run A's `adxx_etan` |
+| **G3** | **PASS** — worst relative L2 **3.57e-08** across all 11 dump times, tolerance 1e-5 |
+| **G4** | **PASS** — exactly 3 600 non-zero cells, all 244 land cells exactly 0, everything finite |
+| **G5** | **PASS** — 1.54e-08, against the 1.26e-07 float32 floor of the archived η |
+| fc consistency | **PASS** — Run A and Run B both return `fc = 0.322547974637434` |
+
+### G1 and the cg2d tolerance — §12.2, confirmed
+
+At the production `cg2dTargetResidual = 1e-7`, all seven test points return `FD/adjoint` of
+1 ± 0.01 to 0.04, and — the diagnostic detail — **the error does not shrink as ε shrinks**.
+That is the signature of a noise floor in `fc`, not of nonlinearity: there is no plateau to
+find because the finite difference itself is noisy.
+
+The noise is in the finite difference, not the adjoint, and two independent lines of
+evidence say so. First, G2 and G3 involve no finite differences at all and come back at 0
+and 3.6e-08. Second, §12.2's prescribed test: rerunning the identical sweep with
+`cg2dTargetResidual = 1e-12` makes **every point pass at every epsilon**, with the plateau
+the gate asks for visible across 1e-3 → 1e-5 and degrading only at 1e-6 where round-off
+takes over — exactly the predicted shape.
+
+`FD / adjoint`, `cg2dTargetResidual = 1e-12`:
+
+| test point | 1e-3 | 1e-4 | 1e-5 | 1e-6 |
+|---|---|---|---|---|
+| p⋆ (i=2, j=17) | 1.000000015 | 1.000000208 | 1.000000421 | 0.999982321 |
+| WBC upstream (2, 14) | 0.999999999 | 1.000000019 | 1.000000088 | 1.000000644 |
+| WBC upstream (2, 11) | 1.000000021 | 0.999999918 | 1.000001625 | 1.000009238 |
+| offshore (4, 17) | 1.000000008 | 1.000000102 | 0.999999395 | 1.000006512 |
+| interior (31, 17) | 0.999999852 | 1.000000072 | 0.999998590 | 1.000034010 |
+| eastern (61, 17) | 1.000000014 | 1.000000040 | 0.999998026 | 1.000009385 |
+| northern (31, 55) | 1.000000118 | 1.000000256 | 1.000000029 | 0.999999802 |
+
+Worst deviation at the two gate epsilons is 2.0e-06, fifty times inside the 1e-4 tolerance;
+at 1e-7 the same points were 1e-2 to 4e-2 away and flat in ε. The adjoint gradient itself
+moves by only ~5e-06 relative between the two solver settings (p⋆: 9.262443e-05 →
+9.262491e-05). The forward solve converging to 1e-7 was limiting how accurately `fc(±ε)`
+could be differenced; it was never limiting the adjoint.
+
+**The linear range** (§12.3, which asks that it be reported rather than claimed): flat to
+within 2e-6 from ε = 1e-3 down to 1e-5 at every point, consistent with `s0-not-chaotic`.
+
+**This does not change the deliverable.** The production maps keep `cg2dTargetResidual =
+1e-7`, because that is what every S0 forward segment was integrated with and what the FNO
+was trained on; tightening it would produce the adjoint of a model the FNO never saw. The
+tightened runs are diagnostic only and are labelled as such in the run manifests
+(`cg2d_target_residual`) and archived separately under `grdchk_cg2d1em12`.
+
+Convection (§12.1) is ruled out as the cause: the discrepancy is uniform across the domain,
+including the mid-basin interior and eastern boundary, rather than confined to columns that
+convect.
+
+---
+
 ## Status — 2026-08-12
 
 Stages 1–5 of section 15 are **built and verified**; the build stops at the TAF

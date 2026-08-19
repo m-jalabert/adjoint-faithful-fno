@@ -38,13 +38,16 @@ C       >>> Initial values.
 #undef ALLOW_SALT0_CONTROL
 #undef ALLOW_UVEL0_CONTROL
 #undef ALLOW_VVEL0_CONTROL
-C--   AF--FNO: initial sea surface height is the control variable.
-C     Not in the stock #undef list but fully wired: ctrl_init.F registers it as
-C     control id 29 ('c','xy'), ctrl_map_ini.F reads xx_etan.<optimcycle> via
-C     ACTIVE_READ_XY with xx_etan_dummy (which adjoint_default already lists in
-C     its TAF -input set), ctrl_pack.F writes the gradient, and
-C     grdchk_getxx.F accepts grdchkvarindex = 29.
-#define ALLOW_ETAN0_CONTROL
+C--   AF--FNO: ALLOW_ETAN0_CONTROL is DEAD CODE in c68j and must stay undefined.
+C     Every one of its blocks -- ctrl_init.F:552, ctrl_map_ini.F:531,
+C     ctrl_pack.F:613, ctrl_unpack.F:703, grdchk_getxx.F:601 -- sits inside
+C     #ifdef ECCO_CTRL_DEPRECATED, which is defined nowhere in this checkout.
+C     Defining ALLOW_ETAN0_CONTROL therefore compiles CTRL_MAP_INI down to an
+C     empty subroutine: xx_etan_dummy never reaches etaN, TAF reports
+C     "the independent variables have no influence on the variables : fc",
+C     and the generated adjoint is identically zero.  See the 2026-08-17
+C     entry in docs/mitgcm_adjoint_ground_truth_plan.md.
+#undef ALLOW_ETAN0_CONTROL
 #undef ALLOW_TR10_CONTROL
 #undef ALLOW_TAUU0_CONTROL
 #undef ALLOW_TAUV0_CONTROL
@@ -79,7 +82,20 @@ C       >>> Backward compatibility option (before checkpoint 65p)
 #undef ALLOW_KAPREDI_CONTROL_OLD
 
 C       >>> Generic Control.
-#undef ALLOW_GENARR2D_CONTROL
+C--   AF--FNO: this is the live initial-SSH control path in c68j, and the only
+C     one.  CTRL_MAP_INI_GENARR matches xx_genarr2d_file(iarr)(1:7)=='xx_etan'
+C     and calls CTRL_MAP_GENARR2D( etaN, ... ), which does the ACTIVE_READ_XY
+C     of xx_etan.<optimcycle> against xx_genarr2d_dummy(iarr) -- already in the
+C     TAF -input set of tools/adjoint_options/adjoint_default.  Defining this
+C     also flips ctrlUseGen to .TRUE. by default (ctrl_readparms.F:176), which
+C     is what routes CTRL_INIT_VARIABLES to the generic path.
+C
+C     Unlike the deprecated ALLOW_ETAN0_CONTROL path, this perturbs etaN only,
+C     not etaH.  That is not a loss: INITIALISE_VARIA calls INTEGR_CONTINUITY
+C     after PACKAGES_INIT_VARIABLES, and with implicDiv2Dflow = 1 (the default
+C     here) UPDATE_ETAH sets etaH = etaN before the first timestep.  etaH is a
+C     dependent diagnostic, not a second independent control.
+#define ALLOW_GENARR2D_CONTROL
 #undef ALLOW_GENARR3D_CONTROL
 #undef ALLOW_GENTIM2D_CONTROL
 

@@ -39,8 +39,8 @@ AF_ADJ_MODE="${AF_ADJ_MODE:-runA}"
 AF_ADJ_WEIGHT="${AF_ADJ_WEIGHT:-${AF_PROJECT_ROOT}/work/costWeight_ssh_anomaly.bin}"
 
 case "${AF_ADJ_MODE}" in
-  runA|runB) ;;
-  *) echo "AF_ADJ_MODE must be runA or runB, got '${AF_ADJ_MODE}'"; exit 1 ;;
+  runA|runB|runG3) ;;
+  *) echo "AF_ADJ_MODE must be runA, runB or runG3, got '${AF_ADJ_MODE}'"; exit 1 ;;
 esac
 
 cd "${AF_PROJECT_ROOT}"
@@ -53,7 +53,7 @@ cd "${AF_PROJECT_ROOT}"
 
 RUN_DIR="${AF_SCRATCH_ROOT}/${AF_ADJ_MODE}"
 cd "${RUN_DIR}"
-srun --ntasks=4 ./mitgcmuv_ad > run.log 2>&1
+srun --mpi=pmix -n 4 ./mitgcmuv_ad > run.log 2>&1
 
 test -f adxx_etan.0000000000.data || {
   echo "ERROR: no gradient written; adxx_etan.0000000000.data is missing"
@@ -64,4 +64,6 @@ test -f adxx_etan.0000000000.data || {
 echo "=== ${AF_ADJ_MODE} complete ==="
 ls -l adxx_etan.0000000000.* ADJetan.*.data 2>/dev/null | head -30
 echo "--- cost function value (gate G5 compares this against numpy) ---"
-grep -iE "global fc|early fc|objf_test" run.log | tail -5
+# fc is printed by cost_final.F to the model's own STDOUT.0000, not to the
+# stdout srun captures; run.log holds only the Fortran STOP messages.
+grep -iE "global fc|early fc|objf_test" STDOUT.0000 | tail -5

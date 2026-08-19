@@ -1,0 +1,297 @@
+{
+  "acceptance": {
+    "0_90_days": "forecast skill essentially preserved; reject if the short AUC degrades by more than 5 percent against the parent in any primary field",
+    "360_2000_days": "judged on attractor statistics, not pointwise agreement: mean, std, RMS anomaly, streamfunction amplitude, western-boundary/interior structure, spectral power and the model/climatology RMSE ratio. The question is whether the emulator settles onto the correct climate attractor, not whether x_hat_2000 approximately equals x_2000",
+    "90_360_days": "remain below or competitive with climatology, and the RMSE growth curve must begin flattening rather than developing a persistent positive slope",
+    "evaluated_by": "the 0-360 day conditions here at validation time; the day-2000 conditions by the figure package, the only stage that runs a 2,000-day rollout"
+  },
+  "architecture": {
+    "channel_mlp_dropout": 0.0,
+    "channel_mlp_expansion": 4.0,
+    "domain_padding": 0.1,
+    "factorization": null,
+    "fno_block_precision": "full",
+    "grid_shape": [
+      62,
+      62
+    ],
+    "hidden_channels": 128,
+    "in_channels": 51,
+    "input_states": 1,
+    "lifting_channel_ratio": 2,
+    "lifting_in_channels": 53,
+    "local_bias": false,
+    "local_kernel_size": 3,
+    "n_layers": 3,
+    "n_modes": [
+      32,
+      32
+    ],
+    "out_channels": 46,
+    "pointwise_layer_norm": true,
+    "positional_channels": 2,
+    "positional_embedding": null,
+    "projection_channel_ratio": 2,
+    "static_channels": [
+      "wind_stress_x",
+      "wet_mask",
+      "coriolis_parameter",
+      "zonal_grid_spacing",
+      "sst_relaxation_target"
+    ],
+    "use_channel_mlp": true
+  },
+  "checkpoint_selection": {
+    "flattening_ceiling": 1.0,
+    "flattening_definition": "(E_360 - E_270) / (E_180 - E_90) on the mean model RMSE curve. Both windows are 90 days wide, so this is a pure ratio of secant slopes: below one is a curve decelerating toward a plateau, above one is a curve still accelerating away. The parent measures 0.95 / 1.73 / 1.65 for pressure / SST / speed -- already steepening in two of the three fields, which is what this run exists to change",
+    "growth_rate_calls": 200,
+    "growth_rate_ceiling": 1.0,
+    "growth_rate_epsilon_relative": 0.01,
+    "growth_rate_fit_from_call": 50,
+    "growth_rate_regime": "S0",
+    "long_auc_window_days": [
+      90,
+      360
+    ],
+    "parent_short_auc_10_90": {
+      "phihyd_surface": 0.5791260363698443,
+      "sst": 0.8210369892984483,
+      "surface_speed": 0.08082015981855482
+    },
+    "parent_short_auc_rationale": "new in this arm and the reason it exists: a longer training horizon must not be bought with short-horizon skill. The selected checkpoint's 10-90 day RMSE-AUC must be within 5 percent of the parent's in every primary field",
+    "parent_short_auc_tolerance": 1.05,
+    "primary_fields": [
+      "surface_speed",
+      "sst",
+      "phihyd_surface"
+    ],
+    "rollout_days": 360,
+    "rule": "the parent's rule, unchanged: keep every checkpoint within 5 percent of the best short AUC in each primary field, then keep only those whose measured perturbation growth rate is at or below 1.0, then minimize the worst 90-360 day RMSE-AUC ratio to climatology; publish exactly one selected.pt",
+    "short_auc_tolerance": 1.05,
+    "short_auc_window_days": [
+      10,
+      90
+    ],
+    "starts": "validation days 6000-6198 stride 6, 34 per regime, 102 pooled",
+    "worst_long_ratio_ceiling": 0.85
+  },
+  "contract_status": "frozen_before_any_fine_tuned_metric",
+  "data": {
+    "evaluation_truth_only": [
+      7200,
+      9000
+    ],
+    "horizon_days": 10,
+    "inference": [
+      6200,
+      7200
+    ],
+    "regimes": [
+      "S0",
+      "S1",
+      "S2"
+    ],
+    "start_note": "one time level, so day 0 is still a valid start; the nine-call target sequence moves the latest start from the parent's day 5,939 to day 5,909, whose final target is day 5,999 and therefore still inside the training block. Thirty starts per regime are given up for the longer horizon",
+    "train": [
+      0,
+      6000
+    ],
+    "training_sequences": 17730,
+    "training_starts_per_regime": 5910,
+    "validation": [
+      6000,
+      7200
+    ]
+  },
+  "expected_parameter_count": 27297960,
+  "initialization": {
+    "architecture_changed": false,
+    "from_scratch": false,
+    "lineage": "exactly one parent, loaded strictly. The parent checkpoint is materialized -- its spectral weights carry the cap baked in -- so it loads into a plain ProductionFNO and the model this run starts from is bit-for-bit the published operator. The per-mode cap is then reinstalled on weights that already satisfy it",
+    "load_model_state": true,
+    "load_optimizer_state": false,
+    "local_branch_bias": false,
+    "local_branch_initialization": "inherited_from_the_parent_not_zeros",
+    "normalization_reused": true,
+    "optimizer_state_rationale": "Adam's second moments were accumulated at 5e-4; inheriting them would set the effective first-step size from the parent's schedule instead of from this contract's 5e-5",
+    "parent_checkpoint": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/model_c_production_1in_1out_spectralnorm_v1/selected.pt",
+    "parent_optimizer_step": 7680,
+    "parent_version": "model_c_production_1in_1out_spectralnorm_v1",
+    "strict_state_dict_load": true
+  },
+  "loss": {
+    "all_terms_active_from_step_1": true,
+    "barotropic_transport_weight": 0.05,
+    "boundary_weight": 0.065,
+    "changed_from_parent": "only the horizon: the same eight terms with the same weights, evaluated over nine autoregressive calls instead of six. Changing the protocol and the objective in one run would leave the result unattributable",
+    "continuity_weight": 0.05,
+    "contract_sha256": "64436febacd20d680b2856476cf293774889b6d49738ad38dd20cbcff0e9fde3",
+    "contraction_penalty": false,
+    "increment_weight": 0.001,
+    "parent_contract_sha256": "6a233883b3c9a6347f0d343f295bee2aa841b143b547acc9f71fea05e8e8d2e1",
+    "physics_terms_add_no_output_channels": true,
+    "pressure_gradient_weight": 0.05,
+    "rollout_definition": "(1/8) sum over k=2..9 of E_(10k), i.e. 20,30,...,90 days",
+    "rollout_steps": 9,
+    "rollout_weight": 0.5,
+    "spectral_bins": 12,
+    "spectral_weight": 1e-05,
+    "staged_fine_tuning": true,
+    "state_definition": "E_10",
+    "total": "L_state + 0.001 L_inc + 0.50 L_rollout + 1e-5 L_spectral + 0.065 L_boundary + 0.05 L_pressure + 0.05 L_continuity + 0.05 L_barotropic_transport",
+    "weights_identical_to_parent": true,
+    "western_boundary_width": 4
+  },
+  "normalization": {
+    "artifact_is_a_byte_copy_of_the_parents": true,
+    "definition": "x_hat_c(y,x) = (x_c(y,x) - mu_c(y,x)) / sigma_c(y,x), land set to zero",
+    "increment_scale": "per_channel_rms_of_the_normalized_ten_day_increment, inherited",
+    "pointwise_shape": [
+      46,
+      62,
+      62
+    ],
+    "rationale": "this is the one place inheritance is desirable: the fine-tune continues exactly the same map on exactly the same dataset, and recomputing the normalizers -- even from the same days to the same recipe -- would move the coordinate system the trained operator already lives in",
+    "recomputed_from_training_days_only": false,
+    "reused_from": "model_c_production_1in_1out_spectralnorm_v1",
+    "reused_from_a_previous_run": true,
+    "train_days": [
+      0,
+      6000
+    ]
+  },
+  "output": {
+    "artifacts": [
+      "model_c_production_1in_1out_spectralnorm_ft90_v1_report.json",
+      "model_c_production_1in_1out_spectralnorm_ft90_v1_arrays.npz",
+      "model_c_production_1in_1out_spectralnorm_ft90_v1_selection.png",
+      "README.md",
+      "manifest.json"
+    ],
+    "project_root": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/model_c_production_1in_1out_spectralnorm_ft90_v1",
+    "scratch_root": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/model_c_production_1in_1out_spectralnorm_ft90_v1"
+  },
+  "prediction": {
+    "map": "x_hat_t_plus_10 = F_theta(x_t, S)",
+    "rollout": "x_t -> x_t+10 -> ... -> x_t+90; every input after the first is self-generated",
+    "target": "direct_state_not_residual"
+  },
+  "purpose": "continue the published production operator for a short second stage at ninety-day autoregression. The failure this targets is an attractor/stationarity problem that appears hundreds to thousands of days out, while the parent was only ever asked to survive sixty autonomous days. Architecture, objective weights, spectral cap, dataset, split, normalization and selection rule are the parent's exactly; the only changes are the initialization, the rollout length, the learning rate and the step count",
+  "read_contract": {
+    "adjoint_state": false,
+    "inference_state": false,
+    "intermediate_wind_state": false,
+    "response_state": false,
+    "training_state": true,
+    "validation_state": true
+  },
+  "rejected_alternatives": {
+    "change_the_ten_day_interval": "this is the strongest point of agreement with Bire, who found the intermediate interval and 10 days in particular gave the most convincing long-term behaviour; 5-day integration needs many more recursive calls and longer intervals struggle to represent wave evolution",
+    "reduce_15_levels_to_3": "Bire's three-level state suits their forecasting problem. This one needs the full [U_1:15, V_1:15, Theta_1:15, eta] because the purpose is a self-contained prognostic map whose Jacobian can serve as the emulator tangent/adjoint operator; dropping interior vertical degrees of freedom would make that interpretation less physically closed",
+    "reduce_modes_32_to_24": "the day-2000 high-k power fraction is already 0.0004 against truth 0.028, so the operator is too spectrally smooth, not contaminated; truncation would stabilize by deleting structure that is already missing",
+    "tanh_stabilizer": "saturating regions drive tanh' toward zero, which would manufacture bounded 2,000-day trajectories by destroying the sensitivities the adjoint study exists to measure",
+    "tighten_the_spectral_cap_to_0p99_in_the_same_run": "a clean and cheap modification, but combining it with the training protocol change would leave neither attributable. It is the declared next experiment if this one still rises",
+    "train_against_day_500_or_day_2000_truth": "past the roughly 90-day decorrelation time two perfectly valid trajectories differ pointwise, so this would teach the operator to suppress variability to minimize an impossible deterministic loss"
+  },
+  "source_hashes": {
+    "src/oceanfno/barotropic_transport.py": "2588dd31567b84dc62a4784849cba57d96d19116c73de87f6d91b7ff9fdc2ed1",
+    "src/oceanfno/continuity.py": "5f1fdce39fe6157c8ed08b7ea8e2ccc5b3033107f49d4f926a969d2f11456df7",
+    "src/oceanfno/dataset.py": "9abbabb73b9f7fd0093314061305ca52ec65d4439e22f764ce142d7afa90e820",
+    "src/oceanfno/finetune.py": "a70c822c611a766d77b562359d74c3a59ca53b2724d1294d525e968bf3eaf78a",
+    "src/oceanfno/model.py": "21504077fce004bf89fee5e57d96ca5bfb9c77f5331d41835544cdd2b6c03908",
+    "src/oceanfno/objective.py": "ec474e5bc146c0382fd33d550f3df8d3b2e53dc7fac6b214f09b8ed9efcc8a4f",
+    "src/oceanfno/perturbation_growth.py": "0943adf80ac18bf162ac65ca53bf6c67415654c6e233763768bdcfcd46c334c2",
+    "src/oceanfno/pressure_gradient.py": "2d8116984ad015aa573cac852800e0fdc6956f300470b8a265bb2468316e17dc",
+    "src/oceanfno/runtime.py": "d099a7b878fc4c32e88d073c02fc3ec4a1a3e9c152a59d4acff878dfe2f13c06",
+    "src/oceanfno/spectral_norm.py": "5c0fc223e3562f748b2c423a7e50d8caeba1621032625f37be025779cf222188",
+    "src/oceanfno/train.py": "71c7c025a2dfea931c47a43b584fd626867a7ca2f33ff0e4d7d95885ddf79098",
+    "src/oceanfno/validation.py": "a489854d72727c8ee8e8dd3a2adb55cf171a3734a8c7e3be35a9f3730a628684"
+  },
+  "sources": {
+    "dataset": {
+      "metadata_sha256": "766cae89359311775c79103f44dc74630630ba6b7a0a8c6e9d26f73487512136",
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/trajectories_v3.zarr"
+    },
+    "mitgcm_declaration": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/mitgcm/S0/spinup/years_000_010/data",
+      "sha256": "766d27ac0ae257f4a8817921667b1d25a44add03966817a8561d9153ba627a58"
+    },
+    "mitgcm_sst_relaxation": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/mitgcm/S0/spinup/years_000_010/SST_relax.bin",
+      "sha256": "952f66ed928ad8c42584e5cf43d584ebb2f64c8f3876b871d3ced4ea689dc6dc"
+    },
+    "mitgcm_zonal_spacing": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/mitgcm/S0/spinup/years_000_010/DXF.data",
+      "sha256": "19ff882c63021105620145889630ee457af5187d669d3c5978e0d0d70b4294e6"
+    },
+    "parent_checkpoint": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/model_c_production_1in_1out_spectralnorm_v1/selected.pt",
+      "sha256": "e75951681b1abbecb44ff35ac8319b38504fad9995e8e08fbc33c86bb8c2798a"
+    },
+    "parent_normalization": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/model_c_production_1in_1out_spectralnorm_v1/model_c_production_1in_1out_spectralnorm_v1_train_only_normalization.npz",
+      "sha256": "fe424b37d74f5b9d901728c8d585245e12ab67e4230a2eb86f6edc43108d96bf"
+    },
+    "parent_report": {
+      "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/model_c_production_1in_1out_spectralnorm_v1/model_c_production_1in_1out_spectralnorm_v1_report.json",
+      "sha256": "ffbba0a0b2122b9fadca9ff2e723bc90130881f854a10ad6f71f8c1b0d240ff1"
+    }
+  },
+  "spectral_normalization": {
+    "adds_parameters": 0,
+    "applied": true,
+    "applies_to": "spectral_convolutions_only",
+    "blocks": 3,
+    "changed_from_parent": false,
+    "checkpoints_materialized": true,
+    "does_not_impose": "a global bound on the emulator Jacobian",
+    "estimator": "persistent alternating power iteration on J",
+    "form": "R_k <- R_k * min(1, 1 / sigma_max(R_k))",
+    "held_fixed_rationale": "tightening the cap to rho = 0.99 is the next single-variable experiment if this run still rises. sigma_max(R_k) <= 1 does not imply sigma_max(J_F) <= 1 -- the model also has pointwise skips, ChannelMLPs, nonlinearities and the 3x3 local branch -- so changing the cap and the training protocol together would make neither attributable",
+    "matrices_total": 1632,
+    "modes_per_block": 544,
+    "one_sided": true,
+    "operator": "the dense complex 128x128 channel mixing at each Fourier mode",
+    "power_iterations_per_forward": 2,
+    "reference": "McCabe et al., Towards Stability of Autoregressive Neural Operators, arXiv:2306.10619",
+    "reinstall_note": "the parent checkpoint is materialized, so its spectral weights already satisfy the cap. Reinstalling it re-estimates sigma from a fresh 400-iteration warmup and may shave a mode by the power-iteration lag, nothing more; preflight measures the resulting deviation of the forward map and refuses to proceed above 1e-2 of its own rms",
+    "rho": 1.0,
+    "warmup_iterations": 400
+  },
+  "training": {
+    "adam_betas": [
+      0.9,
+      0.95
+    ],
+    "batch_size": 8,
+    "budget_note": "1,920 x 8 x 9 = 138,240 additional state transitions, 37.5 percent of the parent's 368,640. Enough to be a real second stage without overwriting the parent operator",
+    "checkpoint_steps": [
+      480,
+      960,
+      1440,
+      1920
+    ],
+    "dropout": 0.0,
+    "fresh_optimizer_state": true,
+    "gradient_accumulation_steps": 4,
+    "gradient_clipping": false,
+    "learning_rate": 5e-05,
+    "learning_rate_rationale": "an order of magnitude below the parent's terminal 1e-4. The parent already knows the ten-day propagator; this stage adjusts where its autonomous trajectory settles, and a rate able to relearn the propagator would dissolve the thing being fine-tuned. Constant because 1,920 steps at a rate already five times below the parent's terminal value has nothing left to anneal, and a decay would confound convergence with a shrinking step",
+    "learning_rate_schedule": "constant",
+    "maximum_steps": 1920,
+    "microbatch_note": "the effective batch is the parent's 8. It is realized as four microbatches of 2 because nine retained unrolls cost more activation memory than six: the product that sets the peak is microbatch x calls, 2 x 9 = 18 against the parent's 4 x 6 = 24. Every loss term is a per-sample quantity averaged over the batch and the microbatches are exactly equal in size -- 5,910 starts per regime divide by two without remainder -- so this is arithmetically identical to one batch of 8",
+    "microbatch_size": 2,
+    "optimizer": "adam",
+    "parent_rollout_steps": 6,
+    "parent_state_transitions": 368640,
+    "rollout_days": 90,
+    "rollout_rationale": "Bire et al. estimate the double gyre's decorrelation time at roughly 90 days. Past it the emulator is not expected to reproduce a particular MITgcm trajectory, so training against exact x_(t+500) or x_(t+2000) would optimize an impossible deterministic target whose cheapest minimizer is suppressed variability. Ninety days is the longest horizon at which pointwise truth is still a defensible target",
+    "rollout_steps": 9,
+    "seed": 20260817,
+    "state_transitions": 138240,
+    "teacher_forcing_after_the_initial_state": false,
+    "training_starts_per_regime": 5910,
+    "weight_decay": 0.0
+  },
+  "version": "model_c_production_1in_1out_spectralnorm_ft90_v1"
+}

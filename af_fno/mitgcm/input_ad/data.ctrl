@@ -1,20 +1,44 @@
 # AF--FNO adjoint control variables.
 #
 # The single control is the initial sea surface height, enabled by
-# ALLOW_ETAN0_CONTROL in code_ad/CTRL_OPTIONS.h.  ctrl_map_ini.F reads
-# xx_etan.<optimcycle> through ACTIVE_READ_XY and adds it to both etaN and
-# etaH, which is the physically consistent meaning of "perturb the initial sea
-# surface": at nIter0 the two are equal.
+# ALLOW_GENARR2D_CONTROL in code_ad/CTRL_OPTIONS.h.
+#
+# NOT ALLOW_ETAN0_CONTROL: in c68j every block of that flag lives inside
+# #ifdef ECCO_CTRL_DEPRECATED, which is defined nowhere, so CTRL_MAP_INI
+# compiles to an empty subroutine and the adjoint comes back identically zero.
+# The generic-array path is the live one.
+#
+# ctrl_map_ini_genarr.F keys on the first 7 characters of xx_genarr2d_file, so
+# the name must start with 'xx_etan'; it then calls
+# CTRL_MAP_GENARR2D( etaN, ... ), which ACTIVE_READ_XY's
+# xx_etan.<optimcycle> against xx_genarr2d_dummy(1) and adds it to etaN,
+# masked by the surface maskC.  etaH follows through UPDATE_ETAH.
+#
+# xx_genarr2d_weight must be non-blank or ctrl_init.F:807 never registers the
+# control and ctrl_map_ini_genarr.F:117 never matches it -- a blank weight is a
+# second, quieter way to get a zero adjoint.  The named file is read
+# unconditionally by READ_REC_3D_RL at ctrlprec (= 64, big-endian float64).
+#
+# 'noscaling' is REQUIRED for ground truth.  Without it ctrl_map_genarr.F:142
+# divides the control by SQRT(wgenarr2d), which rescales the returned gradient
+# by the same factor.  With it, fld = fld + xx_gen*mask and the gradient is
+# dJ/deta in metres per metre, unscaled.  wetan_ones.bin then only has to be
+# positive; it is staged as exact ones by scripts/stage_adjoint_run.py.
+#
+# xx_genarr2d_bounds is left at its default of all zeros: CTRL_BOUND_2D is a
+# no-op unless boundsVec(1) < boundsVec(4).
 #
 # The gradient comes back as adxx_etan.<optimcycle>.data, 62x62.
  &CTRL_NML
- xx_etan_file = 'xx_etan',
  &
 #
 # names for ctrl_pack / ctrl_unpack
  &CTRL_PACKNAMES
  &
 #
-# names for CTRL_GENARR / CTRL_GENTIM -- unused here
+# the generic 2-D control: initial etaN
  &CTRL_NML_GENARR
+ xx_genarr2d_file(1)      = 'xx_etan',
+ xx_genarr2d_weight(1)    = 'wetan_ones.bin',
+ xx_genarr2d_preproc(1,1) = 'noscaling',
  &

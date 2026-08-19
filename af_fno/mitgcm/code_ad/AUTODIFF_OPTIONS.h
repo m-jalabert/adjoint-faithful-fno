@@ -37,7 +37,14 @@ C       >>> Checkpointing as handled by TAMC
 C       >>> Extract adjoint state
 #define ALLOW_AUTODIFF_MONITOR
 C       >>> and DYNVARS_DIAG adjoint state
-#define ALLOW_AUTODIFF_MONITOR_DIAG
+C   AF--FNO: undefined, matching verification/tutorial_tracer_adjsens/code_ad
+C   (a working reference build).  Gates CALL ADEXCH_3D_RL(adrhoinsitu,...)/
+C   (adtotphihyd,...) in addummy_in_dynamics.F, for which -- like
+C   ADEXCH_3D_RL/ADEXCH_UV_3D_RL above -- no hand-written adjoint ships in
+C   this checkout.  Only ever referenced behind #ifdef guards in adcommon.h
+C   and g_common.h, never required unconditionally, and the calls it removes
+C   are dead at runtime for the same dumpAdVarExch.EQ.1 reason as above.
+#undef ALLOW_AUTODIFF_MONITOR_DIAG
 
 C       >>> DO 2-level checkpointing instead of 3-level
 c#undef AUTODIFF_2_LEVEL_CHECKPOINT
@@ -82,6 +89,33 @@ C   ALLOW_USTRESS_CONTROL etc. are all undef), so TAF correctly does not
 C   generate adexch_uv_xy_rs/adexch_xy_rs, and addummy_in_stepping.F's
 C   unconditional calls to them fail to link without this flag.
 #define AUTODIFF_EXCLUDE_ADEXCH_RS
+
+C   AF--FNO: addummy_in_stepping.F has a second, unrelated unconditional call
+C   site -- ADEXCH_3D_RL / ADEXCH_UV_3D_RL for adTheta/adSalt/adwVel/aduVel/
+C   advVel -- guarded by #ifndef ALLOW_BULK_OFFLINE.  No hand-written adjoint
+C   for these ships in this checkout: eesupp/src/exch1_ad.flow declares an
+C   ADNAME override to adexch_3d_rl/adexch_uv_3d_rl (so TAF will not
+C   auto-generate them), but no file in the c68j tree -- including every
+C   verification-directory code_ad reference experiment -- defines them.
+C   NOTE: never write a literal slash-star-slash sequence in this file, even
+C   in a Fortran "C" comment: traditional cpp does not respect Fortran
+C   column rules and opens a real C-style comment that can silently eat a
+C   later #endif, exactly as this line once did.
+C
+C   ALLOW_BULK_OFFLINE was first added to CPP_OPTIONS.h, which is the wrong
+C   file: addummy_in_stepping.F only #includes AUTODIFF_OPTIONS.h and
+C   AD_CONFIG.h, so a define in CPP_OPTIONS.h is invisible to it.  Confirmed
+C   by direct inspection of the preprocessed .f: the ADEXCH_3D_RL calls were
+C   still present verbatim after that first attempt.  Elsewhere the flag is
+C   referenced only by pkg/exf/exf_getclim.F and pkg/exf/exf_init_varia.F,
+C   neither in packages.conf, so defining it here has no other effect.
+C
+C   The calls it removes are provably dead at runtime regardless: they sit
+C   inside a block gated on dumpAdVarExch.EQ.1, and autodiff_readparms.F
+C   defaults dumpAdVarExch to 2, which input_ad/data.autodiff does not
+C   override.  This flag only resolves a link-time symbol requirement for
+C   code that never executes.
+#define ALLOW_BULK_OFFLINE
 
 C   ==================================================================
 #endif /* ndef ECCO_CPPOPTIONS_H */

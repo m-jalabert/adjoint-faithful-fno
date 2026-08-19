@@ -1,0 +1,340 @@
+{
+  "version": "adjoint_phase_a_v1",
+  "contract_status": "frozen_before_any_phase_a_metric",
+  "plan": "docs/Adjoint_study_Phase_A.md",
+  "purpose": "compare dJ/d eta(day 7200) through the published production emulator against MITgcm/TAF, at 10/20/30/90-day leads, for two scalar SSH objectives",
+  "window": {
+    "base_iteration": 2592000,
+    "steps_per_day": 72,
+    "source_day": 7200,
+    "source_iteration": 3110400,
+    "lead_days": [
+      10,
+      20,
+      30,
+      90
+    ],
+    "cost_days": [
+      7210,
+      7220,
+      7230,
+      7290
+    ],
+    "cost_iterations": [
+      3111120,
+      3111840,
+      3112560,
+      3116880
+    ],
+    "limit_rationale": "90 days is the emulator's fine-tune rollout horizon and Bire et al.'s decorrelation estimate, not a statement about S0 predictability: the S0 SST anomaly pattern-correlates with itself at 0.992 after 171 days, so the linearization is expected to hold across the whole window",
+    "source_block": "evaluation truth only (7200-8999): never trained on, never validated on, never a rollout start"
+  },
+  "sweeps": {
+    "primary": {
+      "name": "B_fixed_source",
+      "definition": "source day 7200 fixed, cost day moves to 7200 + L",
+      "rationale": "isolates propagation length from initial condition, and matches the fine-tune's own rollout axis"
+    },
+    "companion": {
+      "name": "A_fixed_cost",
+      "definition": "cost day 7290 fixed, dJ/d eta(t) for every t in [7200, 7290]",
+      "rationale": "the classic backward-in-time sensitivity movie; falls out of the lead-90 run free on both sides",
+      "mitgcm_leads": 91,
+      "fno_leads": 9
+    }
+  },
+  "objectives": {
+    "primary": "ssh_anomaly",
+    "ssh_anomaly": {
+      "definition": "J = eta(p*, T) - <eta(T)>_A",
+      "weight_file": "work/costWeight_ssh_anomaly.bin",
+      "weight_sha256": "8b073515ebb463f6c3d9e4be1a7277a4cb7e299c846ac727c269164488974646",
+      "rationale": "the only objective with a passed grdchk on this executable, and the sharpest thing that can be asked for"
+    },
+    "ssh_anomaly_kernel": {
+      "definition": "J = sum_j g_j eta(i*, j, T) - <eta(T)>_A",
+      "weight_file": "work/costWeight_ssh_anomaly_kernel.bin",
+      "weight_sha256": "3e1659735a2899aa4bff7fe16fcfff1b8cfd2edf09140074bf2e7c97f6bab7b7",
+      "kernel": {
+        "shape": "gaussian",
+        "axis": "meridional",
+        "sigma_cells": 1.0,
+        "radius_cells": 2,
+        "stencil_cells": 5,
+        "weights": [
+          0.05448868454964329,
+          0.24420134200323337,
+          0.4026199468942466,
+          0.24420134200323337,
+          0.05448868454964329
+        ],
+        "all_stencil_cells_wet": true,
+        "centroid_equals_target": true
+      },
+      "rejected_alternatives": {
+        "isotropic_5x5_gaussian": "the Munk layer is one grid cell wide ((A_h/beta)^(1/3) ~ 63 km against ~79-96 km zonal spacing; 0.84 m/s at i=2 against 0.17 m/s at i=3), so zonal smoothing mixes the boundary current with the interior and changes what is being measured. It also reaches the land rim: only 15 of 25 cells are usable and wet renormalization displaces the effective centroid 0.504 cells east, off the jet",
+        "sigma_1p5": "better band-limiting (H=0.13 against 0.40 at the operator cutoff) but a 7-cell stencil spans ~777 km along the jet. sigma is a runtime input, so this costs one 20-minute run to revisit"
+      },
+      "band_limiting": {
+        "operator_mode_cut": "|k| <= 16 of 37 available, on the 74x74 domain-padded grid",
+        "shortest_representable_wavelength_cells": 4.625,
+        "cutoff_wavenumber_rad_per_cell": 1.3585265529036943,
+        "transfer_at_cutoff_sigma_1": 0.3975,
+        "note": "partial by design: the zonal delta is left intact. The definitive answer on high-k sensitivity comes from the radial power spectra, not from the kernel choice"
+      }
+    },
+    "mean_only": {
+      "definition": "J = -<eta(T)>_A",
+      "weight_file": "work/costWeight_mean_only.bin",
+      "weight_sha256": "c29563ecec4b2b533fcba93b83c16287802780196d27ad54459ac30fb6eb76d7",
+      "exact_answer": "MITgcm conserves the area integral of eta exactly (implicitFreeSurface + exactConserv, closed basin, no freshwater flux), so the adjoint of the mean functional is constant in time and equals the weight field itself at every lead. Gate G3 on the MITgcm side; a measurement of global sea-level conservation error on the FNO side"
+    }
+  },
+  "target": {
+    "contract": "config/mitgcm_adjoint_s0_target_v1.json",
+    "i_global": 2,
+    "j_global": 17,
+    "i_index0": 1,
+    "j_index0": 16,
+    "immutable": true
+  },
+  "emulator": {
+    "version": "model_c_production_1in_1out_spectralnorm_ft90_v1",
+    "checkpoint": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/model_c_production_1in_1out_spectralnorm_ft90_v1/selected.pt",
+    "checkpoint_sha256": "4acb7633d85a4df3925843cc833d248e86fcd5d2569ba0300c9c58b022537806",
+    "optimizer_step": 1440,
+    "normalization_sha256": "fe424b37d74f5b9d901728c8d585245e12ab67e4230a2eb86f6edc43108d96bf",
+    "expected_parameter_count": 27297960,
+    "external_input_channels": 51,
+    "state_channels": 46,
+    "eta_channel_index0": 45,
+    "markov": true,
+    "markov_note": "one input state, so dJ/d eta(t0) is a total derivative with respect to a complete initial condition -- structurally the same object as MITgcm's adxx_etan. The two-input predecessor's history slot, and the off-manifold caveat it carried, do not exist here",
+    "adjoint_clean": "the per-mode spectral cap is materialized on write, so the checkpoint loads into a plain ProductionFNO whose inference layer is exactly y_hat(k) = R_k_tilde x_hat(k) and whose adjoint is R_k_tilde^H. No clipping branch, no power iteration, no live buffer in the graph",
+    "precision": "float64 throughout; the float32 difference is reported as gate F4, not chosen between"
+  },
+  "reference": {
+    "model": "MITgcm checkpoint68j",
+    "commit": "f03a2f5e214bc57b8393f6201a6a1266dd1f53d6",
+    "taf_version": "6.8.11",
+    "executable": "build/af_s0_ad/mitgcmuv_ad",
+    "executable_sha256": "787246365e96a93bded565a61efe429df038e29ed013289938bbd67626448b41",
+    "taf_resubmission_required": false,
+    "taf_rationale": "nchklev_1*nchklev_2*nchklev_3 = 72*200*1 = 14400 >= 6480 steps. No .F file, CPP flag, header, package or tamc.h value is touched, so the differentiated source is unchanged and the v1 executable is reused byte-for-byte",
+    "cg2d_target_residual_production": 1e-07,
+    "cg2d_target_residual_grdchk": 1e-12,
+    "cg2d_rationale": "1e-7 is what every S0 forward segment was integrated with and what the emulator was trained on; tightening it produces the adjoint of a model the emulator never saw. 1e-12 is diagnostic only, and exists because the finite difference -- not the adjoint -- is what 1e-7 limits",
+    "write_binary_prec": 64,
+    "adj_dump_freq_seconds": 86400.0,
+    "ivdc_kappa": 1.0
+  },
+  "trajectories": {
+    "forced": {
+      "name": "S_forced",
+      "linearized_about": "the MITgcm truth trajectory, states read from the zarr at days 7200, 7210, ...",
+      "role": "primary comparison against MITgcm -- the matched object, since MITgcm's adjoint is linearized about the truth trajectory by construction"
+    },
+    "free": {
+      "name": "S_free",
+      "linearized_about": "the emulator's own autoregressive trajectory from day 7200",
+      "role": "primary operational answer -- what a deployed user actually gets"
+    },
+    "decomposition": {
+      "jacobian_error": "S_mitgcm vs S_forced",
+      "trajectory_error": "S_forced vs S_free",
+      "total": "S_mitgcm vs S_free"
+    },
+    "identity": "at lead 10 the two chains are identical by construction (one call, same truth state), so ||S_forced_10 - S_free_10|| must be exactly 0"
+  },
+  "gates": {
+    "no_threshold_on_comparison_metrics": "F1-F7 guard the FNO pipeline, G0-G5 guard the reference; the science is reported, not graded. This is the first measurement of this quantity for this model and inventing a threshold before seeing the number would be reverse-engineering a verdict",
+    "fno": {
+      "F1": {
+        "condition": "pipeline J on truth eta(T) matches numpy (w*eta).sum()",
+        "tolerance": 1e-10,
+        "scope": "all four leads, both objectives"
+      },
+      "F2": {
+        "condition": "|FD/adjoint - 1| < 1e-6 with a visible plateau",
+        "tolerance": 1e-06,
+        "scope": "every lead",
+        "note": "the operator is smooth with no branches and no saturation, so a loose F2 is a pipeline bug, not physics. A bug fails at every lead; a genuine nonlinearity fails only at long lead and large epsilon"
+      },
+      "F3": {
+        "condition": "plain ProductionFNO, 27,297,960 parameters, no live spectral-norm hook/buffer/wrapper, both masks in the graph"
+      },
+      "F4": {
+        "condition": "float32 and float64 gradients agree",
+        "tolerance": 0.0001
+      },
+      "F5": {
+        "condition": "S_forced at lead 10 equals S_free at lead 10 exactly",
+        "tolerance": 0.0
+      },
+      "F6": {
+        "condition": "weight-field SHA-256 equals the MITgcm run manifest's"
+      },
+      "F7": {
+        "condition": "report ||S_fno_mean(L) - w_mean|| / ||w_mean|| at every lead",
+        "tolerance": null,
+        "note": "a measurement, not a pass/fail"
+      }
+    },
+    "mitgcm": {
+      "G0": {
+        "condition": "forward re-run matches trajectories_v3.zarr bit-for-bit",
+        "scope": "days 7200-7289 from P90's own forward dumps; day 7290 is never dumped (dumpAtLast=.FALSE.) and is covered by G5"
+      },
+      "G1": {
+        "condition": "|FD/adjoint - 1| < 1e-4 at all 7 points with a visible plateau",
+        "tolerance": 0.0001,
+        "scope": "re-earned at the 90-day window"
+      },
+      "G2a": {
+        "condition": "P90 adxx_etan equals P90 ADJetan at day 7200 (two independent code paths)",
+        "tolerance": 1e-06
+      },
+      "G2b": {
+        "condition": "V10 adxx_etan equals P90 ADJetan at day 7280",
+        "tolerance": 1e-06,
+        "note": "the exact v1 G2 structure: a 90-day tape must return the same adjoint state as a fresh 10-day run"
+      },
+      "G3": {
+        "condition": "mean-only cost returns its own weight field at every dump",
+        "tolerance": 1e-05,
+        "scope": "91 dumps, 90 level-2 tape records"
+      },
+      "G4": {
+        "condition": "S exactly 0 on all 244 land cells, finite everywhere"
+      },
+      "G5": {
+        "condition": "fc equals sum(w*eta(T)) in numpy",
+        "tolerance": "the computed float32 half-ulp bound of that particular weighted sum, never a constant"
+      }
+    }
+  },
+  "mitgcm_runs": [
+    {
+      "name": "P10",
+      "weight": "ssh_anomaly",
+      "n_iter0": 3110400,
+      "n_time_steps": 720,
+      "cost_day": 7210
+    },
+    {
+      "name": "P20",
+      "weight": "ssh_anomaly",
+      "n_iter0": 3110400,
+      "n_time_steps": 1440,
+      "cost_day": 7220
+    },
+    {
+      "name": "P30",
+      "weight": "ssh_anomaly",
+      "n_iter0": 3110400,
+      "n_time_steps": 2160,
+      "cost_day": 7230
+    },
+    {
+      "name": "P90",
+      "weight": "ssh_anomaly",
+      "n_iter0": 3110400,
+      "n_time_steps": 6480,
+      "cost_day": 7290
+    },
+    {
+      "name": "K10",
+      "weight": "ssh_anomaly_kernel",
+      "n_iter0": 3110400,
+      "n_time_steps": 720,
+      "cost_day": 7210
+    },
+    {
+      "name": "K20",
+      "weight": "ssh_anomaly_kernel",
+      "n_iter0": 3110400,
+      "n_time_steps": 1440,
+      "cost_day": 7220
+    },
+    {
+      "name": "K30",
+      "weight": "ssh_anomaly_kernel",
+      "n_iter0": 3110400,
+      "n_time_steps": 2160,
+      "cost_day": 7230
+    },
+    {
+      "name": "K90",
+      "weight": "ssh_anomaly_kernel",
+      "n_iter0": 3110400,
+      "n_time_steps": 6480,
+      "cost_day": 7290
+    },
+    {
+      "name": "C90",
+      "weight": "mean_only",
+      "n_iter0": 3110400,
+      "n_time_steps": 6480,
+      "cost_day": 7290
+    },
+    {
+      "name": "V10",
+      "weight": "ssh_anomaly",
+      "n_iter0": 3116160,
+      "n_time_steps": 720,
+      "cost_day": 7290
+    },
+    {
+      "name": "G90",
+      "weight": "ssh_anomaly",
+      "n_iter0": 3110400,
+      "n_time_steps": 6480,
+      "cost_day": 7290,
+      "grdchk": true
+    }
+  ],
+  "output": {
+    "fno": "outputs/af_fno/adjoint/fno_ft90_s0_adjoint_v1",
+    "mitgcm": "outputs/af_fno/adjoint/mitgcm_s0_adjoint_v2",
+    "comparison": "outputs/af_fno/adjoint/comparison_phase_a_v1",
+    "frozen_and_not_touched": [
+      "outputs/af_fno/adjoint/mitgcm_s0_adjoint_v1"
+    ],
+    "stale_kept_for_provenance": [
+      "outputs/af_fno/adjoint/fno_s0_adjoint_v1"
+    ]
+  },
+  "conventions": {
+    "sign": "S > 0: raising eta at (i,j) raises the target anomaly",
+    "units": "dimensionless (metres of J per metre of eta)",
+    "grid": "cell centres, (j,i) order matching the zarr spatial axes",
+    "land": "exactly 0, not NaN -- on both sides, by construction: MITgcm's eta on land is not a degree of freedom, and the emulator's input mask removes it as one"
+  },
+  "declared_out_of_scope": {
+    "multi_field_adjoint": "dJ/dU, dJ/dV and dJ/dTheta come free on both sides (the FNO's lambda_k carries all 46 channels; MITgcm's addummy_in_stepping.F dumps ADJuvel/ADJvvel/ADJtheta). Phase A archives them and compares eta only; the multi-field comparison is Phase B",
+    "day_2000": "the emulator side is 200 backward passes and feasible; the MITgcm side needs a checkpointing redesign. gate-long-horizon-is-90-360 records that nothing in the acceptance gate looks past day 360 anyway",
+    "turbulent_regimes": "S0 is a friendly case for an adjoint study precisely because it is not chaotic. A Bire-comparable adjoint comparison lives on the 0.25-degree campaign"
+  },
+  "mitgcm_forward_runs": [
+    {
+      "name": "F90",
+      "n_iter0": 3110400,
+      "n_time_steps": 6552,
+      "days": 90,
+      "tail_days": 1,
+      "pchkpt_freq_seconds": 864000.0,
+      "purpose": "forward executable, day 7200 -> 7290 plus one tail day. Produces (a) the day-7280 pickup V10 starts from, which no archive segment holds, (b) daily snapshots for gate G0 over the whole ninety-day window, and (c) the day-7290 snapshot, which no adjoint run dumps because data.diagnostics sets dumpAtLast=.FALSE. and the cost sits at the final iteration",
+      "pickups_at_days": [
+        7210,
+        7220,
+        7230,
+        7240,
+        7250,
+        7260,
+        7270,
+        7280,
+        7290
+      ]
+    }
+  ]
+}

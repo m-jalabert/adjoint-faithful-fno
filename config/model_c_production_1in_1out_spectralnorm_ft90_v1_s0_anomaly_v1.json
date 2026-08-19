@@ -1,0 +1,120 @@
+{
+  "adds_only": true,
+  "artifacts": {
+    "dataset_metadata": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/trajectories_v3.zarr/.zmetadata",
+      "sha256": "766cae89359311775c79103f44dc74630630ba6b7a0a8c6e9d26f73487512136"
+    },
+    "figure_package_arrays": {
+      "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/model_c_production_1in_1out_spectralnorm_ft90_v1_s0_figures_v1/S0/model_c_bire_s0_figures_arrays.npz",
+      "sha256": "bd4f622af3dbfed1860bd68546b8ff1bd2638f5a5ac771bec4a6b9c924b67dd2"
+    },
+    "figure_package_contract": {
+      "path": "/home/mjalabert314/bire_james25_repro/config/model_c_production_1in_1out_spectralnorm_ft90_v1_s0_figures_v1.json",
+      "sha256": "b86a2ca6400fbbd551ac311714cb9815e190b84cfbc8673922675bdb26054a9e"
+    },
+    "figure_package_manifest": {
+      "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/model_c_production_1in_1out_spectralnorm_ft90_v1_s0_figures_v1/S0/manifest.json",
+      "sha256": "e075d1f69696ab737967b46d7f87b6454cc4887d225212ca1bd73806dd9fe2b5"
+    },
+    "figure_package_report": {
+      "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/model_c_production_1in_1out_spectralnorm_ft90_v1_s0_figures_v1/S0/model_c_bire_s0_figures_report.json",
+      "sha256": "8d211848e1bc30bb133fc42d99ba14b3c4c27894a325ea54fabdc1fc537de29b"
+    },
+    "parent_anomaly_report": {
+      "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/model_c_production_1in_1out_spectralnorm_v1_s0_anomaly_v1/S0/model_c_bire_s0_anomaly_report.json",
+      "sha256": "0ba4cde53566d4646814f50d7decddfece69503bb407a5106dd778775478b841"
+    }
+  },
+  "comparison": {
+    "parent_anomaly_package": "model_c_production_1in_1out_spectralnorm_v1_s0_anomaly_v1",
+    "reported": [
+      "day2000_anomaly_rms_ratio",
+      "day2000_western_boundary_to_interior_rms_ratio"
+    ]
+  },
+  "contract_status": "frozen_after_the_fine_tuned_figure_package_and_before_any_anomaly_metric",
+  "dataset": {
+    "tau0_n_m2": {
+      "S0": 0.1
+    },
+    "train": [
+      0,
+      6000
+    ],
+    "version": "trajectories_v3"
+  },
+  "modifies_published_figures": false,
+  "output": {
+    "one_folder_per_regime": true,
+    "overwrite": false,
+    "project_root": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/model_c_production_1in_1out_spectralnorm_ft90_v1_s0_anomaly_v1",
+    "required": [
+      "model_c_bire_figure3a_streamfunction_anomaly_1deg_s0_dt10.png",
+      "model_c_bire_figure7a_streamfunction_anomaly_day060_day2000_s0.png",
+      "model_c_bire_reference_time_mean_streamfunction_s0.png",
+      "model_c_bire_s0_anomaly_report.json",
+      "model_c_bire_s0_anomaly_arrays.npz",
+      "README.md",
+      "manifest.json"
+    ],
+    "scratch_root": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/model_c_production_1in_1out_spectralnorm_ft90_v1_s0_anomaly_v1"
+  },
+  "protocol": {
+    "day2000_structure_diagnostics": [
+      "anomaly_rms_ratio",
+      "amplitude_normalized_meridional_and_zonal_first_difference_rms",
+      "hann_directional_power_fraction_above_0p2_cycles_per_cell",
+      "western_first_4_wet_cells_rms_and_boundary_to_interior_ratio"
+    ],
+    "figure3_lead_days": [
+      0,
+      10,
+      20,
+      30,
+      40
+    ],
+    "figure7_lead_days": [
+      60,
+      2000
+    ],
+    "figure_names": [
+      "model_c_bire_figure3a_streamfunction_anomaly_1deg_s0_dt10.png",
+      "model_c_bire_figure7a_streamfunction_anomaly_day060_day2000_s0.png"
+    ],
+    "member": 0,
+    "parent_version": "model_c_production_1in_1out_spectralnorm_v1",
+    "primary_regime": "S0",
+    "reads_model_weights": false,
+    "rolls_nothing_out": true,
+    "training_version": "model_c_production_1in_1out_spectralnorm_ft90_v1"
+  },
+  "purpose": "streamfunction-anomaly companions to the fine-tune's figures 3 and 7, removing the same MITgcm training-mean field the parent's anomaly package removed so the two arms' transient amplitudes and western-boundary structure are directly comparable",
+  "reference": {
+    "days": [
+      0,
+      6000
+    ],
+    "definition": "time_mean_barotropic_streamfunction_over_training_days_only",
+    "identical_to_the_parent_packages_reference": true,
+    "is_two_dimensional_field": true,
+    "model_own_mean_used": false,
+    "not_a_scalar_spatial_mean": true,
+    "regime": "S0",
+    "source": "mitgcm",
+    "subtracted_from": "both_truth_and_prediction",
+    "why_identical": "an anomaly is only comparable between two models if the standing gyre removed from both is the same field. This is MITgcm's own training-block mean, so it depends on neither model"
+  },
+  "source_hashes": {
+    "src/oceanfno/anomaly.py": "1b105f22b36bdacf4a6dc1739e3af313101236a47832ba93002f9f35c18bcbf8",
+    "src/oceanfno/anomaly_ft90.py": "aa246c0dba0c4b41a9817f3b0f61096abba2a432e974853255259d52c9f5b8f0",
+    "src/oceanfno/dataset.py": "9abbabb73b9f7fd0093314061305ca52ec65d4439e22f764ce142d7afa90e820",
+    "src/oceanfno/diagnostics.py": "149cca17b714b535a1d60e83c3548adaaaa338f483434f28cdd476103644c844",
+    "src/oceanfno/figures.py": "c16f979624818340e491cfd1f649d4e79fe5e72ca0b48936f9865e01b41e2430",
+    "src/oceanfno/figures_ft90.py": "116fb6370728efec543bb83a2deb655d293af3a25d67be90d45ac6ff75cdef30",
+    "src/oceanfno/finetune.py": "a70c822c611a766d77b562359d74c3a59ca53b2724d1294d525e968bf3eaf78a",
+    "src/oceanfno/plots.py": "fd3d65a4bb6e65a9302c63631ae13431ebf3a4c845babd29fba3c7cd0f3e32ea",
+    "src/oceanfno/runtime.py": "d099a7b878fc4c32e88d073c02fc3ec4a1a3e9c152a59d4acff878dfe2f13c06"
+  },
+  "version": "model_c_production_1in_1out_spectralnorm_ft90_v1_s0_anomaly_v1"
+}

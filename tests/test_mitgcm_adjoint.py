@@ -129,7 +129,7 @@ def test_tile_decomposition_reproduces_the_anomaly() -> None:
     wet_area = float((rac * wet).sum())
     j0, i0 = 3, 2
 
-    weight = build_weight("ssh_anomaly", wet, rac, wet_area, j0, i0)
+    weight, _ = build_weight("ssh_anomaly", wet, rac, wet_area, j0, i0)
 
     # what COST_FINAL assembles: per-tile partial sums, then a global sum
     half_y, half_x = ny // 2, nx // 2
@@ -152,7 +152,7 @@ def test_mean_only_weight_sums_to_minus_one() -> None:
     wet[0, :] = wet[-1, :] = False
     rac = rng.uniform(0.5, 1.5, size=(6, 6))
     wet_area = float((rac * wet).sum())
-    weight = build_weight("mean_only", wet, rac, wet_area, 2, 2)
+    weight, _ = build_weight("mean_only", wet, rac, wet_area, 2, 2)
     assert weight.sum() == pytest.approx(-1.0, rel=1e-12)
 
 
@@ -215,7 +215,12 @@ def test_code_ad_has_every_required_file() -> None:
     "filename,token",
     [
         ("COST_OPTIONS.h", "#define ALLOW_COST_TEST"),
-        ("CTRL_OPTIONS.h", "#define ALLOW_ETAN0_CONTROL"),
+        # The initial-SSH control MUST come through the generic-array path.
+        # ALLOW_ETAN0_CONTROL is dead code in c68j -- every one of its blocks
+        # is inside #ifdef ECCO_CTRL_DEPRECATED, which nothing defines -- so
+        # enabling it yields a complete build whose gradient is identically
+        # zero.  See test_etan0_control_stays_off below.
+        ("CTRL_OPTIONS.h", "#define ALLOW_GENARR2D_CONTROL"),
         ("AUTODIFF_OPTIONS.h", "#define ALLOW_AUTODIFF_TAMC"),
         ("AUTODIFF_OPTIONS.h", "#define ALLOW_TAMC_CHECKPOINTING"),
         # ADJetan dumps at adjDumpFreq come from pkg/autodiff/addummy_for_etan.F,
@@ -322,9 +327,66 @@ def test_cost_test_reads_the_weight_passively() -> None:
     assert "MDSREADFIELD" not in code
 
 
+def test_etan0_control_stays_off() -> None:
+    """ALLOW_ETAN0_CONTROL produces a silently zero adjoint in c68j.
+
+    ctrl_init.F:552, ctrl_map_ini.F:531, ctrl_pack.F:613, ctrl_unpack.F:703 and
+    grdchk_getxx.F:601 are all inside #ifdef ECCO_CTRL_DEPRECATED, and nothing
+    in this checkout defines it.  Turning the flag on compiles CTRL_MAP_INI to
+    an empty subroutine, so xx_etan_dummy never reaches etaN and TAF returns
+    "the independent variables have no influence on the variables : fc".  The
+    build succeeds and every gradient is zero, which is why this is a test.
+    """
+
+    text = (CODE_AD / "CTRL_OPTIONS.h").read_text()
+    assert "#undef ALLOW_ETAN0_CONTROL" in text
+    assert "#define ECCO_CTRL_DEPRECATED" not in text
+
+
 def test_grdchk_targets_the_etan_control() -> None:
+    """grdchkvarindex = 100 + iarr selects the iarr-th generic 2-D control."""
+
     text = (INPUT_AD / "data.grdchk").read_text()
-    assert "grdchkvarindex = 29" in text, "29 is xx_etan (ctrl_init.F, grdchk_getxx.F:602)"
+    assert "grdchkvarindex = 101" in text, "101 = 100 + 1 (ctrl_init.F:807)"
+
+
+def test_grdchk_nbeg_is_zero() -> None:
+    """nbeg must be 0 or iGloPos/jGloPos are ignored entirely.
+
+    grdchk_main.F:213 calls GRDCHK_GET_POSITION only when nbeg .EQ. 0.  With
+    any other value icomp indexes the packed control vector directly, so the
+    check silently runs at the first wet cell instead of the requested one --
+    it still prints a plausible grad-res block, just for the wrong cell.
+    """
+
+    text = (INPUT_AD / "data.grdchk").read_text()
+    values = {}
+    for line in text.splitlines():
+        stripped = line.strip()
+        if stripped.startswith(("nbeg", "nend", "nstep")):
+            name, _, value = stripped.partition("=")
+            values[name.strip()] = int(value.strip().rstrip(","))
+    assert values["nbeg"] == 0
+    # GRDCHK_GET_POSITION does nend = nbeg + nend, so nend is an offset:
+    # 0 means exactly one test point.
+    assert values["nend"] == 0
+
+
+def test_genarr_control_is_fully_specified() -> None:
+    """The two silent ways to get a zero or rescaled gradient.
+
+    - A blank xx_genarr2d_weight means ctrl_init.F:807 never registers the
+      control and ctrl_map_ini_genarr.F:117 never matches it.
+    - Without 'noscaling', ctrl_map_genarr.F:142 divides the control by
+      SQRT(wgenarr2d), which rescales the returned gradient by that factor.
+    """
+
+    text = (INPUT_AD / "data.ctrl").read_text()
+    assert "xx_genarr2d_file(1)" in text and "'xx_etan'" in text
+    weight = [l for l in text.splitlines() if l.strip().startswith("xx_genarr2d_weight(1)")]
+    assert weight, "xx_genarr2d_weight(1) must be set"
+    assert weight[0].split("=", 1)[1].strip().strip(",").strip("'").strip() != ""
+    assert "'noscaling'" in text
 
 
 def test_grdchk_position_is_tile_local_and_in_range() -> None:

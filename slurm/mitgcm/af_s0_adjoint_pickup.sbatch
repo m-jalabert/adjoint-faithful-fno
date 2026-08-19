@@ -40,7 +40,7 @@ cd "${AF_PROJECT_ROOT}"
 
 RUN_DIR="${AF_SCRATCH_ROOT}/pickup"
 cd "${RUN_DIR}"
-srun --ntasks=4 ./mitgcmuv > run.log 2>&1
+srun --mpi=pmix -n 4 ./mitgcmuv > run.log 2>&1
 
 # The pickups Run A and Run B depend on must exist before anything downstream.
 for ITER in 0003111120 0003111840; do

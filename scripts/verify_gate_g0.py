@@ -48,6 +48,31 @@ def read_mds_record(run_dir: Path, prefix: str, iteration: int, nz: int) -> np.n
     return values.reshape(nz, 62, 62).astype(np.float32)
 
 
+def center_velocities(dyn: np.ndarray) -> np.ndarray:
+    """Put UVEL/VVEL on cell centres, exactly as the dataset builder does.
+
+    The raw MDS `dynState` holds U on west faces and V on south faces, but
+    trajectories_v3.zarr stores them at cell centres: af_data.py:178-179 applies
+
+        u_center = 0.5 * (u + np.roll(u, -1, axis=-1))
+        v_center = 0.5 * (v + np.roll(v, -1, axis=-2))
+
+    and records the convention in its manifest as "u_centering" /
+    "v_centering".  THETA and ETAN are already centred and pass through.
+
+    Comparing raw MDS against the archive without this step makes every wet
+    velocity differ by O(1e-1) while THETA and ETAN match bit-for-bit -- which
+    is a statement about the C grid, not about the restart.
+    """
+
+    u = dyn[0:NR]
+    v = dyn[NR : 2 * NR]
+    theta = dyn[2 * NR : 3 * NR]
+    u_center = 0.5 * (u + np.roll(u, -1, axis=-1))
+    v_center = 0.5 * (v + np.roll(v, -1, axis=-2))
+    return np.concatenate([u_center, v_center, theta], axis=0).astype(np.float32)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -82,7 +107,7 @@ def main() -> int:
             failures += 1
             continue
 
-        rerun = np.concatenate([dyn, surf], axis=0)
+        rerun = np.concatenate([center_velocities(dyn), surf], axis=0)
         truth = np.asarray(state[arguments.regime_index, day]).astype(np.float32)
 
         identical = bool(np.array_equal(rerun, truth))

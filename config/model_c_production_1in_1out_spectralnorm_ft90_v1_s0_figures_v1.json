@@ -1,0 +1,246 @@
+{
+  "artifacts": {
+    "dataset_metadata": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/trajectories_v3.zarr/.zmetadata",
+      "sha256": "766cae89359311775c79103f44dc74630630ba6b7a0a8c6e9d26f73487512136"
+    },
+    "mitgcm_declaration": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/mitgcm/S0/spinup/years_000_010/data",
+      "sha256": "766d27ac0ae257f4a8817921667b1d25a44add03966817a8561d9153ba627a58"
+    },
+    "mitgcm_sst_relaxation": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/mitgcm/S0/spinup/years_000_010/SST_relax.bin",
+      "sha256": "952f66ed928ad8c42584e5cf43d584ebb2f64c8f3876b871d3ced4ea689dc6dc"
+    },
+    "mitgcm_zonal_spacing": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/mitgcm/S0/spinup/years_000_010/DXF.data",
+      "sha256": "19ff882c63021105620145889630ee457af5187d669d3c5978e0d0d70b4294e6"
+    },
+    "parent_figure_summary": {
+      "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/model_c_production_1in_1out_spectralnorm_v1_s0_figures_v1/S0/model_c_bire_s0_figures_summary.json",
+      "sha256": "46645148e350321ea7def5a0ac93e880d2c4e3bf5c3aa30a1484a1ae07da2565"
+    },
+    "selected_checkpoint": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/model_c_production_1in_1out_spectralnorm_ft90_v1/selected.pt",
+      "sha256": "4acb7633d85a4df3925843cc833d248e86fcd5d2569ba0300c9c58b022537806"
+    },
+    "selected_normalization": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/model_c_production_1in_1out_spectralnorm_ft90_v1/model_c_production_1in_1out_spectralnorm_ft90_v1_train_only_normalization.npz",
+      "sha256": "fe424b37d74f5b9d901728c8d585245e12ab67e4230a2eb86f6edc43108d96bf"
+    },
+    "selected_report": {
+      "path": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/model_c_production_1in_1out_spectralnorm_ft90_v1/model_c_production_1in_1out_spectralnorm_ft90_v1_report.json",
+      "sha256": "e12de33347ef43f256d4d1d8c66904aa40b21a8cf46f970dd5a635c8c28a69c2"
+    }
+  },
+  "baselines": {
+    "climatology": "pointwise_S0_mean_over_the_training_block_0_5999_only",
+    "ensemble_summary": "mean_and_10th_90th_percentiles_across_15_member_metrics",
+    "persistence": "each_members_initial_physical_field_held_fixed_at_every_lead",
+    "rmse": "square_root_of_mean_squared_error_over_wet_cells_for_each_member"
+  },
+  "comparison": {
+    "parent_figure_package": "model_c_production_1in_1out_spectralnorm_v1_s0_figures_v1",
+    "parent_measured": {
+      "day2000_rmse_ratio_to_climatology": {
+        "phihyd_surface": 0.4777746100379193,
+        "sst": 1.4250620533074974,
+        "surface_speed": 1.7636853332849571
+      },
+      "maximum_normalized_magnitude": 10.32812213897705
+    },
+    "parent_summary": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/model_c_production_1in_1out_spectralnorm_v1_s0_figures_v1/S0/model_c_bire_s0_figures_summary.json",
+    "question": "does the fine-tuned emulator settle onto the correct climate attractor -- day-2000 RMSE plateauing near the error between two independent states of the same climate -- rather than continuing to rise? The parent is worse than climatology in SST and surface speed at day 2,000, which is the behaviour under test",
+    "reported": [
+      "maximum_normalized_magnitude",
+      "day2000_rmse_ratio_to_climatology_per_field"
+    ]
+  },
+  "contract_status": "frozen_after_the_ninety_day_fine_tuning_and_validation_and_before_any_inference_metric",
+  "dataset": {
+    "inference": [
+      6200,
+      7200
+    ],
+    "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/trajectories_v3.zarr",
+    "tau0_n_m2": {
+      "S0": 0.1
+    },
+    "train": [
+      0,
+      6000
+    ],
+    "validation": [
+      6000,
+      7200
+    ],
+    "version": "trajectories_v3"
+  },
+  "output": {
+    "one_folder_per_regime": true,
+    "overwrite": false,
+    "project_root": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/model_c_production_1in_1out_spectralnorm_ft90_v1_s0_figures_v1",
+    "required": [
+      "model_c_bire_figure3_streamfunction_1deg_s0_dt10.png",
+      "model_c_bire_figure4_dt10_rmse_0_200_days_s0.png",
+      "model_c_bire_figure5_dt10_single_member_rmse_s0.png",
+      "model_c_bire_figure6_dt10_acc_0_200_days_s0.png",
+      "model_c_bire_figure7_dt10_streamfunction_day060_day2000_s0.png",
+      "model_c_bire_figure8_dt10_rmse_0_2000_days_s0.png",
+      "model_c_bire_s0_figures_report.json",
+      "model_c_bire_s0_figures_arrays.npz",
+      "model_c_bire_s0_figures_summary.json",
+      "model_c_bire_s0_ensemble_curves.csv",
+      "manifest.json",
+      "README.md"
+    ],
+    "scratch_root": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/model_c_production_1in_1out_spectralnorm_ft90_v1_s0_figures_v1"
+  },
+  "protocol": {
+    "acc_fields": [
+      "surface_u",
+      "surface_v",
+      "phihyd_surface",
+      "sst"
+    ],
+    "acc_reference_note": "ACC is a correlation about a time-mean climatology, so its no-skill value is not zero. Figure 6 therefore carries two truth-only references: each member's persistence, and fifteen independent states drawn from the inference block at this seed -- a forecast that knows the climate but nothing about the state. The model curve is only interpretable against that floor",
+    "acc_reference_seed": 20260818,
+    "comparator_model": null,
+    "comparator_note": "the plates carry a single model curve, as the parent's do. A comparator series would mean changing the frozen plot definitions in plots.py, which the parent's own figure contract pins; the parent-versus-fine-tune comparison is recorded in the acceptance gate and the report instead",
+    "figure3_lead_days": [
+      0,
+      10,
+      20,
+      30,
+      40
+    ],
+    "figure7_lead_days": [
+      60,
+      2000
+    ],
+    "figure_names": [
+      "model_c_bire_figure3_streamfunction_1deg_s0_dt10.png",
+      "model_c_bire_figure4_dt10_rmse_0_200_days_s0.png",
+      "model_c_bire_figure5_dt10_single_member_rmse_s0.png",
+      "model_c_bire_figure6_dt10_acc_0_200_days_s0.png",
+      "model_c_bire_figure7_dt10_streamfunction_day060_day2000_s0.png",
+      "model_c_bire_figure8_dt10_rmse_0_2000_days_s0.png"
+    ],
+    "identical_to_the_parent_figure_protocol": true,
+    "inference_set": [
+      6200,
+      7200
+    ],
+    "long_lead_days": "0_to_2000_inclusive_by_10",
+    "maximum_lead_days": 2000,
+    "member_count": 15,
+    "nesting": "nested_validation_inference_protocol_no_independent_third_test_split",
+    "prediction_interval_days": 10,
+    "primary_regime": "S0",
+    "regimes": [
+      "S0"
+    ],
+    "rmse_fields": [
+      "surface_speed",
+      "phihyd_surface",
+      "sst"
+    ],
+    "short_lead_days": "0_to_200_inclusive_by_10",
+    "start_draw_order": [
+      6263,
+      6293,
+      6331,
+      6389,
+      6579,
+      6593,
+      6598,
+      6601,
+      6651,
+      6661,
+      6694,
+      6707,
+      6711,
+      6968,
+      6979
+    ],
+    "start_seed": 20260802,
+    "start_window": [
+      6200,
+      7000
+    ],
+    "static_channels": [
+      "wind_stress_x",
+      "wet_mask",
+      "coriolis_parameter",
+      "zonal_grid_spacing",
+      "sst_relaxation_target"
+    ]
+  },
+  "purpose": "the frozen S0 evaluation suite for the ninety-day fine-tune's selected checkpoint, plus the 2,000-day half of its acceptance gate and the day-2,000 comparison against the parent it continued. The protocol is the parent's to the member, so the two packages are directly comparable",
+  "selected_model": {
+    "architecture": {
+      "channel_mlp_dropout": 0.0,
+      "channel_mlp_expansion": 4.0,
+      "domain_padding": 0.1,
+      "factorization": null,
+      "fno_block_precision": "full",
+      "grid_shape": [
+        62,
+        62
+      ],
+      "hidden_channels": 128,
+      "in_channels": 51,
+      "input_states": 1,
+      "lifting_channel_ratio": 2,
+      "lifting_in_channels": 53,
+      "local_bias": false,
+      "local_kernel_size": 3,
+      "n_layers": 3,
+      "n_modes": [
+        32,
+        32
+      ],
+      "out_channels": 46,
+      "pointwise_layer_norm": true,
+      "positional_channels": 2,
+      "positional_embedding": null,
+      "projection_channel_ratio": 2,
+      "static_channels": [
+        "wind_stress_x",
+        "wet_mask",
+        "coriolis_parameter",
+        "zonal_grid_spacing",
+        "sst_relaxation_target"
+      ],
+      "use_channel_mlp": true
+    },
+    "from_scratch": false,
+    "loss_contract_sha256": "64436febacd20d680b2856476cf293774889b6d49738ad38dd20cbcff0e9fde3",
+    "optimizer_step": 1440,
+    "parent_optimizer_step": 7680,
+    "parent_version": "model_c_production_1in_1out_spectralnorm_v1",
+    "rollout_steps": 9,
+    "training_contract": "/home/mjalabert314/bire_james25_repro/config/model_c_production_1in_1out_spectralnorm_ft90_v1.json",
+    "version": "model_c_production_1in_1out_spectralnorm_ft90_v1"
+  },
+  "source_hashes": {
+    "src/oceanfno/dataset.py": "9abbabb73b9f7fd0093314061305ca52ec65d4439e22f764ce142d7afa90e820",
+    "src/oceanfno/diagnostics.py": "149cca17b714b535a1d60e83c3548adaaaa338f483434f28cdd476103644c844",
+    "src/oceanfno/figures.py": "c16f979624818340e491cfd1f649d4e79fe5e72ca0b48936f9865e01b41e2430",
+    "src/oceanfno/figures_ft90.py": "116fb6370728efec543bb83a2deb655d293af3a25d67be90d45ac6ff75cdef30",
+    "src/oceanfno/finetune.py": "a70c822c611a766d77b562359d74c3a59ca53b2724d1294d525e968bf3eaf78a",
+    "src/oceanfno/model.py": "21504077fce004bf89fee5e57d96ca5bfb9c77f5331d41835544cdd2b6c03908",
+    "src/oceanfno/perturbation_growth.py": "0943adf80ac18bf162ac65ca53bf6c67415654c6e233763768bdcfcd46c334c2",
+    "src/oceanfno/plots.py": "fd3d65a4bb6e65a9302c63631ae13431ebf3a4c845babd29fba3c7cd0f3e32ea",
+    "src/oceanfno/runtime.py": "d099a7b878fc4c32e88d073c02fc3ec4a1a3e9c152a59d4acff878dfe2f13c06",
+    "src/oceanfno/spectral_norm.py": "5c0fc223e3562f748b2c423a7e50d8caeba1621032625f37be025779cf222188",
+    "src/oceanfno/train.py": "71c7c025a2dfea931c47a43b584fd626867a7ca2f33ff0e4d7d95885ddf79098",
+    "src/oceanfno/validation.py": "a489854d72727c8ee8e8dd3a2adb55cf171a3734a8c7e3be35a9f3730a628684"
+  },
+  "truth": {
+    "continuation_required": false,
+    "lead_matched_to_day": 2000,
+    "source": "trajectory_v3_store"
+  },
+  "version": "model_c_production_1in_1out_spectralnorm_ft90_v1_s0_figures_v1"
+}
