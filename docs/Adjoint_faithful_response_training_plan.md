@@ -1,6 +1,6 @@
 # Adjoint-faithful FNO training from forward perturbation responses
 
-**Prospective study plan — 2026-08-22 — not yet approved for execution**
+**Prospective study plan — 2026-08-24 — not yet approved for execution**
 
 This document is deliberately prospective. It specifies the data, controls,
 loss, selection rule, blind tests, and stop/go gates for a response-aware FNO,
@@ -14,6 +14,11 @@ Evidence labels used throughout:
 - **Proposed** means a choice to freeze before the new study begins.
 - **Unresolved** means the repository does not currently establish the detail;
   the specified gate must resolve it without using any adjoint result.
+
+Unless a statement is explicitly labeled Verified, Inferred, or Unresolved,
+prescriptive language in this prospective contract is **Proposed**. “Exact”
+then means exact if the proposal is approved, not a claim that the new artifact
+already exists.
 
 The three required existing documents remain unchanged:
 `docs/model_c_spectralnorm_ft90_handbook.md`,
@@ -55,8 +60,9 @@ adjoint error is unresolved.
 60-day training schedule while adding one new term: a forward perturbation-
 response loss. The response-aware model will start from random initialization.
 No parent or ft90 checkpoint will be loaded. Its matched nominal-only control
-will use the same random seeds, optimizer budget, native chronological split,
-and parent loss.
+will use the same random seeds, optimizer budget, exact implemented production
+split, normalization, architecture, rollout, optimizer schedule, parent loss,
+and checkpoint selector.
 
 The core finite-difference identity is
 
@@ -87,9 +93,10 @@ directions; the final blind adjoint suite is needed to answer that question.
 regime, 224 training directions at 14 annual pickup anchors, 72 validation
 directions at three later anchors, and 72 blind-test directions at three still
 later anchors. Every direction is run with both signs. Most runs stop at 10
-days; a predeclared subset continues to 90 days and writes endpoints every 10
-days. Including the three-amplitude pilot, paired nominal branches, and all
-repeat/solver controls, the exact total is **65,520 model-days = 182.0
+days; a predeclared subset continues to the role-specific 60- or 90-day
+horizon and writes endpoints every 10 days. Including the three-amplitude
+pilot, validation pickup-bank setup, paired nominal branches, and all
+repeat/solver controls, the exact total is **57,750 model-days = 160.417
 model-years**. This is forward MITgcm only.
 
 **Non-negotiable firewall.** No MITgcm adjoint, TAF output, existing adjoint
@@ -119,12 +126,18 @@ parent report:
 | Map | direct state, `x(t+10 d) = F_theta(x(t), S)`, not a residual |
 | Grid | 62 by 62 by 15, with 3,600 wet tracer cells |
 | Fourier operator | 32 by 32 modes, width 128, 3 blocks |
+| Block normalization | six pointwise channel LayerNorms, two per block |
+| Domain padding | 0.1 |
+| Spectral weights/precision | dense, unfactorized (`factorization=null`); full FNO-block precision |
 | Lifting/projection | ratio 2, hence width 256 |
 | Channel MLP | expansion 4, no dropout |
 | Local path | bias-free 3 by 3 convolution, zero initialized |
 | Parameters | 27,297,960 |
 | Spectral normalization | 1,632 per-mode complex matrices, `rho=1`, 400-iteration warm start, **2** power iterations per forward |
 | Inference checkpoint | materialized spectral weights; no live clipping or power iteration |
+
+The full architecture dictionary in the parent JSON—not this abbreviated
+human table—is normative and must pass the field-by-field equality gate.
 
 The parent objective implemented in `src/oceanfno/objective.py` is
 
@@ -164,8 +177,9 @@ added to the output.
 | Checkpoint SHA-256 | `e75951681b1a...` | `4acb7633d85a...` |
 
 The child normalizer is byte-identical to the parent's, SHA-256
-`fe424b37d74f...`. This is correct for a continuation experiment, but it is not
-a reason to reuse the checkpoint or normalizer in a new from-scratch study.
+`fe424b37d74f...`. The new runs load no child/parent checkpoint; they
+recompute the exact parent normalizer recipe and must hash-match that artifact
+so the physical coordinate system is unchanged.
 
 ### 2.3 Forward metrics
 
@@ -216,8 +230,8 @@ longer exposure, and a tighter spectral cap. It does not isolate which of
 those changes caused the failure.
 
 **Proposed.** Both new from-scratch primary arms retain the successful 60-day
-schedule. A 90-day continuation is a later matched experiment only if the
-predeclared forward gates require it.
+schedule. V1 has no 90-day continuation, curriculum, or second training stage;
+day 90 is a sealed evaluation horizon only.
 
 ### 2.5 Implemented selection nuance
 
@@ -227,8 +241,8 @@ then applies its long-range/fallback rule. The ft90 code computes the handbook's
 parent-relative short-skill and flattening conditions as acceptance diagnostics,
 but those extra conditions are not filters passed into the implemented shared
 checkpoint selector. The new contract below follows implemented code where it
-differs from older prose and makes every new filter executable rather than
-descriptive.
+differs from older prose, retains that selector unchanged, and implements any
+new forward-preservation threshold only as a post-selection scientific gate.
 
 ---
 
@@ -345,7 +359,7 @@ r_{M,a,q,k}^{s}
        -\mathcal N[M_{a,q,k}(0)]}{s\epsilon_q},
 $$
 
-where $\mathcal N=\mathcal N_k$ is the one common strict-training scale used
+where $\mathcal N=\mathcal N_k$ is the one common parent-training scale used
 for external comparison. The FNO response is
 
 $$
@@ -401,8 +415,12 @@ inside a predeclared tolerance.
 **Identification limits.** Finite directional supervision constrains the
 Jacobian only on the sampled state/direction distribution. Improvement of a
 blind adjoint projection is expected by duality, not guaranteed. The controls
-below distinguish the response information from extra updates, extra forward
-states, continuation, and a longer rollout horizon.
+below isolate response information with paired B/C runs that have identical
+initialization, nominal minibatch sequence, nominal-loss definition/weight,
+optimizer step count/schedule, architecture, and rollout horizon. The sole
+algorithmic intervention is C's added response gradient; later numerical
+nominal losses/gradients may differ endogenously because the weights have
+diverged.
 
 ---
 
@@ -412,129 +430,153 @@ states, continuation, and a longer rollout horizon.
 | --- | --- | --- | ---: | --- |
 | **A** frozen parent | existing random-init run | legacy production nominal data/loss | 60 d | Historical production reference; no retraining |
 | **A90-context** ft90 child | parent checkpoint | legacy nominal data/loss | 90 d | Context only; never a baseline architecture or weight source |
-| **B** nominal control | random | strict-v3 nominal data; exact parent loss | 60 d | Matched from-scratch control |
-| **C** response-aware | random, paired seed with B | identical to B plus `lambda_resp L_response` | 60 d nominal; response examples to 10 or 90 d | Primary new model |
-| **D** perturbed-state-only | random, paired seed | same response states/compute as C, but ordinary perturbed-state loss and no response difference | 60 d nominal; auxiliary 10/90 d | Required “more forward data” ablation |
-| **E** short-response-only | random, paired seed | same response-update count as C; every response truncated to 10 d | 60 d | Required sparse-long ablation |
+| **B** exact parent-protocol replay | random | common response-study runner with response disabled; exact parent scientific contract | 60 d | Prospective from-scratch nominal control |
+| **C** response-aware | random, paired seed with B | same runner and parent nominal contract as B, plus only `lambda_resp L_response` | 60 d for both nominal and response-gradient unrolls | Primary new model |
 
 **Proposed names.**
 
 - B: `model_c_adjoint_faithful_nominal_control_v1`
 - C: `model_c_adjoint_faithful_response_v1`
 
-**Proposed replication.** B and C use the three paired seeds
-`20260911`, `20260912`, and `20260913`. No “best seed” is selected. The first
-seed is the declared primary replicate; all three are frozen before blind
-evaluation. D and E use `20260911` only in v1; any later replication is a new
-version and cannot reuse v1 blind cases for model decisions.
+**Proposed replication.** The primary paired B/C seed is the production
+parent's exact seed, `20260724`. Two secondary paired replications use
+`20260911` and `20260912`. No “best seed” is selected; the historical-seed arm
+is primary and all three identities are frozen before blind evaluation. Within
+each pair, initialization, nominal minibatch IDs, exact nominal-loss
+code/coefficients, optimizer step indices, and learning-rate schedule are
+identical. The numerical parent-loss value/gradient is not expected to remain
+equal once weights diverge; the only code/data intervention causing that
+divergence is the declared response-gradient contribution.
 
-### 5.1 Optional matched continuation, kept separate
+### 5.1 Single permitted primary delta
 
-If the primary study passes its forward/response gates, a secondary retrofit
-experiment may start from the **frozen parent A**, never the ft90 child:
+The following B/C quantities are frozen to the production implementation:
 
-1. parent -> nominal-only 60-day continuation;
-2. parent -> response-aware 60-day continuation.
+- trajectory store and active in-memory split;
+- pointwise, increment, and static normalization algorithms and source days;
+- 27,297,960-parameter architecture and spectral-normalization machinery;
+- six-call/60-day autonomous unroll;
+- `RolloutDataset`, regime-major records, `ChunkAwareBatchSampler`, effective
+  batch eight, and nominal batch order for the paired seed;
+- Adam, learning-rate schedule, update count, checkpoints, and lack of clipping;
+- all eight forward-loss terms, coefficients, masks, and physics numerics;
+- 360-day nominal validation code and production checkpoint selector.
 
-Both use fresh Adam at constant `5e-5`, the parent's existing normalizer,
-`1,920` updates, and identical nominal exposure. This asks whether response supervision can repair a
-deployed model. It is not the primary result and cannot replace C.
-The response continuation uses the already frozen raw P64 response data,
-amplitudes, `lambda_resp`, 25% schedule, and loss; it merely expresses raw
-responses in the parent's normalizer and recomputes the training-only `d`
-scales deterministically. Its nominal-only mate receives the same optimizer
-budget. Selection is the section-16 rule relative to that nominal continuation.
-Whether to execute this retrofit must be frozen using validation/compute
-considerations before any blind test. If it is not completed before the common
-blind package, it moves to a new study version with a new blind set.
+The exact nominal randomness contract is also frozen: the global seed
+initializes Python, NumPy, Torch CPU/CUDA, and the existing deterministic
+runtime flags; records are regime-major and day-ascending; contiguous
+four-record microbatches never cross regimes; only microbatch order is
+shuffled each epoch with `random.Random(seed + epoch)`; and two consecutive
+microbatches form one optimizer update.
 
-Only if C preserves 10-90-day skill and improves response validation but still
-fails the predeclared 90-360-day forward gate may B and C each receive a
-**matched**, separately named 90-day continuation (fresh Adam, constant `5e-5`,
-1,920 updates). No 30-to-60-to-90 curriculum and no 500/2,000-day pointwise
-target is permitted.
+C alone reads the separate response-training store and adds
+`lambda_resp I_joint L_response` on predeclared optimizer updates. The response
+sampler uses an isolated counter/hash stream and cannot consume Python, NumPy,
+or Torch RNG state used by initialization or the nominal sampler. Persistent
+spectral power vectors are snapshot/restored around auxiliary forwards as in
+section 15.
+
+There is **no** parent continuation, 90-day training continuation, curriculum,
+ordinary perturbed-state loss, short-only arm, optimizer-budget extension, or
+checkpoint initialization in v1. Those would introduce a second scientific
+change and require a separately approved study and a new blind-response set.
 
 ---
 
-## 6. Exact nominal training, validation, and test split
+## 6. Exact production-parent nominal training/validation/inference split
 
 ### 6.1 Immutable nominal source
 
 **Verified.** `trajectories_v3.zarr` contains three independently equilibrated
-regimes, each with 9,000 daily states and shape
-`(9000,46,62,62)`. S0/S1/S2 use wind amplitudes 1.0/0.75/1.25, corresponding
-to 0.100/0.075/0.125 N m^-2. The store itself carries a strict split even
-though current production code deliberately overrides it in memory.
+regimes, each with 9,000 daily states and shape `(9000,46,62,62)`. S0/S1/S2
+use wind amplitudes 1.0/0.75/1.25, corresponding to
+0.100/0.075/0.125 N m^-2. The store carries its own three-block metadata, but
+the production parent deliberately verifies that metadata and then overrides
+it in memory with `src/oceanfno/dataset.py::store_codes`.
 
-**Proposed.** The Zarr store, its arrays, split codes, and all existing MITgcm
-chains remain byte-unchanged. Response data live in a separate store. B and C
-use the store's native chronological split:
+**Frozen proposal.** B and C use that implemented parent split exactly; the
+Zarr store and its metadata remain byte-unchanged and response data live in a
+separate store:
 
-| Half-open indices | Inclusive days | Role |
+| Half-open days | Inclusive days | Exact parent role |
 | --- | --- | --- |
-| `[0,5040)` | 0-5,039 | nominal training, normalizers, climatology, response pilot/train |
-| `[5040,5130)` | 5,040-5,129 | 90-day embargo; never read by model development |
-| `[5130,6390)` | 5,130-6,389 | nominal and response validation only |
-| `[6390,6480)` | 6,390-6,479 | 90-day embargo; never read by model development |
-| `[6480,9000)` | 6,480-8,999 | blind nominal/response test and final truth only |
+| `[0,6000)` | 0-5,999 | nominal training; parent normalizers and climatologies |
+| `[6000,7200)` | 6,000-7,199 | nominal validation |
+| `[6200,7200)` | 6,200-7,199 | nested inference block inside validation |
+| `[7200,9000)` | 7,200-8,999 | evaluation truth only; split code zero |
 
-This is strict, non-overlapping, chronological, and already encoded by
-`archive/src/bire_repro/af_data_v3.py` and the Zarr metadata.
+There are no nominal buffers and no independent third nominal test split.
+The final-inference protocol is nested in validation because that is the
+implemented production design; this study does not relabel any subset of
+days 6,000-8,999 as an independent nominal test set.
 
 ### 6.2 Exact nominal records
 
-- **Training:** all 4,980 valid 60-day rollout starts per regime, days
-  0-4,979; 14,940 sequences pooled. The last target is day 5,039.
-- **Optional 90-day stage:** 4,950 starts per regime, days 0-4,949; the last
-  target is day 5,039.
-- **Nominal checkpoint validation:** 34 starts per regime,
-  $a_m=5130+12m$, $m=0,\ldots,33$, i.e. days 5,130-5,526. Every 360-day
-  rollout ends by day 5,886, inside validation. These starts are distinct from
-  the three response anchors, although their validation trajectories may
-  overlap in time; no sample crosses into an embargo or test block.
-- **Blind nominal test:** 15 fixed starts per regime:
-  `6480, 6517, 6554, 6591, 6628, 6665, 6702, 6739, 6776, 6813,
-  6850, 6887, 6924, 6961, 6999`. Every 2,000-day rollout remains in the test
-  block and ends by day 8,999.
+- **Training:** all 5,940 valid six-call starts per regime, days 0-5,939;
+  17,820 sequences pooled. The final target is day 5,999.
+- **Nominal checkpoint validation:** exactly 34 starts per regime,
+  $a_m=6000+6m$, $m=0,\ldots,33$, i.e. days 6,000, 6,006, ..., 6,198.
+  Every checkpoint is rolled autonomously for 360 days, producing 102 pooled
+  validation members, exactly as in `src/oceanfno/validation.py`.
+- **Final production inference:** the existing S0 figure package uses seed
+  `20260802`, draws from the admissible 2,000-day candidate-start window
+  `[6200,7000)`, and uses exactly 15 starts:
+  `6263, 6293, 6331, 6389, 6579, 6593, 6598, 6601, 6651, 6661,
+  6694, 6707, 6711, 6968, 6979`. Each model receives only its initial state;
+  lead-matched truth through day 2,000 may extend into days 7,200-8,999. These
+  starts and their figure/anomaly definitions are reused unchanged after
+  checkpoint freeze. They are called **nested final inference**, not a new
+  nominal test split.
 
 ### 6.3 Normalization
 
-**Proposed.** Create one immutable strict-training normalizer artifact from
-S0/S1/S2 days 0-5,039 using the parent's pointwise recipe:
+**Frozen proposal.** Each B/C run invokes the production functions
+`training_pointwise_normalizers`, `training_increment_scale`, and
+`store_wind_normalization` on the production split, exactly as the parent did.
+Static construction remains the existing `physical_static_block` followed by
+`static_block`; no response-specific static feature is introduced.
+The pointwise state recipe uses all 18,000 S0/S1/S2 snapshots on days 0-5,999:
 
 $$
 \hat x_c(j,i)=\frac{x_c(j,i)-\mu_c(j,i)}{\sigma_c(j,i)},
 $$
 
-with land set to zero, the per-channel wet-cell fifth-percentile scale floor,
-and the per-channel RMS normalized 10-day increment used by
-`L_increment`. Static inputs retain the parent philosophy and definitions.
-B, C, D, and E must load this byte-identical hashed artifact. An independent
-recomputation is only a reproducibility gate and must hash-match before use.
-The frozen project-side copy is
-`outputs/af_fno/response/strict_v3_normalization_v1/normalization.npz` with its
-full calculation report; the scratch copy must share the same SHA-256.
+with float64 accumulation, population variance, a per-channel fifth percentile
+of wet-cell standard deviations, absolute floor `1e-6`, land mean/raw scale
+zero, land scale one, and normalized land reset to zero. The increment divisor
+is the per-channel RMS of normalized 10-day increments for starts 0--5,989:
+5,990 pairs/regime and 17,970 total. Wind is pooled-standardized over
+regime/wet cells; wet mask remains
+0/1; Coriolis, DXF, and SST target use the exact parent wet-cell
+standardizations.
 
-The existing parent/child normalizer is **not** reused because it includes days
-5,040-5,999, which are validation/embargo days under this study. The Zarr's
-pooled `state_scale` is also not the production pointwise normalizer.
+Every recomputation must hash-match the existing parent artifact
+`model_c_production_1in_1out_spectralnorm_v1_train_only_normalization.npz`,
+SHA-256
+`fe424b37d74f5b9d901728c8d585245e12ab67e4230a2eb86f6edc43108d96bf`.
+The point-mean, raw-scale, scale, floor, and increment component hashes are
+also checked. A mismatch stops before training. Perturbed states and response
+data never enter these quantities. The separate response RMS scales in
+section 14 normalize only `L_response`; they do not modify any parent input,
+target, static, increment, or forward-loss normalization.
+The whole-NPZ byte check assumes the pinned writer/runtime (including fixed ZIP
+metadata); component-array hashes remain the semantic cross-runtime gate.
 
 ### 6.4 Comparator caveat
 
-**Verified.** A and the ft90 child trained or selected within parts of the
-native validation/test chronology because their active split was
-train `[0,6000)`, validation `[6000,7200)`, with nested inference. Therefore:
-
-- B versus C is the clean prospective causal comparison;
-- A and ft90 remain frozen contextual comparators;
-- their common-test metrics are reported, but not called prospectively blind;
-- A/ft90 metrics never select B or C.
+**Proposed interpretation.** A versus B is now an exact-protocol reproduction,
+not a different-split contextual comparison. B versus C is the prospective
+causal comparison. The ft90 child remains contextual because it is a
+continuation, but it shares the parent's nominal chronology. Investigators
+have already seen A/ft90 final-inference metrics; the same starts remain sealed
+from new-model training and selection, but are described honestly as held
+nested inference rather than historically unseen data.
 
 ---
 
 ## 7. Exact new MITgcm response-data design
 
-### 7.1 Why annual anchors
+### 7.1 Existing anchors and the validation pickup bank
 
 **Verified.** Complete, float64 MITgcm pickups already exist annually for every
 regime. The trajectory-day/iteration relation is
@@ -543,16 +585,27 @@ $$
 I(d)=2{,}592{,}000+72d,
 $$
 
-with a 1,200 s timestep and 360-day model year. Using annual anchors avoids
-constructing a restart from the 46-channel Zarr state and avoids a large new
-pickup-generation campaign.
+with a 1,200 s timestep and 360-day model year. Pilot, response-training, and
+blind-response anchors use existing annual pickups. Three off-cycle
+response-validation anchors are generated from one complete nominal pickup
+chain per regime; no restart is ever reconstructed from the 46-channel Zarr
+state.
 
 At a segment boundary such as day 3,600, the source resolver enumerates every
-candidate pickup, requires all `.meta` and `.data` hashes to agree, and then
-chooses the copy in the downstream segment whose half-open interval begins at
-the anchor. If hashes disagree or no downstream copy exists where expected,
-the anchor fails. The manifest retains every candidate path/hash and the
-canonical-choice reason.
+candidate pickup against the canonical trajectory-v3 source-chain inventory.
+If duplicate copies exist, all `.meta` and `.data` hashes must agree. The
+resolver does **not** assume the canonical copy is in a downstream directory:
+the current chains retain some unique boundary pickups in the upstream
+segment. Missing or conflicting hashes fail the anchor. The manifest retains
+every candidate path/hash and the canonical-choice reason.
+
+For validation only, start from the verified annual day-5,760 pickup and run
+one unperturbed, regime-correct chain through day 6,080, archiving complete
+pickups every 10 days. This costs 320 model-days per regime, 960 total. Retain
+days 6,010, 6,050, and 6,080 as sources. Their canonical P32 projections must
+match trajectory-v3 before any perturbation is staged; otherwise Gate D0
+stops. This bridge is response-data setup only. It is excluded from nominal
+training, normalization, climatology, and checkpoint validation.
 
 ### 7.2 Amplitude pilot anchors
 
@@ -601,13 +654,16 @@ only to freeze amplitudes and are excluded from train/validation/test losses.
 
 | Role | Anchor days | Count/regime | Horizon guarantee |
 | --- | --- | ---: | --- |
-| response train | `0,360,720,...,4680` | 14 | every 90-day endpoint <=4,770, inside train |
-| response validation | `5400,5760,6120` | 3 | endpoints <=6,210, inside validation |
-| blind response test | `6840,7560,8280` | 3 | endpoints <=8,370, inside test |
+| response train | `0,360,720,1440,1800,2160,2520,3240,3600,3960,4320,5040,5400,5760` | 14 | every 60-day endpoint <=5,820, inside parent train |
+| response validation | `6010,6050,6080` | 3 | every 60-day endpoint <=6,140, inside validation and before nested inference |
+| blind response test | `7560,7920,8280` | 3 | every 90-day endpoint <=8,370, in model-unseen truth-only chronology |
 
-The blind response anchors avoid the existing Phase-A source day 7,200. They
-are frozen before model training and never read by training, validation,
-hyperparameter selection, or checkpoint selection.
+The 14 training anchors are a count-preserving deterministic spread across the
+17 eligible annual parent-training pickups. Response-validation starts are
+distinct from all nominal selection starts `6000+6m`. The blind anchors avoid
+the existing Phase-A source day 7,200, are frozen before model training, and
+are never read by training, validation, hyperparameter selection, or
+checkpoint selection.
 
 ### 7.4 Directions at each anchor
 
@@ -638,28 +694,42 @@ count” are therefore kept separate in every report.
 
 ### 7.5 Sparse-long subsets
 
-All directions provide a 10-day response. Only the following continue to 90
-days, writing at days 10,20,...,90:
+All directions provide a 10-day response. Sparse-long **training and
+validation** directions continue only to the parent's six-call horizon and
+write days 10,20,...,60. Blind long directions alone continue to day 90:
 
 - **Training:** at days
-  `{0,720,1440,2160,2880,3600,4320,4680}`, extend one preassigned direction
+  `{0,720,1800,2520,3600,4320,5040,5760}`, extend one preassigned direction
   from each input group. This is 8 long directions per group, 32 per regime,
   and 96 total. The other 576 training directions across all regimes are
   short-only.
 - **Validation:** at each of the three anchors, extend one direction from each
-  input group. This is 12 per regime, 36 total.
+  input group to 60 days. This is 12 per regime, 36 total.
 - **Blind response test:** the same count and rule, with a disjoint centre and
-  level inventory: 12 per regime, 36 total.
+  level inventory, integrated to 90 days: 12 per regime, 36 total.
+
+The amplitude pilot and its numerical controls still run their preassigned
+long cases to 90 days solely to prove that the final blind perturbations remain
+in a measurable local regime. No FNO response loss, lambda decision,
+checkpoint decision, or development response score reads a day-70/80/90
+model response. Thus every gradient-carrying model unroll remains exactly six
+calls/60 days, while day-90 response and adjoint skill remain genuinely blind
+extrapolation tests.
 
 Long membership is selected by a constrained deterministic inventory solve
 before any response is run. For each training group/regime, its eight choices
 must include two WBC cases, at least one case from each other region, and, for
 U/V/Theta, at least two cases in each of levels 1-5, 6-10, and 11-15; SSH must
-contain four point and four smooth cases. Validation U/V/Theta long choices
-are one upper, one middle, and one deep case at three distinct regions; their
-SSH sequence is point/smooth/point. Blind-test U/V/Theta use the same depth
-coverage with three distinct regions and split-disjoint centres, and SSH uses
-smooth/point/smooth. Among
+contain four point and four smooth cases. For each validation variable/regime,
+the three long choices are exactly two single-level cases and one held-out
+multi-level case, collectively covering upper, middle, and deep bands at three
+distinct regions. The multi-level type is
+`t=(r+o_h) mod 3` for upper/middle/deep type indices 0/1/2, so every type
+appears for every variable across regimes. Validation SSH is
+point/smooth/point. Blind U/V/Theta use the same constraints with multi-level
+type `t=(r+o_h+1) mod 3`, disjoint centres, and the unseen combinations;
+blind SSH is smooth/point/smooth. Thus single-versus-multi diagnostics are
+populated at every long lead. Among
 assignments satisfying those constraints, choose the one with maximum minimum
 physical centre separation and break ties by the section-9 SHA order.
 Validation and test assignments are solved jointly across regimes so each
@@ -1082,40 +1152,45 @@ RMS. There is no one-size physical amplitude invented in advance.
 
 Every long run also supplies its 10-day response. The train set therefore has
 672 distinct 10-day directions and 96 sparse long trajectories; validation and
-test each have 216/36.
+blind test each have 216/36. Training/validation long trajectories contain six
+leads; pilot/blind long trajectories contain nine.
 
 ### 11.2 Exact model-day cost
 
-For a direction pair, a short direction costs `2 signs x 10 = 20` model-days;
-a long direction costs `2 x 90 = 180` model-days.
+For a direction pair, a short direction costs `2 signs x 10 = 20` model-days.
+A training/validation long pair costs `2 x 60 = 120`; a pilot/blind long pair
+costs `2 x 90 = 180`.
 
 | Component | Short signed runs | Long signed runs | Model-days | Model-years |
 | --- | ---: | ---: | ---: | ---: |
-| production train perturbations | 1,152 | 192 | 28,800 | 80.0 |
-| response validation perturbations | 360 | 72 | 10,080 | 28.0 |
+| production train perturbations | 1,152 | 192 at 60 d | 23,040 | 64.0 |
+| response validation perturbations | 360 | 72 at 60 d | 7,920 | 22.0 |
 | blind response-test perturbations | 360 | 72 | 10,080 | 28.0 |
 | 3-amplitude pilot perturbations | 72 | 72 | 7,200 | 20.0 |
-| shared nominal branches | 18 controls | 42 controls | 3,960 | 11.0 |
+| shared nominal branches | 18 controls | 42 controls, mixed 60/90 d | 3,150 | 8.75 |
+| validation pickup-bank setup | -- | 3 x 320 d | 960 | 2.667 |
 | duplicate 90-day pilot controls | -- | 6 controls | 540 | 1.5 |
 | selected-alpha perturbed duplicates | -- | 24 | 2,160 | 6.0 |
 | tight-CG selected-alpha perturbations | -- | 24 | 2,160 | 6.0 |
 | tight-CG nominal controls | -- | 6 controls | 540 | 1.5 |
-| **Total** | **1,944 perturbed + 18 controls** | **456 perturbed + 54 controls** | **65,520** | **182.0** |
+| **Total** | **1,944 perturbed + 18 controls** | **456 perturbed + 54 controls + 3 setup chains** | **57,750** | **160.417** |
 
 Nominal costs are one shared control per anchor, not one per perturbation:
 
-- training: 24 long controls and 18 short controls = 2,340 days;
-- validation: nine 90-day controls = 810 days;
+- training: six pilot-overlap controls at 90 days, 18 other long controls at
+  60 days, and 18 short controls at 10 days = 1,800 days;
+- validation: nine 60-day controls = 540 days;
 - blind test: nine 90-day controls = 810 days.
 
-The pilot reuses the training-anchor nominal branches. Annual source pickups
-already exist, so no pickup-bank integration cost is included. If an annual
-pickup or forcing hash is missing, that anchor is a stop; it is not reconstructed
-from Zarr.
+The pilot reuses the training-anchor nominal branches. Annual pilot/train/blind
+source pickups already exist. The 960-day off-cycle validation pickup bank is
+included explicitly. If any annual pickup, generated validation pickup, or
+forcing hash is missing, that anchor stops; it is not reconstructed from Zarr.
 
-The complete plan therefore launches 2,400 perturbed branches and 72 nominal
-control branches (2,472 total), though long branches are internally chained in
-10-day segments. The 5,400 model-days from duplicate nominal,
+The complete plan launches 2,400 perturbed branches, 72 nominal/control
+branches, and three validation pickup-bank chains: **2,475 logical branches**.
+At 10-day segment equivalence this is 5,775 integrations and 4,158,000 MITgcm
+timesteps. The 5,400 model-days from duplicate nominal,
 selected-amplitude perturbed-repeat, and tight-CG branches are calibration
 controls, not new training directions.
 
@@ -1174,14 +1249,20 @@ tighter condition.
 
 ### 12.4 Output and restart gates
 
-- Run each long branch as nine validated 10-day segments, using
+- Run training/validation long branches (including their nominal controls) as
+  six validated 10-day segments, and pilot, blind, and calibration-only
+  duplicate/tight-control long branches as nine, using
   `pChkptFreq=864000 s`, and archive/hash the endpoint before launching the
   next segment. MITgcm's rotating `pickup.ckptA/B` names are not assumed to
-  retain all nine endpoints. A one-job wrapper may chain the segments, but
+  retain all endpoints. A one-job wrapper may chain the segments, but
   each segment must restart from the just-verified preceding pickup.
   Apply the perturbation only to the original anchor pickup; later segments
   restart from the complete evolved pickup, including its evolved history
   records, with no repeated edit.
+- Build each off-cycle validation source chain from the untouched day-5,760
+  pickup as 32 validated 10-day segments through day 6,080. It uses production
+  tolerances, no edit, and the same full-pickup/P32/hash gates. Archive all
+  endpoints but designate only days 6,010/6,050/6,080 as response anchors.
 - Set `dumpFreq=0`, `taveFreq=0`, and disable all gridded diagnostics output in
   the response-run `data.diagnostics`; retain stdout/scalar monitors and the
   declared 10-day pickups only. Diagnostics are passive, but their daily
@@ -1201,7 +1282,8 @@ tighter condition.
 
 Every run manifest must contain at least:
 
-- study/contract version and role (`pilot/train/validation/test`);
+- study/contract version and role
+  (`pilot/train/validation/blind_test/validation_pickup_bank`);
 - source pickup `.meta`/`.data` paths and SHA-256;
 - regime, trajectory day, iteration, source-chain segment;
 - perturbed variable, native grid, one-based level list;
@@ -1242,7 +1324,8 @@ The production-role dimensions are frozen as:
 | blind test | 9 | 0 | 9 | 180 | 36 |
 
 Long directions are not duplicated in `short`; their day-10 response is the
-first element of `long/response_p64`. Each role contains:
+first element of `long/response_p64`. Let `L=6` for train/validation and `L=9`
+for blind test. Each role contains:
 
 | Array/table | Shape/content | Dtype |
 | --- | --- | --- |
@@ -1250,15 +1333,15 @@ first element of `long/response_p64`. Each role contains:
 | `anchors/state_p64` | `(A,46,62,62)` float64 pickup projection | float64 |
 | `anchors/nominal_short` | `(A_short,1,46,62,62)` | float64 |
 | `anchors/nominal_short_anchor_row` | `(A_short,)` rows into `anchor_table` | int32 |
-| `anchors/nominal_long` | `(A_long,9,46,62,62)` | float64 |
+| `anchors/nominal_long` | `(A_long,L,46,62,62)` | float64 |
 | `anchors/nominal_long_anchor_row` | `(A_long,)` rows into `anchor_table` | int32 |
 | `short/anchor_row`, `short/direction_row` | each `(Q_short,)` | int32 |
 | `short/input_state_p32` | `(Q_short,2,46,62,62)` exact plus/minus pickup projections | float32 |
 | `short/response_p64` | `(Q_short,2,1,46,62,62)` signs x day 10 | float64 |
 | `long/anchor_row`, `long/direction_row` | each `(Q_long,)` | int32 |
 | `long/input_state_p32` | `(Q_long,2,46,62,62)` exact plus/minus pickup projections | float32 |
-| `long/response_p64` | `(Q_long,2,9,46,62,62)` | float64 |
-| `lead_days` | `[10,20,...,90]` | int16 |
+| `long/response_p64` | `(Q_long,2,L,46,62,62)` | float64 |
+| `lead_days` | train/validation `[10,...,60]`; blind `[10,...,90]` | int16 |
 | `anchor_table.jsonl` | one authoritative row per anchor | canonical JSON Lines |
 | `direction_table.jsonl` | one row per direction; array row mappings above point here | canonical JSON Lines |
 
@@ -1285,9 +1368,10 @@ $$
 
 so the minus record is normally negative. The loader alone forms the oriented
 target
-$r_{M,q,k}^s=(\Delta_{q,s,k}^{64}/\sigma_{train})/(s\alpha_q)$.
-It never guesses sign from a filename. Nominal endpoints plus raw deltas also
-reconstruct the perturbed physical targets for D.
+$r_{M,q,k}^s=(\Delta_{q,s,k}^{64}/\sigma_{parent})/(s\alpha_q)$.
+It never guesses sign from a filename. The scale is the exact production
+parent pointwise scale from section 6, never a response-derived input
+normalizer.
 
 The pilot uses the same split short/long layout with 36 short and 36 long
 `(base_direction,alpha)` rows, an alpha column, and a separate
@@ -1307,10 +1391,10 @@ frozen for v1. Array-level and chunk-manifest SHA-256 digests are mandatory.
 Loader reconstruction must hash-match both signed input states and all sparse
 edits. Development loaders have no filesystem permission or config route to
 the blind store; tests assert both. Every model's external response metrics
-use this one strict-training scale even when A/ft90 internally use their legacy
-normalizer.
+use the exact parent normalization. A, ft90, B, and C therefore share one
+physical-to-normalized coordinate system.
 
-**Estimated combined development-plus-blind curated size:** about 10-12 GB
+**Estimated combined development-plus-blind curated size:** about 9-11 GB
 uncompressed numeric arrays plus metadata; expected compressed size is
 unresolved until pilot compression is measured.
 
@@ -1375,86 +1459,36 @@ and long samples use an unweighted lead mean
 
 $$
 L_{\rm response}^{\rm long}
-=\frac{1}{9}\sum_{k\in\{10,20,\ldots,90\}}\ell_{q,k}.
+=\frac{1}{6}\sum_{k\in\{10,20,\ldots,60\}}\ell_{q,k}.
 $$
 
 The signed formulation compares perturbation **responses** to responses. It is
-not equivalent to fitting the perturbed state alone.
+not equivalent to fitting the perturbed state alone. No response target beyond
+day 60 enters a gradient.
 
-### 14.3 Ordinary state loss on perturbed trajectories
+### 14.3 No ordinary state loss on perturbed trajectories
 
-**Primary choice: no.** C does not add ordinary state loss on `x+delta` or
-`x-delta`. The nominal parent loss anchors the common forward map, while the
-signed response term is the single scientific modification. Adding a
-perturbed-state loss would change two things and weaken attribution.
+**Frozen choice: no.** C does not add ordinary state loss on the plus or minus
+trajectory. The unchanged nominal parent loss anchors the common forward map,
+while the signed response-difference term is the single scientific
+modification. Perturbed absolute targets may be reconstructed for integrity
+audits but are never passed to a state-loss function.
 
-Arm D is the predeclared ablation: it uses the same perturbed endpoints and
-auxiliary compute but replaces the response-difference term by the parent's
-group-balanced normalized `L_state` form independently at each available
-perturbed endpoint. It does **not** apply the eight-term 60-day objective to a
-short case or assume ungenerated intermediate truth. C versus D asks whether
-explicit response information matters beyond more nearby forward states.
+A perturbed-state-only arm, short-only arm, continuation, or additional
+physics/Jacobian regularizer would answer a different multi-change question.
+None is part of v1.
 
-Precisely, D uses
-
-$$
-\ell^{\rm pert}_{q,k}=\frac18
-\sum_{s\in\{-1,+1\}}\sum_g
-\left[
-\frac{
-\sum_{c\in g,j,i}m_{ji}
-\left(\hat F_\theta^{k/10}[\mathcal N_x(x_{a,q}^s)]_{cji}
--\mathcal N[M_{a,q,k}(s\epsilon_q)]_{cji}\right)^2}
-{\max\left\{
-\sum_{c\in g,j,i}m_{ji}
-\mathcal N[M_{a,q,k}(s\epsilon_q)]_{cji}^{2},10^{-12}
-\right\}}
-\right]^{1/2},
-$$
-
-where $m$ is the production wet mask. This is exactly the square-root,
-truth-referenced, four-group `group_relative_l2_terms` state form, including
-its `1e-12` denominator clamp, applied to each signed endpoint. It uses the
-same short/long lead means as C and no subtraction of a nominal branch inside
-the loss.
-
-D's auxiliary coefficient is fixed algebraically, not tuned. Define
-$\theta_{proj}$ as exactly `fno.projection.fcs.0.weight`,
-`fno.projection.fcs.0.bias`, `fno.projection.fcs.1.weight`, and
-`fno.projection.fcs.1.bias`; preflight freezes that sorted key list and fails
-if it changes. At the common seed-`20260911` initialization, before optimizer update
-1, form 12 training-only calibration blocks. Each `(regime,input-family)`
-block contains the three lowest-hash short IDs and the lowest-hash long ID, so
-the 48 directions reproduce the 75/25 auxiliary mix. Evaluate the response
-and D losses on identical cloned weights and spectral buffers and set
-
-$$
-G_R=\operatorname{median}_{b=1}^{12}
-\|\nabla_{\theta_{proj}}[\lambda_{resp}L_{response,b}]\|_2,
-\quad
-G_D=\operatorname{median}_{b=1}^{12}
-\|\nabla_{\theta_{proj}}L_{pert,b}\|_2,
-\quad
-\lambda_D=\frac{G_R}{\max(G_D,10^{-12})}.
-$$
-
-Nonfinite or zero $G_D$ fails the ablation. The dummy nominal auxiliary branch
-is still evaluated and discarded so the branch count matches C. This match is
-performed once, uses no validation/test/adjoint data, and all inputs, norms,
-key names, and $\lambda_D$ are reported.
-E uses the frozen `lambda_resp` and the identical signed response loss, but
-uses only `ell(q,10)` for all 1,920 auxiliary updates; former long inventory
-members contribute their day-10 endpoint and no 20-90-day target.
 
 ### 14.4 Response-loss-weight selection
 
 **Proposed candidates:**
 `lambda_resp in {0.03, 0.10, 0.30, 1.00}`.
 
-Use the primary seed and identical initialization/batch order to run a 1,920-
+Use primary seed `20260724` and identical initialization/batch order to run a 1,920-
 step forward-only screen. For each candidate:
 
-1. evaluate nominal validation and response validation;
+1. evaluate exact parent nominal validation and held response validation at
+   leads 10-60 only;
 2. reject it if any 10-90-day primary-field AUC is >1.05 times the matched
    lambda-zero control at the same step;
 3. reject it if growth is >0.005 per call worse than that control or any
@@ -1480,17 +1514,21 @@ not receive 1,920 extra updates from the screen.
 | --- | --- |
 | Initialization | neuraloperator default random initialization; local branch zero |
 | Parent/ft90 state load | none |
-| Normalizer | load the frozen, hash-verified strict-v3 artifact from section 6.3 |
+| Normalizer | exact parent recomputation over days 0-5,999; required SHA `fe424b37...96bf` |
 | Nominal rollout | 6 calls / 60 days |
 | Teacher forcing | none after initial state |
-| Adam | betas `(0.9,0.95)`, weight decay 0 |
+| Adam | cold start, no optimizer-state load; betas `(0.9,0.95)`, weight decay 0 |
 | Learning rate | `5e-4` steps 1-5,760; `1e-4` steps 5,761-7,680 |
 | Updates | 7,680 |
 | Effective nominal batch | 8 = microbatch 4 x accumulation 2 |
 | Gradient clipping | none |
 | Checkpoints | steps 1,920, 3,840, 5,760, 7,680 |
 | Spectral normalization | exact parent machinery, `rho=1`, materialized checkpoints |
-| Seeds | 20260911, 20260912, 20260913 paired across B/C |
+| Seeds | primary `20260724`; paired replications `20260911`, `20260912` |
+
+Both arms use the same parameterized response-study runner. Its disabled path
+must pass the section-23 primary-seed equivalence harness against the immutable
+parent trainer before B is launched.
 
 B and C see exactly the same nominal batch at every update. C does not replace
 nominal samples with response samples.
@@ -1498,22 +1536,24 @@ nominal samples with response samples.
 ### 15.2 Auxiliary response mixing
 
 On exactly every fourth optimizer update (`I_joint=1`), C adds one response
-direction pair. At every autoregressive lead, concatenate the nominal, minus,
-and plus states on the batch dimension and make **one** model invocation, then
-split and advance the three branches. Sequential sign forwards are forbidden:
+direction pair. At every autoregressive lead, concatenate the response
+anchor's unperturbed, minus, and plus states on the batch dimension and make
+**one** model invocation, then split and advance the three branches.
+Sequential sign forwards are forbidden:
 the live spectral-normalization layer updates its power vectors on every
 training forward, so sequential evaluation would quotient three slightly
 different maps. Batched evaluation gives all signs identical normalized
 weights at that lead. Thus the **response-update fraction is 25%**, while
 nominal exposure remains identical to B.
 
-The auxiliary path must also leave persistent spectral-normalization state
-identical to the nominal-only schedule. Immediately before an auxiliary chain,
+Within either arm's own weight trajectory, the auxiliary path must leave
+persistent spectral-normalization state as if that auxiliary chain had not
+occurred. Immediately before an auxiliary chain,
 snapshot every spectral left/right power vector; allow the parent's usual two
 power iterations on each batched lead; backpropagate the auxiliary loss; then
 restore every vector bit-for-bit before the optimizer step, in a `finally`
 guard. Weight gradients are retained, estimator-buffer mutations are not. B
-needs no dummy data pass; C, D, and E all use the same context manager. Tests
+needs no dummy data pass; C alone uses this context manager. Tests
 must establish branch-order invariance, zero response for zero perturbation,
 and bit-identical within-arm pre/post auxiliary buffer hashes. A same-weight,
 same-buffer counterfactual clone that enters a zero-auxiliary context must
@@ -1525,193 +1565,231 @@ failure.
 
 Within the auxiliary stream:
 
-- 75% of samples are short-only;
-- 25% are long;
+- repeat the exact pattern short/short/short/long, so 75% of samples are
+  short-only and 25% are long;
 - input families are exactly balanced in blocks;
 - regimes are exactly balanced in blocks;
 - levels and regions follow the frozen inventory, with deterministic shuffling.
 
 Over 7,680 updates this gives 1,920 response updates: 1,440 short and 480 long.
-Because a long loss averages nine leads, 77.78% of total response lead weight
-falls at day 10 and 2.78% at each of days 20-90. The study therefore remains
+The 96 long directions therefore make exactly five complete hash-permuted
+passes. The 576 short directions make two complete passes plus one frozen
+288-direction balanced half-pass: exactly 72 cases per input family and 24 per
+family/regime, with region/depth quotas chosen as close as integer arithmetic
+allows to the full short inventory and tie-broken by the direction hash. There
+is no replacement *within* a pass; reuse occurs only through these declared
+complete/partial passes. The optimizer-step-to-direction-ID schedule is hashed
+before training.
+Because a long loss averages six leads, exactly 19/24 = 79.17% of total
+response lead weight falls at day 10 and 1/24 = 4.17% at each of days 20-60.
+The study therefore remains
 primarily a direct constraint on the fundamental 10-day map.
 
 A short pair adds one batch-three invocation/three state transitions; a long
-pair adds nine invocations/27 state transitions. The expected auxiliary load
-is nine state transitions on a joint update, or 2.25 averaged over all updates.
+pair adds six invocations/18 state transitions. The expected auxiliary load is
+6.75 state transitions on a joint update, or 1.6875 averaged over all updates.
 The nominal batch performs 48 state transitions/update, so raw transition
-count rises by about 4.7%; batched-triplet and snapshot overhead suggests a
-practical wall-time increase of roughly 10-25%, to be measured.
+count rises by about 3.5%; batched-triplet and snapshot overhead suggests a
+practical wall-time increase of roughly 8-20%, to be measured.
 
 ### 15.3 Maximum target horizon
 
-The primary nominal target horizon is 60 days. Long response supervision stops
-at 90 days. No training loss, amplitude choice, or model selection uses
-pointwise truth at day 500, day 2,000, or any horizon beyond 90 days. Rollouts
-to 360/2,000 days are diagnostics/evaluation only.
+The primary nominal and response-gradient target horizons are both exactly 60
+days. The forward-only amplitude pilot may integrate to 90 days to certify the
+blind perturbations' local regime, and the blind response/adjoint tests evaluate
+day 90, but no FNO training loss, lambda choice, checkpoint choice, or
+development response score reads a model response beyond day 60. Rollouts to
+360/2,000 days are the unchanged parent forward diagnostics/evaluation only;
+they provide no pointwise training target.
 
 ---
 
 ## 16. Validation and checkpoint-selection protocol
 
-### 16.1 View 1: nominal forward validation
+The study retains the parent's checkpoint selector exactly. Response
+validation is an independent development view used to choose
+\(\lambda_{\rm resp}\), to test the mechanism, and to report the selected
+model; it is **not** spliced into the production checkpoint selector.
 
-Use the 102 strict-validation rollouts defined in section 6 (34 per regime),
-never a response-validation or test anchor. Reuse the trusted production
-numerics for:
+### 16.1 View 1: exact parent nominal forward validation
 
-- RMSE and ACC by primary field;
-- persistence and strict-train climatology curves;
-- 10-90-day RMSE-AUC;
-- 90-360-day RMSE-AUC/climatology;
-- the flattening ratio `(E360-E270)/(E180-E90)`;
-- finite-twin perturbation growth and `lambda_hat`;
-- maximum normalized magnitude, finiteness, spatial variance, WBC/interior
-  structure, and existing stability diagnostics.
+For every saved checkpoint of B and C, call the unchanged
+`validate_checkpoint` implementation on the exact 102 production records:
+34 starts per regime at 6000 + 6m, m = 0,...,33. Reuse the exact
+training-days-0--5,999 climatology and all parent numerics. That function
+produces:
 
-The production **RMSE primary fields** are surface speed, SST, and surface
-PHIHYD. ACC is not defined for speed: its four established fields are surface
-U, surface V, SST, and surface PHIHYD, as uncentered wet-cell pattern
-correlations about the strict-training time-mean climatology. Persistence and
-climatology guards below refer to RMSE, not to invented ACC baselines.
+- RMSE for surface speed, SST, and surface PHIHYD against MITgcm,
+  persistence, and climatology;
+- ACC for surface U, surface V, SST, and surface PHIHYD;
+- 10--90-day RMSE-AUC;
+- 90--360-day RMSE-AUC and its ratio to climatology;
+- the implemented 330--360-day per-call gain;
+- maximum normalized amplitude and day-360 slow-field biases.
 
-### 16.2 View 2: response validation
+The parent training report separately appends the exact perturbation-growth
+diagnostic used by the selector: S0 validation starts 6,000 and 6,198;
+0.01-relative random twins with direction seeds 0 and 1; 200 autoregressive
+calls; a log-separation fit beginning at zero-based call index 50 (calls
+51--200); and the worse of the two fitted per-call growth rates.
 
-Use only the 216 response-validation directions at days 5,400/5,760/6,120.
-Their centres are disjoint from pilot/train/test centres. Every U/V/Theta level
-is present, and the three specified multi-level combination types per variable
-and regime (27 multi-level directions total) are held out from training.
-The two validation views have distinct source starts, positions, and
-observables but intentionally share part of the same validation chronology;
-they are not claimed to be temporally independent sub-blocks.
+Finiteness is an explicit gate. Spatial variance, WBC/interior structure,
+long-inference magnitude, and the other established stability/anomaly views
+are generated after selection by the unchanged figure/anomaly numerics in
+section 19; they are not falsely attributed to `validate_checkpoint` or added
+to the selector.
 
-Report at each lead, input family, output group, regime, region, and kernel:
+No response anchor replaces or augments the 102 nominal records. No threshold,
+metric definition, climatology, growth protocol, or production-validation
+start changes.
 
-- oriented signed response relative L2;
+### 16.2 View 2: held-out forward-response validation
+
+Use only the 216 directions at response-validation anchors 6,010, 6,050, and
+6,080. They are separate from response training and the nested final-inference
+starts, and their centre IDs are disjoint from pilot, training, and blind-test
+centres. Every U/V/Theta level is represented, and the predeclared multi-level
+combinations are absent from response training. Only leads
+\(k\in\{10,20,\ldots,60\}\) are available to development code. Because
+the parent chronology is immutable, these cases and the nominal checkpoint
+rollouts occupy the same validation block and may overlap in calendar time;
+“independent views” means separate source starts, perturbation locations,
+targets, metrics, and decision roles, not a newly invented temporal subsplit.
+All 216 cases are scored at day 10; only the predeclared 36-direction long
+subset is scored at days 20--60.
+
+At each lead, report by input family, output group, regime, input-centre
+region, output region, kernel, and vertical-support class:
+
+- oriented signed-response relative L2;
 - wet-cell spatial pattern correlation;
-- amplitude ratio `||r_F||/||r_M||` and `|log ratio|`;
+- amplitude ratio \(\|r_F\|/\|r_M\|\) and absolute log amplitude ratio;
 - sign agreement;
-- plus/minus central consistency for MITgcm and FNO;
-- WBC versus interior and east/north/south scores;
+- MITgcm and FNO plus/minus central-response consistency;
+- WBC, interior, eastern, northern, and southern scores;
 - point versus smooth SSH;
-- single-level versus held-out multi-level combinations;
-- response norm, SNR, and lead dependence.
+- single-level versus held-out multi-level directions;
+- response norm, calibrated SNR, and lead dependence.
 
-For an evaluation region $\Omega$ define conventional per-case relative L2
+For output region \(\Omega\), define the conventional per-case relative L2
 
-$$
+\[
 E_{q,k,g,s}(\Omega)=
 \left[
 \frac{\sum_{c\in g,\Omega}(r_F-r_M)^2}
-{\max\{\sum_{c\in g,\Omega}r_M^2,
+{\max\{\sum_{c\in g,\Omega}r_M^2,\,
 N_{g,\Omega}n_{h(q),g,k}^2\}}
 \right]^{1/2},
-$$
+\]
 
-where $n_{h,g,k}$ is the differentiated training-only combined noise floor
-and $N_{g,\Omega}$ is the number of scored wet values. This is distinct from
-the training RMS-normalized squared loss. For the primary score set
-$\Omega=$ all wet cells, let $R$ denote the **input-centre** region, and first
-average $E$ over signs, directions with centre in $R$, and regimes within each
-`(input h, output g, R, lead k)` cell. Then define
+where \(n_{h,g,k}\) is the differentiated training-only combined numerical
+floor and \(N_{g,\Omega}\) is the number of scored wet values. This is distinct
+from the training loss's RMS-normalized squared error.
 
-$$
-S_{resp}=\frac1{4\cdot4\cdot5}
-\sum_{h,g,R}\left[
-\frac79\bar E_{h,g,R,10}
-+\frac1{36}\sum_{k=20,\ldots,90}\bar E_{h,g,R,k}
+For the development composite, first average \(E\) over signs, cases, and
+regimes within each \((h,g,R,k)\) cell, where \(R\) is the input-centre region
+and \(\Omega\) is all wet cells. Then define
+
+\[
+S_{\rm resp}^{10:60}=
+\frac{1}{4\cdot4\cdot5}\sum_{h,g,R}
+\left[
+\frac{19}{24}\bar E_{h,g,R,10}
++\frac{1}{24}\sum_{k\in\{20,30,40,50,60\}}
+\bar E_{h,g,R,k}
 \right].
-$$
+\]
 
-The exact weights reproduce the training exposure: 77.78% at day 10 and
-2.78% at each later lead. The long inventory must populate every displayed
-cell; an empty cell fails inventory construction. Re-evaluate $E$ with
-$\Omega=$ WBC/interior/east/north/south for output-region diagnostics, but do
-not add another hidden weighting dimension to `S_resp`. Pattern correlation
-and amplitude are independently reported guards, not folded into this score.
-All models are scored in the one strict-training external normalization,
-never their model-specific internal scale.
-Correlation or amplitude for a truth response at/below its noise floor is
-reported as undefined with the norm/SNR, never coerced to zero or one.
+These weights exactly match section 15's expected response-lead exposure.
+Every cell must be populated. Output-region scores, pattern correlation, and
+amplitude ratio are reported separately rather than hidden inside the
+composite. A truth response at or below its calibrated numerical floor has
+undefined correlation/amplitude, accompanied by its norm and SNR; it is never
+coerced to zero or one. All models are scored in the exact parent external
+normalization.
 
-### 16.3 Checkpoint selection
+### 16.3 Exact checkpoint selection and forward-preservation gate
 
-First select B with the implemented parent forward rule adapted to the strict
-validation starts. Its selected checkpoint becomes the matched forward
-reference; B is never selected with response metrics.
+For each B and C run independently, pass its four checkpoint summaries to the
+unchanged `select_by_validation` function with the parent's default
+`tolerance=1.05` and `growth_ceiling=1.0`:
 
-For each C seed, a checkpoint is response-eligible only if:
+1. retain checkpoints within 5% of that run's best 10--90-day AUC in every
+   primary field;
+2. among those, retain checkpoints with measured perturbation growth at or
+   below 1.0;
+3. if any remain, minimize the worst 90--360-day AUC/climatology ratio and
+   break ties by earlier optimizer step;
+4. if none meets the growth ceiling but the short-feasible pool is nonempty,
+   select its least-growing checkpoint, then earlier step;
+5. if the short-feasible pool is empty, minimize the worst primary-field
+   short-AUC ratio to that run's fieldwise best, then earlier step.
 
-1. every primary 10-90-day AUC is <=1.05 times B for the paired seed and within
-   5% of C's own best candidate;
-2. worst 90-360-day AUC/climatology is <=`min(0.85,1.05 x B)`;
-3. ACC at days 30/60/90 is no more than 0.02 below B in any of surface U,
-   surface V, SST, or surface PHIHYD; separately, for every day-90 RMSE
-   primary field in which B beats both persistence and climatology, C must
-   also beat both;
-4. every rollout is finite and maximum normalized magnitude is <=1.05 times B;
-5. primary stability uses `lambda_hat<=1.0`; if no candidate passes, a declared
-   fallback permits only `lambda_hat <= B+0.002` and labels the selection as a
-   fallback;
-6. both weighted `S_resp` and its day-10-only counterpart are at least 20%
-   lower than B overall and at least 10% lower within each input family;
-7. no day-10 input-family/region aggregate is >1.10 times B, including WBC,
-   and no primary output-group aggregate is >1.10 times B.
+Publish exactly one materialized selected checkpoint per run. Response metrics
+do not determine early stopping, eligibility, tie-breaking, or checkpoint
+selection. For attribution, also report B/C comparisons at every matched saved
+step (1,920, 3,840, 5,760, and 7,680), but do not substitute a favourable fixed
+step for the production-selected model.
 
-Among eligible candidates, choose the minimum response score. A tie within 2%
-is broken by lower worst long/climatology ratio, then earlier step. If no
-checkpoint is eligible, the seed/study fails; forward constraints are not
-relaxed to obtain an adjoint candidate. The sole predeclared exception is a
-separately named 90-day continuation if criterion 2 alone fails—that is, all
-of criteria 1 and 3-7 pass. That trigger uses validation only;
-the 60-day result remains reported, and the continuation must pass this same
-rule before promotion. Its
-starting C checkpoint is the minimum-response checkpoint among those passing
-criteria 1 and 3-7 except criterion 2; its matched B continuation starts from paired B. Both
-starting hashes are frozen before continuation training.
+The section-14 lambda screen is the only development decision that reads
+response validation. After lambda is frozen, response validation is a
+mechanistic outcome. The primary selected C is considered forward-preserving
+only if, relative to paired selected B:
 
-D and E use seed `20260911`, must pass forward criteria 1-5, and are selected
-by minimum `S_resp` with the same tie breaks. For criterion 1, replace “C's
-own best” with the evaluated arm's own best D or E candidate; the <=1.05
-paired-B envelope is unchanged. Criteria 6-7 are
-reported as mechanistic outcomes rather than required improvements. They have
-no continuation escape. If no checkpoint passes criteria 1-5, freeze the finite
-checkpoint with the smallest maximum primary-field 10-90-day AUC ratio to B,
-then lower magnitude ratio, then lower growth, then lower `S_resp`; label it
-forward-ineligible. This predeclared fallback keeps a mechanistic negative
-control available but cannot be promoted as a successful emulator. D/E
-identities are frozen before blind tests and cannot select or alter C.
+- each primary 10--90-day AUC ratio is at most 1.05;
+- the worst 90--360-day AUC/climatology ratio is at most 1.05 times B's;
+- perturbation growth is no more than 0.005 per call worse;
+- maximum normalized amplitude through 360 days is at most 1.05 times B's;
+- all rollouts are finite.
 
-The selected checkpoint is materialized and hashed. No adjoint result is part
-of this procedure.
+It demonstrates the intended development response effect only if
+\(S_{\rm resp}^{10:60}\) is at least 20% lower overall and at least 10% lower
+within each input family than paired B, with no day-10 input-family/region
+aggregate more than 1.10 times B. These are success/stop-go gates applied
+*after* the exact production selector, not a replacement selector.
 
----
+Failure freezes a negative v1 development result. There is no continuation,
+curriculum, checkpoint reselection, new lambda, or relaxed gate. Provided the
+technical adjoint gate later passes, the already-frozen blind evaluations still
+run so that a negative forward/response tradeoff is measured rather than
+hidden.
 
 ## 17. Blind forward-response test
 
-The 216 directions at days 6,840, 7,560, and 8,280 are sealed before training.
-They have disjoint centre IDs and held-out vertical combinations. They are not
-used for amplitude calibration, lambda selection, early stopping, checkpoint
-selection, or architecture choice.
+The geometry/direction manifest for 216 directions at days 7,560, 7,920, and
+8,280 is frozen before training and sealed under an evaluator-only path. No
+blind numerical response or numeric store is generated then. Those forward
+runs are generated/read only after every B/C checkpoint, lambda, development
+report, and ordinary forward report is frozen and hashed. The directions have
+disjoint centre IDs and unseen vertical combinations. They are never used for
+amplitude calibration, lambda selection, early stopping, checkpoint selection,
+architecture choice, or any retry decision.
 
-After all B/C/D/E checkpoints, any pre-blind continuation decision/results,
-and all associated selection reports are frozen:
+Evaluate the frozen parent A, ft90 child as context, and all paired B/C seeds on
+exactly the same cases. Report every section-16.2 diagnostic for all 216
+directions at day 10 and for the predeclared 36-direction long subset at
+days 20,30,...,90, with each available time/regime and every WBC/interior,
+field, kernel, and vertical-support breakdown retained.
 
-1. evaluate A, ft90-context, B, C, D, and E on exactly the same cases;
-2. report all validation metrics from section 16.2 without changing them;
-3. report each of the three times and regimes, not only a pooled value;
-4. retain point/smooth SSH, WBC/interior, and vertical-combination breakdowns;
-5. mark A/ft90 results contextual because their old split was not blind to the
-   native chronology.
+For leads 10--60, report \(S_{\rm resp}^{10:60}\) exactly as defined for
+development. Using only the predeclared long cases, also define
 
-**Predeclared success reading:** the primary `20260911` C checkpoint must lower
-`S_resp` by at least 15% versus paired B, the median paired reduction over all
-three seeds must be at least 15%, and at least two of three seeds must improve.
-The primary seed must improve at least three of four input families and not
-worsen any input-family/region aggregate by more than 10%. This test is
-reported once. Failure produces a negative result, not a new checkpoint.
+\[
+S_{\rm resp}^{90}=
+\frac{1}{4\cdot4\cdot5}\sum_{h,g,R}\bar E_{h,g,R,90}.
+\]
 
----
+The primary seed is **20260724**. Its C checkpoint must reduce
+`S_resp_10:60` by at least 15% and `S_resp_90` by at least 10% versus its
+paired B; both scores must also be below frozen parent A. It must improve at
+least three of four input families and worsen no input-family/region day-10
+aggregate by more than 10% versus B. Across the three paired seeds, the median
+10--60-day reduction must be at least 15%, and at least two seeds must improve
+both the 10--60 and day-90 scores versus paired B.
+
+This package is opened once. A failure is a negative result; it cannot change
+the model, checkpoint, response weight, amplitudes, inventory, or evaluation
+rule.
 
 ## 18. Blind MITgcm-adjoint test
 
@@ -1750,9 +1828,8 @@ to change provenance, but resolve the G1 plateau caveat at Gate A0. Run the
 trusted FNO-side derivative machinery for:
 
 1. frozen parent A;
-2. all paired B and C replicates, with `20260911` primary;
-3. frozen primary-seed D and E ablations;
-4. the existing ft90 result as context.
+2. all paired B and C replicates, with `20260724` primary;
+3. the existing ft90 result as context.
 
 Use source day 7,200 and leads 10, 20, 30, and 90 days for:
 
@@ -1793,13 +1870,13 @@ The two primary effects are
 $\Delta_{A,s}=S_{C,s}-S_A$ and
 $\Delta_{B,s}=S_{C,s}-S_{B,s}$; negative values improve on the historical
 parent and prospective paired nominal control. The primary seed succeeds only
-if $\Delta_{B,20260911}\le\log(0.8)$, $\Delta_{A,20260911}<0$, at least six of
+if $\Delta_{B,20260724}\le\log(0.8)$, $\Delta_{A,20260724}<0$, at least six of
 the eight objective/lead relative-L2 cells improve versus paired B, and none is
 >1.10 times B. Across replication, the median $\Delta_B$ must be
 <=`log(0.9)` and at least two of three seeds must have $\Delta_B<0$.
 
-Secondary endpoints are the free-chain score, D/E mechanistic contrasts,
-higher pattern correlation, amplitude ratio closer to one, and improved mean-
+Secondary endpoints are the free-chain score, higher pattern correlation,
+amplitude ratio closer to one, and improved mean-
 mode preservation. Results are reported per seed; no best seed is chosen after
 opening TAF data.
 
@@ -1836,280 +1913,322 @@ contract, not chosen after inspecting v1 maps.
 
 ## 19. Forward figure and anomaly evaluation after training
 
-After checkpoints are frozen and before TAF is opened:
+After the production selector has frozen every B/C checkpoint and before the
+adjoint evaluator is enabled:
 
-1. Run the established 0-360-day validation package on strict validation.
-2. Run a common blind-test package on the 15 exact starts per regime from
-   section 6, including persistence and a strict-train climatology.
-3. Run the standard S0 streamfunction figures at days 0-40, 60, and 2,000;
+1. Run the unchanged 360-day nominal validation package on the exact 102
+   production-validation records.
+2. Run the established final S0 figure package on the exact 15 starts listed in
+   section 6.2; do not invent a per-regime or new nominal-test package.
+3. Run the standard streamfunction figures at days 0--40, 60, and 2,000;
    RMSE/ACC through day 200; and RMSE through day 2,000.
-4. Run the anomaly package after subtracting the same MITgcm mean over strict
-   training days 0-5,039 from truth and every model. Never subtract a model's
-   own mean.
+4. Through the contract-parameterized `anomaly_response.py` adapter, reuse
+   the existing anomaly numerics on each sealed 15-start figure array. The
+   adapter verifies the complete start vector; the mapped day-60/day-2,000
+   anomaly panels use member 0, start 6,263, exactly as the parent package.
+   The reference is MITgcm's derived S0 time-mean barotropic streamfunction
+   over parent training days 0--5,999. Subtract that identical field from truth
+   and every model; never subtract a model's own mean.
 5. Report anomaly RMS, spatial variance, streamfunction extrema,
-   WBC/interior ratio, and zonal/meridional spectra.
-6. Compare A, ft90-context, B, C, D, and E on identical starts and physical
-   metrics. Retain the historical A/ft90 figure packages as a separate table.
-7. Evaluate the blind forward-response package.
-8. Freeze all outputs and only then enable the adjoint evaluator.
+   WBC/interior ratio, zonal/meridional spectra, perturbation growth, maximum
+   normalized magnitude, persistence, and climatology.
+6. Compare frozen parent A, ft90 child as context, and every B/C seed on
+   identical starts and physical metrics. Preserve the existing A/ft90 reports
+   rather than regenerating a different contract for them.
+7. Freeze all ordinary forward outputs; then run and freeze the blind
+   forward-response package from section 17.
+8. Only after both packages and their hashes are in the freeze manifest may
+   the MITgcm/TAF adjoint evaluator be enabled.
 
-The 90-360 and 2,000-day runs are stability/statistical evaluation, not
-pointwise training targets. The maximum deterministic supervision horizon
-remains 90 days.
+The 90--360- and 2,000-day products are stability/statistical evaluations, not
+pointwise targets. Nominal and response-gradient training remain exactly
+six calls/60 days; only the sealed forward-response and adjoint evaluations
+probe day 90.
 
----
-
-## 20. Required ablations and controls
+## 20. Required controls and attribution checks
 
 ### 20.1 Required for the main paper
 
-1. **A versus B:** quantifies legacy frozen parent versus a new strict-split,
-   parent-design reproduction. This is contextual because splits differ.
-2. **B versus C:** primary causal comparison; only response supervision differs.
-3. **B versus D:** determines whether nearby perturbed states alone help.
-4. **C versus D:** distinguishes explicit response/JVP matching from ordinary
-   perturbed-state fitting.
-5. **C versus E:** tests whether sparse 20-90-day response targets add value
-   beyond dense 10-day JVP constraints.
-6. **Three paired B/C seeds:** separates a response effect from initialization.
+1. **A versus B:** verifies that the production parent can be replayed under
+   its exact implemented contract and quantifies run-to-run/seed effects.
+2. **B versus C:** the primary causal contrast. The arms share seed,
+   initialization, every nominal batch, optimizer step count, learning-rate
+   schedule, six-call rollout, parent loss, selector, and nominal evaluation;
+   C alone receives the auxiliary response term.
+3. **A versus C:** tests whether the new random-initialized model preserves the
+   actual deployed parent's forward skill, not merely its paired rerun.
+4. **Matched saved-step tables:** compare paired B/C at 1,920, 3,840, 5,760,
+   and 7,680 updates. This makes any response effect separable from checkpoint
+   timing while leaving the production selector untouched.
+5. **Three paired B/C seeds:** primary seed 20260724 and replications
+   20260911/20260912; report all seeds and the paired distribution, never a
+   post hoc best seed.
+6. **ft90 context:** report its already-established forward and adjoint
+   products, but never use it as an architecture definition, initializer,
+   normalizer source, hyperparameter control, or causal baseline.
 
-### 20.2 Secondary or next-version
+B and C have identical optimizer budgets and nominal state exposure. C's
+additional compute is solely the declared forward-response information; it
+does not receive extra optimizer updates or a later training stage.
 
-- matched parent nominal/response continuations described in section 5.1;
-- matched B/C 90-day continuations only under the validation-only trigger in
-  section 16.3, before any blind test;
-- point-only versus smooth-only SSH and WBC-balanced versus area-proportional
-  sampling only in a newly versioned study with a newly sealed blind-response
-  set. No v1 blind outcome may trigger either training ablation.
+### 20.2 Explicitly outside v1
 
-The ft90 child is never a primary control, initialization, normalizer source,
-or architecture definition.
-
----
+There is no perturbed-state-only arm, short-only arm, parent continuation,
+90-day continuation, curriculum, alternate spectral cap, architecture
+ablation, or loss-coefficient ablation in this contract. Those would violate
+the single-change question posed here. If a later study tests point-only versus
+smooth-only SSH, WBC sampling, or continuation, it must be separately approved
+and use a newly sealed blind-response inventory; no v1 blind result may trigger
+its design.
 
 ## 21. Compute and storage estimate
 
-### 21.1 MITgcm
+### 21.1 MITgcm forward response work
 
-The exact production/pilot/control budget is 182.0 model-years, 4,717,440
-forward timesteps. A current S0 production manifest records 680.78 s for 3,600
-model-days, or 2.63 ms/step on four MPI ranks. At that rate the exact workload
-is about 3.4 four-rank wall-hours of pure integration; other segment manifests
-support a conservative 3-6 h integration range. Startup, nine-segment chaining,
-filesystem, and scheduler overhead dominate operations: the 2,472 logical
-branches expand to exactly 6,552 validated 10-day segment launches. Reserve
-**50-70 four-rank node-hours** and use job arrays/bundles. The
-measured integration estimate and operational allocation must be reported
-separately.
+The exact pilot/production/control budget in section 11 is 57,750 model-days
+= 160.417 model-years = 4,158,000 forward timesteps. A current S0 production
+manifest records 680.78 s for 3,600 model-days on four MPI ranks. At that rate,
+pure integration is about 3.0 four-rank wall-hours; current segment manifests
+support a conservative 3--6 h integration range.
 
-The dataset is intentionally many small forward runs rather than a few long
-ones. No TAF license or adjoint tape is used.
+Operationally, the design contains 2,400 signed perturbed branches, 72
+nominal/control branches, and three 320-day validation pickup-bank chains:
+2,475 logical branches and 5,775 validated 10-day segment equivalents. Job
+startup, staging, hashing, and filesystem latency will dominate. Reserve
+**45--65 four-rank node-hours**, use arrays/bundles, and report measured
+integration separately from the operational allocation. No TAF license,
+adjoint tape, or adjoint output is involved.
 
 ### 21.2 FNO
 
-The parent measured 3.215 V100-hours per seed. Budget approximately:
+The parent measured 3.215 V100-hours per complete seed. Budget:
 
-- B, three seeds: 9.7 GPU-hours;
-- C, three seeds with 10-25% overhead: 10.6-12.1 GPU-hours;
-- four-candidate lambda screen to 1,920 steps: about 3-5 GPU-hours;
-- D and E primary-seed ablations: about 7-9 GPU-hours;
-- evaluation/adjoints: <3 GPU-hours, mostly CPU for validated double precision.
+- B, three seeds: about 9.7 GPU-hours;
+- C, three seeds at the estimated 8--20% response overhead: 10.4--11.6
+  GPU-hours;
+- four-candidate, 1,920-step lambda screen: about 3.5--4.5 GPU-hours;
+- forward/response/adjoint evaluation: less than 3 GPU-hours, with much of the
+  validated double-precision adjoint work on CPU.
 
-Total primary allocation: **35-45 V100-equivalent GPU-hours**. Optional
-continuations are budgeted separately.
+The total is approximately **27--31 V100-equivalent GPU-hours**. There is no
+continuation or additional training arm in this budget. Actual auxiliary-path
+wall-time is unresolved until the response loader and spectral-buffer context
+are benchmarked.
 
 ### 21.3 Storage
 
-- curated float64 response arrays plus deltas/nominals: 10-12 GB uncompressed,
-  likely 4-8 GB compressed;
-- 60 annual source pickups are existing; edited initial pickups need not all be
-  retained once their byte edits and hashes are in the curated archive, but a
-  recoverability policy must be frozen first;
-- transient endpoint MDS/pickup scratch: approximately 50-100 GB;
-- manifests/logs: <2 GB;
-- models, optimizer checkpoints, reports, and figures: 15-25 GB for all seeds
-  and ablations.
+- curated development-plus-blind response arrays and metadata: about 9--11 GB
+  uncompressed; compressed size is unresolved until the pilot;
+- existing annual source pickups are reused; edited inputs may be represented
+  by complete provenance plus sparse byte edits only if the approved retention
+  policy proves exact recoverability;
+- transient endpoint pickups/logs: approximately 50--100 GB;
+- six B/C runs, screen artifacts, reports, and figures: approximately 15--25
+  GB.
 
-Reserve **150 GB scratch** and **40 GB durable project storage**. Compression
-ratio and raw-retention policy are unresolved until the pilot is extracted.
-
----
+Reserve **150 GB scratch** and **40 GB durable project storage**. Freeze raw
+retention and compression policy after the pilot integrity test but before
+production response generation.
 
 ## 22. Failure criteria and stop/go gates
 
-### Gate D0 — inventory and split
+### Gate D0 — production-contract, source, and inventory audit
 
-- all source pickup/forcing/executable hashes resolve;
-- all anchors lie in their declared split and every endpoint remains inside it;
-- exact family/region/level counts hold;
-- face/carrier labels, great-circle coordinates, and long-cell coverage pass;
-- non-WBC validation/blind centres pass the cross-role three-index separation
-  rule; WBC centres pass the distinct-ID/capacity rule and their achieved
-  joint-maximin separation is recorded;
-- pilot/train/validation/test centre IDs are disjoint within regime/family;
-- duplicate boundary pickups hash-match and the downstream-source rule resolves;
-- the strict-training normalizer hash is frozen before direction scaling;
-- no blind path is visible to training configs.
+- the B/C nominal split, records, normalizer recipe/hash, architecture,
+  optimizer schedule, rollout, forward objective, checkpoint cadence, and
+  production selector match sections 5--6 exactly;
+- every source pickup, metadata, forcing file, executable, and grid hash
+  resolves; duplicate boundary copies agree byte-for-byte;
+- the regime-specific day-5,760-to-6,080 pickup-bank chains complete, and
+  their day-6,010/6,050/6,080 P32 projections match trajectory-v3;
+- every response anchor lies in its declared role and its complete rollout
+  remains within that role's chronology;
+- family, region, level, kernel, sign, and long-subset counts are exact;
+- face/carrier labels, full support, coordinates, WBC capacity exception, and
+  all cross-role centre-disjointness/separation rules pass;
+- the blind store and all adjoint paths are inaccessible to development code.
 
-Failure: stop before MITgcm.
+Failure: stop before production MITgcm response generation or FNO training.
 
 ### Gate D1 — pickup surgery
 
 - only declared records/cells change;
-- every untouched record is array- and byte-identical;
+- every untouched record is byte-identical;
 - plus/minus edits are exact sign reversals;
-- native masks/support counts and both centred P32 states/deltas match the
-  manifest and pass the 1% antisymmetry gate;
-- nominal P32 projection matches Zarr at the anchor.
+- native support and centred P32 state/delta match the manifest and pass the
+  1% realization/antisymmetry gates;
+- the unedited pickup's P32 projection matches trajectory-v3.
 
-Failure: stop and fix/retest the generic editor; do not run a batch.
+Failure: fix and retest the generic editor before any batch submission.
 
-### Gate D2 — amplitude pilot
+### Gate D2 — forward-only amplitude pilot
 
-Every selected group amplitude must satisfy all section-10 linearity, SNR,
-precision, and SSH-cap criteria. Failure in any group stops production
-generation for all groups so the dataset remains one frozen design.
+Each separately selected U, V, Theta, and SSH amplitude must satisfy every
+section-10 linearity, SNR, P32 precision, adjacent-amplitude, SSH-cap,
+perturbed-repeat, and tight-CG criterion. If any family has no passing
+candidate, stop production generation. A smaller-amplitude follow-up requires
+a separately versioned pilot contract; no adjoint result may inform it.
 
-### Gate D3 — response dataset
+### Gate D3 — curated response dataset
 
-- all nominal and signed branches complete;
-- control reruns meet the numerical floor contract;
-- every train/validation pair satisfies `Q_lin<=0.05` and `Q_SNR>=20` at
-  every available lead using the final combined floor; a failure invalidates
-  the dataset version rather than dropping/rescaling that case;
-- response extraction reproduces direct pickup differences;
-- no NaN/Inf; counts, signs, leads, and hashes are exact;
-- validation/test groups are inaccessible to the train loader.
+- every declared nominal and signed branch completes;
+- response extraction reproduces direct float64 pickup differences;
+- train/validation cases satisfy `Q_lin<=0.05` and `Q_SNR>=20` at every
+  available lead through day 60 using the final combined numerical floor;
+- no NaN/Inf is present; counts, signs, lead arrays, schemas, and hashes are
+  exact;
+- the training loader cannot read validation, blind, or adjoint paths, and
+  development evaluators cannot read blind or adjoint paths.
 
-Failure: quarantine incomplete cases; do not silently reduce counts.
-If a later version changes amplitude after observing a validation linearity/
-SNR failure, those cases become development data and that version must create
-new response-validation and blind inventories; it may not reuse the failed
-held-out cases as if untouched.
-Blind-test `Q_lin`/SNR values are computed only after freeze and reported for
-every case. A blind failure labels that case outside the calibrated response
-regime but cannot trigger amplitude, inventory, model, or checkpoint changes.
+A failed train/validation case invalidates the dataset version; it is never
+silently dropped or rescaled, and v1 stops. If a successor changes amplitude,
+inventory, or extraction after seeing that failure, every failed validation
+case becomes development data and the successor must create new response-
+validation and blind inventories. Blind linearity/SNR is computed only after
+model freeze and reported for every case; it cannot trigger any change.
 
-### Gate M0 — nominal control recovery
+### Gate M0 — exact parent replay
 
-B must have no nonfinite 360-day rollout and must satisfy all of:
+The B code/config audit must prove scientific equality to the production
+parent for every invariant in section 5.1, subject only to the explicit
+section-23 infrastructure whitelist. The primary seed is frozen in advance;
+its checkpoint is selected only by the unchanged production selector.
+Relative to frozen parent A on the identical 102 validation records, selected
+primary-seed B must have:
 
-- 10-90-day AUC <=0.1011 speed, <=1.027 SST, and <=0.7240 PHIHYD (125% of
-  the documented parent values, rounded upward);
-- worst 90-360-day AUC/climatology <=0.40;
-- day-90 RMSE below at least one of persistence/climatology in every primary
-  field and below both in at least two fields;
-- `lambda_hat<=1.02` and maximum normalized magnitude <=6.0.
+- each 10--90-day primary-field AUC at most 1.05 times A;
+- worst 90--360-day AUC/climatology ratio at most 1.05 times A;
+- perturbation growth no more than 0.005 per call above A;
+- maximum normalized amplitude through day 360 at most 1.05 times A;
+- no nonfinite rollout.
 
-Because A used a different split, these are reproduction-scale gates rather
-than a claim of identical validation samples. If B is inadequate,
-freeze a negative reproduction report and close v1. Any adjustment to the
-shared B/C nominal protocol requires a newly versioned, re-reviewed contract
-before response-aware training; it is not an in-run rescue.
+All A/B checkpoint-step tables and selector branches are reported, including
+differences. Failure means the exact-parent reproduction has not recovered the
+baseline adequately. Only a demonstrated contract/code-integrity defect may be
+corrected under a newly reviewed version. If all equality/integrity tests pass
+but these metric tolerances fail, freeze a negative M0 and close v1: no
+seed, hardware, protocol, checkpoint, or threshold retry is allowed.
 
-### Gate M1 — response-aware eligibility
+### Gate M1 — response-aware development result
 
-C must satisfy the section-16 forward envelope and response improvement.
-If criterion 2 alone fails while criteria 1 and 3-7 pass, hold the candidate
-as provisional and invoke the predeclared validation-only continuation trigger.
-Any other failure means no C checkpoint is promoted and TAF remains sealed.
+Select C with the unchanged production selector, then apply section 16.3's
+forward-preservation and held-response success criteria against paired B.
+Failure labels the development result negative. It does not authorize another
+lambda, seed, checkpoint, continuation, curriculum, or data edit. Once the
+technically valid model identities are frozen, the preregistered blind
+forward-response and adjoint evaluations still run so the mechanistic result
+is not censored by a development outcome.
 
-### Gate M2 — frozen forward tests
+### Gate M2 — frozen ordinary-forward and response tests
 
-Blind nominal preservation requires every C 10-90-day primary-field AUC
-<=1.05 times paired B, worst 90-360-day AUC/climatology
-<=`min(0.85,1.05 x B)`, no nonfinite rollout, maximum normalized magnitude
-<=1.05 times B through 360 days, and each day-2,000 primary RMSE plus maximum
-magnitude <=1.10 times B. The blind response criteria are frozen in section
-17. Both tests are run once. A failure is a negative result; no checkpoint or
-lambda is changed. If an M1-eligible model was frozen before
-the blind tests, the preregistered adjoint evaluation proceeds regardless of
-the blind forward outcome, provided technical Gate A0 passes. This avoids
-outcome-dependent absence of the mechanistic Jacobian result; a forward-test
-failure still makes the overall “improve while preserve” conclusion negative.
+For the primary selected C, ordinary-forward preservation must hold against
+both paired B and frozen parent A:
 
-### Gate A0 — adjoint pipeline
+- every primary 10--90-day AUC ratio is at most 1.05;
+- the worst 90--360-day AUC/climatology ratio and maximum normalized amplitude
+  through day 360 are each at most 1.05 times the comparator;
+- perturbation growth is no more than 0.005 per call worse;
+- on the exact 15 S0 final-inference starts, each day-2,000 primary RMSE and
+  maximum normalized magnitude is at most 1.10 times each comparator;
+- no rollout is nonfinite.
 
-Parent/B/C/D/E FNO finite differences, forward/reverse identity, dtype, masks,
+The blind response criteria are exactly those in section 17. These packages
+are run once. Failure is a negative result and cannot alter any trained
+artifact or decision. The adjoint evaluation still proceeds if technical Gate
+A0 passes.
+
+### Gate A0 — adjoint pipeline validity
+
+Parent/B/C FNO finite differences, forward/reverse identity, dtype, masks,
 checkpoint/normalizer hashes, and weight-field hashes must pass before
-comparison. The existing MITgcm G0-G5 scalar gates remain required. Extend the
-one offshore G1 curve whose current minimum is at `epsilon=1e-5` with
-predeclared `1e-6` and `1e-7` forward differences; an interior minimum must be
-obtained or the reference retains a failed plateau flag. The new evaluator
-must enforce that flag rather than merely print it.
+comparison; ft90 retains its validated contextual result. The existing MITgcm
+G0--G5 scalar gates remain required. Extend the one offshore G1 curve whose
+current minimum is at `epsilon=1e-5` with predeclared `1e-6` and `1e-7`
+forward differences; obtain an interior minimum or retain and report a failed
+plateau flag.
 
-Because v2 G0 currently checks ETAN only, add a final-evaluation forward-only
-F90 extraction of U/V/Theta/ETAN at FNO 10-day nodes and require the canonical
-P32 projection to match trajectory-v3 there. The temporal qualifier is
-mandatory: final reports may say “46-channel G0 at FNO 10-day nodes; ETAN
-daily,” but may not imply that all 46 channels were checked at all 91 daily
-outputs. Until that extension passes, reports must say “ETAN-only daily G0.”
-These technical extensions occur after model freeze and cannot influence any
-model decision.
+Because v2 G0 currently checks ETAN only, add a final-evaluation, forward-only
+F90 extraction of U/V/Theta/ETAN at FNO 10-day nodes and require its canonical
+P32 projection to match trajectory-v3. Reports must say either
+“46-channel G0 at FNO 10-day nodes; ETAN daily” after that gate passes or
+“ETAN-only daily G0” before it does. These technical checks occur only after
+model freeze and cannot affect model decisions.
 
-### Gate A1 — scientific result
+### Gate A1 — confirmatory scientific result
 
-No threshold selects a model after TAF. Report the predeclared primary and
-secondary endpoints. V1 supports the full hypothesis only if M2 blind nominal
-preservation, the section-17 blind response criteria, and every section-18.3
-primary adjoint criterion pass. Failure of any component, including a forward/
-adjoint tradeoff, rejects “improve the adjoint while preserving forward skill”
-for v1 even if a mechanistic sub-result improves.
-
----
+No threshold selects a model after TAF access. Report the predeclared primary
+and secondary endpoints for every seed. V1 supports the full hypothesis only
+if ordinary-forward preservation in M2, the section-17 blind response
+criteria, and every section-18.3 primary adjoint criterion pass. Any failure,
+including a forward/adjoint tradeoff, rejects “improved Jacobian/adjoint
+without degrading forward skill” for v1 even if a mechanistic sub-result
+improves.
 
 ## 23. Exact implementation files to create or modify after approval
 
-No files below are implemented by this planning task.
+No file below is implemented by this planning task.
 
 ### 23.1 Create
 
-**Contracts/configs**
+**Frozen contracts/configs**
 
 - `config/forward_response_amplitude_pilot_v1.json`
 - `config/forward_response_dataset_v1.json`
 - `config/forward_response_schema_v1.json`
+- `config/forward_response_lambda_screen_v1.json`
 - `config/model_c_adjoint_faithful_nominal_control_v1.json`
 - `config/model_c_adjoint_faithful_response_v1.json`
-- `config/model_c_adjoint_faithful_perturbed_state_control_v1.json`
-- `config/model_c_adjoint_faithful_short_response_v1.json`
 - `config/adjoint_faithful_forward_evaluation_v1.json`
 - `config/adjoint_faithful_blind_adjoint_evaluation_v1.json`
 - `config/adjoint_faithful_firewall_v1.json`
 
-**MITgcm response generation**
+The B config must match every **scientific field** in the production parent.
+The equality checker permits only this explicit infrastructure whitelist:
+study/version label, output/report roots, declared seed, new-runner source
+hashes, and a response block fixed to `enabled=false`. The parent loss
+contract SHA-256 `6a233883b3c9a6347f0d343f295bee2aa841b143b547acc9f71fea05e8e8d2e1`
+and all model/data/training/validation fields must match. C is byte-identical
+to B outside response enablement, response-store/schedule fields, and the
+frozen nonzero lambda.
 
+**MITgcm forward-response generation**
+
+- `scripts/build_response_validation_pickup_bank.py`
 - `scripts/build_forward_response_inventory.py`
 - `scripts/stage_forward_response_run.py`
 - `scripts/extract_forward_response_dataset.py`
 - `scripts/verify_forward_response_dataset.py`
 - `scripts/freeze_adjoint_faithful_study.py`
 - `scripts/verify_adjoint_faithful_firewall.py`
+- `slurm/mitgcm/af_forward_response_pickup_bank.sbatch`
 - `slurm/mitgcm/af_forward_response_array.sbatch`
 
-**FNO data/loss/training**
+**FNO response path and reports**
 
-- `src/oceanfno/chronological_dataset.py` (thin strict-split adapter over the
-  trusted production loader/normalizer, not a second data implementation)
 - `src/oceanfno/response_dataset.py`
 - `src/oceanfno/response_objective.py`
 - `src/oceanfno/response_spectral_context.py`
-- `src/oceanfno/train_response_study.py`
-- `src/oceanfno/validation_response.py`
+- `src/oceanfno/response_validation.py`
+- `src/oceanfno/train_response.py`: the one common parameterized runner for
+  both B (response disabled) and C (response enabled), importing the trusted
+  parent dataset/model/objective/validation utilities;
 - `src/oceanfno/figures_response.py`
-- `src/oceanfno/anomaly_response.py`
+- `src/oceanfno/anomaly_response.py`: contract adapter that reuses the
+  numerical helpers in the frozen anomaly module but accepts B/C figure
+  identities;
 - `slurm/models/c/train_adjoint_faithful_nominal_control_v1.sbatch`
 - `slurm/models/c/train_adjoint_faithful_response_v1.sbatch`
 - `slurm/models/c/figures_adjoint_faithful_response_v1.sbatch`
 
 **Blind adjoint adapters**
 
-- `scripts/fno_adjoint_model.py` (contract-parameterized adapter of the trusted
-  ft90 runner, retaining its double-precision spectral fix)
-- `scripts/compare_adjoint_models_response_v1.py`
+- `scripts/fno_adjoint_model.py`: contract-parameterized adapter of the
+  trusted one-input ft90 runner, retaining its validated complex128 fix;
+- `scripts/compare_adjoint_models_response_v1.py`.
 
 **Tests**
 
+- `tests/test_parent_contract_replay.py`
 - `tests/test_forward_response_inventory.py`
 - `tests/test_forward_response_pickup.py`
 - `tests/test_forward_response_dataset.py`
@@ -2122,30 +2241,45 @@ No files below are implemented by this planning task.
 
 ### 23.2 Modify minimally
 
-- `archive/src/bire_repro/af_s0_twin.py`: factor its trusted byte-level editor
-  into a generic record/cell edit function while retaining the existing global
-  U/V scaling wrapper byte-for-byte compatible.
-- `pyproject.toml`: add entry points only after the new modules exist; preserve
-  the user's current unrelated modification.
+- `archive/src/bire_repro/af_s0_twin.py`: factor its trusted byte-level
+  pickup parser/editor into a generic declared-record/cell edit function while
+  keeping the existing S0 twin wrapper byte-compatible.
+- `pyproject.toml`: add entry points only after the modules exist and preserve
+  the user's unrelated current edit.
+
+The frozen `src/oceanfno/train.py` cannot be parameterized in place: it
+hard-codes the parent version, primary seed, output suffix, and pinned source
+hashes. Before any study training, the new common runner with response disabled
+must pass a primary-seed equivalence harness against that original trainer:
+same initialization tensors, nominal batches, per-term losses, gradients,
+spectral buffers, optimizer states, and checkpoints step-for-step in the
+pinned environment. A full primary-seed replay must also satisfy Gate M0.
+Failure stops implementation; it is not permission to fork parent numerics or
+maintain separate B/C loops.
 
 ### 23.3 Reuse unchanged
 
-- `src/oceanfno/model.py`
-- `src/oceanfno/objective.py`
-- `src/oceanfno/spectral_norm.py`
-- `src/oceanfno/pressure_gradient.py`
-- `src/oceanfno/continuity.py`
-- `src/oceanfno/barotropic_transport.py`
-- numerical routines in `src/oceanfno/figures.py` and `anomaly.py`
-- `scripts/adjoint_metrics.py`
-- `scripts/stage_adjoint_run.py`
-- `af_fno/mitgcm/code_ad/**`, `input_ad/**`, and `tamc.h`
-- all existing parent/ft90 configs, outputs, checkpoints, reports, and docs.
+- `src/oceanfno/dataset.py`, including its production split, normalizers,
+  `RolloutDataset`, and `ChunkAwareBatchSampler`;
+- `src/oceanfno/model.py`, `objective.py`, `spectral_norm.py`,
+  `pressure_gradient.py`, `continuity.py`, and
+  `barotropic_transport.py`;
+- `src/oceanfno/validation.py`, including `validate_checkpoint`,
+  `train_only_climatology`, and `select_by_validation`;
+- `src/oceanfno/train.py` as the immutable primary-seed equivalence
+  reference, not the B/C study runner;
+- numerical routines in `src/oceanfno/figures.py`,
+  `figures_ft90.py`, and `anomaly.py`;
+- `scripts/adjoint_metrics.py`, `fno_adjoint_ft90.py`,
+  `compare_adjoint_maps_phase_a.py`, and
+  `stage_adjoint_run.py`;
+- `af_fno/mitgcm/code_ad/**`, `input_ad/**`, and `tamc.h`;
+- every existing parent/ft90 config, output, checkpoint, report, and required
+  document.
 
-The new adapters import trusted numerics; they do not fork or silently edit the
-frozen production parent.
-
----
+There is deliberately no chronological-split adapter, new nominal
+normalizer, replacement selector, alternate model definition, or forked
+forward objective.
 
 ## 24. Reproducibility and provenance requirements
 
@@ -2157,6 +2291,9 @@ include:
 - MITgcm commit and executable hash;
 - source pickup, metadata, forcing, grid, namelist, and static-input hashes;
 - trajectory-v3 metadata/manifest hash (`766cae893593...` currently);
+- a field-by-field production-parent equality report for split, records,
+  normalizers, architecture, loss, optimizer, rollout, checkpoint cadence,
+  spectral normalization, validation, and selector;
 - exact split arrays, anchor/centre inventory, level and region counts;
 - pilot raw metrics, nominal/perturbed repeats, tight-CG comparisons, combined
   floor, selected amplitudes, and decision trace;
@@ -2166,17 +2303,19 @@ include:
 - pre/post auxiliary spectral power-vector hashes and triplet-order tests;
 - normalizer/increment-scale hashes;
 - materialized checkpoint and optimizer-step hashes;
-- both validation views and the deterministic selection trace, including any
-  fallback;
+- the unmodified nominal-selection trace, including any production fallback,
+  plus a separately labeled response-validation report proving it did not
+  select the full-run checkpoint;
 - hardware, Slurm IDs, wall times, failures/retries, and quarantined cases;
 - blind freeze timestamp, ACL/mount proof, evaluator access log, and hashes of
   every artifact existing before access;
 - final evaluator version and all MITgcm/FNO gate results.
 
-Randomness is limited to the three declared model seeds. Spatial selection is
-hash/maximin deterministic. Completed artifacts are write-once. Reports state
-inclusive and half-open day conventions side by side to prevent off-by-one
-leakage.
+Model randomness is limited to the three declared paired seeds. The response
+sampler uses a separately hashed counter stream and cannot advance the parent
+initialization or nominal-batch RNGs. Spatial selection is hash/maximin
+deterministic. Completed artifacts are write-once. Reports state inclusive and
+half-open day conventions side by side to prevent off-by-one leakage.
 
 The existing adjoint products must be exposed only inside the evaluator mount;
 the development identity must have no read permission. Repository readability
@@ -2187,100 +2326,102 @@ must use the sanitized development checkout/mount contract above.
 
 ## 25. Numbered execution order
 
-1. Review and approve this document; make no compute submission before approval.
-2. Freeze the strict split and compute/hash the one strict-training normalizer,
-   increment scales, and climatology before any standardized perturbation is
-   constructed.
-3. Freeze model seeds, region masks, kernel definitions, counts, leads,
-   candidate alphas/lambdas, and the exact ACL/forbidden-path list in configs.
-4. Materialize the deterministic pilot/train/validation/test centre and level
-   inventory; verify all counts/full supports and freeze hashes.
-5. Generalize and unit-test the trusted pickup editor; prove the old twin path
-   remains compatible and only requested bytes change.
-6. Stage six nominal pilot branches and their duplicates; run the forward-only
-   amplitude pilot at both signs and three alphas.
-7. Extract P64 responses and choose four provisional amplitudes; run the 12
-   selected-alpha perturbed duplicates plus tight-CG signed/nominal controls,
-   apply every section-10 gate, and freeze final amplitudes. Stop if any group
-   fails.
-8. Generate shared nominal response branches for training and validation only;
-   verify their P32 projections against trajectory-v3.
-9. Generate signed training and validation response branches, short first and
-   then the predeclared long subset. Do not generate/read blind response data.
-10. Extract and validate the train/validation response store; freeze response
-   scales and all data hashes.
-11. Train B for the three seeds with the parent 60-day objective/schedule;
-    select B using nominal validation only.
-12. Run the four-lambda 1,920-step screen on forward and response validation;
-    freeze lambda without adjoint access.
-13. Train C for the three paired seeds; train D and E for the primary seed.
-14. Apply the two-view checkpoint rule; freeze selected checkpoints,
-    normalizers, reports, and the complete model-development manifest. Stop on
-    an M1 failure unless its sole cause is the predeclared criterion-2
-    continuation trigger.
-15. Run the normal forward validation and non-blind figure/anomaly preflights.
-16. If and only if the validation-only continuation trigger in section 16.3
-    fired, run the separately named matched B/C continuation, apply the same
-    validation rule, and freeze it. Make this decision before any blind
-    nominal or response result is generated or read. Complete any separately
-    preauthorized parent-retrofit pair in this same pre-blind phase or defer it
-    to a new version.
-17. Run the full common forward figure, anomaly, streamfunction, and blind-
-    nominal packages for A, ft90, B, C,
-    D, E, and any already-frozen continuation. Freeze the complete forward
-    paper package. No blind result can trigger another training run.
-18. Generate/extract the sealed blind forward-response store using its already
-    frozen inventory; run the response evaluation once and freeze it.
-19. Enable the evaluator-only adjoint path. Run FNO gates for parent, B, C, D,
-    and E; verify/extend the MITgcm/TAF gates exactly as in A0.
-20. Compare parent, B, C, D, E, and ft90 context against the existing Phase-A
-    objectives at 10/20/30/90 days. Report all seeds and metrics without
-    reselection.
-21. Run only the preregistered exploratory adjoint projections/objectives, if
-    their independent gates pass.
-22. Produce final tables/figures: nominal forward, anomalies, blind responses,
-    JVP/adjoint metrics, spectra, conservation, controls, compute, and failures.
-23. Archive the full provenance bundle and write the paper conclusion answering
-    the single question: did forward-only perturbation-response supervision
-    improve the learned Jacobian/adjoint while preserving forward skill?
-
----
+1. Review and approve this document. Submit no MITgcm or FNO compute before
+   approval.
+2. Freeze a machine-readable equality contract against
+   `model_c_production_1in_1out_spectralnorm_v1`: exact active split,
+   nominal records, normalization recipes/hash, architecture, parent loss,
+   optimizer schedule, six-call rollout, checkpoint cadence, and selector,
+   with only the section-23 infrastructure whitelist permitted.
+3. Freeze the three paired seeds, response counts/leads, masks, kernels,
+   candidate alphas/lambdas, and the development/evaluator ACL contract.
+4. Materialize the joint pilot/train/validation/blind centre, level, kernel,
+   and long-subset inventory; verify all counts/full support and seal the blind
+   inventory from development.
+5. Implement the common B/C runner and equality harness; pass response-disabled
+   initialization/batch/loss/gradient/optimizer dry-run equivalence against the
+   frozen parent trainer. In parallel, generalize and unit-test the trusted
+   pickup editor; prove the old twin path remains byte-compatible and only
+   requested bytes change.
+6. Build the three regime-specific day-5,760-to-6,080 nominal pickup-bank
+   chains; hash every 10-day pickup and verify their P32 projections.
+7. Run the six-anchor, forward-only amplitude pilot at both signs and all three
+   candidate amplitudes, with paired nominal duplicates.
+8. Choose provisional U/V/Theta/SSH amplitudes; run the selected-alpha
+   perturbed duplicates and tight-CG signed/nominal controls; apply every
+   section-10 criterion and freeze the four final amplitudes. Stop if any
+   family fails.
+9. Generate all shared nominal and signed response-training/validation
+   branches, short cases first and then the frozen 60-day long subsets. Do not
+   generate or expose blind response data.
+10. Extract and verify the development response store; freeze training-only
+    response scales, numerical floors, schemas, and hashes.
+11. Pass the common runner's response-disabled primary-seed equivalence
+    harness, then run B from random initialization for all three seeds through
+    that runner. Apply the exact production selector and Gate M0.
+12. Run the four-lambda, 1,920-step primary-seed screen using nominal and
+    response validation through day 60 only. Freeze lambda and discard screen
+    checkpoints/optimizer states.
+13. Restart from step zero and train C for all three paired seeds; C alone
+    enables the response auxiliary path.
+14. Apply the unchanged production selector independently to every C run.
+    Report response validation only after selection, apply Gate M1, and freeze
+    model/checkpoint/normalizer/config/report hashes. Do not retrain on failure.
+15. Run and freeze the complete ordinary forward validation, S0 figure,
+    anomaly, streamfunction, and matched-step packages for A, ft90, B, and C.
+16. Generate/extract the already-designed evaluator-only blind
+    forward-response store; evaluate it once for A, ft90, B, and C and freeze
+    Gate M2 results.
+17. Enable the evaluator-only adjoint path. Run all FNO derivative checks and
+    the MITgcm G0--G5/A0 technical extensions without changing a model.
+18. Evaluate parent A and every B/C seed against the existing MITgcm/TAF
+    point, kernel, and conservation objectives at 10/20/30/90 days; retain
+    ft90 as context.
+19. Run only preregistered exploratory adjoint objectives whose independent
+    gates were frozen before training.
+20. Produce paper tables/figures for nominal forward skill, anomalies, blind
+    responses, JVP/adjoint metrics, lead dependence, spectra, conservation,
+    paired controls, compute, and every failure.
+21. Archive the provenance/access-log bundle and answer the sole confirmatory
+    question: did forward-only response supervision improve the learned
+    Jacobian/adjoint without degrading the production-parent forward emulator?
 
 ## Frozen proposed contract
 
-This table is the concise proposal to approve. Fields whose numerical outcome
-requires the forward-only pilot/screen are frozen as **procedures**, not invented
-values.
+Numerical outcomes that require the forward-only pilot or lambda screen are
+frozen below as procedures, not invented values.
 
 | Contract item | Frozen proposal |
 | --- | --- |
-| Baseline model | Frozen `model_c_production_1in_1out_spectralnorm_v1`; architecture/objective source of truth; checkpoint not loaded by primary new arms |
-| Context-only child | `model_c_production_1in_1out_spectralnorm_ft90_v1`; no weights, normalizer, or optimizer state used |
-| New model | `model_c_adjoint_faithful_response_v1`, random initialization, paired with nominal arm B |
+| Baseline model | Frozen `model_c_production_1in_1out_spectralnorm_v1` (A); its current implementation is authoritative; no checkpoint is loaded by B or C |
+| Context-only child | `model_c_production_1in_1out_spectralnorm_ft90_v1`; report only; never an initializer, baseline design, or decision source |
+| New model | `model_c_adjoint_faithful_response_v1` (C), random initialization, paired with response-disabled B in the same common runner; C differs only by response data and `lambda_resp * L_response` |
 | State channels | U15 + V15 + Theta15 + SSH1 = 46; unchanged; no adjoint outputs |
-| Static channels | parent five physical statics; unchanged |
-| Nominal train/validation/test | train 0-5,039; buffer 5,040-5,129; validation 5,130-6,389; buffer 6,390-6,479; blind test 6,480-8,999 |
-| Nominal validation/test starts | validation `5130+12m`, m=0..33 per regime; blind test 15 listed starts 6480-6999 per regime |
-| Response anchors | train 14/regime at 0:360:4680; validation 3/regime at 5400/5760/6120; blind test 3/regime at 6840/7560/8280 |
-| Response counts | train 224 directions/regime =672 total, 96 long; validation 72/regime =216, 36 long; blind test same; both signs |
-| Perturbation families | native-face 5x5 Gaussian U/V; tracer 5x5 Gaussian Theta; SSH point and 5x5 Gaussian; sigma1, radius2, unit L2, full active support only |
-| Spatial sampling | exact region counts in section 9; WBC approximately one third and oversampled; interior/east/north/south retained; joint deterministic maximin/hash allocation; split-disjoint IDs everywhere, hard cross-role distance-three outside capacity-limited WBC |
-| Vertical sampling | train single-level, all 15 levels >=3 times per variable/regime; validation/test all levels plus frozen unseen 2/3-level combinations |
-| Amplitudes/calibration | forward-only +/- pilot at alpha `{0.025,0.05,0.10}`; choose largest passing <=5% sign asymmetry, SNR>=20, P32 realization/antisymmetry, adjacent-alpha, SSH <=1 cm, perturbed-repeat, and tight-CG 1% gates; separately U/V/Theta/SSH |
-| Dense-short/sparse-long | all directions at 10 d; long subsets at 10,20,...,90 d; no target beyond 90 d |
-| MITgcm cost | 65,520 model-days =182.0 model-years including pilot, nominal, duplicate-perturbation, and tight-CG controls |
-| Restart semantics | edit only selected Uvel/Vvel/Theta or EtaN cells; Salt, AB histories, dEtaHdt, EtaH, and every unselected record byte-identical; never reconstruct pickup from Zarr |
-| Parent loss | eight implemented terms and coefficients unchanged |
-| Response loss | signed oriented response/JVP error; equal input/output group balance; long lead mean; training-only response scales/noise floors |
-| Response mixing | nominal batch8 every update; one batched nominal/-/+ response triplet every fourth update; spectral power-vector snapshot/restore; 75% short/25% long auxiliary sampling |
-| Response weight | choose from `{0.03,0.10,0.30,1.00}` by exact forward-only 1,920-step validation screen |
-| Primary rollout/training | from scratch, 60 d nominal rollout, 7,680 updates, parent LR/Adam/spectral-norm schedule, seeds 20260911/12/13 |
-| Checkpoint selection | forward AUC/ACC/baseline/stability envelope relative to paired B, then weighted dense-short/sparse-long held-out response score and no-catastrophic-cell guard; no adjoint metric |
-| Blind forward tests | strict-v3 nominal test and 216 direction pairs / 432 signed perturbed branches; separate evaluator-only store; run once after model freeze |
-| Blind adjoint tests | existing scalar-gated S0 point/kernel/mean suite at 10/20/30/90 d plus A0 plateau/full-state extensions; parent/B/C/D/E/ft90 context; exploratory projections only after freeze |
-| Required controls | A, B, C; perturbed-state-only D; short-only E; three paired B/C seeds; optional matched parent continuation kept separate |
-| Forbidden data | no programmatic access or decision use of any MITgcm/TAF adjoint, `ADJ*`, `adxx_*`, adjoint-derived metric/map, blind response/test product, or new FNO adjoint map during development/selection; historical summaries above are rationale only |
+| Architecture/statics | Exact full parent architecture dictionary: 27,297,960 parameters, 32x32 modes, width 128, three blocks, six pointwise LayerNorms, padding 0.1, dense/full-precision spectral weights, local branch, five physical statics, position encoding, and identical spectral normalization |
+| Nominal train/validation periods | Exact parent train `[0,6000)` and validation `[6000,7200)`; no buffer and no replacement split |
+| Nominal validation/inference | Checkpoint starts `6000 + 6m`, `m=0,...,33`, 34/regime; nested final-inference block `[6200,7200)` and exact 15 S0 starts in section 6.2; `[7200,9000)` is truth-only |
+| Normalization | Exact parent functions and days 0--5,999 over S0/S1/S2; recomputation must match SHA-256 `fe424b37d74f5b9d901728c8d585245e12ab67e4230a2eb86f6edc43108d96bf`; response data never change parent normalization |
+| Response anchors | Train 14/regime at 0,360,720,1440,1800,2160,2520,3240,3600,3960,4320,5040,5400,5760; validation 3/regime at 6010/6050/6080; blind 3/regime at 7560/7920/8280 |
+| Response counts | Train 224 directions/regime = 672 total, 96 long; validation 72/regime = 216 total, 36 long; blind same; every direction has both signs |
+| Perturbation families | Native-face 5x5 Gaussian U/V; tracer-centred 5x5 Gaussian Theta; SSH wet-cell point and 5x5 Gaussian; sigma 1 cell, radius 2, unit-L2 kernel, full active support only |
+| Spatial/vertical design | WBC about one third and oversampled; interior/east/north/south retained; deterministic joint maximin/hash allocation; every U/V/Theta level represented; training single-level, held validation/blind multi-level combinations |
+| Amplitude calibration | Forward-only +/- pilot at alpha 0.025/0.05/0.10 training sigma; choose the largest separately for U/V/Theta/SSH passing <=5% sign asymmetry, SNR>=20, P32/adjacent-alpha/repeat/tight-CG gates; SSH peak <=1 cm |
+| Response horizons | All cases 10 d; training/validation sparse-long targets 10,20,...,60 d; pilot and blind evaluation may reach 90 d; no model-development response metric or gradient beyond 60 d |
+| MITgcm cost | 57,750 model-days = 160.417 model-years, 4,158,000 steps, including pickup bank, pilot, nominal, duplicate, and tight-CG controls |
+| Restart semantics | Edit only selected `Uvel`, `Vvel`, `Theta`, or `EtaN` cells; Salt, AB histories, `dEtaHdt`, `EtaH`, and every unselected byte remain identical; never reconstruct a pickup from Zarr |
+| Forward loss | Exact eight-term parent objective and coefficients, unchanged; exact six-call/60-day nominal rollout |
+| Response loss | Signed oriented response/JVP error, balanced equally across input/output physical groups; six-lead mean for long cases; no ordinary perturbed-state loss |
+| Response mixing | Exact parent nominal minibatches and nominal-loss definition/weight every update; isolated response pair every fourth update; 75% short/25% long; batched nominal/-/+ branches and spectral power-vector snapshot/restore |
+| Response weight | Choose from 0.03/0.10/0.30/1.00 using only a 1,920-step primary-seed forward/response-validation screen; discard screen states and restart C at step zero |
+| Optimizer/training | Cold Adam with no state load, exact parent betas, no weight decay/clipping, batch 8, 7,680 updates, LR 5e-4 through 5,760 then 1e-4, checkpoints 1,920/3,840/5,760/7,680, six-call/60-day rollout |
+| Seeds | Primary 20260724; paired replications 20260911 and 20260912 |
+| Checkpoint selection | Exact unchanged parent `select_by_validation` on exact nominal validation, independently for B and C; response validation never selects a full-run checkpoint |
+| Forward-preservation criteria | Selected C must remain within the predeclared 5% nominal validation envelope versus paired B and frozen A, with final-inference gates; response-development and blind improvements are separate success tests |
+| Blind forward tests | Presealed geometry; evaluator-only 216-direction/432-signed numeric response set generated after freeze at 7560/7920/8280, with all cases at day 10 and 36 long through day 90; ordinary parent final-inference/figure package; run once |
+| Blind adjoint tests | Existing scalar-gated S0 point/kernel/mean suite at 10/20/30/90 d, plus predeclared A0 technical extensions; compare parent, all B/C seeds, and ft90 context |
+| Required controls | A frozen parent, B exact-scientific-contract response-disabled replay, C response-aware in the same runner; matched saved steps and three paired seeds; ft90 context only |
+| Forbidden data | No MITgcm/TAF adjoint, `ADJ*`, `adxx_*`, adjoint-derived map/metric, blind numeric response, nested final-inference result, or new FNO adjoint may influence training, amplitude/lambda choice, architecture, checkpoint selection, or retry decisions |
 
-**Approval boundary:** stop here. The next authorized action, if this contract is
-approved, is implementation and no-compute inventory/pickup unit testing—not an
+**Approval boundary:** stop here. After approval, the first authorized work is
+contract implementation plus no-compute inventory/pickup unit testing—not an
 MITgcm submission and not FNO training.
