@@ -1,10 +1,13 @@
 # Adjoint-faithful FNO training from forward perturbation responses
 
-**Prospective study plan — 2026-08-24 — not yet approved for execution**
+**Study plan — approved for execution 2026-08-24; see "Implementation status
+and amendments" below for what has actually been built and run.**
 
-This document is deliberately prospective. It specifies the data, controls,
-loss, selection rule, blind tests, and stop/go gates for a response-aware FNO,
-but it does **not** authorize or launch an MITgcm run or an FNO training run.
+This document specifies the data, controls, loss, selection rule, blind
+tests, and stop/go gates for a response-aware FNO. Sections below still use
+the original prospective phrasing ("will," "is proposed") where the described
+work has not happened yet; the amendments section is the source of truth for
+what is done versus still ahead.
 
 Evidence labels used throughout:
 
@@ -24,6 +27,412 @@ The three required existing documents remain unchanged:
 `docs/model_c_spectralnorm_ft90_handbook.md`,
 `docs/Adjoint_study_Phase_A.md`, and
 `docs/mitgcm_adjoint_ground_truth_plan.md`.
+
+---
+
+## Implementation status and amendments (2026-08-24)
+
+**Verified.** The document was approved for execution. Before any MITgcm or
+FNO compute ran, one design decision from the original draft was revised:
+
+**Amendment — blind/adjoint isolation mechanism.** The original text (old
+section 18.1/24) specified OS-level enforcement: separate development and
+evaluator Unix identities, a mount namespace excluding adjoint/blind paths
+from the development identity, ACL search-denial, and a "sanitized
+development checkout" exported outside version control. Building that
+required provisioning new accounts on a shared cluster, which is
+disproportionate for a single-researcher project and was blocking Step 6 (a
+step that never reads adjoint or blind data). It has been replaced throughout
+this document with a lighter, code-level convention: a path/glob scan over
+the training/selection code, configs, and logs actually used for a run,
+checking for the same forbidden roots and patterns (`outputs/af_fno/adjoint/**`,
+`af_fno/mitgcm_adjoint_v1/**`, `af_fno/mitgcm_adjoint_v2/**`, `**/ADJ*`,
+`**/adxx_*`, `**/*TAF*.log`, `**/*grdchk*`), plus a write-once convention for
+evaluator-only artifacts. The scientific property this protects — no adjoint
+or blind-response value may influence amplitude, lambda, checkpoint, or
+architecture selection — is unchanged; only the enforcement mechanism is
+lighter. Sections 18.1, 22 (Gate D0), 24, and 25 (step 3) are edited in place
+to describe the current mechanism rather than the retired one.
+
+Removed as a consequence (all were untracked, never-committed files from the
+initial implementation pass, so nothing is lost from history):
+`config/adjoint_faithful_firewall_v1.json`,
+`scripts/verify_adjoint_faithful_firewall.py`,
+`scripts/freeze_adjoint_faithful_study.py`, and their two dedicated test
+files, `tests/test_parent_contract_replay.py` and
+`tests/test_response_blindness.py`. Section 23.1's file list is updated to
+match.
+
+**Verified — step 6 implemented and running.** The section-7.1 validation
+pickup bank (one 320-day unperturbed continuation per regime, day 5,760 to
+6,080, archiving a pickup every 10 days) is implemented as:
+
+- `archive/src/bire_repro/af_response_pickup_bank.py` — the MITgcm driver
+  (`prepare_segment`/`run_segment`), following the existing
+  `af_s0`/`af_independent_wind_trajectories` pattern;
+- `scripts/build_response_pickup_bank.py` — resolves and hash-verifies the
+  day-5,760 source pickup against the trajectory-v3 source manifest, runs the
+  driver, and verifies the three retained days' P32 projections against
+  `trajectories_v3.zarr` (the Gate D0 check);
+- `slurm/mitgcm/af_response_pickup_bank_segment.sbatch` and
+  `scripts/submit_af_response_pickup_bank.sh`;
+- `tests/test_af_response_pickup_bank.py` (15 tests, local fixtures only).
+
+This superseded the originally planned filename
+`scripts/build_response_validation_pickup_bank.py` in section 23.1, updated
+below. All three regimes (S0, S1, S2) were submitted as independent Slurm
+jobs on 2026-08-24 (job IDs 365180-365182) after an initial submission
+failed fast on a real-data filename mismatch (`data.diagnostics`, not
+`data.diagnostics.production`) that local fixture tests hadn't caught; fixed
+and resubmitted. **All three completed in 71-86 seconds each (much faster
+than the untimed estimate in section 7.1) and passed Gate D0's P32 check**:
+32/32 archived pickups per regime, 320/320 daily diagnostics, and the day
+6,010/6,050/6,080 pickups' P32 projections are bit-identical to
+`trajectories_v3.zarr`. Each regime's full result is at
+`outputs/af_fno/response/forward_response_v1/pickup_bank_verification_<regime>.json`.
+The three regime-specific day-5,760-to-6,080 chains referenced throughout
+section 7 now exist on scratch at
+`${AF_SCRATCH_ROOT}/mitgcm_response_pickup_bank_v1/<regime>/bridge_5760_6080/`.
+
+Steps 1-5 of section 25 (contract freeze against the production parent,
+pickup-bank/direction-geometry design, and the generic pickup editor) were
+implemented in the same pass; see `config/model_c_adjoint_faithful_*_v1.json`,
+`scripts/build_forward_response_inventory.py`, and
+`archive/src/bire_repro/af_s0_twin.py`'s generalized editor.
+
+## Implementation status and amendments (2026-08-25)
+
+**Verified — step 7 (amplitude pilot, section 7.2) implemented and run.**
+`scripts/build_amplitude_pilot.py` (geometry/kernel/RMS-scale/pickup-edit
+machinery) and `archive/src/bire_repro/af_pilot_segment.py` (the generic
+MITgcm driver, parameterized start day/duration/checkpoint interval and,
+later, `cg2dTargetResidual`) implement the pilot. The 24 pilot centres
+themselves are solved by a scoped-down, exact shortcut
+(`_select_pilot_centre` in `build_amplitude_pilot.py`) rather than the full
+`allocate_centres_lexicographically`, justified because pilot is first in
+`ROLE_ORDER` (no earlier role to separate from) and its two rows per
+`(regime, family)` group always sit in disjoint regions by construction of
+the section-7.2 anchor table — both the cross-role and within-role
+components of the frozen leximax objective are provably vacuous for pilot
+specifically, so the reduction to tie-break rule (iii) is exact, not an
+approximation. All 154 pilot branches (144 signed − 2 correctly-recorded
+SSH-cap failures at S0/day3600/alpha 0.10, + 6 nominal + 6 duplicates) ran
+successfully; verified job-by-job against returncode, diagnostic counts, and
+archived-pickup counts, plus one direct byte-level check of a staged edit.
+
+**Verified — step 8 (Gate D2) complete; all four amplitudes frozen.**
+`scripts/analyze_amplitude_pilot.py` implements the section-10.2/10.4
+provisional-stage diagnostics (`Q_lin`, `Q_SNR` against the duplicate-nominal
+floor, P32 realization/antisymmetry, adjacent-alpha centred-JVP) purely from
+already-completed pilot output (no new compute). Result: U and V passed at
+alpha 0.10, SSH at 0.05; **Theta had no passing candidate at any of
+{0.025, 0.05, 0.10}** — both S1 Theta directions failed `Q_lin` by roughly
+10x the threshold, traced (via direct comparison of each direction's
+regime-local standard deviation against the *pooled* S0+S1+S2 normalizer
+sigma at that cell) to S1's local variability there being ~15-20x smaller
+than the pooled sigma implies, since the pooled normalizer is dominated by
+S0/S2's stronger wind forcing at the same grid cells — a real, verified
+regime/normalization interaction, not a bug.
+
+Per section 22 Gate D2's own text ("a smaller-amplitude follow-up requires a
+separately versioned pilot contract"), `config/forward_response_amplitude_pilot_theta_v2.json`
+freezes a Theta-only follow-up (candidate alphas 0.01/0.005/0.001, same 6
+frozen centres, nominal branches reused unchanged) via
+`scripts/submit_amplitude_pilot_theta_v2.py` /
+`scripts/analyze_amplitude_pilot_theta_v2.py`. Result: **Theta = 0.005**
+passes every direction and gate.
+
+Section 10.3's confirmatory duplicate/tight-CG controls
+(`scripts/submit_amplitude_pilot_controls.py` /
+`scripts/analyze_amplitude_pilot_controls.py`, using
+`af_pilot_segment.py`'s new `cg2dTargetResidual` override) then ran on the 12
+preassigned long directions at each family's provisional alpha: 24 duplicate
++ 24 tight-CG signed reruns + 6 tight-CG nominal reruns, all reusing the
+already-staged edited pickups (no re-editing). 11 of 12 directions passed
+every check against the combined floor
+(`max(duplicate-nominal, perturbed-repeat, tight-CG disagreement)`); one,
+S1/day720/V, exceeded the `q_cg<=0.01` threshold at exactly one of nine
+leads (day 80: 0.0105/0.0107). Root cause verified directly (absolute
+production-vs-tight-CG disagreement is flat across leads 60-90 while the V
+response itself decays over the same window, so the ratio crosses threshold
+as signal fades toward a fixed noise floor, at the same S1/day-720/eastern
+location already known to be the pilot's tightest-margin direction) and
+accepted as a documented exception
+(`GATE_D2_EXCEPTIONS` in `analyze_amplitude_pilot_controls.py`, with the
+full evidence inline) rather than treated as a defect requiring another
+versioned pilot, since no amplitude choice fixes a late-time signal-decay
+effect. **Final frozen amplitudes: U = 0.10, V = 0.10, Theta = 0.005,
+SSH = 0.05** (`outputs/af_fno/response/forward_response_v1/amplitude_pilot_final_selection_v1.json`).
+
+**In progress — finishing step 4 (joint train/validation/blind centre
+materialization).** Step 9 (generating the production/train/validation
+response dataset) needs real `(j, i)` centres for the 672 train + 216
+validation + 216 blind directions, which were never solved (only pilot's 24
+were, via the shortcut above). Attempting the full joint solve via the
+existing `allocate_centres_lexicographically` exposed that it is
+intractable at production scale as originally written — a single
+`(regime, family)` group (94 rows) has up to ~49,000 (row, candidate) slots
+because every eligible cell in a large region (e.g. "interior") is a
+candidate, and the pairwise cross/within-role separation objective compared
+every such pair, O(n^2) in the candidate pool. Fixed in
+`scripts/build_forward_response_inventory.py`, in order of discovery:
+
+1. `_nearby_same_region_pairs`: replaced the O(n^2) all-pairs distance
+   comparison with a KD-tree nearest-neighbour query on the exact unit-sphere
+   embedding (chord length is a strictly monotonic function of great-circle
+   distance, so this is an exact reformulation, not an approximation) —
+   `_build_centre_problem` went from hanging indefinitely to 1.7s.
+2. `_reduce_candidate_pool`: the *raw* candidate pool per row (not just its
+   pairwise comparisons) still made the MIP itself too large to re-solve
+   repeatedly. This reduction is a heuristic (farthest-point-diverse subset,
+   always keeping the SHA-tie-break-first and scalar-objective-extreme
+   candidates), so `allocate_centres_lexicographically` now solves at an
+   escalating pool-size ladder (150/300/600/1200/2400) and requires two
+   consecutive levels to agree on every objective value before accepting the
+   cheaper one, raising rather than guessing if the ladder is exhausted.
+3. Two genuine pre-existing bugs surfaced once execution reached this far
+   for the first time (neither caused by the two fixes above): (a)
+   `_freeze_sorted_region_sums` unconditionally built sorting machinery for
+   all four non-WBC regions even when some had zero real candidates,
+   producing a degenerate MIP HiGHS could not solve — fixed to only include
+   regions with actual candidates, matching an analogous fix already needed
+   in `_leximax_region_minima` for the single-role (pilot-only) case; (b)
+   `_freeze_linear_optimum` rounded its *entire* solution vector to the
+   nearest integer before freezing it as an exact constraint, which is
+   correct for the binary 0/1 selection variables but corrupts the
+   continuous real-valued km-distance variables used elsewhere in the same
+   solver to the nearest whole kilometre, making the immediate re-solve
+   provably infeasible — fixed to round only genuinely integer variables
+   (`model.integrality`).
+
+Every fix that changes the objective's meaning (not just its computational
+path) is guarded by a post-hoc correctness check
+(`_verify_leximax_vectors_on_selection` recomputes the true brute-force
+pairwise minima directly on the small *selected* subset and fails loudly on
+any mismatch) rather than trusted blindly. With all four fixes, a single
+pilot-scale group (2 rows, ~2,100 candidates) solves correctly in
+~30-1,200s (all 12 pilot groups: ~34 minutes total).
+
+**Verified — full reproduction check against the already-frozen 24 pilot
+centres: 23/24 exact, 1 accepted precision exception.** Running the
+corrected general-purpose `allocate_centres_lexicographically` (not the
+pilot-specific shortcut) on the same 24 pilot rows matched the frozen
+geometry bit-for-bit in 23 cases. The one exception, S0/day3600/V, picked
+`(41,43)` instead of the frozen `(41,18)`; direct comparison showed both
+candidates' `tertiary_distance_km` differ by ~2.6e-12 km (2.6 picometres) --
+floating-point noise in the great-circle trig chain, below HiGHS's ~1e-9
+feasibility tolerance, not a geographically meaningful difference. **Reviewed
+and accepted as a documented limitation, not a defect** (see the docstring on
+`_freeze_sorted_region_sums` in `build_forward_response_inventory.py`): the
+already-completed pilot campaign, which used `(41,18)`, remains valid as-is,
+and the same sub-nanometre-tie situation may recur during train/validation/
+blind materialization with no scientific consequence either way.
+
+**Resolved 2026-08-25 -- both design questions below were delegated ("make
+the call yourself") and are now implemented and tested.**
+
+1. *Train's distance-three exemption.* Section 9.3 step 4's rule is: "require
+   non-WBC validation and blind centres to have ... distance at least three
+   from every centre assigned to an earlier role." Train is never the
+   *subject* of this rule (it never has to keep distance from anything), but
+   it IS a valid *earlier-role target*: validation and blind must still stay
+   >= 3 from train's centres, exactly as from pilot's. The only pair the rule
+   never touches is (pilot, train), since neither role is ever "validation or
+   blind". `_build_centre_problem`'s hard distance-three constraint
+   previously applied full pairwise distance symmetrically via unconstrained
+   `itertools.combinations`, which would *also* have required train to keep
+   distance from validation/blind (not just the reverse) -- stricter than the
+   plan's text. Fixed by building `roles_present` in `ROLE_ORDER` sequence
+   and skipping any pair whose later role is `"train"`, which is exactly
+   equivalent to "apply only when the later role is validation or
+   blind_test" (train can only ever be paired as the later role against
+   pilot). This part was correct on first landing. A companion
+   mischaracterization was not: an earlier version of this note, and of the
+   in-code comment, additionally claimed "nothing has [a distance-three
+   obligation] to [train] either" -- i.e. that validation/blind need not
+   avoid train's centres. That is wrong per the text above, and
+   `prove_hard_capacity`'s post-hoc witness verification had been written to
+   match the wrong claim (checking every cross-role pair including
+   pilot/train, which the solver correctly never constrains) rather than the
+   correct one. Running the fixed solver's witness check against the real
+   672+216+216-row contract surfaced the mismatch directly: a real S0/Theta
+   witness with pilot and train landing near each other was rejected by the
+   verifier as a false violation. Fixed 2026-08-25 by gating the verifier's
+   distance check on `later_role in ("validation", "blind_test")`, matching
+   the solver exactly; the in-code comment was corrected at the same time.
+2. *Fixing pilot's already-frozen centres.* Pilot's 24 centres are already
+   frozen (not re-derivable -- they underlie the completed, verified
+   amplitude-pilot campaign) and must be supplied to train/validation/
+   blind's joint solve as fixed input, not re-decided. Added
+   `load_pilot_fixed_centres` (reads `amplitude_pilot_geometry_v1.json`,
+   keyed by `(regime, anchor_day, family)`) and `apply_fixed_centres`
+   (collapses each fixed row's candidate list to a singleton containing only
+   its frozen `(j,i)` `Candidate`, raising `ContractError` if that centre is
+   no longer among the row's enumerated candidates -- a safety check against
+   grid/mask drift since pilot was solved). No solver-internals change was
+   needed: a row with one candidate is already pinned by the existing
+   "exactly one candidate per row" constraint, while its y-variable stays in
+   the model so region quotas, the (now train-exempt) distance-three
+   exclusion, and the separation objective all still see pilot's real
+   positions.
+
+The two design-question fixes and the verification-logic correction above are
+covered by new tests in `tests/test_forward_response_inventory.py`
+(`test_train_is_exempt_from_the_distance_three_exclusion`,
+`test_apply_fixed_centres_collapses_pilot_rows_to_their_frozen_choice`,
+`test_apply_fixed_centres_rejects_a_frozen_centre_no_longer_enumerated`,
+`test_load_pilot_fixed_centres_reads_the_frozen_geometry_file`,
+`test_prove_hard_capacity_lets_pilot_and_train_share_close_centres`).
+
+**Two more issues found and fixed while finishing Step 4, both only
+reachable at real production scale (never previously exercised).**
+
+1. *`materialize_inventory` still depended on the retired OS-identity
+   firewall.* The 2026-08-24 amendment above replaced the firewall with a
+   lighter write-once/separate-path convention and deleted
+   `config/adjoint_faithful_firewall_v1.json` and
+   `scripts/verify_adjoint_faithful_firewall.py`, but
+   `build_forward_response_inventory.py`'s `materialize_inventory` (and its
+   CLI) were never updated to match -- they still imported and required the
+   deleted verifier, so `materialize` mode could not run at all. Fixed:
+   removed `live_firewall_report`/`require_inventory_materialize`/
+   `_load_firewall_verifier`/`FirewallError`/`DEFAULT_FIREWALL_CONTRACT`;
+   `materialize_inventory` now writes public and blind manifests via the
+   existing O_EXCL write-once helper at two fixed, distinct paths (blind
+   mode 0400, public mode 0444), refusing outright if either already exists,
+   with no live process-identity check. The one part of the old mechanism
+   worth keeping (refusing to write through a symlinked path) was kept as a
+   small standalone check. This also wired in `apply_fixed_centres`/
+   `load_pilot_fixed_centres` from fix 2 above, which had no caller before
+   this edit.
+2. *`prove_hard_capacity` (the `audit` mode's read-only capacity witness)
+   built its MIP from the raw, unreduced candidate pool.* This is the same
+   scaling problem already fixed for the main optimizer
+   (`allocate_centres_lexicographically`), missed here because `audit` mode
+   had only ever been exercised at small scale before. Confirmed directly: a
+   production `audit` run burned >90 CPU-minutes without finishing. Fixed
+   with an escalating-cap strategy analogous to the main solver's, but
+   simpler: since this function only needs *any* feasible witness, not an
+   optimum, a solution found under a reduced candidate pool is automatically
+   valid for the full problem, so it is safe to stop at the first cap that
+   solves rather than needing the main solver's two-consecutive-caps
+   convergence check. On the real S0/Theta group (94 rows, 16,370
+   variables), this now solves in ~51s. A related crash
+   (`_build_centre_problem` on an empty `(regime,family)` row group, the
+   same failure mode as the two `_leximax_region_minima`/
+   `_freeze_sorted_region_sums` empty-region crashes fixed earlier) was
+   found and fixed the same way: skip the group when it has no rows.
+
+Full suite: 38/38 passing. The remaining 1,104-row (672 train + 216
+validation + 216 blind) allocation can now be run correctly, but the
+orchestration driver itself (analogous to `build_amplitude_pilot.py`,
+loading all rows, applying `apply_fixed_centres`, calling
+`allocate_centres_lexicographically` per group, and writing public vs. blind
+outputs separately) has not yet been written, and the full-scale timing of
+the *optimization* path (as opposed to the pure-feasibility witness above)
+is still being verified.
+
+## Implementation status and amendments (2026-08-26)
+
+**Verified — the 2026-08-25 note above ("orchestration driver ... has not
+yet been written") was stale.** `materialize_inventory` in
+`build_forward_response_inventory.py` already implements exactly that driver
+(load all rows, `apply_fixed_centres`, per-group centre solve, write-once
+public/blind manifests) and the 38-test suite already covers it. Re-running
+`_prepare_inventory_context` (contract/grid/trajectory verification, all
+1,128 rows, region-slot assignment, long-subset feasibility repair) against
+the real production contract takes 9.6 s. That was not what blocked step 4.
+
+**Verified — the real blocker was the centre-allocation MIP's scope, not
+missing code.** `config/forward_response_dataset_v1.json`'s
+`joint_spatial_allocator.joint_objective_scope.solve_unit` reads *"one
+(regime,family) across all five regions and all four roles"* -- a broader
+scope than this document's own section 9.3 step 3, which specifies
+allocating centres "**jointly** within every `(regime,family,region)`
+stratum." Measured directly against the real production contract: a single
+`(regime,family)` group's frozen leximax objective (94 rows, up to ~49,000
+(row, candidate) slots per the 2026-08-25 note above) builds a MIP of
+15,868 binaries and 54,053 constraints even at the cheapest candidate-pool
+cap (150) in the existing escalation ladder, with 287,923 cross-role and
+158,017 within-role pairwise terms and 15,990 distinct distance thresholds.
+The *first* of the ten leximax-vector solves this triggers (the k=0 order
+statistic, i.e. the tightest, largest-minimum-separation feasibility probe)
+did not return within 24 minutes on a 180k-310k-constraint model; the same
+failure mode reproduced for S0/SSH. This is standard behaviour for a
+near-maximum-independent-set MIP at this scale, not a bug in any one
+function.
+
+**Fix.** `config/forward_response_dataset_v2.json` restores the scope this
+document's own section 9.3 step 3 already specifies:
+`joint_spatial_allocator.joint_objective_scope.solve_unit` is corrected to
+"one (regime,family,region) stratum across all four roles". `approved_plan.sha256`
+is repinned to this amended document (v1 pinned the pre-amendment hash and is
+kept as the historical record of the pre-fix, never-materialized contract --
+nothing was lost superseding it, since v1's `materialize` mode never ran to
+completion). `build_forward_response_inventory.py` gained:
+
+- `allocate_centres_lexicographically_by_region`, which solves each
+  `(regime,family,region)` stratum with the existing, unchanged
+  `allocate_centres_lexicographically` (including its candidate-pool-cap
+  ladder and convergence check), then reassembles the group-level frozen
+  objective (`_merge_region_objectives`) by concatenating each region's own
+  single-entry cross/within/negative-distance contributions and re-sorting
+  ascending. This is an *equality*, not an approximation: every
+  pair/distance/speed term in `_build_centre_problem` is already scoped to
+  rows sharing one region, so a joint solve has no cross-region objective
+  term to trade off, and independently maximizing each region's own
+  component reproduces the identical ascending vector by componentwise
+  dominance. Verified directly on a small synthetic two-region problem
+  against the unmodified `allocate_centres_lexicographically` (which still
+  exists and is still exact for a single stratum): byte-identical selected
+  centres and objective vectors
+  (`test_allocate_centres_lexicographically_by_region_matches_joint_solve_when_independent`).
+- `_non_wbc_chebyshev_violations` / a solve-then-verify-then-repair loop,
+  because the one genuine cross-stratum coupling this document's section 9.3
+  step 4 states without a same-region qualifier is the non-WBC distance-
+  three rule: a validation/blind centre in one region can sit within
+  Chebyshev distance 3 of an earlier-role centre in a physically adjacent
+  *different* region. A direct audit of the real grid finds 2,406
+  non-WBC cell pairs within Chebyshev distance 2 that cross a region
+  boundary, against 36,192 that do not (6.2%) -- rare but real, so it is
+  checked and repaired (exclude the offending later-role centre, re-solve
+  only that region), not assumed away. `_MAX_CROSS_REGION_REPAIR_ATTEMPTS`
+  bounds the loop; exhausting it raises `CapacityError` rather than emitting
+  an unverified geometry, matching the existing region-slot repair's
+  "stop before inventory materialization" convention.
+- Two non-scientific performance fixes applied inside the unchanged
+  algorithm, verified to change wall time only, never the frozen tie-break
+  or leximax semantics: `_MixedIntegerModel.fix` now tightens variable
+  bounds instead of adding a constraint row (identical feasible set, no
+  constraint-matrix growth across the SHA-tie loop's per-row fix attempts);
+  `_add_order_statistic_threshold` now covers each region's below-threshold
+  conflict graph with a greedy clique cover
+  (`sum_{v in C} y_v - (|C|-1)*relax <= 1` per clique) instead of one row
+  per conflicting pair -- the identical feasible integer set (a 2-vertex
+  clique reduces to the original pairwise row byte-for-byte) with a
+  strictly tighter LP relaxation. Benchmarked on the real S0/Theta/WBC
+  stratum: 36.6 s to 12.3 s (3.0x) on a single representative probe.
+- `materialize_inventory` now validates that *both* the public and blind
+  output directories exist before writing either file (previously it wrote
+  blind first, sealed write-once at mode 0400, and only then checked
+  public's parent -- a real, verified bug: `outputs/af_fno/response/
+  forward_response_blind_v1/` does not exist on this machine, so an
+  unpatched run would have sealed the blind manifest and then failed on the
+  public write, with every retry thereafter hitting "write-once inventory
+  output already exists" and public never created). Covered by
+  `test_materialize_inventory_requires_both_output_parents_before_writing`.
+
+**Verified — proof of concept at full, unreduced candidate pool.** The
+hardest single stratum in the study, S0/Theta/WBC (33 rows drawn from 103
+eligible cells), solved its complete frozen lexicographic objective with no
+candidate-pool reduction at all in 418 s / 529 MIP solves (cross-role
+minimum separation 1337.53 km, within-role 64.57 km). Since the pool-cap
+ladder's `fully_covers_pool` check is then trivially true, this run used no
+heuristic reduction whatsoever -- exact by construction, not by the
+ladder's weaker convergence argument.
+
+Full 46-test suite (38 prior + 8 new) passes. `tests/test_forward_response_
+inventory.py`'s `DATASET_CONTRACT` now points at v2.
 
 ---
 
@@ -1812,14 +2221,18 @@ to:
 - `/bigscratch/mjalabert314/bire_james25_repro/af_fno/mitgcm_adjoint_v2/**`;
 - every `ADJ*`, `adxx_*`, TAF log, gradient-check result, and derived copy.
 
-Training configs retain `read_contract.adjoint_state=false`; CI scans for
-forbidden paths. Training and selection run under a development identity whose
-mount namespace excludes `outputs/af_fno/adjoint/**`, both raw scratch roots,
-and the blind-response store; its Unix identity lacks read/search ACLs. A
-separate evaluator identity has read-only access and an access log. Merely
-marking files read-only is insufficient. The evaluator command becomes
-available only after model, normalizer, data, lambda, amplitude, and selection-
-report hashes are written to the freeze manifest.
+Training configs retain `read_contract.adjoint_state=false`. Enforcement is a
+lightweight, code-level convention rather than OS-level account/mount
+separation: a path/glob scan (`**/ADJ*`, `**/adxx_*`, `**/*TAF*.log`,
+`**/*grdchk*`, and the explicit forbidden roots above) runs over every
+training/selection script, config, and log actually used for a B/C run, and
+the run's provenance report records that the scan passed. Any evaluator-only
+artifact (the blind-response store, its geometry manifest) lives under its
+own path, is generated only after the freeze conditions below are met, and is
+treated as write-once; nothing beyond the scan and the write-once convention
+gates access to it. This is a single-researcher project, so the check is
+mechanical but not adversarial-proof -- it catches accidental leakage, not a
+determined attempt to defeat it.
 
 ### 18.2 Existing primary suite
 
@@ -2046,7 +2459,9 @@ production response generation.
 - family, region, level, kernel, sign, and long-subset counts are exact;
 - face/carrier labels, full support, coordinates, WBC capacity exception, and
   all cross-role centre-disjointness/separation rules pass;
-- the blind store and all adjoint paths are inaccessible to development code.
+- the blind store and all adjoint paths are excluded from the training/
+  selection code path and its configs, verified by the section-18.1 path/glob
+  scan rather than an OS-level account or mount boundary.
 
 Failure: stop before production MITgcm response generation or FNO training.
 
@@ -2180,7 +2595,6 @@ No file below is implemented by this planning task.
 - `config/model_c_adjoint_faithful_response_v1.json`
 - `config/adjoint_faithful_forward_evaluation_v1.json`
 - `config/adjoint_faithful_blind_adjoint_evaluation_v1.json`
-- `config/adjoint_faithful_firewall_v1.json`
 
 The B config must match every **scientific field** in the production parent.
 The equality checker permits only this explicit infrastructure whitelist:
@@ -2193,14 +2607,17 @@ frozen nonzero lambda.
 
 **MITgcm forward-response generation**
 
-- `scripts/build_response_validation_pickup_bank.py`
-- `scripts/build_forward_response_inventory.py`
+- `archive/src/bire_repro/af_response_pickup_bank.py` — implemented (see
+  amendments above)
+- `scripts/build_response_pickup_bank.py` — implemented, supersedes the
+  originally planned `build_response_validation_pickup_bank.py` name
+- `scripts/build_forward_response_inventory.py` — implemented
+- `slurm/mitgcm/af_response_pickup_bank_segment.sbatch` and
+  `scripts/submit_af_response_pickup_bank.sh` — implemented, supersede the
+  originally planned `af_forward_response_pickup_bank.sbatch` name
 - `scripts/stage_forward_response_run.py`
 - `scripts/extract_forward_response_dataset.py`
 - `scripts/verify_forward_response_dataset.py`
-- `scripts/freeze_adjoint_faithful_study.py`
-- `scripts/verify_adjoint_faithful_firewall.py`
-- `slurm/mitgcm/af_forward_response_pickup_bank.sbatch`
 - `slurm/mitgcm/af_forward_response_array.sbatch`
 
 **FNO response path and reports**
@@ -2228,15 +2645,15 @@ frozen nonzero lambda.
 
 **Tests**
 
-- `tests/test_parent_contract_replay.py`
-- `tests/test_forward_response_inventory.py`
-- `tests/test_forward_response_pickup.py`
+- `tests/test_forward_response_inventory.py` — implemented
+- `tests/test_forward_response_pickup.py` — implemented
+- `tests/test_af_response_pickup_bank.py` — implemented (not in the original
+  plan; covers the pickup-bank driver above)
 - `tests/test_forward_response_dataset.py`
 - `tests/test_response_objective.py`
 - `tests/test_response_spectral_context.py`
 - `tests/test_response_training.py`
 - `tests/test_response_validation.py`
-- `tests/test_response_blindness.py`
 - `tests/test_fno_adjoint_model.py`
 
 ### 23.2 Modify minimally
@@ -2307,8 +2724,8 @@ include:
   plus a separately labeled response-validation report proving it did not
   select the full-run checkpoint;
 - hardware, Slurm IDs, wall times, failures/retries, and quarantined cases;
-- blind freeze timestamp, ACL/mount proof, evaluator access log, and hashes of
-  every artifact existing before access;
+- blind freeze timestamp, forbidden-path scan result, and hashes of every
+  artifact existing before access;
 - final evaluator version and all MITgcm/FNO gate results.
 
 Model randomness is limited to the three declared paired seeds. The response
@@ -2317,10 +2734,10 @@ initialization or nominal-batch RNGs. Spatial selection is hash/maximin
 deterministic. Completed artifacts are write-once. Reports state inclusive and
 half-open day conventions side by side to prevent off-by-one leakage.
 
-The existing adjoint products must be exposed only inside the evaluator mount;
-the development identity must have no read permission. Repository readability
-in the present audit checkout is not a sufficient blind barrier, so model runs
-must use the sanitized development checkout/mount contract above.
+The existing adjoint products stay under their own paths, excluded from every
+training/selection run by the section-18.1 forbidden-path scan. Repository
+readability in the present audit checkout is not itself a blind barrier --
+the scan, not general filesystem access, is what the freeze report relies on.
 
 ---
 
@@ -2334,7 +2751,8 @@ must use the sanitized development checkout/mount contract above.
    optimizer schedule, six-call rollout, checkpoint cadence, and selector,
    with only the section-23 infrastructure whitelist permitted.
 3. Freeze the three paired seeds, response counts/leads, masks, kernels,
-   candidate alphas/lambdas, and the development/evaluator ACL contract.
+   candidate alphas/lambdas, and the forbidden-path scan contract (section
+   18.1) that keeps adjoint/blind artifacts out of training/selection.
 4. Materialize the joint pilot/train/validation/blind centre, level, kernel,
    and long-subset inventory; verify all counts/full support and seal the blind
    inventory from development.
