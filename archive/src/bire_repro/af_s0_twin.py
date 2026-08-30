@@ -24,6 +24,7 @@ import socket
 import subprocess
 import time
 from dataclasses import dataclass
+from numbers import Real
 from pathlib import Path
 from typing import Any, Mapping, Sequence
 
@@ -49,6 +50,7 @@ EXPERIMENT = "S0_twin"
 CONTROL_REGIME = "S0"
 EPSILON = 1.0e-6
 PERTURBED_FIELDS = ("Uvel", "Vvel")
+RESPONSE_EDIT_FIELDS = ("Uvel", "Vvel", "Theta", "EtaN")
 PERTURBATION = "multiplicative"
 PERTURBATION_FORMULA = "field_twin = (1 + epsilon) * field_control"
 
@@ -89,6 +91,21 @@ class TwinSpec:
         return 1.0 + self.epsilon
 
 
+@dataclass(frozen=True)
+class PickupEdit:
+    """One absolute, zero-based edit to a pickup record.
+
+    ``j`` and ``i`` must either both be integers for a single-cell edit or both
+    be ``None`` for the whole-record operation retained by the legacy S0 twin.
+    Response-generation callers use additive cell edits.
+    """
+
+    record: int
+    j: int | None
+    i: int | None
+    value: float
+
+
 #: The original twin.  Every function below defaults to it, so existing callers
 #: and the manifests already written to scratch are unaffected.
 DEFAULT_SPEC = TwinSpec(
@@ -119,6 +136,26 @@ THETA_RANGE_C = (-5.0, 45.0)
 
 class TwinExperimentError(RuntimeError):
     """Raised when the twin experiment design or its inputs are violated."""
+
+
+def pickup_record_index(field: str, level_one_based: int) -> int:
+    """Return the absolute zero-based pickup record for one field level.
+
+    The frozen layout starts ``Uvel`` at record 0, ``Vvel`` at 15,
+    ``Theta`` at 30, and ``EtaN`` at 105; the prognostic histories occupy the
+    declared records between and after those fields.
+    """
+
+    if isinstance(level_one_based, bool) or not isinstance(level_one_based, int):
+        raise TwinExperimentError("pickup level must be a one-based integer")
+    offset = 0
+    for name, count in PICKUP_FIELD_LAYOUT:
+        if name == field:
+            if not 1 <= level_one_based <= count:
+                raise TwinExperimentError(f"{field} level {level_one_based} is outside 1..{count}")
+            return offset + level_one_based - 1
+        offset += count
+    raise TwinExperimentError(f"unknown pickup field {field!r}")
 
 
 def segment_plan(spec: TwinSpec = DEFAULT_SPEC) -> dict[str, Any]:
@@ -161,24 +198,28 @@ def segment_plan(spec: TwinSpec = DEFAULT_SPEC) -> dict[str, Any]:
     }
 
 
-def _pickup_record_slices(meta_path: Path) -> tuple[Any, dict[str, slice]]:
-    """Validate the control pickup metadata and map each field to its records."""
+def _pickup_record_slices(
+    meta_path: Path, expected_iteration: int = TWIN_START_ITERATION
+) -> tuple[Any, dict[str, slice]]:
+    """Validate pickup metadata and map each declared field to its records."""
 
     meta = parse_mds_meta(meta_path)
-    if meta.timestep != TWIN_START_ITERATION:
+    if isinstance(expected_iteration, bool) or not isinstance(expected_iteration, int):
+        raise TwinExperimentError("expected pickup iteration must be an integer")
+    if meta.timestep != expected_iteration:
         raise TwinExperimentError(
-            f"{meta_path} is at iteration {meta.timestep}, expected {TWIN_START_ITERATION}"
+            f"{meta_path} is at iteration {meta.timestep}, expected {expected_iteration}"
         )
     if meta.dtype != PICKUP_DTYPE:
         raise TwinExperimentError(f"{meta_path} is {meta.dtype}, expected {PICKUP_DTYPE}")
     if meta.dimensions != PICKUP_GRID:
-        raise TwinExperimentError(f"{meta_path} has dimensions {meta.dimensions}, expected {PICKUP_GRID}")
+        raise TwinExperimentError(
+            f"{meta_path} has dimensions {meta.dimensions}, expected {PICKUP_GRID}"
+        )
     names = tuple(name.strip() for name in meta.fields)
     expected_names = tuple(name for name, _ in PICKUP_FIELD_LAYOUT)
     if names != expected_names:
-        raise TwinExperimentError(
-            f"{meta_path} fldList is {names}, expected {expected_names}"
-        )
+        raise TwinExperimentError(f"{meta_path} fldList is {names}, expected {expected_names}")
     expected_records = sum(count for _, count in PICKUP_FIELD_LAYOUT)
     if meta.nrecords != expected_records:
         raise TwinExperimentError(
@@ -193,6 +234,278 @@ def _pickup_record_slices(meta_path: Path) -> tuple[Any, dict[str, slice]]:
     if missing:
         raise TwinExperimentError(f"{meta_path} is missing perturbation targets {missing}")
     return meta, slices
+
+
+def _validated_pickup_values(
+    source_data: Path, meta: Any, slices: Mapping[str, slice]
+) -> np.ndarray:
+    """Read one exact-size pickup and retain the legacy numerical checks."""
+
+    count = meta.nrecords * PICKUP_GRID[0] * PICKUP_GRID[1]
+    expected_bytes = count * PICKUP_DTYPE.itemsize
+    actual_bytes = source_data.stat().st_size
+    if actual_bytes != expected_bytes:
+        raise TwinExperimentError(
+            f"{source_data} is {actual_bytes} bytes, expected exactly {expected_bytes}"
+        )
+    control = np.fromfile(source_data, dtype=PICKUP_DTYPE, count=count)
+    if control.size != count:
+        raise TwinExperimentError(f"{source_data} holds {control.size} values, expected {count}")
+    if not np.isfinite(control).all():
+        raise TwinExperimentError(f"{source_data} decoded to non-finite values as {PICKUP_DTYPE}")
+    control = control.reshape(meta.nrecords, *PICKUP_GRID)
+    theta = control[slices["Theta"]]
+    if not THETA_RANGE_C[0] <= float(theta.min()) or not float(theta.max()) <= THETA_RANGE_C[1]:
+        raise TwinExperimentError(
+            f"{source_data} Theta range {float(theta.min())}..{float(theta.max())} is implausible"
+        )
+    return control
+
+
+def _validate_declared_edits(
+    *,
+    declared_fields: Sequence[str],
+    edits: Sequence[PickupEdit],
+    operation: str,
+    slices: Mapping[str, slice],
+) -> tuple[tuple[str, ...], tuple[PickupEdit, ...], dict[int, str]]:
+    """Fail closed on an ambiguous, ineffective, or over-broad edit request."""
+
+    if operation not in {"add", "multiply"}:
+        raise TwinExperimentError("pickup edit operation must be 'add' or 'multiply'")
+    if isinstance(declared_fields, (str, bytes)):
+        raise TwinExperimentError("declared_fields must be a sequence of field names")
+    declared = tuple(declared_fields)
+    if not declared:
+        raise TwinExperimentError("at least one pickup field must be declared")
+    if any(not isinstance(field, str) or field not in slices for field in declared):
+        raise TwinExperimentError(f"invalid declared pickup fields {declared}")
+    permitted_fields = RESPONSE_EDIT_FIELDS if operation == "add" else PERTURBED_FIELDS
+    if any(field not in permitted_fields for field in declared):
+        raise TwinExperimentError(
+            f"{operation} pickup edits are restricted to fields {permitted_fields}"
+        )
+    if len(set(declared)) != len(declared):
+        raise TwinExperimentError(f"duplicate declared pickup fields {declared}")
+    if isinstance(edits, (str, bytes)):
+        raise TwinExperimentError("edits must be a sequence of PickupEdit values")
+    frozen_edits = tuple(edits)
+    if not frozen_edits:
+        raise TwinExperimentError("at least one pickup edit is required")
+
+    field_by_record = {
+        record: field
+        for field, record_slice in slices.items()
+        for record in range(record_slice.start, record_slice.stop)
+    }
+    declared_set = set(declared)
+    used_fields: set[str] = set()
+    cell_targets: set[tuple[int, int, int]] = set()
+    whole_records: set[int] = set()
+    for edit in frozen_edits:
+        if not isinstance(edit, PickupEdit):
+            raise TwinExperimentError("every edit must be a PickupEdit")
+        if isinstance(edit.record, bool) or not isinstance(edit.record, int):
+            raise TwinExperimentError(f"pickup record must be an integer: {edit.record!r}")
+        if edit.record not in field_by_record:
+            raise TwinExperimentError(f"pickup record {edit.record} is out of range")
+        field = field_by_record[edit.record]
+        if field not in declared_set:
+            raise TwinExperimentError(
+                f"pickup record {edit.record} belongs to undeclared field {field}"
+            )
+        used_fields.add(field)
+
+        if (edit.j is None) != (edit.i is None):
+            raise TwinExperimentError("pickup edit j and i must either both be set or both be None")
+        if edit.j is None:
+            if operation != "multiply":
+                raise TwinExperimentError(
+                    "whole-record edits are reserved for legacy multiplicative twins"
+                )
+            if field not in PERTURBED_FIELDS:
+                raise TwinExperimentError(
+                    f"whole-record compatibility edits are not permitted for {field}"
+                )
+            if edit.record in whole_records or any(
+                target_record == edit.record for target_record, _, _ in cell_targets
+            ):
+                raise TwinExperimentError(f"duplicate or overlapping edit of record {edit.record}")
+            whole_records.add(edit.record)
+        else:
+            if operation != "add":
+                raise TwinExperimentError(
+                    "cell edits are restricted to additive forward-response perturbations"
+                )
+            if (
+                isinstance(edit.j, bool)
+                or not isinstance(edit.j, int)
+                or isinstance(edit.i, bool)
+                or not isinstance(edit.i, int)
+            ):
+                raise TwinExperimentError("pickup edit j and i must be zero-based integers")
+            if not 0 <= edit.j < PICKUP_GRID[0] or not 0 <= edit.i < PICKUP_GRID[1]:
+                raise TwinExperimentError(
+                    f"pickup cell ({edit.j}, {edit.i}) is outside {PICKUP_GRID}"
+                )
+            target = (edit.record, edit.j, edit.i)
+            if edit.record in whole_records or target in cell_targets:
+                raise TwinExperimentError(f"duplicate or overlapping pickup target {target}")
+            cell_targets.add(target)
+
+        if isinstance(edit.value, bool) or not isinstance(edit.value, Real):
+            raise TwinExperimentError("pickup edit values must be finite real numbers")
+        value = float(edit.value)
+        if not np.isfinite(value):
+            raise TwinExperimentError(f"pickup edit value must be finite: {edit.value!r}")
+        no_op = (operation == "add" and value == 0.0) or (operation == "multiply" and value == 1.0)
+        if no_op:
+            raise TwinExperimentError(f"pickup {operation} edit is a no-op: {edit.value!r}")
+
+    if used_fields != declared_set:
+        unused = sorted(declared_set - used_fields)
+        raise TwinExperimentError(f"declared pickup fields have no edits: {unused}")
+    return declared, frozen_edits, field_by_record
+
+
+def write_declared_pickup_edits(
+    source_meta: Path,
+    run_dir: Path,
+    *,
+    expected_iteration: int,
+    declared_fields: Sequence[str],
+    edits: Sequence[PickupEdit],
+    operation: str,
+) -> dict[str, Any]:
+    """Copy a pickup verbatim and apply only declared absolute record/cell edits.
+
+    Single-cell edits are the response-generation interface.  Whole-record
+    multiplication remains available solely so :func:`write_perturbed_pickup`
+    can retain its established byte stream.
+    """
+
+    source_meta = Path(source_meta).resolve()
+    source_data = source_meta.with_suffix(".data")
+    if not source_meta.is_file() or not source_data.is_file():
+        raise TwinExperimentError(f"incomplete source pickup beside {source_meta}")
+    meta, slices = _pickup_record_slices(source_meta, expected_iteration)
+    control = _validated_pickup_values(source_data, meta, slices)
+    declared, frozen_edits, _ = _validate_declared_edits(
+        declared_fields=declared_fields,
+        edits=edits,
+        operation=operation,
+        slices=slices,
+    )
+    for edit in frozen_edits:
+        value = float(edit.value)
+        before = control[edit.record] if edit.j is None else control[edit.record, edit.j, edit.i]
+        with np.errstate(over="ignore", invalid="ignore"):
+            after = before + value if operation == "add" else before * value
+        if not np.isfinite(after).all():
+            raise TwinExperimentError(f"pickup edit of record {edit.record} is non-finite")
+        before_bytes = np.asarray(before, dtype=PICKUP_DTYPE).tobytes()
+        after_bytes = np.asarray(after, dtype=PICKUP_DTYPE).tobytes()
+        if before_bytes == after_bytes:
+            target = (
+                f"record {edit.record}" if edit.j is None else repr((edit.record, edit.j, edit.i))
+            )
+            raise TwinExperimentError(f"pickup edit of {target} produces no byte change")
+
+    run_dir = Path(run_dir)
+    destination_meta = run_dir / source_meta.name
+    destination_data = run_dir / source_data.name
+    if destination_meta.resolve() == source_meta or destination_data.resolve() == source_data:
+        raise TwinExperimentError("source and edited pickup destinations must be distinct")
+    if not run_dir.is_dir():
+        raise TwinExperimentError(f"pickup destination directory does not exist: {run_dir}")
+    if os.path.lexists(destination_meta) or os.path.lexists(destination_data):
+        raise TwinExperimentError("refusing to overwrite an existing edited pickup")
+    created: list[Path] = []
+    try:
+        for source, destination in (
+            (source_meta, destination_meta),
+            (source_data, destination_data),
+        ):
+            try:
+                with source.open("rb") as input_handle, destination.open("xb") as output_handle:
+                    created.append(destination)
+                    shutil.copyfileobj(input_handle, output_handle)
+                    output_handle.flush()
+                    os.fsync(output_handle.fileno())
+            except FileExistsError as exc:
+                raise TwinExperimentError(
+                    f"refusing to overwrite an existing edited pickup: {destination}"
+                ) from exc
+            shutil.copystat(source, destination)
+    except BaseException:
+        for destination in created:
+            destination.unlink(missing_ok=True)
+        raise
+
+    edited = np.memmap(
+        destination_data,
+        dtype=PICKUP_DTYPE,
+        mode="r+",
+        shape=(meta.nrecords, *PICKUP_GRID),
+    )
+    for edit in frozen_edits:
+        value = float(edit.value)
+        if edit.j is None:
+            edited[edit.record] = control[edit.record] * value
+        elif operation == "add":
+            edited[edit.record, edit.j, edit.i] = control[edit.record, edit.j, edit.i] + value
+        else:
+            edited[edit.record, edit.j, edit.i] = control[edit.record, edit.j, edit.i] * value
+    edited.flush()
+    del edited
+
+    expected_bytes = control.size * PICKUP_DTYPE.itemsize
+    if destination_data.stat().st_size != expected_bytes:
+        raise TwinExperimentError(
+            f"{destination_data} size changed from the required {expected_bytes} bytes"
+        )
+    source_bytes = source_data.read_bytes()
+    edited_bytes = destination_data.read_bytes()
+    source_words = np.frombuffer(source_bytes, dtype="V8")
+    edited_words = np.frombuffer(edited_bytes, dtype="V8")
+    allowed = np.zeros(control.size, dtype=bool)
+    plane_size = PICKUP_GRID[0] * PICKUP_GRID[1]
+    for edit in frozen_edits:
+        start = edit.record * plane_size
+        if edit.j is None:
+            allowed[start : start + plane_size] = True
+        else:
+            allowed[start + edit.j * PICKUP_GRID[1] + edit.i] = True
+    changed = source_words != edited_words
+    if np.any(changed & ~allowed):
+        raise TwinExperimentError(f"{destination_data} changed bytes outside declared targets")
+    if not np.any(changed):
+        raise TwinExperimentError("declared pickup edits produced no byte changes")
+    if destination_meta.read_bytes() != source_meta.read_bytes():
+        raise TwinExperimentError(f"{destination_meta} is not a verbatim metadata copy")
+
+    return {
+        "applied": True,
+        "iteration": expected_iteration,
+        "operation": operation,
+        "declared_fields": list(declared),
+        "edits": [
+            {"record": edit.record, "j": edit.j, "i": edit.i, "value": float(edit.value)}
+            for edit in frozen_edits
+        ],
+        "dataprec": str(PICKUP_DTYPE),
+        "meta_copied_verbatim": True,
+        "source_pickup_meta": str(source_meta),
+        "source_pickup_data": str(source_data),
+        "edited_pickup_meta": str(destination_meta),
+        "edited_pickup_data": str(destination_data),
+        "source_pickup_sha256": {"meta": _sha256(source_meta), "data": _sha256(source_data)},
+        "edited_pickup_sha256": {
+            "meta": _sha256(destination_meta),
+            "data": _sha256(destination_data),
+        },
+        "changed_value_count": int(changed.sum()),
+    }
 
 
 def write_perturbed_pickup(
@@ -213,22 +526,8 @@ def write_perturbed_pickup(
 
     destination_meta = run_dir / source_meta.name
     destination_data = run_dir / source_data.name
-    shutil.copy2(source_meta, destination_meta)
-
     count = meta.nrecords * PICKUP_GRID[0] * PICKUP_GRID[1]
-    control = np.fromfile(source_data, dtype=PICKUP_DTYPE, count=count)
-    if control.size != count:
-        raise TwinExperimentError(
-            f"{source_data} holds {control.size} values, expected {count}"
-        )
-    if not np.isfinite(control).all():
-        raise TwinExperimentError(f"{source_data} decoded to non-finite values as {PICKUP_DTYPE}")
-    control = control.reshape(meta.nrecords, *PICKUP_GRID)
-    theta = control[slices["Theta"]]
-    if not THETA_RANGE_C[0] <= float(theta.min()) or not float(theta.max()) <= THETA_RANGE_C[1]:
-        raise TwinExperimentError(
-            f"{source_data} Theta range {float(theta.min())}..{float(theta.max())} is implausible"
-        )
+    control = _validated_pickup_values(source_data, meta, slices)
 
     scale = spec.scale
     twin = control.copy()
@@ -245,7 +544,18 @@ def write_perturbed_pickup(
             "l2_delta": float(np.sqrt(np.sum(np.square(delta)))),
             "zero_cells": int((block == 0.0).sum()),
         }
-    twin.tofile(destination_data)
+    write_declared_pickup_edits(
+        source_meta,
+        run_dir,
+        expected_iteration=TWIN_START_ITERATION,
+        declared_fields=PERTURBED_FIELDS,
+        edits=tuple(
+            PickupEdit(record=record, j=None, i=None, value=scale)
+            for name in PERTURBED_FIELDS
+            for record in range(slices[name].start, slices[name].stop)
+        ),
+        operation="multiply",
+    )
 
     written = np.fromfile(destination_data, dtype=PICKUP_DTYPE, count=count).reshape(
         meta.nrecords, *PICKUP_GRID

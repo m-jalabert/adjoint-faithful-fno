@@ -1,0 +1,165 @@
+{
+  "amendment_discipline": {
+    "gates_relaxed": "none; the same 1.05 AUC ceiling and 0.005 growth allowance are applied at a step where they are harder to pass",
+    "if_no_forward_feasible_candidate": "stop_v1_as_section_14_4_specifies_no_third_grid",
+    "re_screens_permitted_after_this_one": 0
+  },
+  "approved_plan": {
+    "note": "repinned 2026-08-28 to the document carrying section 14.4's criterion 2b and the v2 result section; the pre-run pin was e7dbc449739ee227f1a28b765b94e929dc04e04fc0df202d572c9389c64623cf",
+    "path": "docs/Adjoint_faithful_response_training_plan.md",
+    "sha256": "9539d829c6ee46ac2c0dab4171a1a12b0c9522cef31dc19c8580c8a9e69e2514",
+    "superseded_pin_pre_run": "e7dbc449739ee227f1a28b765b94e929dc04e04fc0df202d572c9389c64623cf"
+  },
+  "candidate_lambda_resp": [
+    0.0003,
+    0.001,
+    0.003,
+    0.01
+  ],
+  "contract_status": "frozen_before_re_screen_after_tier_0_diagnostics",
+  "forbidden_decision_inputs": [
+    "mitgcm_adjoint",
+    "taf_output",
+    "fno_adjoint_map",
+    "blind_response_case",
+    "blind_response_metric",
+    "nested_final_inference"
+  ],
+  "forward_feasibility": {
+    "candidate_to_lambda_zero_long_ratio_to_climatology_max_ratio": 1.05,
+    "candidate_to_lambda_zero_short_auc_max_ratio": 1.05,
+    "growth_max_additive_worsening_per_call": 0.005,
+    "long_ratio_criterion_note": "section 14.4 criterion 2b, amended 2026-08-28: section 16.3's existing 90-360-day forward-preservation criterion applied at the screen rather than only after training. Adds no new gate and loosens nothing; evaluated from candidate results already in hand.",
+    "nonfinite_rejects": true,
+    "primary_fields": [
+      "surface_speed",
+      "sst",
+      "phihyd_surface"
+    ]
+  },
+  "matched_control_version": "model_c_adjoint_faithful_nominal_control_v1",
+  "model_version": "model_c_adjoint_faithful_response_v1",
+  "output_subdirectory": "lambda_screen_v2",
+  "primary_seed": 20260724,
+  "response_validation": {
+    "adjoint_forbidden": true,
+    "all_composite_cells_must_be_populated": true,
+    "all_day_10": true,
+    "anchor_days": [
+      6010,
+      6050,
+      6080
+    ],
+    "blind_response_forbidden": true,
+    "composite_cell_axes": [
+      "input_family",
+      "output_group",
+      "input_centre_region",
+      "lead"
+    ],
+    "directions_per_regime": 72,
+    "directions_total": 216,
+    "external_normalizer": "exact_parent",
+    "lead_weights": {
+      "10": 0.7916666666666666,
+      "20": 0.041666666666666664,
+      "30": 0.041666666666666664,
+      "40": 0.041666666666666664,
+      "50": 0.041666666666666664,
+      "60": 0.041666666666666664
+    },
+    "long_directions_total": 36,
+    "long_lead_days": [
+      10,
+      20,
+      30,
+      40,
+      50,
+      60
+    ],
+    "metric_contract": {
+      "composite_name": "S_resp_10:60",
+      "json_pointer": "/response_validation",
+      "must_hash_match_the_pretraining_study_freeze": true,
+      "path": "config/adjoint_faithful_forward_evaluation_v1.json"
+    },
+    "relative_l2_denominator_floor": "training_only_differentiated_combined_numerical_floor",
+    "within_cell_pooling_axes": [
+      "sign",
+      "case",
+      "regime"
+    ]
+  },
+  "screen": {
+    "checkpoint_and_optimizer_state_disposition": "written_to_scratch_for_diagnostics_only_discard_after_lambda_freeze_never_published",
+    "full_run_restarts_at_step_zero": true,
+    "identical_nominal_batch_order": true,
+    "identical_response_direction_order": true,
+    "joint_update_every": 4,
+    "learning_rate_schedule": {
+      "decay_factor": 0.2,
+      "decay_step": 5760,
+      "initial_learning_rate": 0.0005,
+      "note": "section 15.1's 5e-4 through step 5,760 then 1e-4. v1's script trained at a constant 5e-4 because a 1,920-step screen never reaches the decay; a full-length screen must implement it or it is not matched to arm B at the step it is compared against",
+      "source": "config/model_c_production_1in_1out_spectralnorm_v1.json::training"
+    },
+    "long_response_updates": 480,
+    "matched_lambda_zero_control": {
+      "model": "model_c_adjoint_faithful_nominal_control_v1",
+      "optimizer_step": 7680,
+      "same_common_runner_initialization_nominal_batches_and_optimizer_schedule_required": true,
+      "seed": 20260724
+    },
+    "maximum_response_lead_days": 60,
+    "nominal_rollout_steps": 6,
+    "optimizer_steps": 7680,
+    "response_pattern": [
+      "short",
+      "short",
+      "short",
+      "long"
+    ],
+    "response_sampler_may_not_consume_parent_rng_state": true,
+    "response_sampler_stream": "same_isolated_counter_hash_stream_and_the_entire_1920_update_full_run_schedule_for_every_candidate",
+    "response_schedule_hash_required_before_first_candidate": true,
+    "response_schedule_is_prefix_of_full_run_schedule": true,
+    "response_updates": 1920,
+    "restart_each_candidate_from_identical_random_initialization": true,
+    "scratch_checkpoint_root": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/lambda_screen_v2",
+    "short_response_updates": 1440
+  },
+  "selected_lambda_resp": 0.001,
+  "selection": {
+    "direction": "minimize",
+    "no_forward_feasible_candidate_action": "stop_v1",
+    "primary_metric": "S_resp_10:60",
+    "primary_metric_definition_must_equal_metric_contract": true,
+    "tie_break": "smaller_lambda_resp",
+    "within_fraction_of_minimum_for_tie": 0.02
+  },
+  "selection_status": "selected_2026-08-28",
+  "supersedes": {
+    "contract": "config/forward_response_lambda_screen_v1.json",
+    "reason": "v1's candidate grid was frozen before step 10 produced the d values that set L_response's magnitude, so its four points sampled effective weights of roughly {0.26, 0.9, 2.6, 8.7} in nominal-loss units and never entered the intended small-perturbation regime; and v1 measured at step 1,920, the mildest point of the run, where a fixed lambda carries ~1/3.3 of the share it carries at 7,680.",
+    "v1_result": "no_forward_feasible_candidate",
+    "v1_result_retained_at": "outputs/af_fno/response/forward_response_v1/lambda_screen/lambda_selection_result.json"
+  },
+  "tier_0_evidence": {
+    "artifact": "outputs/af_fno/response/forward_response_v1/tier0_diagnostics/tier0_control_response_baselines.json",
+    "control_S_resp_10_60_by_step": {
+      "1920": 13.4178,
+      "3840": 12.4481,
+      "5760": 11.6103,
+      "7680": 11.3811
+    },
+    "control_response_training_loss_by_step": {
+      "1920": 10.7576,
+      "3840": 9.2342,
+      "5760": 8.3035,
+      "7680": 8.0835
+    },
+    "diagnostic_only_never_a_selection_input": true,
+    "zero_response_predictor_loss": 0.8663
+  },
+  "version": "forward_response_lambda_screen_v2"
+}

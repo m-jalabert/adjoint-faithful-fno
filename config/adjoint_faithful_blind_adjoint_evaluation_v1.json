@@ -1,0 +1,198 @@
+{
+  "version": "adjoint_faithful_blind_adjoint_evaluation_v1",
+  "contract_status": "frozen_before_model_training_and_evaluator_only",
+  "approved_plan": {
+    "path": "docs/Adjoint_faithful_response_training_plan.md",
+    "sha256": "3674047c166e571c13f507b55d55c95fd3ef092447a16311b3fa96dda1e91534"
+  },
+  "enablement": {
+    "requires_complete_study_freeze_manifest": true,
+    "requires_gate_m2_forward_packages_frozen": true,
+    "requires_manual_confirmation_before_adjoint_access": true,
+    "model_or_selection_mutation_after_enablement_forbidden": true
+  },
+  "models": {
+    "historical_parent": "model_c_production_1in_1out_spectralnorm_v1",
+    "context_only_child": "model_c_production_1in_1out_spectralnorm_ft90_v1",
+    "nominal_control": "model_c_adjoint_faithful_nominal_control_v1",
+    "response_aware": "model_c_adjoint_faithful_response_v1",
+    "paired_seeds": [
+      20260724,
+      20260911,
+      20260912
+    ],
+    "primary_seed": 20260724,
+    "post_access_reselection_forbidden": true
+  },
+  "reference": {
+    "phase_a_contract": "config/adjoint_phase_a_v1.json",
+    "phase_a_contract_sha256": "9380b2514f0713b3c88016080caa75a2c621078436c67a06927f95c44ce62fc9",
+    "phase_a_contract_hash_must_match_before_evaluator_enablement": true,
+    "objective_weights": {
+      "point_ssh_anomaly": {
+        "phase_a_key": "ssh_anomaly",
+        "weight_file": "work/costWeight_ssh_anomaly.bin",
+        "sha256": "8b073515ebb463f6c3d9e4be1a7277a4cb7e299c846ac727c269164488974646"
+      },
+      "five_point_meridional_gaussian_ssh_anomaly": {
+        "phase_a_key": "ssh_anomaly_kernel",
+        "weight_file": "work/costWeight_ssh_anomaly_kernel.bin",
+        "sha256": "3e1659735a2899aa4bff7fe16fcfff1b8cfd2edf09140074bf2e7c97f6bab7b7"
+      },
+      "analytic_area_mean_conservation": {
+        "phase_a_key": "mean_only",
+        "weight_file": "work/costWeight_mean_only.bin",
+        "sha256": "c29563ecec4b2b533fcba93b83c16287802780196d27ad54459ac30fb6eb76d7"
+      }
+    },
+    "all_objective_weight_hashes_must_match_phase_a_contract_and_run_manifests": true,
+    "mitgcm_point_kernel_store": "outputs/af_fno/adjoint/mitgcm_s0_adjoint_v2",
+    "raw_scratch_v1": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/mitgcm_adjoint_v1",
+    "raw_scratch_v2": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/mitgcm_adjoint_v2",
+    "source_day": 7200,
+    "lead_days": [
+      10,
+      20,
+      30,
+      90
+    ],
+    "regime": "S0",
+    "reuse_existing_scalar_gated_taf_products": true,
+    "rerun_for_provenance_only_forbidden": true,
+    "existing_mitgcm_reference_gates": {
+      "required": [
+        "G0",
+        "G1",
+        "G2a",
+        "G2b",
+        "G3",
+        "G4",
+        "G5"
+      ],
+      "all_required_before_scientific_comparison": true,
+      "status_and_evidence_must_be_revalidated_from_the_frozen_products": true,
+      "g1_plateau_caveat_is_resolved_only_by_gate_a0_extension": true,
+      "g0_etan_only_caveat_is_resolved_only_by_gate_a0_46_channel_extension": true
+    }
+  },
+  "objectives": [
+    "point_ssh_anomaly",
+    "five_point_meridional_gaussian_ssh_anomaly",
+    "analytic_area_mean_conservation"
+  ],
+  "fno_derivative_contract": {
+    "adapter": "scripts/fno_adjoint_model.py",
+    "truth_forced_primary": true,
+    "free_chain_secondary": true,
+    "fixed_source_and_backward_sweep": true,
+    "physical_unit_transform_required": true,
+    "complex_precision": "complex128 work buffers; neuralop hard-coded complex64 buffer replacement required",
+    "finite_difference_gate": true,
+    "forward_reverse_identity_gate": true,
+    "mask_gate": true,
+    "dtype_gate": true,
+    "checkpoint_normalizer_and_weight_field_hash_gates": true
+  },
+  "gate_a0_extensions": {
+    "g1_offshore_plateau": {
+      "existing_epsilon_minimum": 1e-05,
+      "additional_forward_difference_epsilons": [
+        1e-06,
+        1e-07
+      ],
+      "interior_minimum_required_for_pass": true,
+      "failed_plateau_must_be_retained_and_reported": true
+    },
+    "g0_46_channel": {
+      "run": "F90 forward-only extraction",
+      "fields": [
+        "Uvel",
+        "Vvel",
+        "Theta",
+        "EtaN"
+      ],
+      "fno_node_days": [
+        7200,
+        7210,
+        7220,
+        7230,
+        7240,
+        7250,
+        7260,
+        7270,
+        7280,
+        7290
+      ],
+      "canonical_p32_projection_must_match_trajectory_v3": true,
+      "report_label_on_pass": "46-channel G0 at FNO 10-day nodes; ETAN daily",
+      "report_label_before_pass": "ETAN-only daily G0"
+    }
+  },
+  "reported_metrics": [
+    "relative_l2",
+    "pattern_correlation",
+    "amplitude_ratio",
+    "sign_agreement",
+    "wbc_interior_structure",
+    "radial_decay",
+    "lead_dependence",
+    "conservation_mode_error",
+    "absolute_12_bin_spectra",
+    "fno_cutoff_4p625_cells",
+    "unweighted_phase_a_metrics",
+    "clearly_labeled_area_weighted_companions"
+  ],
+  "primary_score": {
+    "definition": "S_m_s=(1/8)*sum_{objective in point,kernel} sum_{lead in 10,20,30,90} log(max(truth_forced_relative_l2,1e-12))",
+    "effects": {
+      "Delta_A": "S_C_s-S_A",
+      "Delta_B": "S_C_s-S_B_s"
+    },
+    "primary_seed_criteria": {
+      "Delta_B_max": -0.2231435513142097,
+      "Delta_A_strictly_below": 0.0,
+      "improved_cells_vs_B_minimum": 6,
+      "any_cell_max_ratio_vs_B": 1.1
+    },
+    "replication_criteria": {
+      "median_Delta_B_max": -0.10536051565782628,
+      "seeds_with_Delta_B_below_zero_minimum": 2
+    }
+  },
+  "secondary_endpoints": [
+    "free_chain_score",
+    "higher_pattern_correlation",
+    "amplitude_ratio_closer_to_one",
+    "improved_mean_mode_preservation"
+  ],
+  "confirmatory_success_requires": [
+    "gate_a0_technical_validity",
+    "gate_m2_ordinary_forward_preservation",
+    "blind_forward_response_criteria",
+    "all_primary_adjoint_criteria"
+  ],
+  "failure_action": "freeze_publishable_negative_v1_and_forbid_model_or_threshold_retry",
+  "exploratory": {
+    "confirmatory_rescue_forbidden": true,
+    "default_enabled": false,
+    "currently_enabled_tests": [],
+    "pretraining_manifest": null,
+    "pretraining_manifest_sha256": null,
+    "current_status": "disabled_because_no_exact_exploratory_manifest_is_frozen",
+    "enablement_requirements": [
+      "manifest_exists_before_any_model_training",
+      "manifest_sha256_is_recorded_in_the_pretraining_study_freeze",
+      "every_runtime_objective_has_exact_target_coordinates_and_weight_hash",
+      "every_directional_projection_has_exact_direction_ids_and_kernel_hashes",
+      "manifest_excluded_from_training_selection_code_path_by_the_forbidden_path_scan",
+      "absence_or_late_creation_of_manifest_means_no_exploratory_test_runs"
+    ],
+    "candidate_tests_not_enabled_without_the_requirements_above": [
+      "interior_runtime_weight_ssh_objective",
+      "eastern_runtime_weight_ssh_objective",
+      "native_U_V_Theta_directional_projections",
+      "balanced_geostrophic_U_V_SSH_projections",
+      "S1_S2_10_30_90_day_ssh_suite"
+    ]
+  }
+}

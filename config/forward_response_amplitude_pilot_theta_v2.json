@@ -1,0 +1,33 @@
+{
+  "version": "forward_response_amplitude_pilot_theta_v2",
+  "contract_status": "frozen_before_theta_followup_compute",
+  "approved_plan": {
+    "path": "docs/Adjoint_faithful_response_training_plan.md",
+    "sha256": "3674047c166e571c13f507b55d55c95fd3ef092447a16311b3fa96dda1e91534"
+  },
+  "parent_contract": {
+    "path": "config/forward_response_amplitude_pilot_v1.json",
+    "note": "inherits unchanged: pilot geometry/centres, kernel definition, group-balanced norm, precision tolerances, provisional/final selection rule shape, and the six paired nominal/duplicate branches (already run; not resubmitted)"
+  },
+  "reason": {
+    "gate": "D2 provisional stage, section 10.4",
+    "finding": "Theta had no passing candidate at alpha in {0.025,0.05,0.10}: both S1 Theta directions (day720 eastern, day3600 northern) failed Q_lin at every candidate (0.38-0.54 vs the 0.05 threshold), while S0/S2 Theta passed cleanly at every candidate.",
+    "diagnosis": "S1's local (regime-only) standard deviation at those two cells/channels is 0.056x and 0.064x the pooled (S0+S1+S2) normalizer sigma used to build the unit-RMS direction -- by far the smallest ratio of any Theta direction (next smallest: S2 southern at 0.271x). The pooled sigma there is dominated by S0/S2's stronger wind forcing, not S1's own (weakest, 0.75x) circulation, so a nominally 'unit RMS' perturbation is a much larger perturbation relative to what S1 actually varies by at those specific locations. Verified directly against trajectories_v3: only wind-stress amplitude differs across regimes, confirming this is a normalization-basis effect, not a data or pipeline bug.",
+    "action_per_section_22_gate_d2": "no passing candidate requires a separately versioned pilot contract with smaller candidate amplitudes; this file is that contract, scoped to the Theta family only."
+  },
+  "scope": {
+    "family": "Theta",
+    "directions": "the same 6 frozen Theta centres from forward_response_amplitude_pilot_v1 (one per regime per anchor day), unchanged",
+    "horizons": "unchanged per direction (S0/day720, S1/day3600, S2/day3600 long to 90 days; S0/day3600, S1/day720, S2/day720 short to 10 days)",
+    "nominal_branches": "reused from v1 (6 anchors + 6 duplicates, already completed); not rerun"
+  },
+  "candidate_alphas": [0.01, 0.005, 0.001],
+  "candidate_alpha_derivation": "targets bringing S1's local-relative perturbation back toward the same order as S0/S2's smallest passing case: alpha * (pooled_sigma/local_std) ~= 0.025 * 0.886 ~= 0.022 for S0's best case; solving alpha ~= 0.022 * 0.056 ~= 0.0012 for S1's worst ratio motivates probing a decade below the v1 grid (0.001-0.01, bracketing the ~0.0012 estimate) instead of reusing 0.0025 (which loses precision under the existing 3-decimal alpha-token filesystem naming)",
+  "selection": {
+    "inherits": "config/forward_response_amplitude_pilot_v1.json#/selection",
+    "applies_to": "Theta only"
+  },
+  "selected_amplitude_theta": 0.005,
+  "selection_status": "provisional_selected_2026-08-24",
+  "selection_evidence": "outputs/af_fno/response/forward_response_v1/amplitude_pilot_theta_v2_selection.json"
+}

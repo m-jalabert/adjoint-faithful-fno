@@ -434,6 +434,1848 @@ ladder's weaker convergence argument.
 Full 46-test suite (38 prior + 8 new) passes. `tests/test_forward_response_
 inventory.py`'s `DATASET_CONTRACT` now points at v2.
 
+**Verified, then amended -- v2's region-decomposed exact solver was
+mathematically correct but still impractically slow at production scale, so
+the same day it was frozen it was replaced with a deterministic heuristic.**
+Running the real, twelve-group materialize job under v2 stalled repeatedly
+in ways the small-scale benchmarks above did not predict:
+
+1. A first attempt (all twelve `(regime,family)` groups solving in parallel
+   worker processes) gave zero progress for over 90 minutes even on strata
+   already proven fast in isolation. Diagnosed and fixed as OpenBLAS thread
+   oversubscription (verified via `/proc/PID/status` thread counts: each of
+   twelve concurrent processes was free to spawn up to 64 BLAS threads with
+   no coordination between them); each worker process now pins
+   `OMP_NUM_THREADS`/`OPENBLAS_NUM_THREADS`/`MKL_NUM_THREADS` to 1 before
+   numpy is ever imported.
+2. Re-run sequentially (one group at a time, no cross-process contention) to
+   isolate the true per-stratum cost: `S0/U/WBC` -- 1,505 candidates,
+   *smaller* than `S0/Theta/WBC`'s 3,297, which had already solved
+   completely in 503 s -- ran over 45 minutes without finishing even its
+   first leximax sub-stage. Directly confirmed still-healthy (99.7% CPU,
+   one OS thread, `srun --overlap` process inspection on the allocated
+   Slurm node), so this was not a second contention bug: candidate-pool
+   *size* does not predict leximax cost, graph *density* does (a smaller
+   pool with the same row count is pruned to a *proportionally* denser
+   conflict graph by `_nearby_same_region_pairs`' row-count-scaled
+   neighbour cutoff), and there is no way to bound that cost in advance
+   short of solving it.
+
+The exact solver's own cost comes specifically from *proving* it found the
+mathematically maximal worst-case separation over the full candidate space
+-- an NP-hard max-min dispersion search. Nothing about this study's
+scientific validity depends on that proof; section 9.3's hard constraints
+(distinct IDs, the non-WBC distance-three rule, regional quotas, the
+Phase-A exclusion) are what protect against leakage and ensure coverage,
+and those are unchanged. Decision: replace the objective with a
+deterministic greedy farthest-point placement (`_pick_farthest_candidate`
+implementing the four-level score in the amended section 9.3 step 3 above,
+`allocate_centres_greedy_farthest_point` for one stratum), which *achieves*
+and *reports* separation rather than proving it optimal. This is a standard,
+analyzable heuristic for max-min dispersion, not an ad hoc choice -- it is
+what the exact solver's own binary search was implicitly approximating on
+the way to a proof. `allocate_centres_lexicographically_by_region`'s outer
+per-region loop and cross-region Chebyshev-3 repair (verified exact and
+reused unchanged from the same-day v2 work) call the new placement function
+in place of the removed exact solver.
+
+The exact-MIP-leximax machinery it replaced
+(`allocate_centres_lexicographically`, `_allocate_centres_lexicographically_core`,
+the clique-cover conflict-graph strengthening, the order-statistic binary
+search, `_freeze_sorted_region_sums`, the pairwise cross/within-role
+objective construction in `_build_centre_problem`) is deleted rather than
+left dead: `_MixedIntegerModel` and a simplified `_build_centre_problem`
+(hard constraints only, no pairwise objective) remain, since
+`prove_hard_capacity`'s read-only feasibility-witness mode (the `audit` CLI
+path) still uses them and is unrelated to which placement algorithm
+chooses cells.
+
+**Verified speedup.** `S0/U` -- the group that stalled over 45 minutes
+under the exact solver and was never completed -- now places all 94 rows
+across all five regions, including 5 cross-region distance-three repair
+attempts, in 0.5 s. `S0/Theta` -- 11 repair attempts -- in 1.0 s. Both well
+under the 32-attempt repair bound, and both report real, non-degenerate
+achieved separations (e.g. `S0/U`: cross-role minima 333.58-2505.75 km,
+within-role 38.94-111.19 km). The Slurm job running the exact v2 solver
+(job 385904, `--max-workers 1`, launched to work around the parallel-worker
+contention above) was cancelled once this timing made the exact approach's
+open-ended cost clearly disproportionate to what it bought; no production
+inventory had been materialized under it.
+
+`config/forward_response_dataset_v3.json` freezes this change (`approved_plan.sha256`
+repinned to this amended document; `joint_spatial_allocator.joint_objective_scope`
+gains a frozen `objective_method` string identifying the greedy algorithm,
+checked exactly by `validate_frozen_algorithm_contract`). v2 is kept as the
+historical record of the region-decomposition fix and is superseded, not
+deleted; like v1, it never materialized any output.
+
+Full 47-test suite passes (46 prior, minus 3 removed tests that exercised
+now-deleted exact-MIP internals, plus 4 new covering the greedy allocator's
+scoring and hard-constraint enforcement directly).
+`tests/test_forward_response_inventory.py`'s `DATASET_CONTRACT` now points
+at v3.
+
+**Verified — step 9 (production train/validation response generation)
+implemented and executed; two implementation bugs and one real amplitude
+gap found and resolved.** `scripts/stage_forward_response_run.py` /
+`scripts/submit_forward_response_run.py` /
+`slurm/mitgcm/af_forward_response_array.sbatch` stage and run every shared
+nominal and signed production train/validation branch from the frozen v3
+inventory, reusing the amplitude pilot's kernel/RMS-scale/pickup-edit
+machinery unchanged. Never reads the blind manifest (no argument or default
+in the module points at one). A full submission (933 work items: 888 signed
+directions + 45 shared nominal groups) surfaced three distinct issues:
+
+1. *A real bug, fixed*: `sbatch --export` splits its argument on commas, and
+   a direction's natural identifier (`direction_id`) embeds a JSON fragment
+   containing commas -- silently truncated, causing spurious 0-row lookup
+   failures. Fixed by addressing signed branches with the comma-free
+   `(regime, anchor_day, family, direction_slot)` tuple instead
+   (`direction_slot` already verified unique within that triple at
+   production scale).
+2. *A real bug, fixed*: validation anchors (days 6010/6050/6080) are
+   deliberately off the regular annual checkpoint cadence (section 7.3) and
+   were never in the canonical trajectory-v3 chain at all -- step 6's
+   dedicated day-5,760-to-6,080 bridge exists specifically so they have an
+   available pickup, but the reused `pilot._resolve_source` only ever
+   searched the canonical chain. Fixed by routing anchors inside
+   `(pickup_bank.SOURCE_DAY, pickup_bank.END_DAY]` to the bridge chain
+   instead (`_resolve_source_for_anchor`); verified directly that every
+   validation-role branch that failed this way before the fix succeeded on
+   retry after it, with no other change.
+3. *A real bug, fixed*: section 8.6's held-out vertical combinations (2- and
+   3-level directions, validation-role only -- verified: 27 of 888
+   production directions, 9 each of U/V/Theta) crashed
+   `build_amplitude_pilot`'s single-level-only `channel_index`
+   (`ValueError: too many values to unpack`), because the amplitude pilot
+   itself never has a multi-level direction and its helpers were never
+   built to handle one. `direction_vector_by_level` /
+   `pickup_edits_for_by_level` generalize the same spatial kernel to a
+   weighted multi-level combination -- same horizontal pattern at every
+   level, each level's own channel sigma and its frozen `_unit_weights`
+   coefficient (read from the inventory row, already unit-L2-normalized),
+   the whole multi-level support jointly RMS-normalized to unit RMS. Proven
+   to reduce byte-for-byte to `build_amplitude_pilot.direction_vector`'s own
+   single-level formula when there is one level (weight 1.0) -- both by unit
+   test and by construction -- so this is a pure addition: the 861
+   already-working single-level/SSH directions are untouched, using the
+   original pilot functions exactly as before.
+
+Both bugs' victims (6 multi-level + 9 validation-resolution = 15 branches
+that failed before their respective fix landed, since Slurm does not
+auto-retry a failed job) were identified by exact cross-reference against
+the analytically-known violation/multi-level sets and resubmitted; all 15
+completed successfully on retry, with no further failures of either kind
+anywhere in the batch.
+
+**Verified — a real, non-bug amplitude gap: 18 of 222 SSH directions (8.1%)
+exceed the frozen 1cm peak cap (section 8.5) at the frozen alpha_SSH=0.05.**
+Not a code defect: the safety check (mirroring
+`build_amplitude_pilot.run_signed`'s own) is working correctly and raises
+*before* any MITgcm run or pickup edit, so no data was ever written for
+these 18 -- a clean absence, not a corrupted result. All 18 are the
+gaussian-kernel ("smooth") SSH direction at their anchor; zero point-kernel
+SSH directions violate. Root cause is the same regime/normalization
+interaction already documented for Theta v2 above (local sigma at these
+specific production cells is smaller than the pooled normalizer implies,
+so the RMS-scaled physical peak comes out larger than intended), here
+surfacing at production locations the pilot's own 24-site sample never
+happened to probe. Overshoot is not uniformly small: sorted, the 18 range
+1.1% to 55.3% over cap, median ~21%, with a real gap between the 3rd-
+smallest (4.5%) and 4th-smallest (10.2%).
+
+**Decision (reviewed with the researcher 2026-08-26):** split by severity
+rather than either blanket-accepting or blanket-re-piloting.
+
+- The 3 directions at <=5% overshoot (`S1/day360/slot15` 1.1%,
+  `S2/day1440/slot14` and `S0/day720/slot14` both 4.5%) are accepted as
+  documented exceptions and run at the frozen alpha=0.05 -- see
+  `SSH_PEAK_CAP_EXCEPTIONS` in `stage_forward_response_run.py`, following
+  the same reviewed-exception convention as `GATE_D2_EXCEPTIONS` in
+  `analyze_amplitude_pilot_controls.py` (the S1/day720/V case).
+- The remaining 15 (10.2%-55.3% over) are treated as a genuine gap in
+  alpha_SSH=0.05's coverage, not clippable or droppable per Gate D3's own
+  text below. `config/forward_response_amplitude_pilot_ssh_v2.json` freezes
+  a smooth-SSH-only follow-up pilot at candidate alphas {0.03, 0.025, 0.02}
+  -- verified analytically before submission that alpha<=0.03 brings every
+  one of the 15 production directions' peak under the 1cm cap (worst case
+  0.015535 m at 0.05 -> 0.009321 m at 0.03), so the pilot's job is to find
+  the largest of these that still passes Q_lin/Q_SNR/adjacent-alpha at the
+  frozen pilot locations, exactly as the Theta v2 follow-up did.
+- Of the 15, 3 are validation-role (`S0/day6010/slot21`, `S0/day6050/slot23`,
+  `S0/day6080/slot23`). Per Gate D3's text ("If a successor changes
+  amplitude... after seeing that failure, every failed validation case
+  becomes development data and the successor must create new response-
+  validation and blind inventories"), these 3 cannot remain validation
+  cases once alpha_SSH changes for them -- deferred as an explicit follow-up
+  (swap in 3 freshly-allocated validation centres via the existing v3
+  greedy allocator) rather than resolved silently alongside the 12
+  train-role directions, which have no such constraint.
+
+**Verified — both independent pieces of the 2026-08-26 split-by-severity
+decision are now complete, except the deferred validation-centre swap.**
+
+- The 3 accepted-exception directions ran at the frozen alpha=0.05 with no
+  further issue (`SSH_PEAK_CAP_EXCEPTIONS` in `stage_forward_response_run.py`
+  gates the cap check per-direction, not blanket-disabled).
+- The SSH-v2 follow-up pilot (`config/forward_response_amplitude_pilot_ssh_v2.json`,
+  36 branches: 6 frozen pilot centres x 3 candidate alphas x 2 signs, both
+  point and smooth kernels re-tested per section 8.5's "one common alpha_SSH"
+  rule) completed with every branch succeeding.
+  `analyze_amplitude_pilot_ssh_v2.py` selected **alpha_SSH=0.03**, the
+  largest candidate: it passes day10_q_lin, long_q_lin, Q_SNR, P32, and
+  adjacent-alpha-JVP convergence at all 6 pilot locations, both kernels.
+  Result frozen into the contract (`selected_amplitude_ssh`,
+  `selection_status: "provisional_selected_2026-08-26"`,
+  `selection_evidence` pointing at
+  `outputs/af_fno/response/forward_response_v1/amplitude_pilot_ssh_v2_selection.json`).
+- The 12 train-role production directions in `SSH_ALPHA_OVERRIDES`
+  (`stage_forward_response_run.py`) were then run for real at alpha=0.03
+  (Slurm jobs 388850-388861). All 24 branches (12 directions x 2 signs)
+  completed and every realized `ssh_peak_m` fell under the 1cm cap; worst
+  case `S1/day5760/slot14` at 0.009321 m, matching the linear-scaling
+  prediction in the v2 contract's `candidate_alpha_derivation` field to five
+  significant figures. Recorded as `production_confirmation` in
+  `forward_response_amplitude_pilot_ssh_v2.json`.
+- The 3 validation-role directions (`S0/day6010/slot21`, `S0/day6050/slot23`,
+  `S0/day6080/slot23`) needed 3 freshly-allocated validation centres from the
+  v3 greedy allocator before they could be run, per the Gate D3 constraint
+  above. See the follow-up amendment immediately below for how this was
+  completed, and a materially larger scope discovered while doing it.
+
+**Verified — the deferred validation-centre swap surfaced 9 more, previously
+unknown cap violations in the sealed blind store; both were repaired
+together and step 9 is now fully complete.** Before touching either sealed
+file, Gate D3's exact text was re-read: "If a successor changes amplitude...
+after seeing that failure, every failed validation case becomes development
+data and the successor must create new response-validation **and blind**
+inventories." That pairing prompted checking the blind SSH directions
+analytically before assuming the swap was validation-only -- the same
+zero-MITgcm-cost peak check already used everywhere (peak scales exactly
+linearly in alpha for a fixed direction), applied to all 54 blind SSH
+directions at the frozen alpha=0.05.
+
+- **Finding:** 9 of 54 blind SSH directions (16.7%) also exceed the 1cm cap,
+  all gaussian-kernel, the identical root cause already documented for
+  train/validation. Nobody could have known before this check: blind has
+  never been executed or read for anything else in this study, and this
+  check reads only geometry (family/kernel/centre/the fixed pooled sigma)
+  against a pre-registered constant (section 8.5's 1cm cap) -- no simulated
+  trajectory, response, or adjoint quantity is touched, so this is not a
+  blind-isolation violation, the same reasoning that already lets the
+  pre-flight cap check gate every step-9 production run before any MITgcm
+  compute.
+- **Decision (reviewed with the researcher 2026-08-26):** fix both the 3
+  validation and 9 blind violators together in one pass, via
+  `scripts/repair_ssh_v2_deferred_centres.py`, rather than deferring blind
+  again -- free to do now (pure geometry, blind still unexecuted, so no
+  compute is wasted) and matches Gate D3's literal validation+blind pairing.
+- **Mechanism.** Re-running the full deterministic greedy allocator
+  (`allocate_centres_greedy_farthest_point`) from scratch was ruled out: it
+  is a single stateful pass where each row's choice depends on every
+  earlier-processed row in its `(regime,family,region)` stratum, so even
+  filtering just these 12 rows' candidate lists and re-solving the whole
+  stratum could cascade and silently move already-good rows -- up to 900 of
+  which already have real, expensive MITgcm output on disk. Instead, every
+  non-target row's current, real, frozen position was treated as fixed
+  ground truth (`taken`/`placed_by_role` seeded directly from the sealed
+  files' actual content, not re-derived from history), and a new cell was
+  computed for only the 12 target rows using the frozen
+  `_pick_farthest_candidate` scorer itself (imported, not reimplemented)
+  against that fixed backdrop, processed in `ROLE_ORDER` (validation before
+  blind_test) so a validation replacement's new position is visible to a
+  blind replacement's distance-three exclusion in the same stratum. New
+  candidates were additionally required to satisfy the SSH peak cap --
+  closing a real gap in the original candidate pool, which is purely
+  geometric (wet mask, full support, Phase-A exclusion) and never checked
+  amplitude-normalized peak at all -- preferring a candidate that passes at
+  the frozen default alpha=0.05 before ever falling back to the alpha=0.03
+  override.
+- **Result: all 12 repaired rows pass at the default alpha=0.05 -- none need
+  the 0.03 override.** New peaks range 0.0027-0.0099 m, comfortably under
+  the cap (old peaks: 0.0113-0.0150 m). This is a cleaner outcome than
+  originally anticipated: these 12 directions now behave identically to the
+  other 213 validation / 207 blind SSH directions, no per-direction
+  amplitude bookkeeping needed for any of them.
+- **Verification before writing anything:** a dry-run mode inspected every
+  proposed swap first; independently, `_non_wbc_chebyshev_violations`
+  (existing, unmodified) was run against the full post-repair SSH row set
+  for all three regimes and found zero violations; global exact-cell
+  disjointness was checked across all 1,128 rows (every family, every role,
+  post-patch) and found zero collisions; a `canonical_json` round-trip of
+  the untouched sealed files was confirmed byte-identical before trusting a
+  patch-and-rewrite; after applying, a row-by-row diff confirmed exactly 12
+  rows changed (3 public, 9 blind) and every changed row differs *only* in
+  its `centre` field, nothing else. Both sealed files were unsealed,
+  patched, and re-sealed at their original modes (public 0444, blind 0400),
+  with a pre-repair backup of each written alongside at 0400
+  (`*.pre_ssh_v2_centre_repair_2026-08-26.bak`). The full 62-test suite
+  (`test_forward_response_inventory.py` + `test_stage_forward_response_run.py`)
+  passed unchanged afterward. `direction_id` embeds no coordinates (verified
+  directly from `Direction.slot_id`), so no downstream key (`SSH_ALPHA_OVERRIDES`,
+  `SSH_PEAK_CAP_EXCEPTIONS`, any already-completed run's report) needed any
+  change.
+- **Execution.** The 3 repaired validation directions were then run for real
+  at their new centres (Slurm jobs 388979-388981); all 6 branches completed
+  and every peak matched the dry-run prediction exactly (0.007969 m,
+  0.003733 m, 0.006115 m). The 9 repaired blind directions were deliberately
+  **not** executed -- their geometry is fixed, but blind generation stays
+  out of scope until after model freeze, per step 9's own text ("Do not
+  generate or expose blind response data") and section 17.
+- **Step 9 is now fully complete**, re-verified directly against the real
+  files on disk rather than assumed: all 888 signed directions (both signs
+  each) and all 45 nominal branches have a completed report; zero missing.
+
+## Implementation status and amendments (2026-08-27)
+
+**Verified — step 10 (extract and verify the development response store)
+implemented and run; the extraction and the frozen response-scale/floor are
+complete and correct, but Gate D3 itself has failed on 19 of 888 production
+directions and is stopped pending review, per section 22's own text.**
+
+`scripts/extract_forward_response_dataset.py` (new) reads every completed
+step-6/7/8/9 MITgcm report and pickup and writes the section-13 curated
+store: one zarr dataset
+(`/bigscratch/.../af_fno/datasets/forward_response_v1.zarr`, 4.5 GB, roles
+`pilot`/`train`/`validation` only -- never reads or writes anything blind)
+plus write-once `{role}_anchor_table.jsonl` / `{role}_direction_table.jsonl`
+(`pilot` additionally `pilot_solver_control_table.jsonl`) under
+`outputs/af_fno/response/forward_response_v1/`. Added
+`build_forward_response_inventory.pickup_to_trajectory_p64`, the "different
+later operation" that function's own P32 sibling had deferred since step 4:
+identical face-to-centre averaging, kept in float64 throughout rather than
+cast to float32, matching section 10.2's differencing rule exactly. Realized
+role shapes match the plan's section-13 table exactly: train
+`A=42, A_short=18, A_long=24, Q_short=576, Q_long=96`; validation
+`A=9, A_short=0, A_long=9, Q_short=180, Q_long=36`; pilot 36 short + 35 long
+(one fewer than the schema's original 36 -- see below).
+`scripts/freeze_response_scales.py` (new) then computes and write-once
+freezes section 14.2's response-loss scale `d_{h,g,k}` (from the just
+-extracted train arrays) floored at ten times section 10.3's combined
+differentiated noise floor, generalized from the single GB-pooled number
+Gate D2 froze to one value per (input family, output group, lead) -- needed
+because the loss balances output *groups* individually, not the GB
+aggregate. Output: `outputs/af_fno/response/forward_response_v1/response_scales_v1.json`.
+The floor never binds anywhere in the 4x4x6 grid (real responses sit
+5.6x-990x above it); the closest margin is U-input/SSH-output response.
+One real judgement call, since SSH does not have one alpha in the extracted
+train set (`SSH_ALPHA_OVERRIDES` puts 12 of ~222 train SSH directions at
+0.03, the rest at 0.05): the floor's raw-to-differentiated conversion
+(`n_diff = n_raw/alpha`) uses the *smallest* alpha actually used per family,
+read from the extracted data rather than hardcoded, so the floor stays
+conservative for every direction in that family regardless of which alpha it
+used. For U/V/Theta this trivially reduces to their one frozen family alpha.
+
+**Two more real, verified schema staleness bugs found and fixed** (joining
+the class already known from other frozen artifacts in this study -- a
+contract written before the data exists is a claim about what the data will
+look like, and this is the first time anything actually checked): both in
+`config/forward_response_schema_v1.json`, both purely textual/contract
+edits, no code semantics changed.
+
+1. `$defs.direction.properties.alpha.enum` only listed the three original
+   pilot candidates (0.025/0.05/0.1) -- missing Theta's later-frozen 0.005
+   and SSH's 0.03 override. Widened to include both; nothing else referenced
+   the old list.
+2. `$defs.direction`'s SSH branch capped `physical_peak` at a hard 0.01,
+   with no allowance for the three already-reviewed, already-accepted SSH
+   peak-cap exceptions frozen in `stage_forward_response_run.SSH_PEAK_CAP_EXCEPTIONS`
+   on 2026-08-26 (peaks up to 0.010454, 4.5% over cap). The schema (written
+   2026-08-25) predates that decision and was never updated to match.
+   Raised to 0.0105 -- comfortably covers the three known exceptions
+   (worst 0.010454) while still rejecting the smallest of the *un*-accepted
+   violations (10.2% over, i.e. >=0.01102).
+3. The Gate-D3 checklist text asserted the pilot has exactly 36 long
+   `(base_direction, alpha)` rows. Real, verified count is 35: (S0, day
+   3600, SSH, alpha=0.10) hit the section-10.1 SSH peak cap before any
+   MITgcm run for both signs (`status: "failed_ssh_peak_cap"`, no manifest,
+   no response -- confirmed by reading both report files directly). This
+   was already known and accepted at the amplitude-pilot stage (it is why
+   alpha_SSH's provisional value ended up below 0.10 in the first place);
+   the schema's row-count assertion just never accounted for it. Corrected
+   the check's text to 35 and recorded the reason; `extract_forward_response_dataset.py`
+   omits the row rather than fabricating a response that was never computed
+   (`PILOT_CAP_FAILURES`).
+
+**`scripts/verify_forward_response_dataset.py`** (new) implements the
+schema's `x-verifier-only-cross-array-gates` checklist: a small,
+dependency-free JSON-Schema (2020-12 subset) validator applied to every row
+of every extracted table against the frozen `$defs`, plus real zarr
+array-shape/dtype/chunk/compressor equality against `array_contract`,
+bijective/in-bounds row-mapping checks between tables and arrays, full
+response/input hash reproduction (recomputes every stored hash from the
+actual array bytes), sparse-edit record/support/sign-reversal checks,
+vertical-weight unit-L2 checks, P32 realization/antisymmetry checks, a
+NaN/Inf sweep, and blind-isolation checks (the store's `roles` attribute and
+the output root are inspected for anything blind-shaped; the blind path
+itself is never opened, matching every other blind-isolation check in this
+study). It also implements the one Gate-D3 criterion nothing before this
+step had ever checked: Q_lin/Q_SNR, recomputed per train/validation
+direction and lead against Gate D2's frozen combined GB floor -- section 10
+only ever gated *amplitude selection* (one decision per family, checked at
+the pilot's 24 sample locations), never each individual production
+direction's own realized linearity/SNR.
+
+**Two real bugs in this new verifier, found and fixed against the real
+data, before its Q_lin/Q_SNR check could be trusted.** Both are in
+`check_qlin_qsnr` specifically; every other check was correct on first run
+(0 findings from the schema/hash/array/sparse-edit/bijection passes across
+all three roles).
+
+1. First run reported 1,466 of 1,468-ish Q_lin/Q_SNR "failures" -- Q_lin
+   pinned at almost exactly 2.0 nearly everywhere. Root cause: the stored
+   `response_p64` arrays are the *raw*, unoriented difference
+   `P64[perturbed]-P64[nominal]` (section 13's own text: "the minus record
+   is normally negative"); section 10.2's `Q_lin` needs the *oriented*
+   `R^s = delta^s/s`, i.e. the minus branch's raw delta negated before
+   comparing to the plus branch. The verifier compared the two raw arrays
+   directly, so for any well-behaved (near-linear, near-antisymmetric)
+   response `R^+ - (-R^-)` is enormous even though `R^+ - R^-` (correctly
+   oriented) is tiny -- an entirely artificial "linearity failure" showing
+   up almost everywhere. Fixed by negating the minus branch before
+   differencing, matching `analyze_amplitude_pilot_controls.py`'s own
+   `r_duplicate`/`r_tight` construction exactly.
+2. Second run still reported 846 of 888 directions failing, now on Q_SNR
+   specifically (values around 0.1-2 against a required 20). Before
+   concluding this was real, cross-checked one flagged direction
+   (S0/day720/SSH point-kernel, a *pilot* sample already known-good) by hand
+   from the raw reports, bypassing both scripts entirely: its true Q_SNR
+   against the frozen combined floor is 71.9 (comfortable pass). Root
+   cause: `check_qlin_qsnr` never divided the raw physical-unit response by
+   the per-channel sigma normalizer before comparing it to
+   `combined_floor_gb_by_lead`, which *is* sigma-normalized throughout
+   `analyze_amplitude_pilot_controls.py` -- an apples-to-oranges unit
+   mismatch, not a real signal problem. Fixed by loading and dividing by
+   `sigma` (`pilot._load_normalizer`) before every norm, exactly matching
+   the pilot analysis convention. After both fixes, 0 array/hash/schema
+   findings and 39 Q_lin/Q_SNR findings remain (from 1,468) -- a real
+   result, not an artifact, confirmed by the independent hand check above
+   and by every other check (which never depended on this code path)
+   passing cleanly throughout.
+
+**Gate D3 result: FAIL, 39 findings across 19 of 888 production directions
+(2.1%) -- narrow, concentrated in Theta and point-kernel SSH, and stopped
+here rather than resolved unilaterally, per section 22's explicit text
+("never silently dropped or rescaled") and this document's own established
+convention that a consequential amplitude/coverage gap is a decision "reviewed
+with the researcher," not one the implementer makes alone.** Full detail:
+
+- **16 of 222 Theta directions** (12 train + 4 validation, all
+  `gaussian_5x5_sigma1`, spanning all three regimes and a range of vertical
+  levels and anchor days) fail `Q_lin<=0.05` at one or more of their leads
+  -- Q_lin up to 0.41, versus the 0.05 threshold. Q_SNR is essentially never
+  the binding constraint here (typically 100s, once as high as 1988); this
+  is a **linearity** failure, the same failure mode Theta's amplitude was
+  already known to be marginal on (Theta v2 exists specifically because the
+  original three candidates failed Q_lin at the pilot's own locations, and
+  even 0.005 needed a dedicated smaller-alpha pilot to pass). Two of the 16
+  (S1/day5040/level1, S0/day6050 validation) fail on Q_SNR instead/also
+  (8.6-15.6, versus 20) at the later leads only -- signal decaying toward
+  the floor over 40-60 days, the same qualitative effect already accepted
+  as `GATE_D2_EXCEPTIONS`' S1/day720/V case, just not yet reviewed for
+  these two.
+- **2 of 111 SSH point-kernel directions** (both validation-role, both at
+  the day-6080 anchor, one each in S0 and S1) fail Q_SNR narrowly (16.25-19.57
+  versus 20) at select leads -- close misses, not catastrophic.
+- **1 direction** (S2/day6080/Theta/level1, validation) fails
+  `p32_antisymmetry_relative_error` (1.73%, versus the 1% bound) -- distinct
+  from the Q_lin/Q_SNR failures above (this direction does not otherwise
+  appear in that list).
+
+None of this can be resolved by re-running with a different candidate
+alpha inside the current pilot contract (Theta's alpha is already the
+smallest that passed at the pilot's 6 locations; going smaller only shrinks
+signal further, the same reasoning the SSH-v2 and GATE_D2_EXCEPTIONS
+decisions already used elsewhere in this document) without a new,
+separately-versioned pilot or an explicit decision to treat some subset as
+documented exceptions the way the 3 SSH-peak-cap and 1 tight-CG cases
+already were. Per Gate D3's own text, if amplitude, inventory, or extraction
+changes after seeing this failure, every already-generated validation case
+becomes development data and new validation/blind inventories are required
+-- exactly the SSH-v2 precedent from 2026-08-26, at a larger scale (16
+directions across two roles, versus 3). This decision is deferred to the
+researcher; step 10's extraction and freezing work is otherwise complete and
+correct, and nothing computed here used any adjoint or blind information.
+
+**Root cause, investigated further at the researcher's request (2026-08-27):
+three distinct mechanisms, not one.** Recomputing Q_lin/Q_SNR at lead 10 for
+every one of the 222 Theta train+validation directions (not just the 16
+that failed a full check across all their leads) exposes a clean pattern
+the single-direction sigma-percentile check above understated:
+
+1. **Northern-region Theta nonlinearity -- the dominant mechanism (14 of 16
+   Theta failures).** Failure rate by region: `northern` 22.2% (8 of 36),
+   `eastern` 8.3% (3 of 36), `WBC` 2.6% (2 of 78), `interior` 2.8% (1 of
+   36), `southern` 0% (0 of 36) -- an 8-9x concentration in one region out
+   of five. `region_masks` (`build_forward_response_inventory.py`) defines
+   `northern` as the ten wet rows adjacent to the basin's solid northern
+   wall, a classic boundary-current/recirculation zone -- a physically
+   plausible reason for genuinely stronger short-lead nonlinearity, not
+   obviously a normalization artifact: correlation between each direction's
+   local-sigma percentile and its Q_lin is weak (-0.11) and weaker still
+   against fail/pass (-0.13), and several failures sit at *high* local sigma
+   (S1/WBC at the 95th percentile, S2/interior at the 58th), where the
+   pooled-normalizer-dilutes-a-weak-signal mechanism (already established
+   for the original Theta Q_lin failure and the SSH peak-cap gap) does not
+   apply. Also concentrated in shallower levels: 14 of 16 failures are at
+   levels 1-9; zero at levels 10-15. The frozen Theta pilot sample included
+   exactly one northern-region direction (S1/day3600/level4) among six
+   total, and it passed Theta v2's alpha=0.005 selection -- one location out
+   of 36+ real northern-region production directions was never going to
+   catch a 22% failure rate specific to that region, the same
+   "pilot-sample-didn't-happen-to-probe-this" shape as every other gap this
+   study has found.
+2. **Late-lead signal decay toward the floor at one specific southern-region
+   location (2 SSH point-kernel validation directions).** Both failures
+   (S0/day6080 and S1/day6080) are the point-kernel SSH direction at the
+   identical grid cell `(j,i)=(1,45)`, region `southern`, realized under two
+   different wind regimes -- not a northern-boundary or normalization
+   effect at all. S1's failure is at leads 40-60 only (Q_snr 16.25-16.96,
+   Q_lin fine); S0's is at lead 10 only (Q_snr 19.57, the single closest
+   near-miss of all 19 findings). This is the same qualitative shape as the
+   already-accepted `GATE_D2_EXCEPTIONS` S1/day720/V case: a real but small
+   signal decaying over lead time toward a comparatively fixed noise floor,
+   at one location the pilot's own single point-kernel-per-regime sample
+   never had reason to probe.
+3. **One isolated antisymmetry violation** (S2/day6080/Theta/level1,
+   `interior` region, alpha=0.005) -- does not overlap either mechanism
+   above (not a Q_lin/Q_SNR failure at all, and not in `northern`); at
+   Theta's very small frozen alpha, this is plausibly float64/pickup
+   precision noise on the realized +/- perturbation rather than a
+   dynamical effect, but this has not been separately confirmed.
+
+**Resolved 2026-08-27 -- Gate D3 now PASSES.** Reviewed with the researcher
+after the root-cause investigation above: treat all three mechanisms as
+documented exceptions for the 12 already-affected TRAIN directions (which,
+per Gate D3's own text, carry no validation/blind provenance constraint),
+but give the 7 VALIDATION directions (6 Q_lin/Q_SNR + 1 antisymmetry) fresh,
+individually MITgcm-verified centres, since Gate D3 explicitly requires new
+centres for a failed validation case rather than an exception.
+
+- **12 train-role directions** (all Theta) are now recorded as
+  `GATE_D3_TRAIN_EXCEPTIONS` in `scripts/verify_forward_response_dataset.py`,
+  keyed by `(regime, anchor_day, family, direction_slot)` with their exact
+  failing leads, following the same reviewed-exception convention as
+  `GATE_D2_EXCEPTIONS`/`SSH_PEAK_CAP_EXCEPTIONS` elsewhere in this study --
+  the verifier now recognizes and skips exactly these (regime, day, lead)
+  cells rather than silently dropping or blanket-disabling the check.
+- **7 validation-role directions** were repaired by the new
+  `scripts/repair_gate_d3_validation_centres.py`, structurally mirroring
+  the 2026-08-26 SSH deferred-centre repair (same frozen
+  `_pick_farthest_candidate` scorer, same fixed-backdrop/per-stratum
+  approach, same unseal/backup/patch/reseal convention) but with one
+  necessary difference: the SSH peak cap was a zero-compute deterministic
+  function of (alpha, kernel, centre), so candidates could be pre-filtered
+  analytically; Q_lin/Q_SNR/antisymmetry cannot be -- each candidate had to
+  be staged and run as a real MITgcm branch (both signs, at the row's own
+  role/alpha/duration) and independently re-verified before being accepted
+  or discarded. All 7 targets found a passing candidate within 1-3 real
+  attempts (13 real branch-pairs total): 4 passed immediately, 2 needed a
+  second candidate, 1 (the worst-affected northern-region Theta direction,
+  `S0/day6080/level8`) needed a third. Every accepted replacement's realized
+  P32 magnitude, antisymmetry, and per-lead Q_lin/Q_SNR are recorded in
+  `outputs/af_fno/response/forward_response_v1/gate_d3_validation_centre_repair_2026-08-27.json`.
+  Sealed files patched with the established backup convention:
+  `forward_response_inventory_v1.jsonl` (new centres for the 7 rows) and
+  `validation_direction_table.jsonl` (full row recompute: centre,
+  support counts, physical peak/RMS/L2, P32 realization/antisymmetry,
+  sparse edits, input/response hashes), plus the corresponding 7 rows of
+  the `validation` zarr group's `short`/`long` arrays, patched in place and
+  reconsolidated. Every other row (881 of 888) is untouched. Neither
+  `validation_anchor_table.jsonl` (anchors do not move) nor
+  `response_scales_v1.json` (train-only, per section 14.2) needed any
+  change. The write-once extraction manifest
+  (`forward_response_dataset_v1_manifest.json`) is a historical record of
+  the pre-repair state, same as v1/v2 dataset-config precedent elsewhere in
+  this document; the repair report above is the authoritative post-repair
+  record for the 7 changed rows.
+- **One real bug found and fixed in the repair script itself before it
+  could be trusted**, caught because it produced an implausible result
+  rather than a plausible-looking wrong one: the first `--apply` run
+  reported all 6 candidates for the first target failing "realized P32
+  magnitude" by a factor of ~12.4x, an implausible physical result (the
+  direction-construction math guarantees unit standardized RMS over its own
+  support by construction, regardless of location). Root cause: the
+  candidate-check function computed the standardized RMS over the *entire*
+  62x62 domain instead of the perturbation's own centred support (unlike
+  the extraction pipeline's own `_p32_realized_and_antisymmetry`, which
+  correctly masks to the support) -- diluting the magnitude by
+  approximately `sqrt(support_size/3600)`, almost exactly the observed
+  ratio. Fixed by calling the trusted, already-correct
+  `extract._p32_realized_and_antisymmetry` directly instead of a
+  from-scratch reimplementation, plus a second, related fix: the row object
+  passed into that check still carried the *original* (failing) centre
+  coordinates rather than the candidate's, which would have masked the
+  support at the wrong location entirely. No sealed file was touched before
+  either fix landed -- `--apply`'s patch step only runs after every target
+  has a verified-passing candidate, and the run that hit this bug raised
+  before reaching that point. Six real MITgcm branch-pairs were spent
+  diagnosing this (all now fully explained, not wasted -- see the corrected
+  numbers in the same target's second run).
+
+**Gate D3: PASS**, re-verified directly (`scripts/verify_forward_response_dataset.py`
+run to completion, 0 findings), including a full re-check of the 7 repaired
+directions' Q_lin/Q_SNR/antisymmetry/hashes/schema conformance alongside the
+881 untouched rows. Step 10 is complete.
+
+**Verified — step 11 (arm B: exact parent-protocol replay, response
+disabled) implemented and run for all three seeds; Gate M0 PASSES.**
+
+`src/oceanfno/train_response.py` (new) is the one common parameterized
+runner section 23.1 specifies for both B and C. `src/oceanfno/train.py`
+stays byte-unchanged (its own `load_contract` hard-rejects any contract
+whose version/seed/output paths differ from the parent's own hardcoded
+constants, which is exactly why it "cannot be parameterized in place" --
+section 23.2). The new runner instead imports every piece of `train.py`
+that is generic given a contract dict rather than closed over the parent's
+specific identity (`physical_static_block`, `physics_contexts`,
+`evaluate_loss`, `split_summary`, `acceptance_gate`, `_verify_file`,
+`_verify_dataset`, and every invariant schedule/architecture constant
+section 5.1 freezes identical between B and the parent), and writes new
+code only for contract validation, output naming, and the top-level
+`preflight`/`run` orchestration -- structured to mirror `train.py`'s own
+control flow line-for-line so the two have a narrow, checkable difference
+rather than being independent implementations that happen to agree.
+
+Contract validation (`train_response.load_contract`) is a **whitelist deep-diff
+against the real parent contract on disk**, not a hand-copied duplicate of
+`train.py`'s own field-by-field assertions: it loads
+`config/model_c_production_1in_1out_spectralnorm_v1.json`, verifies its
+SHA-256 against `study_contract.parent_config_sha256`, and requires every
+JSON path in the B contract to be byte-identical to the parent's except the
+six explicitly whitelisted ones (`version`, `contract_status`,
+`study_contract`, `output`, `training.seed`, `response`) --
+`config/model_c_adjoint_faithful_nominal_control_v1.json` (frozen
+2026-08-24) already differs from the parent contract in exactly those six
+places and nowhere else, confirmed directly. `training.seed` may be
+overridden at call time to any of the three frozen `paired_seeds`, so one
+contract file drives all three runs. `new_runner_source_hashes.
+"src/oceanfno/train_response.py"` in both study contracts, previously
+`null` ("runner_hashes_pending"), is now pinned to the real file's SHA-256
+(`040788d7...`); `contract_status` for B moved to
+`frozen_scientific_contract_and_runner_hashes`. C's contract is left
+`_pending` -- its four `response_*.py` runner files are step 13's work, not
+this one's, and `load_contract` explicitly refuses `response.enabled=true`
+until they exist.
+
+**Equivalence harness (`scripts/verify_response_training_equivalence.py`,
+new) passes with zero mismatches.** Re-running all 7,680 steps of a real B
+training twice just to diff them against `train.py` would cost as much GPU
+time as the real run -- and `train.py`'s own `load_contract` hard-rejects
+any `training.maximum_steps` other than 7,680, so there is no way to get
+its *real* `run()` to do a short comparison anyway. What the harness checks
+instead is everything upstream of the step loop that a mistake in the new
+orchestration code could silently get wrong: it recomputes
+`training_records`, `validation_records`, `snapshot_codes`, `pair_codes`,
+the derived `static_block`, every `normalization` component, and
+`train_only_climatology` through `train_response.py`'s own code path and
+hash-matches each against `study_contract.equality_artifact_hashes`
+(frozen 2026-08-24, before this module existed) -- and, most importantly,
+replays the exact microbatch/StopIteration-driven iteration
+`train_response.run()`'s training loop uses to derive the full
+`(7680,2,4,2)` nominal batch schedule for **all three** seeds and
+hash-matches each against its own pinned per-seed hash. Every check passed
+on the first real run except one self-inflicted, non-blocking one: an
+`inference_starts` check compared against the wrong source list
+(`validation_starts()`, the 34-per-regime checkpoint-validation starts,
+instead of section 6.2's fixed, separately-seeded 15-day inference list) --
+caught because the script marked it informational rather than fatal, fixed
+by using the literal documented list, and confirmed matching. This artifact
+is not used by training or Gate M0 in any case (it feeds the much later S0
+figure package, step 15).
+
+**Three real training runs, one per paired seed, submitted via
+`slurm/models/c/train_adjoint_faithful_nominal_control_v1.sbatch`** (new;
+mirrors `train_production_1in_1out_spectralnorm_v1.sbatch`, calling
+`python -m oceanfno.train_response preflight`/`run` with `--seed` instead).
+Jobs 395420 (seed 20260724, primary)/395421 (20260911)/395422 (20260912)
+all completed cleanly on V100 nodes in parallel, 3.31-3.86 h each (parent's
+own reference: 3.215 h) -- `preflight` passed on every job (27,297,960
+parameters, local branch zero-initialized, spectral cap verified against an
+exact SVD) before any of the 7,680-step loop ran, and no job hit
+`ResponseTrainingContractError`/`DivergenceError`/a non-finite
+loss-or-gradient check. All three selected step 7,680 via
+`declared_fallback_no_checkpoint_met_the_growth_rate_ceiling` -- the same
+selector branch the parent itself used (section 2.3: "Both selected through
+the implemented fallback because no candidate met the declared growth
+ceiling of 1.0"), not a new failure mode. `checkpoint`/`content` SHA-256 and
+the full `report.json`/`arrays.npz`/`selected.pt` set are published under
+`outputs/af_fno/C/model_c_adjoint_faithful_nominal_control_v1/seed_<seed>/`
+and `/bigscratch/.../models/C/model_c_adjoint_faithful_nominal_control_v1/seed_<seed>/`.
+
+**Gate M0: PASS, decisively.** Primary-seed (20260724) selected-B versus
+frozen parent A on the identical 102 pooled validation records:
+
+| Metric | B (seed 20260724) | A (frozen) | Ratio/delta | Ceiling | Result |
+| --- | ---: | ---: | ---: | ---: | --- |
+| 10-90d AUC, surface speed | 0.080820 | 0.080820 | 1.00000x | <=1.05x | PASS |
+| 10-90d AUC, SST | 0.821037 | 0.821037 | 1.00000x | <=1.05x | PASS |
+| 10-90d AUC, surface PHIHYD | 0.579126 | 0.579126 | 1.00000x | <=1.05x | PASS |
+| 90-360d ratio, surface speed | 0.309277 | 0.309277 | 1.00000x | <=1.05x | PASS |
+| 90-360d ratio, SST | 0.289608 | 0.289608 | 1.00000x | <=1.05x | PASS |
+| 90-360d ratio, surface PHIHYD | 0.182586 | 0.182586 | 1.00000x | <=1.05x | PASS |
+| Twin growth per call | 1.013225 | 1.013225 | -0.000000 | <=+0.005 | PASS |
+| Max normalized amplitude (360d) | 5.257050 | 5.257000 | 1.00001x | <=1.05x | PASS |
+| Finite rollout | yes | -- | -- | required | PASS |
+
+Every metric matches the parent to 5-6 significant figures rather than
+merely clearing the 5% tolerance -- the expected result of running the
+identical architecture/data/split/schedule/seed through equivalent code,
+and a strong independent confirmation (on real 7,680-step GPU training, not
+just the harness's pre-training artifacts) that `train_response.py`'s
+response-disabled path is a faithful replay. The two secondary seeds
+(20260911/20260912) are paired replications only, not separately gated
+against A per section 5.1 ("no best seed is selected"); their own growth
+rates (1.0126, 1.0120) and metrics differ from the primary seed's as
+expected from different initialization/data order, with no acceptance-gate
+role.
+
+Per section 22, a positive Gate M0 with all equality/integrity checks
+passing needs no further action beyond recording it. **Step 11 is complete.**
+The B checkpoints are the paired comparator for Gate M1/M2 once C exists
+(steps 12-14); no C training, lambda screen, or response-loss code has run
+yet.
+
+**Verified — step 12 (four-lambda, 1,920-step primary-seed forward-only
+screen) implemented and run to completion; result FAIL, "no forward-feasible
+candidate," reported here for review rather than accepted unilaterally.**
+
+Built the full response-training machinery section 15.2/14.2/16.2 specify,
+all new modules under `src/oceanfno/`: `response_dataset.py` (the
+deterministic, hash-verifiable auxiliary schedule -- stratified round-robin
+over the 12 `(input_family, regime)` cells so that any 12-pick window of
+either stream is exactly family/regime-balanced, not merely the whole pass;
+verified directly against the real 672-row train inventory: pattern holds,
+576 short directions split 288/288 between "used twice" and "used three
+times" exactly matching the declared two-full-passes-plus-288-half-pass
+design, 96 long directions each used exactly 5 times), `response_objective.py`
+(section 14.2's group-balanced loss, reusing the frozen `response_scales_v1.json`
+from step 10 unchanged), `response_spectral_context.py` (snapshot/restore
+for the persistent spectral power-iteration buffers -- verified directly:
+buffers are bit-identical before and after two real auxiliary chains against
+an untrained model), `response_validation.py` (the `S_resp_10:60` composite,
+section 16.2), and `train_response.auxiliary_update` (the shared one-direction
+auxiliary-chain mechanism both this screen and the eventual full C run,
+step 13, will call). `scripts/run_lambda_screen.py` is a *standalone* script,
+not a short invocation of `train_response.run()`: the screen trains at a
+constant learning rate for 1,920 steps (never reaching B's step-5,761 decay)
+and discards its state entirely once lambda is frozen, and reuses arm B's
+already-published, hash-verified normalizer rather than recomputing it four
+times.
+
+**One real unit-handling bug found and fixed before any GPU time was
+spent**, caught by an explicit units note added while reviewing the code a
+second time: the curated store's initial-state arrays are *physical*-unit
+P32 projections (step 10's own `pickup_to_trajectory_p32`), but the model
+operates on *normalized* state throughout every other code path in this
+repository. An early draft of `response_validation._model_response` fed the
+raw physical values directly into the model. Fixed by normalizing initial
+states the same way `RolloutDataset`/`ProductionStepper` do, and by deriving
+the model side's oriented response directly from the model's own normalized
+output difference (`(output_diff)/(sign*alpha)`, no sigma division) rather
+than reusing `oriented_response` (which divides by sigma and is correct only
+for the truth side, whose stored differences are in physical units) --
+documented at length in `response_validation.py`'s module docstring so the
+same mistake cannot recur silently in `train_response.py`'s own auxiliary
+path. A direct integration smoke test (untrained model, real data) confirmed
+gradients flow, shapes/dtypes are correct, and spectral buffers stay
+unmutated after this fix.
+
+**Four real screen candidates ran to completion** on V100 nodes (57-154 min
+each; wall time grew across the batch, consistent with increasing shared-
+cluster load rather than any candidate-specific issue -- no errors in any
+run). Results against arm B's own published step-1,920 checkpoint (the
+frozen "matched lambda-zero control"):
+
+| lambda_resp | AUC ratio: speed | AUC ratio: SST | AUC ratio: PHIHYD | growth | S_resp_10:60 |
+| ---: | ---: | ---: | ---: | ---: | ---: |
+| 0.03 | 1.588 | 1.645 | 1.164 | 0.9995 | 12.133 |
+| 0.10 | 1.838 | 2.465 | 1.183 | 0.9948 | 13.965 |
+| 0.30 | 2.082 | 3.494 | 1.076 | 1.0110 | 15.008 |
+| 1.00 | 3.028 | 6.961 | 2.144 | 0.9670 | 14.821 |
+
+(AUC ratio = candidate's 10-90d short AUC / control's; ceiling 1.05. Growth
+ceiling: control's 1.0151 + 0.005 = 1.0201, all four pass this one
+comfortably.) **Every candidate fails the AUC forward-feasibility check --
+even the smallest tested lambda, by 16-65% depending on field -- while every
+candidate passes the growth check.** `scripts/select_lambda_resp.py`
+confirms this formally: `status: "no_forward_feasible_candidate"`, frozen to
+`outputs/af_fno/response/forward_response_v1/lambda_screen/lambda_selection_result.json`.
+Per section 14.4's literal text this means v1 stops.
+
+**Investigated before accepting this at face value, given the stakes.**
+Three observations, all consistent with a genuine effect rather than a
+coding defect, though not fully conclusive:
+
+1. The degradation is **monotonic in lambda** for SST and surface speed
+   (1.65x/1.59x at lambda=0.03 rising to 6.96x/3.03x at lambda=1.00) and for
+   the whole-run-averaged nominal `total` loss (0.437 to 1.022) and
+   `spectral` regularization term specifically (11.57 to 37.81, more than
+   3x) -- a smooth, mechanistically legible trend as the response gradient's
+   weight increases, not noise-shaped scatter.
+2. The response loss's own raw (pre-lambda) magnitude is large and roughly
+   *constant* across candidates (10.7-11.8) while section 14.2's own
+   normalization divides by `d_{h,g,k}^2`, and several frozen `d` values are
+   small (e.g. `d_{U,SSH,10}=0.000424`, step 10's own frozen value) --
+   exactly the situation section 14.2's text anticipates ("the floor
+   prevents a nearly zero cross-group response from producing an infinite
+   loss," not a *small* one). An untrained/early-training model's response
+   in a weakly-varying output group is not yet small, so its squared error
+   divided by a small `d^2` can be large even at step ~1,920 -- a plausible,
+   literal reading of the frozen design rather than an implementation
+   artifact, but not independently proven here.
+3. Gradient accumulation arithmetic was re-checked by hand: one auxiliary
+   update (undivided) lands once per 4 steps against 2 divided-by-2 nominal
+   microbatches per step (8 nominal-equivalent contributions per 4 steps) --
+   roughly a 15-20% relative weight at lambda=0.03 by loss magnitude alone,
+   before accounting for Adam's per-parameter adaptive scaling, which does
+   not preserve that ratio and could amplify a concentrated auxiliary
+   gradient (e.g. into specific spectral modes) well beyond its raw-loss
+   share.
+
+None of this rules out a subtler bug in `auxiliary_update`'s forward/backward
+construction that a code-level review, rather than an outcome-level one,
+might still find. **This finding is reported here rather than acted on
+unilaterally**, matching this document's own established convention for
+consequential results (the 2026-08-26/27 amendments' pattern of
+investigate-then-defer-to-the-researcher) and section 14.4's explicit
+"stop" language, which this document treats as requiring the researcher's
+review before the freeze in `select_lambda_resp.py` is treated as final --
+that script's write-once guard means it has not been re-run, and the
+`"selected_lambda_resp": null` state in both study contracts is unchanged.
+
+## Implementation status and amendments (2026-08-27, step 12 re-screen)
+
+**Verified — tier-0 diagnostics; the v1 screen's "no forward-feasible
+candidate" is a property of its frozen grid and measurement step, not of the
+method.** Before accepting the stop, two baselines the v1 screen never
+measured were computed by inference only
+(`scripts/tier0_response_diagnostics.py`,
+`slurm/models/c/tier0_response_diagnostics.sbatch`, Slurm job 399448; result
+at `outputs/af_fno/response/forward_response_v1/tier0_diagnostics/tier0_control_response_baselines.json`).
+Nothing was trained; no adjoint, TAF, blind, or nested-final-inference
+artifact was opened.
+
+**The reference scale of the section-14.2 loss.** `d_{h,g,k}` is, by
+construction in `freeze_response_scales.compute_scales`, the RMS of the
+oriented truth response `r_M` over the same train directions the auxiliary
+stream draws from, in the same oriented/sigma convention. A model predicting
+**zero response** therefore scores `l = (1/8) sum_{s,g} mean(r_M^2)/d^2 ~= 1`.
+Measured directly on the exact 480-direction schedule prefix the screen
+consumed: **`l_zero = 0.8663`** (mean lead-10 term 0.9639). The training loss
+is now readable: `l > 0.87` means worse than having no response at all.
+
+This retires observation 2 of the 2026-08-27 step-12 note, which suspected
+small `d` values were inflating the loss. `response_scales_v1.json`'s floor
+is **inactive in all 16 (family, group) cells at lead 10** -- every `d`
+exceeds `10*n_diff` by two to three orders of magnitude. `l ~= 11` is not a
+normalization artifact; it is a real statement that the learned Jacobian is
+badly wrong.
+
+**The matched lambda-zero control, which v1 never scored.** Arm B's own
+checkpoints, scored through the unchanged
+`response_validation.evaluate_response_validation`:
+
+| arm B control (lambda = 0) | `S_resp 10:60` | `l` (train prefix) | `l / l_zero` |
+| --- | ---: | ---: | ---: |
+| step 1,920 | 13.418 | 10.758 | 12.4x |
+| step 3,840 | 12.448 | 9.234 | 10.7x |
+| step 5,760 | 11.610 | 8.304 | 9.6x |
+| step 7,680 | 11.381 | 8.083 | 9.3x |
+
+Against the matched step-1,920 control, `lambda=0.03` improves `S_resp` by
+**9.6%** (13.418 -> 12.133) and is the only candidate that improves anything;
+0.10/0.30/1.00 are 4.1%/11.9%/10.5% **worse** than the control. That is the
+signature of a grid sitting entirely above the optimum. The response term
+works; the weights tested did not.
+
+**Two defects in the v1 screen, both discovered by execution.**
+
+*Defect 1 -- the candidate grid was calibrated on an unmeasured assumption.*
+Section 14.4's `{0.03, 0.10, 0.30, 1.00}` was frozen before step 10 produced
+the `d` values that set `L_response`'s magnitude. Measured, `l ~= 10.7` while
+the nominal total is `~0.32`, so over any four optimizer steps the nominal
+path contributes `4 x 0.315` of loss-scale gradient and the auxiliary path
+`1 x (0.03 x 10.73) = 0.322`, undivided -- **~26% of the raw training signal
+at the smallest candidate**, concentrated in a single step. The grid's four
+points sampled effective weights of roughly `{0.26, 0.9, 2.6, 8.7}` in
+nominal-loss units. No candidate in the intended small-perturbation regime
+was ever tested. This is the same class of specification defect as the
+2026-08-26 `solve_unit` scope error: a frozen constant contradicting the
+document's own intent, revealed by running it.
+
+*Defect 2 -- a constant lambda does not hold the balance constant.* Arm B's
+nominal loss falls 4.3x across the run while `l` falls only 1.33x, so at
+fixed `lambda` the auxiliary term's share **grows** with training:
+
+| step | `L_nominal` | `l` | `lambda*l / L_nominal` at 0.03 |
+| --- | ---: | ---: | ---: |
+| 1,920 | 0.3151 | 10.758 | 1.02 |
+| 3,840 | 0.1580 | 9.234 | 1.75 |
+| 5,760 | 0.1296 | 8.304 | 1.92 |
+| 7,680 | 0.0725 | 8.083 | **3.34** |
+
+(`L_nominal` is a window average and `l` an end-of-window snapshot, so 3.34
+is a lower bound on the instantaneous ratio.) Step 1,920 is therefore the
+*mildest* point of the run: any lambda that passes there is ~3.3x more
+dominant by step 7,680. A screen that measures at 1,920 systematically
+selects a lambda that is too large for the run it is selecting for.
+
+**Amendment — `config/forward_response_lambda_screen_v2.json`.** Two frozen
+constants change, and nothing else:
+
+- the candidate grid becomes `{3e-4, 1e-3, 3e-3, 1e-2}`. Its top point 1e-2
+  sits below the measured-failing 0.03; extrapolating the AUC excess
+  linearly from `lambda=0.03` (worst ratio 1.64 against the 1.05 ceiling)
+  gives `lambda* ~ 2.3e-3` if measured at 1,920 and `~7e-4` at 7,680, so the
+  grid brackets the estimate from both sides;
+- the screen trains the full **7,680** steps and is matched against arm B's
+  step-**7,680** checkpoint, so the weight is gated where it is most
+  dominant and where the forward map is mature.
+
+`scripts/run_lambda_screen.py` is now contract-driven; v1 stays reachable so
+its result remains reproducible. One correctness fix follows from the longer
+budget: the v1 script trained at a **constant** 5e-4 with no schedule,
+because a 1,920-step screen never reaches section 15.1's step-5,761 decay. A
+full-length screen must implement it or it is not matched to arm B at the
+step it is compared against; the script now derives `decay_step = 5,760` and
+`decay_factor = 0.2` from the production contract, exactly as
+`train_response.run` does. The screen also now writes scratch checkpoints at
+the declared steps and persists the full per-update response-loss series to
+a sidecar `.jsonl` -- v1 kept only a mean, which is the one statistic that
+cannot show whether the auxiliary term makes progress on its own objective.
+
+**Unchanged.** The loss definition (14.2), the reject/select rule and its
+1.05 AUC ceiling and 0.005 growth allowance (14.4), the composite `S_resp`
+(16.2), the response schedule and its hash, `response_scales_v1.json`, the
+three-seed structure, and every firewall clause. No gate is relaxed: the
+same ceilings are applied at a step where they are harder to pass.
+
+**Two findings that temper the expected result, recorded now so they are not
+rediscovered as a surprise.**
+
+1. *Nominal-only training reaches better response fidelity for free.* The
+   control hits `S_resp` 12.448 at step 3,840 and 11.610 at 5,760 -- better
+   than `lambda=0.03`'s 12.133 at 1,920 -- at no forward-skill cost. Any
+   claim resting on a `-9.6%` measured at 1,920 is confounded with having
+   stopped early. Screening at 7,680 removes this confound, which is the
+   second reason for the step change.
+2. *The `lambda=0.03` aggregate is one input family.* Per family against the
+   matched control: SSH `-60.5%`, V `-12.5%`, Theta `-3.8%`, U `+7.6%`.
+   Section 16.3 requires at least 10% within **every** input family; the
+   measured effect clears that in two families, is flat in a third, and goes
+   backwards in U. The headline number is SSH carrying the average.
+
+Consequently the v2 screen may well also fail, and that would be a
+substantive negative result rather than a mis-calibration. **Bounded
+amendment discipline:** this is one re-screen with a grid and measurement
+step declared and hashed before it runs. If no v2 candidate is
+forward-feasible, section 14.4's stop is taken as final for v1 and no third
+grid is tried.
+
+**Submitted 2026-08-27.** All four v2 candidates launched as independent
+Slurm jobs on the `gpu` partition (one V100 each, 20 h limit): job 400101
+(`lambda=3e-4`), 400102 (`1e-3`), 400103 (`3e-3`), 400104 (`1e-2`), via
+`slurm/models/c/lambda_screen_v2.sbatch`. A 8-step smoke candidate (job
+400088) verified the amended path end to end beforehand -- matched control
+resolved at step 7,680, contract hash recorded, section-15.1 decay wired to
+`decay_step=5760`/`decay_factor=0.2` -- and its two artifacts were deleted so
+the write-once guard stays meaningful for the real run. Results will land as
+`outputs/af_fno/response/forward_response_v1/lambda_screen_v2/candidate_lambda_<lambda>.json`
+plus a per-update `_response_loss_log.jsonl` sidecar each;
+`scripts/select_lambda_resp.py` is unchanged and has not been re-run, so
+`selected_lambda_resp` stays `null` in both study contracts until the
+researcher reviews the four results.
+
+`config/forward_response_lambda_screen_v2.json`'s `approved_plan.sha256`
+(`e7dbc449...`) pins this document as of the contract freeze, immediately
+before this status note -- the same convention v1 followed, where the pin
+records the contract state rather than tracking every later status edit.
+
+**A forward-only result worth keeping regardless of the screen's outcome.**
+Arm B's fully converged, production-selected model sits at `l = 8.083`,
+**9.3x worse than predicting no response at all**, on a trend that is
+clearly flattening (10.758 -> 9.234 -> 8.304 -> 8.083). This quantifies how
+wrong the emulator's Jacobian is using forward perturbation data only, with
+no adjoint value read, and independently corroborates the Phase-A adjoint
+failure without touching the firewall.
+
+
+## Implementation status and amendments (2026-08-28, step 12 v2 result)
+
+**Verified — the v2 screen ran to completion and the response term works.**
+All four candidates COMPLETED on V100 nodes (jobs 400101-400104, 3 h 12 m to
+6 h 48 m; no errors, all rollouts finite). Against arm B's step-7,680
+checkpoint (`S_resp 10:60 = 11.381`, `l = 8.083`, worst 90-360-day
+ratio-to-climatology 0.3093):
+
+| lambda | AUC ratio spd/sst/phi | growth | 90-360d ratio to B | `S_resp` | vs control | `l` first->last quarter |
+| ---: | --- | ---: | ---: | ---: | ---: | --- |
+| 3e-4 | 0.979 / **1.083** / 0.729 | 1.0121 | 1.107 | 8.228 | -27.7% | 8.55 -> 3.34 |
+| 1e-3 | 0.997 / 0.972 / 0.629 | 1.0156 | 1.035 | 7.031 | -38.2% | 7.28 -> 2.37 |
+| 3e-3 | 1.034 / 1.010 / 0.848 | 1.0171 | **1.064** | 5.844 | -48.7% | 6.67 -> 1.99 |
+| 1e-2 | **1.160** / **1.156** / 0.708 | **1.0246** | 1.268 | 5.126 | -55.0% | 7.56 -> 2.07 |
+
+The 2026-08-27 grid diagnosis is confirmed. Where every v1 candidate degraded
+the forward map by 16-596% and moved `S_resp` the wrong way at all but the
+smallest weight, the v2 grid contains two forward-feasible candidates, and the
+auxiliary term now makes strong progress on its own objective: the response
+training loss falls from ~7 to ~2 within a run (against `l_zero = 0.866`),
+where in v1 it was flat across every candidate and every weight.
+
+`lambda=3e-4`'s rejection is on `sst` AUC 1.083, which is *worse* than
+`lambda=1e-3`'s 0.972 -- non-monotonic in lambda, so that rejection reflects
+run-to-run variation rather than the weight. It is recorded as a reject
+because the frozen rule is applied as written, not because the weight is
+believed harmful.
+
+**Selected: `lambda_resp = 1e-3`**, under section 14.4 criteria 1-5 with the
+2026-08-28 criterion 2b. `lambda=3e-3` is the unconstrained `S_resp`
+minimizer and is rejected by 2b alone (90-360-day ratio 1.064 > 1.05); see
+that amendment for why applying section 16.3's long-horizon criterion at the
+screen is the conservative reading rather than a relaxation.
+
+**Pre-registered — section 16.3's per-input-family gate is expected to fail
+for Theta, and no lambda fixes it.** Section 16.3 requires `S_resp` at least
+10% lower within *each* input family. Measured against the matched control,
+the Theta input family improves by only 0.1-3.1% at every candidate weight,
+while U/V/SSH improve 20-69%. The mechanism is visible in the
+(input family -> output group) breakdown: essentially the entire composite
+lives in the **-> Theta output column**, where the control is wildly
+over-amplified (`E` = 27.9 to 75.6), and that is exactly what the response
+loss repairs (U->Theta 75.6 -> 34.3, V->Theta 47.9 -> 25.8, SSH->Theta
+27.9 -> 5.9 at `lambda=3e-3`). Every other cell already sits at `E ~ 1.0`,
+which is the "model produces no response at all" level: a response loss can
+suppress over-amplification, but it cannot manufacture sensitivity that the
+forward map does not have. The Theta *input* family has no over-amplification
+to correct -- its cells are already at or below that floor (Theta->Theta is
+0.587, genuine skill) -- so the 10% requirement presumes a pathology that
+family does not exhibit.
+
+This is recorded **before** step 13 trains anything, and the gate is left
+exactly as written. Section 16.3 is applied unamended at step 14; if it fails
+on the Theta family alone while U/V/SSH clear it by a wide margin, that is a
+result to report and interpret, not one to have legislated away in advance.
+The decision whether a family already at the no-response floor should have
+been exempt is deferred to step 14, with this note as the pre-registration.
+
+**Frozen 2026-08-28.** `scripts/select_lambda_resp.py` (now contract-driven,
+carrying criterion 2b) was run once and returned `status: "selected"`,
+`selected_lambda_resp = 0.001`, with exactly one forward-feasible candidate
+and therefore no tie to break. The result is frozen write-once at
+`outputs/af_fno/response/forward_response_v1/lambda_screen_v2/lambda_selection_result.json`;
+`config/forward_response_lambda_screen_v2.json` and
+`config/model_c_adjoint_faithful_response_v1.json` both now carry
+`lambda_resp = 0.001` with status `selected_2026-08-28`, and the study
+contract's `lambda_contract` points at the v2 screen. The v1 contract and its
+`no_forward_feasible_candidate` result are untouched and retained as the
+historical record of the mis-calibrated grid. **Step 12 is complete; step 13
+may proceed.**
+
+**Disposition of the v2 screen runs.** Each candidate wrote scratch
+checkpoints at steps 1,920/3,840/5,760/7,680 under
+`${AF_SCRATCH_ROOT}/af_fno/models/C/lambda_screen_v2/lambda_<lambda>/seed_20260724/`
+and a full per-update response-loss series alongside its candidate JSON.
+Section 14.4's discard rule is unchanged and the step-13 primary-seed C run
+still restarts from step zero; the checkpoints are retained only as
+diagnostics, are never published, and take no part in selection. Because the
+`lambda=1e-3` screen run is itself a full 7,680-step primary-seed run under
+the production schedule, it also serves as an advance determinism check on
+step 13: the step-13 primary-seed run should reproduce it, and a material
+divergence is a finding about run-to-run nondeterminism rather than about C.
+
+
+## Implementation status and amendments (2026-08-29, step 13 executed)
+
+**Verified — arm C trained for all three paired seeds.** Jobs 407048/407049/407050
+(`slurm/models/c/train_adjoint_faithful_response_v1.sbatch`) COMPLETED in
+3 h 07 m to 3 h 09 m each, preceded by a 4 m 25 s eight-step smoke (job 407044)
+that exercised the amended runner end to end and whose two artifacts were
+deleted afterwards. Each seed published `report.json`, `arrays.npz`,
+`selection.png`, `README.md`, `manifest.json` and a new
+`response_loss_log.jsonl` carrying all 1,920 auxiliary updates. All three
+manifests read `status: complete`, and all three selected step 7,680 through
+the same `declared_fallback_no_checkpoint_met_the_growth_rate_ceiling` branch
+arm B took -- the production selector was applied unchanged, on nominal
+validation only.
+
+The auxiliary term behaves consistently across seeds. Response training loss
+by quarter (against `l_zero = 0.866`):
+
+| seed | Q1 | Q2 | Q3 | Q4 |
+| --- | ---: | ---: | ---: | ---: |
+| 20260724 | 7.28 | 3.95 | 2.94 | 2.37 |
+| 20260911 | 7.86 | 3.72 | 3.06 | 2.20 |
+| 20260912 | 7.56 | 4.00 | 2.90 | 2.36 |
+
+Seed 20260724 reproduces the `lambda=1e-3` v2 screen run's trajectory
+(7.28 -> 2.37) to two decimal places, which is the advance determinism check
+that run was retained for.
+
+**Two implementation gaps closed, both of which blocked step 13 outright.**
+
+*The production runner had no response path.* `train_response.run()` defined
+`auxiliary_update` but never called it -- correct for arm B, and the reason
+B's three seeds are valid, but it meant arm C could not be trained by the
+production runner at all. The section-15.2 auxiliary stream is now wired into
+`run()` behind `response.enabled`: schedule construction and composition
+checks, the joint update on every `joint_update_every`-th step, the
+non-finite guard routed through the existing `_diverged` path, a
+schedule-consumption assertion after the loop, response provenance in the
+report, and the per-update sidecar. With `response.enabled` false the block is
+skipped entirely -- no schedule is built and no response artifact is opened --
+so the change is inert on arm B's path. Verified directly: B's preflight still
+returns `response_training: {"enabled": false}`, and B's three published runs
+are unaffected and are not re-run. `preflight` additionally now validates the
+auxiliary schedule's composition and hash before any GPU time is spent.
+
+*The equality whitelist had drifted from the code that enforces it.*
+`load_contract` compares the study contract against the **parent** contract,
+where `read_contract.response_state` is false; C sets it true, and that path
+was absent from the enforced whitelist, so every arm C preflight failed. The
+field was already declared in the contract's own
+`paired_causal_whitelist_json_paths` as an intended B/C difference -- but that
+field is documentation. `WHITELIST_PREFIXES` in `train_response.py` is what
+`load_contract` actually reads, and the two had silently diverged. The code
+constant now whitelists that single leaf, deliberately not the whole
+`read_contract` subtree: `adjoint_state`, `blind_response_state`,
+`inference_state` and `intermediate_wind_state` remain outside it and stay
+pinned to the parent's `false`, so the firewall is untouched. The contract's
+`equality_whitelist_json_paths` was brought back into agreement, and
+`new_runner_source_hashes` re-frozen in both study contracts with the
+superseded hashes and the inertness argument recorded.
+
+**Step 13 is complete. Gate M1 (step 14) has not been applied.** Its response
+half requires `S_resp 10:60` for each C run, which no step-13 artifact
+contains. Its forward half is already readable from the published reports,
+and is recorded here because it is not what the screen predicted:
+
+| seed | spd | sst | phihyd | worst 90-360d | maxAmp | growth C-B |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| 20260724 | 0.997 | 0.972 | 0.629 | 1.035 | 1.006 | +0.0024 |
+| 20260911 | 1.012 | 1.021 | **1.768** | **1.096** | 1.013 | +0.0012 |
+| 20260912 | 0.994 | 1.006 | **1.051** | 0.954 | 0.973 | +0.0026 |
+
+Growth is inside the 0.005 allowance for every seed, and surface speed, SST
+and maximum amplitude are all at or below 1.05. The failures are confined to
+`phihyd_surface` and, for one seed, the long-horizon ratio.
+
+**`phihyd_surface` is bimodal and the mode is not set by the arm.** Pooling
+all six published runs, the metric takes one of two values -- roughly 0.33 or
+roughly 0.58 -- with no dependence on treatment:
+
+| | seed 20260724 | seed 20260911 | seed 20260912 |
+| --- | ---: | ---: | ---: |
+| B | 0.5791 (high) | 0.3291 (low) | 0.3294 (low) |
+| C | 0.3641 (low) | 0.5819 (high) | 0.3463 (low) |
+
+Each arm draws one high and two low. The paired C/B ratio therefore ranges
+from 0.629 to 1.768 -- a factor of 2.8 -- purely according to which arm
+happened to draw the high value for that seed, and seed 20260911's 1.768 is
+the same lottery that gave seed 20260724 a spurious 0.629 in C's favour.
+Averaged over seeds, C's mean `phihyd` is 0.431 against B's 0.413, a 4.4%
+difference, well inside this spread. The 2026-08-28 tier-0 note already
+measured a 43% `phihyd` spread across B's three seeds alone and warned that
+the screen result would not transfer cleanly; this is that warning
+materializing.
+
+Section 16.3 as written applies forward-preservation per selected run against
+paired B, and on `phihyd_surface` it is comparing single draws from a bimodal
+distribution. Whether that constitutes a genuine forward-preservation failure,
+or a criterion applied to a metric too unstable at n=1 to support it, is a
+step-14 decision and is **not** taken here. It is recorded before Gate M1 is
+applied so the question is pre-registered rather than raised after seeing
+whether the gate passes. No response metric was consulted in reaching it.
+
+
+## Implementation status and amendments (2026-08-29, step 14 -- Gate M1)
+
+**Verified — Gate M1 applied and frozen. Verdict: negative. No seed passes.**
+`scripts/apply_gate_m1.py` (job 419128) scored all six published selected
+checkpoints on held-out response validation and applied section 16.3's two
+criterion sets to each B/C pair. The result is write-once at
+`outputs/af_fno/response/forward_response_v1/gate_m1/gate_m1_result.json`,
+which also records the checkpoint and report SHA-256 of all six runs. Every
+number was produced strictly after the production selector had already chosen
+each run's checkpoint on nominal validation alone, so none of it can have
+influenced a selection. Two independent cross-checks landed exactly: arm B
+seed 20260724 scores `S_resp = 11.3811`, reproducing the 2026-08-28 tier-0
+measurement, and arm C seed 20260724 scores `7.0312`, reproducing the
+`lambda=1e-3` v2 screen candidate to four decimals despite cuBLAS
+nondeterminism.
+
+**The response effect is large, uniform across seeds, and reproducible.**
+
+| | seed 20260724 | seed 20260911 | seed 20260912 | mean | spread |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| overall `S_resp` reduction | 38.2% | 38.9% | 39.3% | **38.8%** | 1.1 pt |
+| U | 40.0% | 39.6% | 38.6% | 39.4% | 1.4 pt |
+| V | 30.5% | 29.7% | 35.3% | 31.8% | 5.7 pt |
+| SSH | 50.6% | 55.3% | 51.9% | 52.6% | 4.7 pt |
+| Theta | 0.7% | 1.0% | 1.1% | 0.9% | 0.4 pt |
+
+`S_resp 10:60` falls from 11.38/11.96/11.68 to 7.03/7.30/7.09. The overall
+20% requirement is cleared by every seed with a margin of nearly two, and the
+day-10 input-family/region criterion passes everywhere (worst ratio 1.012
+against a 1.10 ceiling).
+
+**Gate M1 nonetheless fails, on two criteria, both flagged in advance.**
+
+*The Theta input family, all three seeds.* Section 16.3 requires at least 10%
+within every input family; Theta returns 0.7-1.1%. This is the failure
+pre-registered in the 2026-08-28 v2 result note before step 13 trained
+anything, with its mechanism: the composite is dominated by the `-> Theta`
+output column where the control is over-amplified by factors of 28 to 76, and
+that is what the response loss repairs. Every other cell already sits at
+`E ~ 1.0`, the level at which the model produces no response at all. A
+response loss can suppress over-amplification; it cannot manufacture
+sensitivity the forward map does not have. The Theta *input* family has no
+over-amplification to correct, so the criterion presumes a pathology that
+family does not exhibit. The consistency of the number across seeds
+(0.4 pt spread) confirms this is structural, not noise.
+
+*`phihyd_surface`, seeds 20260911 and 20260912, plus the long-horizon ratio
+for seed 20260911.* The paired C/B `phihyd` ratios are 0.629, 1.768 and
+1.051 -- a 2.81x spread with no consistent direction. This is the bimodality
+recorded in the 2026-08-29 step-13 note: pooling all six runs, `phihyd`
+takes either ~0.33 or ~0.58, and each arm drew one high and two low. Averaged
+over seeds, C's mean is 0.431 against B's 0.413, a 4.4% difference. Seed
+20260911's 1.768 and seed 20260724's 0.629 are the same lottery pointing in
+opposite directions. Growth passes for every seed (+0.0012 to +0.0026 against
+a 0.005 allowance), as do surface speed, SST and maximum amplitude.
+
+**Disposition.** Gate M1's text is explicit: "Failure labels the development
+result negative. It does not authorize another lambda, seed, checkpoint,
+continuation, curriculum, or data edit." No such change is made or proposed
+here, and no gate is relaxed or reinterpreted after the fact. The negative
+v1 development result is frozen as recorded.
+
+Also per Gate M1 and section 16.3, the negative development outcome does not
+censor the mechanistic question: "Provided the technical adjoint gate later
+passes, the already-frozen blind evaluations still run so that a negative
+forward/response tradeoff is measured rather than hidden." Steps 15-19
+proceed on the frozen model identities.
+
+**What the frozen result establishes, separately from the gate.** Forward-only
+perturbation supervision at `lambda=1e-3` reduced the held-out response error
+of a production ocean emulator by 38.8% on average, reproducibly across three
+seeds, with 30-53% reductions in three of four input families and no
+detectable cost in surface speed, SST, amplitude or perturbation growth. It
+did not improve the family that was already at the no-response floor, and the
+forward criterion that failed did so on a metric whose paired variance
+(2.81x) exceeds any plausible treatment effect. Whether section 16.3's
+per-family threshold and its use of `phihyd_surface` at n=1 were
+well-specified for this experiment is a question for the write-up; it is
+recorded here rather than acted on, and the gate stands as written.
+
+
+## Implementation status and amendments (2026-08-29, step 15 -- ordinary forward package)
+
+**Verified — the complete ordinary forward evaluation is built, run and
+frozen for all three B and all three C seeds.** Twelve packages: six S0 figure
+packages (jobs 419759-419764, ~90 s each) and six anomaly packages (jobs
+419773-419778, ~65 s each, CPU -- they read no model weights and roll nothing
+out). All twelve completed. The freeze manifest is write-once at
+`outputs/af_fno/response/forward_response_v1/step15_forward_freeze/step15_forward_freeze_manifest.json`
+and hashes 120 study artifacts, the 40 artifacts of the preserved A and ft90
+packages, all twelve contracts, the four modules involved, and the six
+training reports the packages derive from.
+
+**The frozen modules were deliberately not modified.** Section 19 step 2/4
+call for the *established* package, and section 23.1 asks for
+`figures_response.py`/`anomaly_response.py` as contract adapters. That is not
+a stylistic preference: the parent's own figure and anomaly contracts pin
+`src/oceanfno/figures.py` and `src/oceanfno/anomaly.py` in their
+`source_hashes` and re-verify those hashes on every load, so editing either
+file would have retired the A and ft90 packages' ability to re-verify
+themselves -- which section 19 step 6 forbids in substance by requiring those
+reports be preserved rather than regenerated.
+
+The adapters therefore import and execute every numerical helper unchanged --
+`evaluate_regime`, the train-only climatology, the static block, all six
+plots, the summary, `long_rollout_gate`, the MITgcm training-mean reference
+field, the anomaly subtraction itself, `variability_summary`,
+`day2000_structure_summary` -- and re-express only what the frozen modules
+hard-wire to the parent: the three identity strings and the output roots. The
+allow-list of admissible identities lives in code (`IDENTITIES`), not in the
+contracts, so a contract cannot authorize its own identity. Every arm's
+figures are therefore produced by exactly the code that produced the parent's,
+on the identical 15 starts, leads, fields, baselines and reference field.
+
+**Arm B seed 20260724 reproduces parent A exactly** on every published
+diagnostic -- maximum normalized magnitude 10.328, day-2,000 streamfunction
+minimum -29.39 Sv, spatial-std ratio 0.997, day-2,000 anomaly RMS 1.087 Sv,
+model/truth 1.462, WBC/interior 5.06, high-wavenumber fraction 0.0038. That is
+the exact-parent-replay property Gate M0 asserted, now visible in an
+independent package, and it is the strongest available check that the adapter
+changes nothing numerical.
+
+**Long-rollout half, all eight models on the identical 15 starts:**
+
+| model | max normalized magnitude (<= 8) | day-2,000 psi min Sv (>= -33) | std ratio (0.80-1.25) |
+| --- | ---: | ---: | ---: |
+| A parent | 10.328 | -29.39 | 0.997 |
+| ft90 child | 8.434 | -29.30 | 0.995 |
+| B 20260724 | 10.328 | -29.39 | 0.997 |
+| B 20260911 | 6.551 | -30.12 | 1.000 |
+| B 20260912 | 12.960 | -30.25 | 1.026 |
+| C 20260724 | 12.302 | **-34.81** | 1.196 |
+| C 20260911 | 9.890 | -29.83 | 1.006 |
+| C 20260912 | 11.619 | -30.41 | 1.007 |
+
+(truth day-2,000 minimum: -30.01 Sv.) The magnitude ceiling is exceeded by the
+parent itself and by five of six study runs, so it separates neither arm; this
+is a pre-existing property of the lineage, not a response-loss effect.
+
+**Day-2,000 anomaly structure, about the identical MITgcm training mean:**
+
+| model | anomaly RMS Sv | model/truth | WBC/interior | high-k fraction |
+| --- | ---: | ---: | ---: | ---: |
+| A parent | 1.087 | 1.462 | 5.06 | 0.0038 |
+| ft90 child | 1.190 | 1.600 | 8.16 | 0.0022 |
+| B 20260724 | 1.087 | 1.462 | 5.06 | 0.0038 |
+| B 20260911 | 0.811 | 1.091 | 6.23 | 0.0048 |
+| B 20260912 | 2.212 | 2.974 | 3.68 | 0.0011 |
+| C 20260724 | **4.868** | **6.547** | **2.31** | 0.0000 |
+| C 20260911 | 1.667 | 2.242 | 7.23 | 0.0029 |
+| C 20260912 | 0.902 | 1.213 | 3.19 | 0.0125 |
+
+(truth WBC/interior ratio: 23.10 for every model, since the reference and the
+truth are identical.)
+
+**One seed is an outlier and it is the same seed in both tables.** C seed
+20260724 is the worst of all eight models on the day-2,000 anomaly -- 4.868 Sv
+RMS, 6.5 times truth, with the western-boundary/interior ratio collapsed to
+2.31 against truth's 23.10 and essentially no high-wavenumber power -- and it
+is also the only run to breach the -33 Sv streamfunction floor. Its two
+sibling seeds (1.667 and 0.902 Sv) sit inside arm B's own range (0.811-2.212).
+Arm means are 2.479 Sv for C against 1.370 for B, a ratio of 1.8 carried
+almost entirely by that one seed.
+
+Recorded, not interpreted as a treatment effect. Day-2,000 anomaly amplitude
+and the western-boundary ratio are both known to be unstable across runs in
+this lineage, and the 2026-08-29 step-13 and step-14 notes already established
+that per-seed forward comparisons in this study have paired variance
+(2.81x on `phihyd_surface`) exceeding any plausible effect size at n=3. Three
+seeds cannot separate "the response loss degrades the day-2,000 circulation in
+one seed out of three" from "this diagnostic has a heavy tail." Section 19 is
+a reporting step with no gate, so nothing turns on the reading here; it is
+flagged for the write-up and as context for the section-17 and section-18
+packages.
+
+**Section 19 step 8 precondition is deliberately not satisfied yet.** The
+manifest records `ordinary_forward_frozen: true`,
+`blind_forward_response_frozen: false`,
+`adjoint_evaluator_may_be_enabled: false`. Both packages and their hashes must
+be in the freeze manifest before the MITgcm/TAF adjoint evaluator is enabled,
+and the section-17 blind forward-response package is execution step 16, which
+has not been run.
+
+
+## Implementation status and amendments (2026-08-29, step 16 -- blind forward-response test, Gate M2)
+
+**Verified — Gate M2 is POSITIVE. All seven section-17 conditions pass.**
+Frozen write-once at
+`outputs/af_fno/response/forward_response_blind_v1/gate_m2/gate_m2_result.json`
+(job 420247).
+
+| model | `S_resp 10:60` | `S_resp 90` |
+| --- | ---: | ---: |
+| A (frozen parent) | 12.6910 | 19.5967 |
+| ft90 (context) | 12.8330 | 20.3421 |
+| B 20260724 | 12.6910 | 19.5967 |
+| B 20260911 | 13.2423 | 22.5558 |
+| B 20260912 | 12.6223 | 17.0427 |
+| **C 20260724** | **8.5513** | **14.3726** |
+| **C 20260911** | **8.9249** | **15.8060** |
+| **C 20260912** | **8.1938** | **11.1304** |
+
+| seed | 10-60 reduction | day-90 reduction | families improved | worst day-10 aggregate |
+| --- | ---: | ---: | --- | ---: |
+| 20260724 (primary) | 32.6% | 26.7% | U, V, Theta, SSH (4/4) | 1.004 |
+| 20260911 | 32.6% | 29.9% | U, V, SSH (3/4) | 1.024 |
+| 20260912 | 35.1% | 34.7% | U, V, SSH (3/4) | 1.010 |
+
+Every requirement is cleared with margin: the primary seed needed 15% at
+10-60 and returned 32.6%; it needed 10% at day 90 and returned 26.7%; both
+scores are below frozen parent A (8.55 against 12.69, 14.37 against 19.60);
+it improves all four input families, not the three required; no day-10
+input-family/region aggregate exceeds 1.004 against a 1.10 ceiling. The
+median 10-60 reduction is 32.6% against a 15% requirement, and **all three**
+seeds improve both scores where two were required. Arm B seed 20260724 again
+scores identically to parent A, the exact-replay property now visible in a
+third independent package.
+
+**The Theta family behaves differently here than in development.** Gate M1
+found Theta essentially unmovable (0.7-1.1%) and failed on it; on the blind
+cases the primary seed improves all four families. The development and blind
+anchors are different days with disjoint centre IDs and unseen vertical
+combinations, so this is not a contradiction -- it says the Theta result at
+the validation anchors was specific to those anchors rather than a structural
+ceiling. Recorded as an observation; Gate M1's frozen negative verdict is
+unchanged and is not revisited.
+
+**Three defects of one class, caught before they could corrupt the result.**
+Both `nominal_groups` and `run_signed` derived branch duration from the
+hard-coded `LONG_DURATION_DAYS = 60`, correct for train/validation (whose
+horizons are 10 and 60) but wrong for the blind manifest, whose long
+directions declare 90-day horizons because section 17 evaluates days 20..90.
+The nominal side was fixed before the runs; the signed side was missed and
+surfaced as a `StopIteration` on a missing day-70 checkpoint during
+extraction -- loudly, before any model was scored, so nothing was corrupted
+and the package's "opened once" property held. Both are now data-driven from
+the rows' declared `horizon_days`, verified backward-compatible
+(train/validation signed horizons remain exactly {10: 756, 60: 132}, nominal
+groups exactly {10: 18, 60: 33}). The 72 stale 60-day long branches were
+cleared and re-run at 90 days; the 180 correct short branches were untouched.
+A third gap -- extraction resolving reports from a hard-coded development
+root, which would have silently missed the blind reports in their separate
+evaluator-only directory -- was fixed by threading the root, defaults
+unchanged.
+
+**Provenance.** The pinned modules stay byte-identical:
+`src/oceanfno/response_validation.py` still hashes to `0f7dccae5ade59b2...`,
+and `figures.py`/`anomaly.py` were never touched, so arms A, ft90, B and C all
+remain able to re-verify themselves. The day-90 scorer
+`src/oceanfno/response_validation_blind.py` was proved numerically identical
+to the development scorer before the package was opened
+(`scripts/verify_blind_scorer_equivalence.py`, job 419920: composite
+difference 1.78e-15, worst per-cell difference exactly 0.0 across 480 cells,
+and no `S_resp_90` emitted on a 10-60 store). Section 16.2's numerical floor
+is frozen for leads 10-60 only; the lead-60 value is carried forward to lead
+90, which is training-only by construction -- computing one from the blind
+responses would let blind data into its own scoring rule -- and conservative,
+since `n_diff` decreases over 10-60. Every result records this as
+`lead_90_floor_source`.
+
+**Blind store.** 216 directions (180 short at lead 10, 36 long at leads
+10..90), both signs, 9 anchors, in its own
+`forward_response_blind_v1.zarr` so the development store's pinned hash is
+untouched. Antisymmetry `|r_plus + r_minus| / |r|` = 0.0003, confirming the
+perturbations sit in the linear regime the finite-difference identity assumes.
+All 441 MITgcm reports present, 432 signed branches carrying every required
+lead, zero nonzero return codes.
+
+**What this establishes.** Forward-only perturbation supervision at
+`lambda = 1e-3` reduced held-out blind response error by 32.6-35.1% at leads
+10-60 and 26.7-34.7% at day 90, reproducibly across three seeds, on cases
+generated after every checkpoint, weight and report was frozen and hashed, and
+never read during amplitude calibration, lambda selection, early stopping,
+checkpoint selection or any retry. Day 90 is beyond every training horizon in
+the study: no C run ever saw a response target past day 60, so the day-90
+improvement is extrapolation, not fit. This is the section-17 endpoint, and it
+is positive.
+
+**Section 19 step 8 precondition is now satisfied.** Both the ordinary forward
+package (step 15) and the blind forward-response package are frozen with their
+hashes. The MITgcm/TAF adjoint evaluator may be enabled -- execution step 17.
+
+
+## Implementation status and amendments (2026-08-29, step 17 -- FNO derivative gates, Gate A0 part 1)
+
+**Verified — the FNO side of Gate A0 passes for all eight models, 30/30
+sub-checks each.**
+
+| package | gates | median dot-product residual | worst probe |
+| --- | --- | ---: | ---: |
+| A (frozen parent) | PASS 30/30 | 5.42e-15 | 1.38e-13 |
+| ft90 (retained Phase-A result) | PASS 30/30 | 1.15e-13 | single probe |
+| B 20260724 | PASS 30/30 | 5.42e-15 | 1.38e-13 |
+| B 20260911 | PASS 30/30 | 9.48e-15 | 3.76e-14 |
+| B 20260912 | PASS 30/30 | 3.21e-14 | 5.60e-14 |
+| C 20260724 | PASS 30/30 | 2.86e-15 | 9.67e-12 |
+| C 20260911 | PASS 30/30 | 2.09e-14 | 3.20e-11 |
+| C 20260912 | PASS 30/30 | 2.53e-14 | 3.72e-13 |
+
+Gates covered: F1 cost identity (relative error 1.7e-16 on the SSH anomaly
+objective), F2 finite difference with an interior minimum in the epsilon
+sweep, F2 forward-versus-reverse mode (agreement to 2.8e-17), F3 operator
+preflight (plain `ProductionFNO`, 27,297,960 parameters, no live
+spectral-norm hook), F4 precision (float32/float64 relative L2 6.5e-07), F5
+chain identity (forced and free chains identical to **exactly** 0.0). Arm B
+seed 20260724 again reproduces parent A digit for digit.
+
+**`ModelIdentity`: the trusted runner is now contract-parameterized.** Section
+18.2 requires the same FNO machinery for A, all six B/C replicates and ft90;
+section 23.1 asks for it as an adapter, not a copy. `fno_adjoint_ft90.py` hard-
+coded its model identity in five places; those are now one frozen dataclass
+whose **every default is the ft90 child's**, so calling that module unchanged
+still reproduces the published Phase-A result -- verified directly: the default
+path resolves checkpoint SHA `4acb7633d85a`, the published normalizer, and
+optimizer step 1,440. Every gate, objective and in particular the validated
+complex128 spectral-buffer promotion is executed unchanged.
+`scripts/fno_adjoint_model.py` supplies only the registry of eight identities,
+each pinning its checkpoint SHA, normalizer SHA and optimizer step -- hard-coded
+for the same reason the ft90 runner pins its own, since a different checkpoint
+is a different operator.
+
+**Amendment — the F-precision adjoint-identity gate was a lottery, and the
+evidence is unambiguous.** Check 2 of `verify_double_precision_spectrum`
+compared a *single* random probe at *one* hard-coded seed against a fixed
+1e-12 constant. `<v, J u>` carries 500-2900x cancellation for every model in
+this study, so a single realization is heavy-tailed. Measured across five
+probes per model:
+
+| model | probe residuals (seeds 20260819..23) | median |
+| --- | --- | ---: |
+| C 20260724 | **9.7e-12**, 2.9e-15, 4.2e-16, 5.5e-15, 2.4e-15 | 2.9e-15 |
+| C 20260911 | 2.1e-14, 2.5e-14, **3.2e-11**, 9.2e-16, 2.2e-15 | 2.1e-14 |
+| A / B 20260724 | 1.4e-13, 3.5e-14, 1.8e-15, 5.4e-15, 2.1e-15 | 5.4e-15 |
+
+Under the original gate C 20260724 **failed** and C 20260911 **passed** --
+purely because the hard-coded seed landed on the former's bad draw and not the
+latter's. C 20260911's worst probe (3.2e-11) is three times worse than the
+draw that failed C 20260724, and it passed. Had the fixed seed been 20260821
+the verdicts would have swapped. The gate was measuring the probe, not the
+operator. It also fired on the model with the **best median residual of all
+eight**.
+
+The gate now draws five predeclared, shared seeds and tests the **median**
+against the unchanged 1e-12 threshold. The bar is not loosened -- the
+estimator is -- and this brings the check into line with the rest of its own
+suite, where F2 and F2_forward_mode already compare against a *measured*
+arithmetic floor rather than a constant. Every per-probe residual, the min,
+the max and the cancellation ratio are recorded so the spread stays visible.
+
+**Applied symmetrically.** The seeds are fixed and shared, so no arm is tested
+on a different draw. All seven study packages were deleted and re-run from
+scratch under the amended rule, including the five that had already passed
+under the old one: no result obtained under the retired rule is retained. ft90
+keeps its validated Phase-A result as section 22 requires; its independently
+measured median (7.3e-15) would pass the amended gate comfortably. The
+amendment was put to the researcher with the evidence and the alternatives
+before it was applied, and these checks occur only after model freeze and
+cannot affect any model decision.
+
+**Gate A0 is not yet complete.** Two MITgcm-side conditions remain, both
+independent of the FNO work:
+
+1. the G1 epsilon extension -- extend the one offshore curve whose minimum sits
+   at `epsilon=1e-5` with predeclared 1e-6 and 1e-7 forward differences, then
+   either obtain an interior minimum or retain and report a failed plateau
+   flag. The standing evidence (`grdchk-limited-by-cg2d`) is that the G1 error
+   is flat in epsilon because the *finite difference* is cg2d-noise-limited
+   rather than because the adjoint is wrong, so the plateau flag is the
+   expected outcome and section 22 explicitly permits reporting it;
+2. the 46-channel G0 extraction -- a forward-only F90 extraction of
+   U/V/Theta/ETAN at FNO 10-day nodes whose canonical P32 projection must match
+   trajectory-v3. Until it passes, reports must say "ETAN-only daily G0" rather
+   than "46-channel G0 at FNO 10-day nodes".
+
+Until both are resolved, Gate A0 stands as **FNO side passed, MITgcm side
+outstanding**, and the section-18.3 blind adjoint comparison (execution step
+18) may not be treated as unblocked.
+
+
+## Implementation status and amendments (2026-08-29, step 17 part 2 -- Gate A0 MITgcm side)
+
+**Verified — Gate A0 is now complete. Both outstanding MITgcm-side conditions
+are resolved.**
+
+**46-channel G0: PASS, and stronger than the gate asked for.** Section 22
+required "a final-evaluation, forward-only F90 extraction of U/V/Theta/ETAN at
+FNO 10-day nodes" whose canonical P32 projection matches trajectory-v3. No new
+MITgcm run was needed: F90 already dumps `UVEL`/`VVEL`/`THETA` (dynState) and
+`ETAN` (surfState) as daily snapshots (`frequency = -86400`, negative meaning
+instantaneous, not time-averaged), and `scripts/verify_gate_g0.py` already
+implements the full 46-channel comparison including the face-to-centre
+velocity averaging. Run over F90's whole window, days 7,200-7,290:
+
+- **91/91 days bit-identical**, worst `max|difference|` = **0.0**;
+- all ten FNO 10-day nodes bit-identical, which is the condition section 22
+  actually specifies;
+- result at
+  `outputs/af_fno/adjoint/mitgcm_s0_adjoint_v2/gate_g0_46channel_2026-08-29/`.
+
+Reports may therefore now say **"46-channel G0 at FNO 10-day nodes; ETAN
+daily"**, and in fact the stronger "46-channel G0 at every day of the 90-day
+window" is supported. The v2 report's own G0 entry ("forward re-run ETAN
+matches trajectories_v3.zarr bit-for-bit") remains accurate for what it
+checked and is superseded, not contradicted, by this one.
+
+**G1 extension: the interior minimum exists, and the plateau flag is not
+needed.** Section 22 asked to extend the offshore curve with predeclared 1e-6
+and 1e-7 and either obtain an interior minimum or report a failed plateau
+flag. Both branches were run and both are reported; neither is substituted for
+the other.
+
+Full offshore curve at `cg2dTargetResidual = 1e-12`, tolerance 1e-4:
+
+| epsilon | 1e-1 | 3e-2 | 1e-2 | 3e-3 | **1e-3** | 1e-4 | 1e-5 | 1e-6 | 1e-7 |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| \|FD/adj-1\| | 6.2e-5 | **1.6e-4** | 1.2e-7 | 5.1e-7 | **7.5e-9** | 1.0e-7 | 6.1e-7 | 6.5e-6 | 3.2e-6 |
+
+- *Predeclared epsilons alone*: no interior minimum. At cg2d 1e-12 the error
+  rises monotonically from 7.5e-9 at 1e-3 to 6.5e-6 at 1e-6 and scatters at
+  1e-7, so the minimum stays pinned at the largest predeclared epsilon. At the
+  production `cg2d = 1e-7` setting, epsilon 1e-7 gives 1.6e-2 against 2.4e-4 at
+  1e-6 -- a 60x degradation for one decade. This is section 22's failed
+  plateau flag.
+- *With the labelled upward diagnostic*: a genuine **interior minimum at
+  epsilon = 1e-3**, bracketed by 5.1e-7 at 3e-3 above and 1.0e-7 at 1e-4
+  below, three to five orders of magnitude inside tolerance. The curve is
+  truncation-limited above 1e-2 (the only tolerance breach is 1.6e-4 at 3e-2)
+  and solver-noise-limited below 1e-4: the textbook finite-difference V.
+
+**Why the predeclared direction could not have worked.** Section 22 specifies
+shrinking epsilon, but the error was already *increasing* as epsilon fell --
+epsilon 1e-3 was already at or past the optimum. An interior minimum could
+only lie at larger epsilon. The upward sweep (1e-1, 3e-2, 1e-2, 3e-3) was run
+as an explicitly labelled diagnostic, outside the gate decision, precisely
+because it is not predeclared. The conclusion it supports is that the earlier
+"plateau" was an artifact of sweeping downward from a point already near the
+optimum, not evidence of an adjoint defect.
+
+The standing interpretation is confirmed and sharpened: **the adjoint is
+correct, and G1's difficulty at the production solver setting is a
+finite-difference noise floor set by `cg2dTargetResidual`, not an adjoint
+error.** Tightening cg2d from 1e-7 to 1e-12 moves every point from failing
+(1e-3 to 1.6e+1) to passing (1.2e-9 to 3.4e-5).
+
+Archived with both branches, per-epsilon provenance and raw logs at
+`outputs/af_fno/adjoint/mitgcm_s0_adjoint_v1/grdchk_g1_extension_2026-08-29/`.
+
+**Infrastructure hazard recorded.** Every grdchk job stages into one shared
+scratch run directory that `stage_adjoint_run.py` deletes on entry.
+Concurrent jobs destroy each other's tree (three submitted in parallel: two
+died), and even serialized, the second job destroys the first's result JSON --
+the epsilon 1e-7 value survives only because it was archived from the job's
+stdout. **Any future grdchk sweep must run serially and archive each result
+immediately.**
+
+**Gate A0 status: PASS.** FNO side 30/30 for all eight models; MITgcm G0
+(46-channel), G1, G2a, G2b, G3, G4, G5 all satisfied. Section 19 step 8's
+precondition was already met by the step-15 and step-16 freezes, so the
+evaluator-only adjoint path is open and execution step 18 -- the blind
+MITgcm-adjoint comparison, the study's confirmatory endpoint -- may proceed.
+
+
+## Implementation status and amendments (2026-08-29, step 18 -- blind MITgcm-adjoint test, Gate A1)
+
+**Verified — Gate A1 is NEGATIVE. V1's hypothesis is not supported, and v1
+closes.** Frozen write-once at
+`outputs/af_fno/adjoint/comparison_response_v1/gate_a1_result.json`.
+
+Five of section 18.3's six criteria pass. One fails:
+
+| criterion | required | measured | |
+| --- | --- | --- | --- |
+| primary `delta_B` | <= log 0.8 (ratio 0.800) | **-0.1775 (ratio 0.837)** | **FAIL** |
+| primary `delta_A` | < 0 | -0.1775 | pass |
+| primary cells improved | >= 6 of 8 | **8 of 8** | pass |
+| primary worst cell vs B | <= 1.10 | **0.974** | pass |
+| median `delta_B` | <= log 0.9 | **-0.2949** | pass |
+| seeds with `delta_B` < 0 | >= 2 of 3 | **3 of 3** | pass |
+
+Primary score `S` (mean log relative-L2 over the eight objective/lead cells;
+lower is better), truth-forced:
+
+| model | S forced | | model | S forced |
+| --- | ---: | --- | --- | ---: |
+| A (frozen parent) | 2.2843 | | C 20260724 | **2.1068** |
+| ft90 | 2.3867 | | C 20260911 | **2.1486** |
+| B 20260724 | 2.2843 | | C 20260912 | **2.1006** |
+| B 20260911 | 2.4455 | | | |
+| B 20260912 | 2.3955 | | | |
+
+Per seed: `delta_B` = -0.1775, -0.2969, -0.2949, i.e. relative-L2 ratios of
+0.837, 0.743, 0.745. **Every one of the twenty-four (objective, lead, seed)
+cells improved**, and no cell in any seed is worse than its paired B.
+
+**Why the primary seed missed while the other two cleared the same bar
+comfortably.** Seed 20260724's paired B is the strongest control in the study
+-- its `S_B` = 2.2843 is identical to frozen parent A's, the exact-replay
+property established at Gate M0 and visible again here -- while the other two
+seeds' controls sit at 2.4455 and 2.3955. The primary seed therefore faces the
+hardest comparison of the three. This is an observation about which control
+each seed drew, not a defence of the result: section 18.3 nominates 20260724
+as primary in advance, and its threshold is the one that binds.
+
+**The decisive finding is in the secondary endpoints, and it qualifies the
+improvement severely.** Averaged over the eight truth-forced cells:
+
+| model | pattern correlation | amplitude ratio | sign agreement |
+| --- | ---: | ---: | ---: |
+| A / B 20260724 | 0.0258 | 13.88 | 0.496 |
+| ft90 | 0.0243 | 14.75 | 0.494 |
+| B 20260911 / 20260912 | 0.0074 / 0.0195 | 15.99 / 15.40 | 0.487 / 0.488 |
+| C 20260724 | 0.0221 | **12.52** | 0.492 |
+| C 20260911 / 20260912 | 0.0089 / 0.0176 | **12.76 / 12.88** | 0.492 / 0.489 |
+
+Pattern correlation is ~0.02 for **every** model, C included, and sign
+agreement is ~0.49 -- chance. The amplitude ratio falls consistently, 13.9 to
+12.5 for the primary seed and 15.4-16.0 to 12.8-12.9 for the others, but
+remains an order of magnitude from one.
+
+So the relative-L2 improvement is **an amplitude improvement, not a structural
+one**. The response loss makes the emulator's adjoint less wrong in magnitude
+while leaving it essentially uncorrelated with the MITgcm adjoint in space.
+This is the same mechanism Gate M1 exposed in the `-> Theta` column and that
+the step-16 note recorded: a response loss can suppress over-amplification, but
+it cannot manufacture structure the forward map does not contain. Phase A's
+central failure -- pattern correlation near zero against MITgcm/TAF -- is **not
+fixed** by forward-only response supervision at this strength.
+
+Reporting a "25% adjoint improvement" without that qualification would
+misrepresent the result.
+
+**Disposition, per Gate A1 and section 18.3.** "No threshold selects a model
+after TAF access." "Any failure, including a forward/adjoint tradeoff, rejects
+'improved Jacobian/adjoint without degrading forward skill' for v1 even if a
+mechanistic sub-result improves." "A failure is publishable and closes v1. Any
+later v2 must use a new preregistered development cycle and, preferably, new
+sealed adjoint targets."
+
+No threshold is adjusted, no seed is substituted, and the primary seed's
+`delta_B` is not renegotiated against the median that passes. **The v1
+scientific answer is negative.**
+
+**What v1 does establish, and it is not nothing.** On sealed data opened once,
+forward-only perturbation supervision at `lambda = 1e-3`:
+
+- reduced held-out blind *response* error by 32.6-35.1% at leads 10-60 and
+  26.7-34.7% at day 90, reproducibly across three seeds (Gate M2, positive);
+- reduced blind *adjoint* relative-L2 in 24 of 24 cells, median ratio 0.745,
+  with all three seeds improving on both their paired control and the frozen
+  parent;
+- cost no measurable forward skill: paired C-B differences flip sign across
+  seeds on every forward metric except perturbation growth (+0.002 per call,
+  inside the 0.005 allowance).
+
+And it establishes the limit precisely: **the gain is amplitude, not
+structure.** An adjoint whose pattern correlation stays at 0.02 is not usable
+for the inverse problems that motivate this work, whatever its norm. That is
+the finding a v2 would have to target -- and it argues that matching response
+*magnitudes* is insufficient, and that a structural or spectral constraint on
+the Jacobian is the direction to preregister next.
+
+
+## Implementation status and amendments (2026-08-29, step 19 -- exploratory adjoint objectives)
+
+**Verified — step 19 runs no tests, and that is the correct execution of it,
+not a gap.**
+
+Section 25 step 19 admits "only preregistered exploratory adjoint objectives
+whose independent gates were frozen before training". The frozen evaluator
+contract `config/adjoint_faithful_blind_adjoint_evaluation_v1.json`
+(`contract_status: frozen_before_model_training_and_evaluator_only`, still
+byte-unmodified) records its own answer:
+
+```
+exploratory.currently_enabled_tests    []
+exploratory.pretraining_manifest       null
+exploratory.current_status             "disabled_because_no_exact_exploratory_manifest_is_frozen"
+exploratory.confirmatory_rescue_forbidden  true
+```
+
+and among its enablement requirements, explicitly:
+
+```
+"absence_or_late_creation_of_manifest_means_no_exploratory_test_runs"
+```
+
+A search of `config/` and `outputs/` finds no exploratory manifest of any
+kind. The five candidate tests section 18.4 lists -- interior and eastern
+runtime-weight SSH objectives, native U/V/Theta directional projections,
+balanced geostrophic projections, and the S1/S2 10/30/90-day suite -- were
+described but never materialized with exact target coordinates, direction IDs
+and weight/kernel hashes, and were never hashed into the pretraining freeze.
+
+**Creating one now is forbidden and would be indefensible.** Section 18.4:
+"Unless exact target coordinates/direction IDs are materialized and hashed in
+the pretraining freeze manifest, these analyses are explicitly exploratory and
+cannot rescue or overturn the section-18.3 confirmatory result... A genuinely
+new confirmatory S1/S2/interior/eastern suite should be a separately frozen
+contract, not chosen after inspecting v1 maps." Gate A1 has already returned a
+negative confirmatory result and the v1 maps are open. Any exploratory
+objective selected now would be chosen with knowledge of exactly which
+comparisons v1 failed and by how much -- the precise circumstance both clauses
+exist to prevent.
+
+Section 18.4's own note that "U/V packaging and face-to-centre adjoint
+conventions are **unresolved** and require independent gates before use"
+independently blocks the two directional-projection tests: their gates were
+never built either.
+
+**Step 19 is therefore complete with zero tests executed.** The five candidate
+objectives remain available to a v2 as a separately preregistered contract,
+frozen before any v2 training, which is where section 18.3 already says such
+work belongs: "Any later v2 must use a new preregistered development cycle
+and, preferably, new sealed adjoint targets."
+
+
+## Implementation status and amendments (2026-08-29, steps 20-21 -- results and provenance; v1 closed)
+
+**Verified — step 20: consolidated paper tables produced.**
+`scripts/build_paper_tables_response_v1.py` reads only frozen gate artifacts
+and recomputes no metric, so a table cannot disagree with the gate that
+produced it. Outputs at
+`outputs/af_fno/response/forward_response_v1/paper_tables_v1/`:
+`results_v1_consolidated.json` (machine-readable), `results_v1_tables.tex`
+(paper-ready), `results_v1_summary.md`. Coverage: forward skill for all six
+runs, day-2,000 anomaly structure for all eight models, blind response
+(Gate M2), development response (Gate M1), blind adjoint with secondary
+endpoints (Gate A1), the technical gates, compute, and -- taken literally from
+section 25's "and every failure" -- a failure table assembled from the gate
+artifacts themselves, so a negative result cannot be dropped by being
+forgotten. It carries four entries: Gate M1, Gate A1, the G1 predeclared
+plateau flag, and the superseded v1 lambda screen.
+
+**Verified — step 21: provenance bundle frozen, and v1's confirmatory question
+answered.** `outputs/af_fno/response/forward_response_v1/v1_provenance_bundle/`
+hashes the plan, seven contracts, ten decision artifacts, and all six models'
+reports, checkpoints and normalizers, together with the firewall record: the
+adjoint evaluator was enabled only after the five predeclared freezes; the
+blind response manifest was frozen before training and its numerics generated
+only after; **zero** exploratory adjoint tests were run; no post-access
+reselection was performed; and exactly one gate estimator was amended after
+seeing a result -- the F-precision probe -- with its threshold value unchanged,
+applied symmetrically, all prior results discarded and re-run. **No threshold
+was changed after any confirmatory result.**
+
+### The sole confirmatory question, answered
+
+*Did forward-only response supervision improve the learned Jacobian/adjoint
+without degrading the production-parent forward emulator?*
+
+**No. V1's hypothesis is not supported, and v1 closes.**
+
+The two halves of the question separate cleanly, and that separation is the
+result:
+
+- **The forward emulator was not degraded.** Paired C-B differences flip sign
+  across seeds on every forward metric except perturbation growth (+0.002 per
+  call, inside the 0.005 allowance). C matches B as a forecaster.
+- **The adjoint improved in magnitude but not in structure.** Relative-L2 fell
+  in 24 of 24 (objective, lead, seed) cells, median ratio 0.745, and the
+  amplitude ratio fell from 13.9-16.0 to 12.5-12.9. But pattern correlation
+  stayed at ~0.02 for every model including C, and sign agreement at ~0.49,
+  which is chance. Phase A's central failure is not fixed.
+
+Gate A1 fails on one criterion of six: the primary seed's `delta_B` is -0.1775
+against a required -0.2231. Gate A1's own text governs: "Any failure,
+including a forward/adjoint tradeoff, rejects 'improved Jacobian/adjoint
+without degrading forward skill' for v1 even if a mechanistic sub-result
+improves."
+
+**What v1 establishes positively**, on sealed data opened once: blind held-out
+*response* error down 32.6-35.1% at leads 10-60 and 26.7-34.7% at day 90,
+reproducibly across three seeds, at no measurable forward cost -- and day 90 is
+beyond every training horizon in the study, so that improvement is
+extrapolation rather than fit.
+
+**What v1 rules out**, which is the more valuable half: matching response
+*magnitudes* alone is insufficient to recover adjoint *structure*. An adjoint
+at pattern correlation 0.02 is not usable for the inverse problems that
+motivate this work, whatever its norm. A v2 would need a structural or
+spectral constraint on the Jacobian, under a new preregistered development
+cycle and preferably new sealed adjoint targets, exactly as section 18.3
+requires.
+
+**Execution steps 1-21 are complete. V1 is closed with a negative
+confirmatory result and a positive, reproducible mechanistic one.**
+
+
 ---
 
 ## 1. Executive summary
@@ -1327,13 +3169,26 @@ oversampled, while every other boundary and the interior retain coverage.
 3. Allocate pilot/train/validation/blind-test centre sets **jointly** within
    every `(regime,family,region)` stratum, including all role quotas before
    exposing any response. Centre IDs are constrained to be distinct across
-   roles. Lexicographically maximize (i) minimum cross-role great-circle
-   separation, (ii) minimum within-role separation, and (iii) summed WBC
-   training-only mean surface speed or, outside WBC, proximity to the four
-   subregion centroids. Physical distance uses `R=6371 km`, `(XC,YC)` for
-   tracer centres, `(XG,YC)` for U faces, and `(XC,YG)` for V faces. Resolve
-   every remaining tie by SHA-256 of
-   `response-v1|split|regime|family|level-support|region|j|i`.
+   roles. **Amended 2026-08-26** (see the dated amendment below for why):
+   process every direction slot in this stratum in one fixed, deterministic
+   order (role order, then the frozen region-slot SHA), and for each slot
+   choose the eligible candidate maximizing, in order: (i) minimum
+   great-circle separation to every already-placed centre of a
+   **different** role; (ii) minimum separation to already-placed centres of
+   the **same** role; (iii) summed WBC training-only mean surface speed
+   preference or, outside WBC, proximity to the four subregion centroids;
+   (iv) ascending SHA-256 of
+   `response-v1|split|regime|family|level-support|region|j|i`. A criterion
+   with nothing yet placed to compare against scores every remaining
+   candidate as tied, falling through to the next. Physical distance uses
+   `R=6371 km`, `(XC,YC)` for tracer centres, `(XG,YC)` for U faces, and
+   `(XC,YG)` for V faces. This is a deterministic greedy farthest-point
+   placement, not an exact global optimum: it reports the separation it
+   achieves rather than proving no denser arrangement exists. (The
+   original text called for lexicographically maximizing (i)/(ii)/(iii) as
+   an exact global optimum over the full candidate space; see the
+   amendment for why that was replaced before any production response data
+   was generated.)
 4. In role order `pilot < train < validation < blind`, require non-WBC
    validation and blind centres to have
    native-index Chebyshev distance at least three from every centre assigned
@@ -1365,11 +3220,14 @@ strata. This is enough for split-disjoint IDs but not for a global hard
 distance-three rule, which is why the WBC exception above is explicit rather
 than silently relaxed after seeing data.
 
-**Unresolved until inventory materialization.** No trusted non-WBC sampler or
-joint allocator currently exists. The concrete `(j,i)` list and achieved WBC
-separations must be generated from this rule, reviewed for counts/full support,
-frozen, and hashed before runs. Failure to meet the exact counts, distinct-ID
-rule, or non-WBC distance rule is a stop, not permission to clip a kernel.
+**Unresolved until inventory materialization.** A trusted allocator now exists
+(`allocate_centres_greedy_farthest_point` /
+`allocate_centres_lexicographically_by_region`, see the 2026-08-26
+amendment), but the concrete `(j,i)` list and achieved separations for the
+full 1,104-row production inventory are not yet generated. They must still
+be produced by this rule, reviewed for counts/full support, frozen, and
+hashed before runs. Failure to meet the exact counts, distinct-ID rule, or
+non-WBC distance rule is a stop, not permission to clip a kernel.
 
 ---
 
@@ -1900,6 +3758,8 @@ step forward-only screen. For each candidate:
    leads 10-60 only;
 2. reject it if any 10-90-day primary-field AUC is >1.05 times the matched
    lambda-zero control at the same step;
+2b. reject it if its worst 90-360-day AUC/climatology ratio is >1.05 times
+   that control's (**amended 2026-08-28**, see below);
 3. reject it if growth is >0.005 per call worse than that control or any
    rollout is nonfinite;
 4. among remaining candidates, minimize the group/region/lead-balanced
@@ -1912,6 +3772,27 @@ response case, or test metric may be read during this screen.
 Screen checkpoints and optimizer states are discarded. The full primary-seed
 C run restarts from its original random initialization and step zero; it does
 not receive 1,920 extra updates from the screen.
+
+**Amendment 2026-08-28 — criterion 2b.** As originally written, this
+section's feasibility check read only the 10-90-day short AUC, while section
+16.3's forward-preservation gate -- the one that actually decides whether a
+trained C is accepted -- additionally requires the worst 90-360-day
+AUC/climatology ratio to be at most 1.05 times paired B's. The v2 screen made
+the gap concrete: `lambda=3e-3` passes every criterion 1-5 as written and is
+the S_resp minimizer, but its 90-360-day ratio is already 1.064 times B's, so
+selecting it would knowingly choose a weight that fails section 16.3 at step
+14 -- where "there is no continuation, curriculum, checkpoint reselection, new
+lambda, or relaxed gate." Because the v2 screen is itself a full 7,680-step
+primary-seed run, its long-horizon ratio is not a projection but essentially
+the number section 16.3 would gate on.
+
+Criterion 2b therefore applies section 16.3's *existing* long-horizon
+criterion at the screen instead of only after training. This adds no new gate,
+loosens nothing, and consumes no new compute: it is evaluated from the
+candidate results already in hand. It selects `lambda=1e-3`, which passes
+every section-14.4 and section-16.3 forward criterion with margin and still
+reduces `S_resp 10:60` by 38.2% against a 20% target. No adjoint, TAF, FNO
+adjoint map, blind response case, or test metric enters this amendment.
 
 ---
 
@@ -2615,9 +4496,18 @@ frozen nonzero lambda.
 - `slurm/mitgcm/af_response_pickup_bank_segment.sbatch` and
   `scripts/submit_af_response_pickup_bank.sh` — implemented, supersede the
   originally planned `af_forward_response_pickup_bank.sbatch` name
-- `scripts/stage_forward_response_run.py`
-- `scripts/extract_forward_response_dataset.py`
-- `scripts/verify_forward_response_dataset.py`
+- `scripts/stage_forward_response_run.py` — implemented
+- `scripts/extract_forward_response_dataset.py` — implemented (see the
+  2026-08-27 amendment above)
+- `scripts/verify_forward_response_dataset.py` — implemented; Gate D3
+  **PASS** (0 findings) as of 2026-08-27, after the exception/repair
+  resolution below (see amendment above)
+- `scripts/freeze_response_scales.py` — implemented (not in the original
+  plan; freezes section 14.2's response-loss scale/floor, see amendment
+  above)
+- `scripts/repair_gate_d3_validation_centres.py` — implemented (not in the
+  original plan; fresh, MITgcm-verified centres for the 7 validation-role
+  Gate D3 failures, see amendment above)
 - `slurm/mitgcm/af_forward_response_array.sbatch`
 
 **FNO response path and reports**
@@ -2626,14 +4516,16 @@ frozen nonzero lambda.
 - `src/oceanfno/response_objective.py`
 - `src/oceanfno/response_spectral_context.py`
 - `src/oceanfno/response_validation.py`
-- `src/oceanfno/train_response.py`: the one common parameterized runner for
-  both B (response disabled) and C (response enabled), importing the trusted
-  parent dataset/model/objective/validation utilities;
+- `src/oceanfno/train_response.py` — implemented; response-disabled (arm B)
+  path complete, equivalence harness passing, Gate M0 PASS (see amendment
+  above); response-enabled (arm C) path deliberately unimplemented until
+  step 13
 - `src/oceanfno/figures_response.py`
 - `src/oceanfno/anomaly_response.py`: contract adapter that reuses the
   numerical helpers in the frozen anomaly module but accepts B/C figure
   identities;
-- `slurm/models/c/train_adjoint_faithful_nominal_control_v1.sbatch`
+- `slurm/models/c/train_adjoint_faithful_nominal_control_v1.sbatch` —
+  implemented and run for all three seeds (see amendment above)
 - `slurm/models/c/train_adjoint_faithful_response_v1.sbatch`
 - `slurm/models/c/figures_adjoint_faithful_response_v1.sbatch`
 
@@ -2652,7 +4544,11 @@ frozen nonzero lambda.
 - `tests/test_forward_response_dataset.py`
 - `tests/test_response_objective.py`
 - `tests/test_response_spectral_context.py`
-- `tests/test_response_training.py`
+- `tests/test_response_training.py` — the equivalence harness itself was
+  implemented as `scripts/verify_response_training_equivalence.py` instead
+  (see amendment above), since it needs the real trajectory store and takes
+  several minutes; this file is still open for cheaper unit-level coverage
+  of `train_response.py`'s contract-loading/whitelist-diff logic
 - `tests/test_response_validation.py`
 - `tests/test_fno_adjoint_model.py`
 
@@ -2777,32 +4673,90 @@ the scan, not general filesystem access, is what the freeze report relies on.
 11. Pass the common runner's response-disabled primary-seed equivalence
     harness, then run B from random initialization for all three seeds through
     that runner. Apply the exact production selector and Gate M0.
-12. Run the four-lambda, 1,920-step primary-seed screen using nominal and
-    response validation through day 60 only. Freeze lambda and discard screen
-    checkpoints/optimizer states.
+12. Run the four-lambda primary-seed screen using nominal and response
+    validation through day 60 only, at the step budget and against the
+    matched arm B step the frozen screen contract declares. Freeze lambda and
+    discard screen checkpoints/optimizer states. (Executed twice: the v1
+    1,920-step `{0.03, 0.10, 0.30, 1.00}` screen returned no forward-feasible
+    candidate, and the tier-0 diagnostics showed that grid and measurement
+    step were both mis-calibrated; superseded by the v2 7,680-step
+    `{3e-4, 1e-3, 3e-3, 1e-2}` screen. See "Implementation status and
+    amendments (2026-08-27, step 12 re-screen)".)
 13. Restart from step zero and train C for all three paired seeds; C alone
-    enables the response auxiliary path.
+    enables the response auxiliary path. (Executed 2026-08-29, jobs
+    407048-407050, all three complete and selected at step 7,680. Required
+    wiring the section-15.2 auxiliary stream into `train_response.run()`,
+    which had never called it, and repairing the enforced equality whitelist;
+    see "Implementation status and amendments (2026-08-29, step 13
+    executed)".)
 14. Apply the unchanged production selector independently to every C run.
     Report response validation only after selection, apply Gate M1, and freeze
     model/checkpoint/normalizer/config/report hashes. Do not retrain on failure.
+    (Executed 2026-08-29, job 419128. **Verdict: negative**, no seed passing:
+    the Theta input family returns 0.7-1.1% against a 10% per-family
+    requirement, and `phihyd_surface` fails for two seeds on a metric with
+    2.81x paired variance. The overall 20% requirement is cleared by every
+    seed at 38.2-39.3%. Nothing is retrained; steps 15-19 proceed. See
+    "Implementation status and amendments (2026-08-29, step 14 -- Gate M1)".)
 15. Run and freeze the complete ordinary forward validation, S0 figure,
     anomaly, streamfunction, and matched-step packages for A, ft90, B, and C.
+    (Executed 2026-08-29, jobs 419759-419764 and 419773-419778. Twelve B/C
+    packages built through the `figures_response.py`/`anomaly_response.py`
+    contract adapters, which leave the frozen `figures.py`/`anomaly.py`
+    byte-identical so A and ft90 stay self-verifying; A and ft90 preserved,
+    not regenerated. Frozen in
+    `outputs/af_fno/response/forward_response_v1/step15_forward_freeze/`.
+    See "Implementation status and amendments (2026-08-29, step 15 --
+    ordinary forward package)".)
 16. Generate/extract the already-designed evaluator-only blind
     forward-response store; evaluate it once for A, ft90, B, and C and freeze
-    Gate M2 results.
+    Gate M2 results. (Executed 2026-08-29, jobs 419921-420152 and 420247.
+    **Gate M2 POSITIVE**, all seven conditions passing: 32.6-35.1% reduction
+    at leads 10-60 and 26.7-34.7% at day 90 versus paired B, across all three
+    seeds. See "Implementation status and amendments (2026-08-29, step 16 --
+    blind forward-response test, Gate M2)".)
 17. Enable the evaluator-only adjoint path. Run all FNO derivative checks and
     the MITgcm G0--G5/A0 technical extensions without changing a model.
+    (Partially executed 2026-08-29, jobs 420985-420991: the FNO derivative
+    gates pass 30/30 for all eight models, and the F-precision
+    adjoint-identity check was amended from a single hard-coded probe to a
+    median over five predeclared probes at the unchanged threshold. The two
+    MITgcm-side Gate A0 conditions -- the G1 epsilon extension and the
+    46-channel G0 extraction -- were then resolved the same day: 46-channel
+    G0 is bit-identical on 91/91 days, and the G1 offshore curve has a genuine
+    interior minimum at epsilon=1e-3 once swept upward. **Gate A0 PASSES.**
+    See "Implementation status and amendments (2026-08-29, step 17 -- FNO
+    derivative gates, Gate A0 part 1)" and "(2026-08-29, step 17 part 2 --
+    Gate A0 MITgcm side)".)
 18. Evaluate parent A and every B/C seed against the existing MITgcm/TAF
     point, kernel, and conservation objectives at 10/20/30/90 days; retain
-    ft90 as context.
+    ft90 as context. (Executed 2026-08-29. **Gate A1 NEGATIVE**: five of six
+    section-18.3 criteria pass and all 24 cells improve, but the primary
+    seed's `delta_B` is -0.1775 against a required -0.2231. The improvement is
+    in amplitude, not structure -- pattern correlation stays ~0.02 for every
+    model. V1 closes. See "Implementation status and amendments (2026-08-29,
+    step 18 -- blind MITgcm-adjoint test, Gate A1)".)
 19. Run only preregistered exploratory adjoint objectives whose independent
-    gates were frozen before training.
+    gates were frozen before training. (Executed 2026-08-29: **zero tests
+    run**, which is the correct outcome. No exploratory manifest was ever
+    materialized or hashed into the pretraining freeze, and the frozen
+    evaluator contract's own rule is
+    `absence_or_late_creation_of_manifest_means_no_exploratory_test_runs`.
+    Creating one after Gate A1's negative result would be selecting objectives
+    with knowledge of which comparisons v1 failed. See "Implementation status
+    and amendments (2026-08-29, step 19 -- exploratory adjoint objectives)".)
 20. Produce paper tables/figures for nominal forward skill, anomalies, blind
     responses, JVP/adjoint metrics, lead dependence, spectra, conservation,
-    paired controls, compute, and every failure.
+    paired controls, compute, and every failure. (Executed 2026-08-29:
+    `outputs/af_fno/response/forward_response_v1/paper_tables_v1/`.)
 21. Archive the provenance/access-log bundle and answer the sole confirmatory
     question: did forward-only response supervision improve the learned
     Jacobian/adjoint without degrading the production-parent forward emulator?
+    (Executed 2026-08-29. **Answer: no** -- the forward emulator was not
+    degraded and the adjoint improved in magnitude in 24/24 cells, but pattern
+    correlation stayed ~0.02, and Gate A1 fails on the primary seed's
+    `delta_B`. **V1 is closed.** See "Implementation status and amendments
+    (2026-08-29, steps 20-21 -- results and provenance; v1 closed)".)
 
 ## Frozen proposed contract
 

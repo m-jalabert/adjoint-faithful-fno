@@ -1,0 +1,424 @@
+{
+  "version": "adjoint_faithful_forward_evaluation_v1",
+  "contract_status": "frozen_before_model_training",
+  "approved_plan": {
+    "path": "docs/Adjoint_faithful_response_training_plan.md",
+    "sha256": "3674047c166e571c13f507b55d55c95fd3ef092447a16311b3fa96dda1e91534"
+  },
+  "models": {
+    "historical_parent": "model_c_production_1in_1out_spectralnorm_v1",
+    "context_only_child": "model_c_production_1in_1out_spectralnorm_ft90_v1",
+    "nominal_control": "model_c_adjoint_faithful_nominal_control_v1",
+    "response_aware": "model_c_adjoint_faithful_response_v1",
+    "paired_seeds": [
+      20260724,
+      20260911,
+      20260912
+    ],
+    "primary_seed": 20260724,
+    "best_seed_selection_forbidden": true
+  },
+  "nominal_checkpoint_validation": {
+    "implementation": "src/oceanfno/validation.py::validate_checkpoint",
+    "selector": "src/oceanfno/validation.py::select_by_validation",
+    "selector_must_be_unchanged": true,
+    "starts_per_regime": [
+      6000,
+      6006,
+      6012,
+      6018,
+      6024,
+      6030,
+      6036,
+      6042,
+      6048,
+      6054,
+      6060,
+      6066,
+      6072,
+      6078,
+      6084,
+      6090,
+      6096,
+      6102,
+      6108,
+      6114,
+      6120,
+      6126,
+      6132,
+      6138,
+      6144,
+      6150,
+      6156,
+      6162,
+      6168,
+      6174,
+      6180,
+      6186,
+      6192,
+      6198
+    ],
+    "records_total": 102,
+    "rollout_days": 360,
+    "checkpoint_steps": [
+      1920,
+      3840,
+      5760,
+      7680
+    ],
+    "short_auc_days": [
+      10,
+      90
+    ],
+    "long_auc_days": [
+      90,
+      360
+    ],
+    "short_auc_tolerance": 1.05,
+    "growth_ceiling": 1.0,
+    "response_metrics_may_not_select_checkpoint": true
+  },
+  "matched_saved_step_tables": {
+    "models": [
+      "nominal_control_B",
+      "response_aware_C"
+    ],
+    "paired_seeds": [
+      20260724,
+      20260911,
+      20260912
+    ],
+    "optimizer_steps": [
+      1920,
+      3840,
+      5760,
+      7680
+    ],
+    "row_key": [
+      "model",
+      "seed",
+      "optimizer_step"
+    ],
+    "rows_per_model": 12,
+    "rows_total": 24,
+    "matched_B_C_pairs_total": 12,
+    "same_seed_and_same_step_comparisons_required": true,
+    "nominal_validation_metrics_required": true,
+    "response_validation_metrics_required_after_lambda_freeze": true,
+    "materialized_checkpoint_hashes_required": true,
+    "all_matched_step_differences_reported": true,
+    "selection_role": "none_do_not_substitute_a_favourable_fixed_step_for_the_production_selected_checkpoint"
+  },
+  "growth_diagnostic": {
+    "regime": "S0",
+    "start_days": [
+      6000,
+      6198
+    ],
+    "relative_epsilon": 0.01,
+    "direction_seeds": [
+      0,
+      1
+    ],
+    "calls": 200,
+    "fit_from_zero_based_call_index": 50,
+    "reported_value": "worse_of_two_fitted_per_call_rates"
+  },
+  "response_validation": {
+    "dataset_role": "validation",
+    "anchor_days": [
+      6010,
+      6050,
+      6080
+    ],
+    "directions_total": 216,
+    "long_directions_total": 36,
+    "development_lead_days": [
+      10,
+      20,
+      30,
+      40,
+      50,
+      60
+    ],
+    "composite": "S_resp_10:60",
+    "lead_weights": {
+      "10": 0.7916666666666666,
+      "20": 0.041666666666666664,
+      "30": 0.041666666666666664,
+      "40": 0.041666666666666664,
+      "50": 0.041666666666666664,
+      "60": 0.041666666666666664
+    },
+    "balance_axes": [
+      "input_family",
+      "output_group",
+      "input_centre_region",
+      "lead"
+    ],
+    "within_cell_pooling_axes": [
+      "sign",
+      "case",
+      "regime"
+    ],
+    "relative_l2_definition": "sqrt(sum_{c in output_group,output_region}(r_F-r_M)^2/max(sum_{c in output_group,output_region}(r_M^2),N_scored*n_diff_training_floor^2))",
+    "composite_formula": "(1/(4*4*5))*sum_{h,g,R}[(19/24)*Ebar_h_g_R_10+(1/24)*sum_{k in 20,30,40,50,60}Ebar_h_g_R_k]",
+    "composite_output_region": "all_wet_cells",
+    "reported_breakdowns": [
+      "input_family",
+      "output_group",
+      "regime",
+      "input_centre_region",
+      "output_region",
+      "kernel",
+      "vertical_support_class",
+      "lead"
+    ],
+    "reported_metrics": [
+      "oriented_signed_response_relative_l2",
+      "wet_cell_spatial_pattern_correlation",
+      "amplitude_ratio",
+      "absolute_log_amplitude_ratio",
+      "sign_agreement",
+      "mitgcm_plus_minus_central_response_consistency",
+      "fno_plus_minus_central_response_consistency",
+      "response_norm",
+      "calibrated_snr",
+      "lead_dependence"
+    ],
+    "required_region_scores": [
+      "WBC",
+      "interior",
+      "eastern",
+      "northern",
+      "southern"
+    ],
+    "required_kernel_comparison": "SSH_point_vs_smooth",
+    "required_vertical_comparison": "single_level_vs_held_out_multi_level",
+    "truth_at_or_below_floor_policy": "correlation_and_amplitude_are_undefined_and_are_reported_with_truth_norm_and_snr_never_coerced",
+    "all_cells_must_be_populated": true,
+    "numerical_floor_source": "training_only_differentiated_combined_floor",
+    "external_normalizer": "exact_parent",
+    "checkpoint_selection_role": "none_after_lambda_freeze"
+  },
+  "nested_final_inference": {
+    "regime": "S0",
+    "candidate_start_half_open": [
+      6200,
+      7000
+    ],
+    "seed": 20260802,
+    "starts": [
+      6263,
+      6293,
+      6331,
+      6389,
+      6579,
+      6593,
+      6598,
+      6601,
+      6651,
+      6661,
+      6694,
+      6707,
+      6711,
+      6968,
+      6979
+    ],
+    "rollout_days": 2000,
+    "anomaly_panel_member_index0": 0,
+    "anomaly_panel_start_day": 6263,
+    "truth_reference": "MITgcm S0 training-days-0-5999 time-mean barotropic streamfunction",
+    "model_own_mean_subtraction_forbidden": true,
+    "selection_role": "none"
+  },
+  "ordinary_forward_outputs": {
+    "streamfunction_lead_days": [
+      0,
+      10,
+      20,
+      30,
+      40,
+      60,
+      2000
+    ],
+    "rmse_acc_through_day": 200,
+    "rmse_through_day": 2000,
+    "required_diagnostics": [
+      "anomaly_rms",
+      "spatial_variance",
+      "streamfunction_extrema",
+      "wbc_interior_ratio",
+      "zonal_spectrum",
+      "meridional_spectrum",
+      "perturbation_growth",
+      "maximum_normalized_magnitude",
+      "persistence",
+      "climatology"
+    ],
+    "freeze_before_blind_response": true
+  },
+  "gate_m0": {
+    "model": "primary_seed_selected_nominal_control_B",
+    "comparator": "frozen_parent_A",
+    "primary_seed": 20260724,
+    "same_102_nominal_validation_records_required": true,
+    "production_contract_field_by_field_equality_prerequisite": true,
+    "thresholds": {
+      "each_primary_10_90_day_auc_max_ratio": 1.05,
+      "worst_90_360_day_auc_climatology_max_ratio": 1.05,
+      "growth_max_additive_worsening_per_call": 0.005,
+      "maximum_normalized_amplitude_360d_max_ratio": 1.05,
+      "finite_required": true
+    },
+    "all_parent_and_B_checkpoint_steps_and_selector_branches_reported": true,
+    "all_parent_and_B_checkpoint_step_and_selector_branch_differences_reported": true,
+    "contract_or_code_integrity_failure_action": "stop_and_permit_only_a_demonstrated_integrity_defect_to_be_corrected_under_a_newly_reviewed_version",
+    "metric_failure_after_all_equality_and_integrity_checks_pass_action": "freeze_negative_m0_close_v1_and_forbid_seed_hardware_protocol_checkpoint_or_threshold_retry"
+  },
+  "development_gate_m1": {
+    "selected_C_vs_paired_B": {
+      "each_primary_short_auc_max_ratio": 1.05,
+      "worst_long_auc_climatology_max_ratio": 1.05,
+      "growth_max_additive_worsening_per_call": 0.005,
+      "maximum_normalized_amplitude_360d_max_ratio": 1.05,
+      "finite_required": true,
+      "response_composite_min_fractional_reduction": 0.2,
+      "each_input_family_min_fractional_reduction": 0.1,
+      "day10_input_family_region_max_ratio": 1.1
+    },
+    "failure_action": "freeze_negative_result_without_retraining"
+  },
+  "blind_response": {
+    "store": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/forward_response_blind_v1.zarr",
+    "generated_and_opened_once_after_model_and_forward_freeze": true,
+    "directions_total": 216,
+    "long_directions_total": 36,
+    "lead_days": [
+      10,
+      20,
+      30,
+      40,
+      50,
+      60,
+      70,
+      80,
+      90
+    ],
+    "case_scoring": {
+      "all_216_directions_at_day_10": true,
+      "only_predeclared_36_long_directions_at_days_20_through_90": true,
+      "same_case_set_for_A_ft90_and_every_B_C_seed": true
+    },
+    "diagnostics": {
+      "reuse_response_validation_definitions": true,
+      "reported_breakdowns": [
+        "input_family",
+        "output_group",
+        "regime",
+        "input_centre_region",
+        "output_region",
+        "kernel",
+        "vertical_support_class",
+        "lead"
+      ],
+      "reported_metrics": [
+        "oriented_signed_response_relative_l2",
+        "wet_cell_spatial_pattern_correlation",
+        "amplitude_ratio",
+        "absolute_log_amplitude_ratio",
+        "sign_agreement",
+        "mitgcm_plus_minus_central_response_consistency",
+        "fno_plus_minus_central_response_consistency",
+        "WBC_interior_eastern_northern_southern_scores",
+        "SSH_point_vs_smooth",
+        "single_level_vs_unseen_multi_level",
+        "response_norm",
+        "calibrated_snr",
+        "lead_dependence"
+      ],
+      "truth_at_or_below_floor_policy": "correlation_and_amplitude_are_undefined_and_are_reported_with_truth_norm_and_snr_never_coerced"
+    },
+    "post_freeze_numerical_locality_report": {
+      "q_lin_definition": "norm_GB(R_plus-R_minus)/(0.5*(norm_GB(R_plus)+norm_GB(R_minus)))",
+      "q_snr_definition": "0.5*(norm_GB(R_plus)+norm_GB(R_minus))/n_raw_family_GB_lead",
+      "floor": "final_input_family_specific_combined_raw_floor",
+      "reported_reference_thresholds": {
+        "q_lin_max": 0.05,
+        "q_snr_min": 20.0
+      },
+      "computed_for_every_available_case_and_lead": true,
+      "reported_without_dropping_or_rescaling_cases": true,
+      "threshold_pass_is_not_a_blind_model_selection_or_retry_input": true,
+      "may_not_change_amplitude_inventory_model_checkpoint_or_rule": true
+    },
+    "scores": {
+      "S_resp_10_60": {
+        "definition": "exact_response_validation_composite_using_blind_cases_and_leads_10_through_60",
+        "cell_axes": [
+          "input_family",
+          "output_group",
+          "input_centre_region",
+          "lead"
+        ],
+        "within_cell_pooling_axes": [
+          "sign",
+          "case",
+          "regime"
+        ],
+        "lead_weights": {
+          "10": 0.7916666666666666,
+          "20": 0.041666666666666664,
+          "30": 0.041666666666666664,
+          "40": 0.041666666666666664,
+          "50": 0.041666666666666664,
+          "60": 0.041666666666666664
+        },
+        "output_region": "all_wet_cells",
+        "all_cells_must_be_populated": true
+      },
+      "S_resp_90": {
+        "definition": "(1/(4*4*5))*sum_{h,g,R}Ebar_h_g_R_90",
+        "predeclared_long_cases_only": true,
+        "cell_axes": [
+          "input_family",
+          "output_group",
+          "input_centre_region"
+        ],
+        "within_cell_pooling_axes": [
+          "sign",
+          "case",
+          "regime"
+        ],
+        "output_region": "all_wet_cells",
+        "all_cells_must_be_populated": true
+      }
+    },
+    "primary_seed_criteria": {
+      "S_resp_10_60_min_fractional_reduction_vs_B": 0.15,
+      "S_resp_90_min_fractional_reduction_vs_B": 0.1,
+      "both_scores_below_parent_A": true,
+      "input_families_improved_minimum": 3,
+      "day10_input_family_region_max_ratio_vs_B": 1.1
+    },
+    "replication_criteria": {
+      "median_10_60_min_fractional_reduction": 0.15,
+      "seeds_improving_both_10_60_and_90_minimum": 2
+    },
+    "failure_may_not_change_any_frozen_artifact": true
+  },
+  "gate_m2": {
+    "comparators": [
+      "paired_B",
+      "frozen_parent_A"
+    ],
+    "each_primary_short_auc_max_ratio": 1.05,
+    "worst_long_auc_climatology_max_ratio": 1.05,
+    "maximum_normalized_amplitude_360d_max_ratio": 1.05,
+    "growth_max_additive_worsening_per_call": 0.005,
+    "each_day2000_primary_rmse_max_ratio": 1.1,
+    "day2000_maximum_normalized_magnitude_max_ratio": 1.1,
+    "finite_required": true,
+    "adjoint_still_runs_on_scientific_failure_if_gate_a0_passes": true
+  }
+}

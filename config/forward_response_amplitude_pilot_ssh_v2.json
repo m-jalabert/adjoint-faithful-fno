@@ -1,0 +1,49 @@
+{
+  "version": "forward_response_amplitude_pilot_ssh_v2",
+  "contract_status": "frozen_before_ssh_followup_compute",
+  "approved_plan": {
+    "path": "docs/Adjoint_faithful_response_training_plan.md",
+    "sha256": "f2263158b3b0bc475afcbd364057a22ae72de97363a562da730db20af08af6c0"
+  },
+  "parent_contract": {
+    "path": "config/forward_response_amplitude_pilot_v1.json",
+    "note": "inherits unchanged: pilot geometry/centres, kernel definition, group-balanced norm, precision tolerances, provisional/final selection rule shape, and the six paired nominal/duplicate branches (already run; not resubmitted)"
+  },
+  "reason": {
+    "gate": "step 9 production execution, not a pilot-stage gate -- v1's alpha_SSH=0.05 already passed every Gate D2 criterion at all 6 frozen pilot locations (point and smooth)",
+    "finding": "18 of 222 production SSH directions (8.1%) exceed the 0.01 m peak cap at alpha_SSH=0.05 when generating the real step-9 response dataset. All 18 are the gaussian-kernel (smooth) direction at their anchor; zero point-kernel SSH directions violate. Overshoot ranges 1.1%-55.3% over cap (median ~21%), verified analytically (peak scales exactly linearly with alpha for a fixed direction, so this required no new MITgcm compute to characterize).",
+    "diagnosis": "Same regime/normalization interaction already documented for Theta v2 (see that amendment): local sigma at these specific production cells is smaller than the pooled (S0+S1+S2) normalizer implies, so a nominally unit-RMS smooth-SSH direction produces a larger physical peak than at the pilot's own 24-site sample, which never happened to probe these particular cells.",
+    "action": "of the 18, 3 at <=5% overshoot are accepted as documented exceptions (see SSH_PEAK_CAP_EXCEPTIONS in scripts/stage_forward_response_run.py) and run unchanged at alpha=0.05; the remaining 15 (10.2%-55.3% over) are this contract's scope -- a smooth-SSH-only follow-up pilot with smaller candidate amplitudes, per section 22 Gate D2's 'a smaller-amplitude follow-up requires a separately versioned pilot contract'."
+  },
+  "scope": {
+    "family": "SSH",
+    "directions": "all 6 frozen SSH centres from forward_response_amplitude_pilot_v1 (one per regime per anchor day: 3 point at day 720, 3 smooth at day 3600), unchanged -- both kernels are re-tested so the frozen alpha still satisfies section 8.5's 'one common alpha_SSH that passes for both point and smooth families' rule, even though only the smooth kernel produced the production-scale cap violations",
+    "horizons": "unchanged per direction (S0/day3600, S1/day720, S2/day720 long to 90 days; S0/day720, S1/day3600, S2/day3600 short to 10 days, per the frozen pilot long_assignment table)",
+    "nominal_branches": "reused from v1 (6 anchors + 6 duplicates, already completed); not rerun"
+  },
+  "candidate_alphas": [0.03, 0.025, 0.02],
+  "candidate_alpha_derivation": "verified analytically against all 15 in-scope production directions' realized peak at alpha=0.05 (largest: 0.015535 m, S1/day5760/slot14): peak scales exactly linearly with alpha for a fixed direction (no MITgcm run needed to compute it), so alpha<=0.05*0.01/0.015535~=0.0322 is necessary and sufficient to bring every one of the 15 under the 0.01 m cap. 0.04 (worst-case peak 0.012428 m) does not qualify and is excluded; the three candidates all satisfy the cap with increasing margin, so the pilot's job is choosing the largest that also passes Q_lin/Q_SNR/adjacent-alpha at the frozen pilot locations, not re-deriving the cap constraint.",
+  "selection": {
+    "inherits": "config/forward_response_amplitude_pilot_v1.json#/selection",
+    "applies_to": "SSH only"
+  },
+  "production_directions_in_scope": {
+    "note": "the 15 production (non-pilot) directions this follow-up's chosen alpha will be applied to once frozen; excludes the 3 accepted exceptions and the 3 validation-role directions deferred for a separate centre swap (see the roadmap amendment)",
+    "train_role_count": 12,
+    "validation_role_count_deferred": 3
+  },
+  "selected_amplitude_ssh": 0.03,
+  "selection_status": "provisional_selected_2026-08-26",
+  "selection_evidence": "outputs/af_fno/response/forward_response_v1/amplitude_pilot_ssh_v2_selection.json",
+  "production_confirmation": {
+    "status": "confirmed_2026-08-26",
+    "note": "all 12 in-scope train-role directions (SSH_ALPHA_OVERRIDES in scripts/stage_forward_response_run.py) subsequently run for real at alpha=0.03 via Slurm jobs 388850-388861; all 24 branches (12 directions x 2 signs) completed and every realized ssh_peak_m fell under the 0.01 m cap. Worst case: S1/day5760/slot14 at 0.009321 m (versus 0.015535 m at the original alpha=0.05), matching the linear-scaling prediction in candidate_alpha_derivation exactly.",
+    "worst_case": {"regime": "S1", "anchor_day": 5760, "family": "SSH", "direction_slot": 14, "ssh_peak_m": 0.009321}
+  },
+  "deferred_validation_centre_swap": {
+    "status": "completed_2026-08-26",
+    "note": "the 3 validation-role directions this contract originally deferred (S0/day6010/slot21, S0/day6050/slot23, S0/day6080/slot23) needed fresh centres, not just an alpha override, per Gate D3 -- see scripts/repair_ssh_v2_deferred_centres.py and the 2026-08-26 training-plan amendment. That same check also found 9 previously-unknown cap violations in the sealed blind store (blind SSH directions, never before checked), repaired together in the same pass. All 12 repaired rows pass at the DEFAULT alpha=0.05, not this contract's 0.03 override -- their new centres simply do not have the small-local-sigma problem their old centres had, so no alpha override applies to any of them. The 3 validation directions were then run for real (peaks 0.007969/0.003733/0.006115 m). The 9 blind directions had only their geometry repaired -- not executed, per blind isolation (deferred to post-freeze).",
+    "repair_script": "scripts/repair_ssh_v2_deferred_centres.py",
+    "repair_report": "outputs/af_fno/response/forward_response_v1/ssh_v2_deferred_centre_repair_2026-08-26.json"
+  }
+}

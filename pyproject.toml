@@ -36,6 +36,8 @@ dev = [
 
 [project.scripts]
 oceanfno-train = "oceanfno.train:main"
+oceanfno-train-response = "oceanfno.train_response:main"
+oceanfno-finetune = "oceanfno.finetune:main"
 oceanfno-figures = "oceanfno.figures:main"
 oceanfno-anomaly = "oceanfno.anomaly:main"
 

@@ -1,0 +1,777 @@
+{
+  "version": "forward_response_dataset_v3",
+  "contract_status": "frozen_before_joint_inventory_materialization_v3_greedy_farthest_point",
+  "approved_plan": {
+    "path": "docs/Adjoint_faithful_response_training_plan.md",
+    "sha256": "bf6c137cf0c637def51dfe57fba137bdab6f5ba7ef5ab1d2050502796c83a480"
+  },
+  "sources": {
+    "trajectory_store": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/trajectories_v3.zarr",
+    "trajectory_metadata_sha256": "766cae89359311775c79103f44dc74630630ba6b7a0a8c6e9d26f73487512136",
+    "trajectory_source_manifest": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/trajectories_v3.manifest.json",
+    "trajectory_source_manifest_sha256": "cf4b531a13a38b888d1e5f8c0817a26b9ec0b8946cc7b976847a9c64c22b0498",
+    "canonical_chain_roots": {
+      "S0": [
+        "/bigscratch/mjalabert314/bire_james25_repro/af_fno/mitgcm/S0/production/years_100_110",
+        "/bigscratch/mjalabert314/bire_james25_repro/af_fno/mitgcm_v2/S0/production/years_110_120",
+        "/bigscratch/mjalabert314/bire_james25_repro/af_fno/mitgcm_long_truth_v1/S0/production/years_120_126"
+      ],
+      "S1": [
+        "/bigscratch/mjalabert314/bire_james25_repro/af_fno/mitgcm_independent_v1/S1/production/years_100_110",
+        "/bigscratch/mjalabert314/bire_james25_repro/af_fno/mitgcm_independent_v1/S1/production/years_110_120",
+        "/bigscratch/mjalabert314/bire_james25_repro/af_fno/mitgcm_independent_v1/S1/production/years_120_125"
+      ],
+      "S2": [
+        "/bigscratch/mjalabert314/bire_james25_repro/af_fno/mitgcm_independent_v1/S2/production/years_100_110",
+        "/bigscratch/mjalabert314/bire_james25_repro/af_fno/mitgcm_independent_v1/S2/production/years_110_120",
+        "/bigscratch/mjalabert314/bire_james25_repro/af_fno/mitgcm_independent_v1/S2/production/years_120_125"
+      ]
+    },
+    "canonical_segment_manifest_sha256_in_chain_order": {
+      "S0": [
+        "3d69a6f16eebacfad903ff5150cd6eeef0351101b17f1a0652f44d5effd947c2",
+        "e90f700958c2814495acc8ef3305965e709c63538e2bbcee4a9d07a5b2cc5a43",
+        "e15530c67dbe07f9b0133a68bf8cf4da72ede6060bf691966d083f142e741c6f"
+      ],
+      "S1": [
+        "ffb2316770f488db008b73a5fa10e53166960de7ca2808717c63a11b7a142d54",
+        "d15017958ef49697eecf71f5bbbb1bbd8e5379f1214291311f899def862f0d3e",
+        "319c998ecc8164c58c3009da664c24e3b881ce6425dc2de5f23420dc43e6871d"
+      ],
+      "S2": [
+        "943f1c8828107e54c79823fd32c93d606c00c629d0b0b7d7f42edc9580b2477a",
+        "a3565a9aaeffcd70d3818854db01f0934df57333b5f3390e67b4deadb86241d1",
+        "ef4d5742fb7850b82ec1aedc13845147edf6ad141131712f36003621ebcc92ad"
+      ]
+    },
+    "global_scratch_iteration_search_forbidden": true,
+    "grid": {
+      "canonical_root": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/mitgcm/S0/production/years_100_110",
+      "byte_identical_across_canonical_regime_segments": true,
+      "files": {
+        "Depth": {
+          "meta_sha256": "39ad92a5d27ed99d4da2bdbc940b6aa4d7d1eaf6274df687b3819cb4562647b5",
+          "data_sha256": "a74fdf766f39dc18df63644d19cee364c6b1b41933ad5ee701748ac5be6d8139"
+        },
+        "hFacC": {
+          "meta_sha256": "c19c7184833fd64409a054f388b32f054bcda47276f243847621764c2a9a9a80",
+          "data_sha256": "72f9f39efee5f62f5697f7c063683569bbedacb22968566a19b58663deee7871"
+        },
+        "hFacW": {
+          "meta_sha256": "c19c7184833fd64409a054f388b32f054bcda47276f243847621764c2a9a9a80",
+          "data_sha256": "ebd4e41063626457ca0a772e308cad65d8bbf596a3fa7a5227cec06836b06509"
+        },
+        "hFacS": {
+          "meta_sha256": "c19c7184833fd64409a054f388b32f054bcda47276f243847621764c2a9a9a80",
+          "data_sha256": "b39a37570e565ccadae1c84b13bfbfafd023f767f3b760a09fca15397a2ec290"
+        },
+        "XC": {
+          "meta_sha256": "39ad92a5d27ed99d4da2bdbc940b6aa4d7d1eaf6274df687b3819cb4562647b5",
+          "data_sha256": "f47aedbb71bd82b60144b0fcb40231f2287a2f20c05fb562a1ca29ce289fff03"
+        },
+        "YC": {
+          "meta_sha256": "39ad92a5d27ed99d4da2bdbc940b6aa4d7d1eaf6274df687b3819cb4562647b5",
+          "data_sha256": "399db3d2f78fb60d6b88d72dd25f7af911b818a980bf52b61858574f16b4f99c"
+        },
+        "XG": {
+          "meta_sha256": "39ad92a5d27ed99d4da2bdbc940b6aa4d7d1eaf6274df687b3819cb4562647b5",
+          "data_sha256": "d19c4d9e259e2a4adda08790fa8fd24f28d049391656a0c9a478e24e3b0f760e"
+        },
+        "YG": {
+          "meta_sha256": "39ad92a5d27ed99d4da2bdbc940b6aa4d7d1eaf6274df687b3819cb4562647b5",
+          "data_sha256": "87e6211ecf813f290f98ca57b7b0c33b3b9aba8893371274690072b92f50b043"
+        },
+        "RAC": {
+          "meta_sha256": "39ad92a5d27ed99d4da2bdbc940b6aa4d7d1eaf6274df687b3819cb4562647b5",
+          "data_sha256": "9c5f819dd09b595aed4449e6799c0361f321bcc0413fd306eea48849ebed151b"
+        }
+      },
+      "wet_tracer_cells": 3600,
+      "active_native_faces_per_level": {
+        "W": 3540,
+        "S": 3540
+      }
+    },
+    "pickup_relation": {
+      "base_iteration": 2592000,
+      "steps_per_day": 72,
+      "formula": "I(day)=2592000+72*day"
+    },
+    "complete_pickups_only": true,
+    "restart_reconstruction_from_46_channels_forbidden": true,
+    "duplicate_source_policy": "all candidate meta and data hashes must agree; retain every candidate and canonical-choice reason"
+  },
+  "stores": {
+    "development": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/forward_response_v1.zarr",
+    "blind": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/forward_response_blind_v1.zarr",
+    "development_digest_root": "outputs/af_fno/response/forward_response_v1",
+    "blind_digest_root": "outputs/af_fno/response/forward_response_blind_v1",
+    "trajectory_store_mutation_forbidden": true
+  },
+  "integration_budget": {
+    "production_train_perturbation_model_days": 23040,
+    "response_validation_perturbation_model_days": 7920,
+    "blind_response_test_perturbation_model_days": 10080,
+    "three_amplitude_pilot_perturbation_model_days": 7200,
+    "shared_nominal_branch_model_days": 3150,
+    "validation_pickup_bank_model_days": 960,
+    "duplicate_nominal_pilot_control_model_days": 540,
+    "selected_alpha_perturbed_duplicate_model_days": 2160,
+    "tight_cg_selected_alpha_perturbation_model_days": 2160,
+    "tight_cg_nominal_control_model_days": 540,
+    "total_model_days": 57750,
+    "total_model_years_360_days": 160.41666666666666,
+    "forward_timesteps": 4158000,
+    "signed_perturbed_branches": 2400,
+    "nominal_and_control_branches": 72,
+    "validation_pickup_bank_chains": 3,
+    "logical_branches_total": 2475,
+    "ten_day_segment_equivalents": 5775,
+    "adjoint_or_taf_compute": false
+  },
+  "normalization": {
+    "artifact": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/model_c_production_1in_1out_spectralnorm_v1/model_c_production_1in_1out_spectralnorm_v1_train_only_normalization.npz",
+    "sha256": "fe424b37d74f5b9d901728c8d585245e12ab67e4230a2eb86f6edc43108d96bf",
+    "input_and_external_response_coordinate_system": "exact_parent_pointwise_normalization",
+    "response_training_rms_scales_are_loss_only": true
+  },
+  "roles": {
+    "pilot": {
+      "anchor_days_per_regime": [
+        720,
+        3600
+      ],
+      "base_directions_per_regime": 8,
+      "base_directions_total": 24,
+      "numeric_access": "development_amplitude_only"
+    },
+    "train": {
+      "anchor_days_per_regime": [
+        0,
+        360,
+        720,
+        1440,
+        1800,
+        2160,
+        2520,
+        3240,
+        3600,
+        3960,
+        4320,
+        5040,
+        5400,
+        5760
+      ],
+      "anchors_per_regime": 14,
+      "directions_per_anchor": 16,
+      "directions_per_regime": 224,
+      "directions_total": 672,
+      "short_only_total": 576,
+      "long_total": 96,
+      "long_anchor_days": [
+        0,
+        720,
+        1800,
+        2520,
+        3600,
+        4320,
+        5040,
+        5760
+      ],
+      "lead_days": [
+        10,
+        20,
+        30,
+        40,
+        50,
+        60
+      ],
+      "chronology_half_open": [
+        0,
+        6000
+      ]
+    },
+    "validation": {
+      "anchor_days_per_regime": [
+        6010,
+        6050,
+        6080
+      ],
+      "anchors_per_regime": 3,
+      "directions_per_anchor": 24,
+      "directions_per_regime": 72,
+      "directions_total": 216,
+      "short_only_total": 180,
+      "long_total": 36,
+      "lead_days": [
+        10,
+        20,
+        30,
+        40,
+        50,
+        60
+      ],
+      "chronology_half_open": [
+        6000,
+        7200
+      ],
+      "distinct_from_nominal_validation_starts": true
+    },
+    "blind_test": {
+      "anchor_days_per_regime": [
+        7560,
+        7920,
+        8280
+      ],
+      "anchors_per_regime": 3,
+      "directions_per_anchor": 24,
+      "directions_per_regime": 72,
+      "directions_total": 216,
+      "short_only_total": 180,
+      "long_total": 36,
+      "lead_days": [
+        10,
+        20,
+        30,
+        40,
+        50,
+        60,
+        70,
+        80,
+        90
+      ],
+      "chronology_half_open": [
+        7200,
+        9000
+      ],
+      "numeric_store_created_only_after_model_freeze": true,
+      "inventory_evaluator_only": true
+    }
+  },
+  "validation_pickup_bank": {
+    "source_day": 5760,
+    "end_day": 6080,
+    "segments_per_regime": 32,
+    "segment_days": 10,
+    "regimes": 3,
+    "model_days_total": 960,
+    "retained_anchor_days": [
+      6010,
+      6050,
+      6080
+    ],
+    "p32_projection_must_match_trajectory_v3": true,
+    "run_output_contract": {
+      "generator": "scripts/build_response_pickup_bank.py run --regime <regime>",
+      "driver_module": "bire_repro.af_response_pickup_bank",
+      "run_dir_template": "${AF_SCRATCH_ROOT}/mitgcm_response_pickup_bank_v1/<regime>/bridge_5760_6080",
+      "manifest": "segment_manifest.json",
+      "result": "segment_result.json",
+      "archived_pickup_naming": "pickup.<iteration:010d>.{meta,data}",
+      "public_verification_report": "outputs/af_fno/response/forward_response_v1/pickup_bank_verification_<regime>.json"
+    }
+  },
+  "shared_nominal_branch_inventory": {
+    "train": {
+      "pilot_overlap_anchors_at_90_days": 6,
+      "other_long_anchors_at_60_days": 18,
+      "short_anchors_at_10_days": 18,
+      "model_days": 1800
+    },
+    "validation": {
+      "anchors_at_60_days": 9,
+      "model_days": 540
+    },
+    "blind_test": {
+      "anchors_at_90_days": 9,
+      "model_days": 810
+    },
+    "one_shared_nominal_control_per_anchor_not_per_direction": true,
+    "total_model_days": 3150
+  },
+  "directions_per_anchor": {
+    "train": {
+      "U_gaussian": 4,
+      "V_gaussian": 4,
+      "Theta_gaussian": 4,
+      "SSH_point": 2,
+      "SSH_gaussian": 2
+    },
+    "validation_and_blind": {
+      "U": 6,
+      "V": 6,
+      "Theta": 6,
+      "SSH_point": 3,
+      "SSH_gaussian": 3
+    }
+  },
+  "regional_quotas_per_regime": {
+    "train_U_V_Theta_each": {
+      "WBC": 20,
+      "interior": 9,
+      "eastern": 9,
+      "northern": 9,
+      "southern": 9
+    },
+    "train_SSH_point_each": {
+      "WBC": 8,
+      "interior": 5,
+      "eastern": 5,
+      "northern": 5,
+      "southern": 5
+    },
+    "train_SSH_gaussian_each": {
+      "WBC": 8,
+      "interior": 5,
+      "eastern": 5,
+      "northern": 5,
+      "southern": 5
+    },
+    "validation_blind_U_V_Theta_each": {
+      "WBC": 6,
+      "interior": 3,
+      "eastern": 3,
+      "northern": 3,
+      "southern": 3
+    },
+    "validation_blind_SSH_point_each": {
+      "WBC": 3,
+      "interior": 2,
+      "eastern": 2,
+      "northern": 1,
+      "southern": 1
+    },
+    "validation_blind_SSH_gaussian_each": {
+      "WBC": 3,
+      "interior": 1,
+      "eastern": 1,
+      "northern": 2,
+      "southern": 2
+    }
+  },
+  "regions": {
+    "precedence": [
+      "WBC",
+      "eastern",
+      "southern",
+      "northern",
+      "interior"
+    ],
+    "WBC": "first four wet tracer cells east of western wall in each wet row",
+    "eastern": "last four wet tracer cells west of eastern wall excluding WBC",
+    "southern": "ten southernmost wet tracer rows excluding WBC and eastern",
+    "northern": "ten northernmost wet tracer rows excluding WBC and eastern",
+    "interior": "remaining eligible centres",
+    "face_carrier": {
+      "U": "tracer cell immediately east at same (j,i)",
+      "V": "tracer cell immediately north at same (j,i)"
+    }
+  },
+  "horizontal_kernel": {
+    "type": "isotropic_gaussian",
+    "radius_cells": 2,
+    "sigma_cells": 1.0,
+    "shape": [
+      5,
+      5
+    ],
+    "normalization": "discrete_unit_l2",
+    "full_active_native_support_at_every_level": true,
+    "clipping_or_land_renormalization_forbidden": true
+  },
+  "vertical_support": {
+    "canonical_serialization": {
+      "level_support_token": "compact sorted-key UTF-8 JSON object with keys levels and weights_hex; weights_hex are lowercase Python/C99 binary64 float.hex strings",
+      "single_level_weight_hex": "0x1.0000000000000p+0",
+      "two_level_weight_hex": "0x1.6a09e667f3bccp-1",
+      "three_level_outer_weight_hex": "0x1.d76b861d8875dp-2",
+      "three_level_centre_weight_hex": "0x1.849ebf15f3b48p-1",
+      "ssh_token": "{\"levels\":[],\"weights_hex\":[]}",
+      "anchor_index_and_direction_slot": "un-padded base-10 integers",
+      "all_hash_preimages": "UTF-8 without trailing newline"
+    },
+    "indices": {
+      "regime": {
+        "S0": 0,
+        "S1": 1,
+        "S2": 2
+      },
+      "variable_offset": {
+        "U": 0,
+        "V": 5,
+        "Theta": 10
+      },
+      "anchor_indices": {
+        "0": "first declared anchor for the role",
+        "1": "second declared anchor for the role",
+        "2": "third declared anchor for the role"
+      }
+    },
+    "training": {
+      "type": "single_level",
+      "formula": "level(q,r,h)=1+((q+5*r+offset[h]) mod 15)",
+      "offsets": {
+        "U": 0,
+        "V": 5,
+        "Theta": 10
+      },
+      "q_formula": "q=4*anchor_slot+direction_slot",
+      "minimum_occurrences_each_level_per_variable_regime": 3
+    },
+    "validation": {
+      "single_levels": "1 through 15 exactly once",
+      "single_anchor_index_formula": "((level-1)+2*regime_index+variable_offset) mod 3",
+      "combination_type_indices": {
+        "upper_two": 0,
+        "middle_gaussian_three": 1,
+        "deep_two": 2
+      },
+      "combination_anchor_index_formula": "(type_index+regime_index+variable_offset) mod 3",
+      "combinations": [
+        {
+          "name": "upper_two",
+          "levels": [
+            1,
+            2
+          ],
+          "weights": "[1,1]/sqrt(2)",
+          "weights_float64_hex": [
+            "0x1.6a09e667f3bccp-1",
+            "0x1.6a09e667f3bccp-1"
+          ]
+        },
+        {
+          "name": "middle_gaussian_three",
+          "levels": [
+            7,
+            8,
+            9
+          ],
+          "weights": "[exp(-1/2),1,exp(-1/2)]/sqrt(1+2*exp(-1))",
+          "weights_float64_hex": [
+            "0x1.d76b861d8875dp-2",
+            "0x1.849ebf15f3b48p-1",
+            "0x1.d76b861d8875dp-2"
+          ]
+        },
+        {
+          "name": "deep_two",
+          "levels": [
+            14,
+            15
+          ],
+          "weights": "[1,1]/sqrt(2)",
+          "weights_float64_hex": [
+            "0x1.6a09e667f3bccp-1",
+            "0x1.6a09e667f3bccp-1"
+          ]
+        }
+      ]
+    },
+    "blind": {
+      "single_levels": "1 through 15 exactly once",
+      "single_anchor_index_formula": "((level-1)+2*regime_index+variable_offset+1) mod 3",
+      "combination_type_indices": {
+        "unseen_upper_two": 0,
+        "unseen_middle_gaussian_three": 1,
+        "unseen_deep_two": 2
+      },
+      "combination_anchor_index_formula": "(type_index+regime_index+variable_offset+1) mod 3",
+      "combinations": [
+        {
+          "name": "unseen_upper_two",
+          "levels": [
+            2,
+            3
+          ],
+          "weights": "[1,1]/sqrt(2)",
+          "weights_float64_hex": [
+            "0x1.6a09e667f3bccp-1",
+            "0x1.6a09e667f3bccp-1"
+          ]
+        },
+        {
+          "name": "unseen_middle_gaussian_three",
+          "levels": [
+            6,
+            7,
+            8
+          ],
+          "weights": "[exp(-1/2),1,exp(-1/2)]/sqrt(1+2*exp(-1))",
+          "weights_float64_hex": [
+            "0x1.d76b861d8875dp-2",
+            "0x1.849ebf15f3b48p-1",
+            "0x1.d76b861d8875dp-2"
+          ]
+        },
+        {
+          "name": "unseen_deep_two",
+          "levels": [
+            13,
+            14
+          ],
+          "weights": "[1,1]/sqrt(2)",
+          "weights_float64_hex": [
+            "0x1.6a09e667f3bccp-1",
+            "0x1.6a09e667f3bccp-1"
+          ]
+        }
+      ]
+    }
+  },
+  "long_membership": {
+    "train_per_group_regime": 8,
+    "train_region_constraints": "two WBC and at least one each interior/eastern/northern/southern",
+    "train_depth_constraints_U_V_Theta": "at least two each in levels 1-5, 6-10, 11-15",
+    "train_SSH_kernel_counts": {
+      "point": 4,
+      "gaussian": 4
+    },
+    "validation_and_blind_per_group_regime": 3,
+    "validation_and_blind_U_V_Theta_composition": "exactly two single-level directions and one multi-level direction, collectively upper/middle/deep and three distinct regions",
+    "validation_multilevel_type_formula": "(regime_index+variable_offset) mod 3",
+    "blind_multilevel_type_formula": "(regime_index+variable_offset+1) mod 3",
+    "validation_kernel_sequence_SSH": [
+      "point",
+      "gaussian",
+      "point"
+    ],
+    "blind_kernel_sequence_SSH": [
+      "gaussian",
+      "point",
+      "gaussian"
+    ],
+    "joint_cross_regime_all_five_regions_required": true,
+    "assignment_objective": [
+      "maximize minimum physical centre separation among selected directions",
+      "break exact objective ties by response-v1 SHA order"
+    ],
+    "response_or_model_magnitude_may_not_affect_membership": true
+  },
+  "joint_spatial_allocator": {
+    "role_order": [
+      "pilot",
+      "train",
+      "validation",
+      "blind_test"
+    ],
+    "joint_across_all_role_quotas": true,
+    "candidate_subregions": {
+      "WBC": "four equal-rank latitude quartiles after sorting eligible candidates south-to-north, with candidate SHA order breaking equal-coordinate ties",
+      "eastern": "four equal-rank latitude quartiles after sorting eligible candidates south-to-north, with candidate SHA order breaking equal-coordinate ties",
+      "northern": "four equal-rank longitude quartiles after sorting eligible candidates west-to-east, with candidate SHA order breaking equal-coordinate ties",
+      "southern": "four equal-rank longitude quartiles after sorting eligible candidates west-to-east, with candidate SHA order breaking equal-coordinate ties",
+      "interior": "four geographic quadrants split at the midpoint of the minimum and maximum eligible-candidate longitude and latitude; midpoint coordinates belong to the western/southern half"
+    },
+    "subregion_centroid": "normalized Cartesian mean of unit-sphere lon/lat vectors for eligible candidates in the subregion, converted back to lon/lat; an empty subregion fails",
+    "centre_id": "(regime,family,native_grid,j,i)",
+    "distinct_across_roles": true,
+    "non_wbc_cross_role_chebyshev_min": 3,
+    "wbc_hard_distance_exception": true,
+    "wbc_distinct_ids_and_joint_maximin_required": true,
+    "earth_radius_km": 6371.0,
+    "coordinates": {
+      "tracer": [
+        "XC",
+        "YC"
+      ],
+      "U": [
+        "XG",
+        "YC"
+      ],
+      "V": [
+        "XC",
+        "YG"
+      ]
+    },
+    "lexicographic_objectives": [
+      "DEPRECATED 2026-08-26 -- replaced by joint_objective_scope.objective_method's deterministic greedy farthest-point placement; kept only as the historical record of the exact-MIP objective v1/v2 attempted to prove optimal: maximize lexicographically the ascending-sorted five-region vector of within-region minimum cross-role great-circle separations; then the ascending-sorted five-region vector of within-region minimum within-role great-circle separations; then the tertiary tuple of summed WBC mean surface speed and per-region proximity to subregion centroids."
+    ],
+    "joint_objective_scope": {
+      "solve_unit": "one (regime,family,region) stratum across all four roles, matching section 9.3 step 3's own text; SSH point and smooth slots participate in the same SSH solve within that stratum. The one deliberate exception is the non-WBC cross-role Chebyshev-3 hard constraint (section 9.3 step 4), which section 9.3 states without a same-region qualifier and which therefore is verified and, if necessary, repaired across region boundaries after every stratum solves independently -- see cross_region_repair below.",
+      "cross_region_coupling": "apply the non-WBC later-role Chebyshev-distance-three constraint against every earlier-role centre even when its region label differs",
+      "distance_vector_region_order_before_sorting": [
+        "WBC",
+        "interior",
+        "eastern",
+        "northern",
+        "southern"
+      ],
+      "undefined_pairwise_minimum": "omit a region component only when fewer than two eligible selected centres exist for that pair class; every remaining component must be finite",
+      "objective_vector_comparison": "DEPRECATED 2026-08-26 -- greedy placement has no MIP objective vector to compare exactly; achieved separations are computed by direct brute-force distance recomputation on the small final selection (_brute_force_region_minima) and reported, not compared against a claimed optimum. Candidate SHA order remains the sole tie-break, applied at each individual placement rather than after a complete frozen vector.",
+      "ssh_cross_kernel_ownership_tie_break": "after the complete physical objective vector ties, order SSH (slot,candidate) ownership variables by the ascending tuple (candidate tie SHA-256, region-slot SHA-256) and lexicographically maximize their binary selection vector (1 before 0); this assigns point-versus-gaussian ownership without changing the candidate grammar or selected global centre set",
+      "cross_region_repair": {
+        "mechanism": "allocate_centres_lexicographically_by_region solves every (regime,family,region) stratum independently via the unchanged allocate_centres_lexicographically, then checks the assembled selection for non-WBC cross-role Chebyshev-3 violations that cross a region boundary; any violation excludes the offending later-role (validation/blind_test) centre from its own region's candidate pool and re-solves only that region.",
+        "max_attempts": 32,
+        "no_convergence_action": "stop_v2_before_inventory_materialization",
+        "measured_boundary_adjacency": "2406 non-WBC cell pairs within Chebyshev distance 2 cross a region boundary, against 36192 that do not (6.2%), on the real production grid"
+      },
+      "objective_method": "deterministic_farthest_point_greedy_v3: process every row in one fixed order (role order, then region-slot SHA); for each row pick the eligible candidate maximizing, in order, (i) minimum distance to already-placed cells of a different role, (ii) minimum distance to already-placed cells of the same role, (iii) the physical/geographic tertiary preference, (iv) ascending candidate SHA-256. Achieved separation is reported, not proven optimal."
+    },
+    "wbc_speed_source": {
+      "store": "trajectories_v3.zarr state channels U_01 and V_01",
+      "days_half_open": [
+        0,
+        6000
+      ],
+      "regimes": [
+        "S0",
+        "S1",
+        "S2"
+      ],
+      "state_is_already_face_to_centre_projected": true,
+      "second_face_centring_forbidden": true
+    },
+    "tie_hash_grammar": "response-v1|split|regime|family|level-support|region|j|i",
+    "region_slot_assignment": {
+      "pilot": "use the exact six-case region sequence in the amplitude-pilot contract",
+      "production_strata": "(role,regime,family,kernel-quota-family), where U/V/Theta each use one gaussian stratum and SSH point/smooth use separate quota strata",
+      "slot_order": "ascending SHA-256 of response-v1|region-slot|role|regime|family|kernel|anchor-index|direction-slot|level-support",
+      "region_label_stream": "repeatedly traverse [WBC,interior,eastern,northern,southern], emitting one label whose declared quota remains, until every quota is exhausted",
+      "base_assignment": "zip the SHA-ordered slots to the quota-exact region-label stream",
+      "assignment": "use the quota-exact SHA-zip base assignment unless it makes the complete frozen long-membership constraints infeasible; only then apply the minimum-Hamming constrained repair before centre optimization",
+      "filesystem_enumeration_may_not_affect_slots": true,
+      "repair_if_long_membership_infeasible": {
+        "activation": "only when no assignment of long-membership indicators satisfies every frozen long constraint under the base region labels",
+        "centre_coordinates_response_values_and_model_values_forbidden": true,
+        "feasibility_scope": "jointly across the three regimes for one role and input family, including SSH point/smooth kernel constraints where applicable",
+        "feasibility_witness_is_not_final_long_membership": true,
+        "immutable_constraints": [
+          "all declared per-role per-regime per-family per-kernel regional quotas",
+          "all exact long counts anchor counts kernel counts and kernel sequences",
+          "all single-level multi-level upper-middle-deep and designated-combination formulas",
+          "all within-regime distinct-region and across-regime all-five-region requirements"
+        ],
+        "primary_objective": "minimize the number of direction-slot region labels changed from the base assignment",
+        "quota_preservation_required": true,
+        "repair_hash_grammar": "response-v1|region-repair|role|regime|family|kernel|anchor-index|direction-slot|level-support|region",
+        "tie_break": "order slots by the frozen region-slot SHA; within each slot order permissible region labels by ascending repair-hash SHA; among globally feasible minimum-Hamming assignments lexicographically minimize the resulting per-slot region-rank vector",
+        "zero_hamming_assignment_must_be_retained_when_feasible": true,
+        "no_feasible_repair_action": "stop_v1_before_inventory_materialization"
+      }
+    },
+    "post_selection_row_mapping": {
+      "stratum": "(role,regime,family,kernel,region,level_support_token)",
+      "slot_order": "ascending region-slot SHA-256 already used for region assignment",
+      "centre_order": "ascending candidate tie SHA-256 using the frozen response-v1 centre grammar",
+      "assignment": "after any SSH cross-kernel ownership tie is resolved, within each stratum zip the ordered direction slots to the ordered selected centres",
+      "permutations_or_filesystem_order_forbidden": true
+    },
+    "phase_a_exclusion_zero_based": {
+      "tracer_cells": [
+        [
+          14,
+          1
+        ],
+        [
+          15,
+          1
+        ],
+        [
+          16,
+          1
+        ],
+        [
+          17,
+          1
+        ],
+        [
+          18,
+          1
+        ]
+      ],
+      "exclude_as_centres_and_SSH_support": true,
+      "exclude_projected_U_V_Theta_footprints_intersecting": true
+    }
+  },
+  "restart_edit": {
+    "U": "selected Uvel native W-face cells only",
+    "V": "selected Vvel native S-face cells only",
+    "Theta": "selected Theta tracer cells only",
+    "SSH": "selected EtaN tracer cells only",
+    "always_unchanged": [
+      "Salt",
+      "GuNm1",
+      "GvNm1",
+      "GtNm1",
+      "dEtaHdt",
+      "EtaH",
+      "all_unselected_cells_and_records"
+    ]
+  },
+  "sign_axis": {
+    "index_0": -1,
+    "index_1": 1,
+    "filename_sign_inference_forbidden": true
+  },
+  "curated_storage": {
+    "numeric_byte_order": "little_endian",
+    "float32_dtype": "<f4",
+    "float64_dtype": "<f8",
+    "compressor": "Blosc-Zstd",
+    "compression_level": 3,
+    "shuffle": "bitshuffle",
+    "response_chunk": "one direction, one sign, one lead, all 46x62x62 values",
+    "input_chunk": "one direction, one sign, all 46x62x62 values",
+    "canonical_json_lines": "sorted keys, compact separators, UTF-8, frozen line order",
+    "array_and_chunk_manifest_sha256_required": true
+  },
+  "stored_response_semantics": {
+    "response_p64": "raw P64(perturbed_endpoint)-P64(paired_nominal_endpoint) in float64 physical state units",
+    "minus_record_is_normally_negative": true,
+    "stored_response_is_not_divided_by_sign_alpha_or_parent_scale": true,
+    "loader_only_oriented_target_formula": "r_M=(response_p64/parent_pointwise_scale)/(sign*alpha)",
+    "filename_sign_inference_forbidden": true,
+    "parent_external_normalization_only": true
+  },
+  "schema": "config/forward_response_schema_v1.json",
+  "amplitude_contract": "config/forward_response_amplitude_pilot_v1.json",
+  "selected_amplitudes": null,
+  "generation_gates": {
+    "validation_pickup_bank_setup": {
+      "requires": [
+        "approved_contract_hashes",
+        "canonical_source_and_grid_hash_audit",
+        "generic_pickup_and_segment_staging_tests"
+      ],
+      "role": "gate_d0_setup_only"
+    },
+    "amplitude_pilot": {
+      "requires": [
+        "gate_d0",
+        "gate_d1"
+      ],
+      "may_generate": [
+        "pilot_nominal",
+        "pilot_signed_candidates",
+        "pilot_duplicates",
+        "selected_provisional_alpha_repeat_and_tight_cg_controls"
+      ]
+    },
+    "train_and_validation": {
+      "requires": [
+        "gate_d2_final_amplitudes"
+      ],
+      "may_generate": [
+        "shared_nominal_train_validation",
+        "signed_train_validation_responses"
+      ]
+    },
+    "blind_test": {
+      "requires": [
+        "manual_confirmation_blind_data_not_yet_generated",
+        "all_model_checkpoint_lambda_selection_development_and_ordinary_forward_hashes_frozen"
+      ],
+      "may_generate_once": [
+        "shared_nominal_blind",
+        "signed_blind_responses",
+        "blind_numeric_store"
+      ]
+    },
+    "adjoint_or_taf_generation": "forbidden_for_all_response_dataset_phases"
+  },
+  "supersedes": {
+    "version": "forward_response_dataset_v2",
+    "reason": "v2's region-decomposed exact MIP leximax solver was mathematically correct but still impractically slow at production scale: after fixing a 90+ minute parallel-worker BLAS thread-oversubscription stall, a sequential re-run found S0/U/WBC (1,505 candidates, smaller than S0/Theta/WBC's 3,297, which had already solved completely in 503s) ran over 45 minutes without finishing its first sub-stage -- candidate-pool size does not predict leximax cost, conflict-graph density does, and that cost cannot be bounded in advance short of solving it. Replaced with a deterministic greedy farthest-point placement (section 9.3 step 3, amended 2026-08-26) that achieves and reports separation rather than proving it globally optimal -- nothing about the study's scientific validity depends on that proof, only on the hard constraints (distinct IDs, the non-WBC distance-three rule, regional quotas, the Phase-A exclusion) actually holding, which are unchanged. Verified speedup: S0/U 0.5s, S0/Theta 1.0s (previously 45+ minutes unfinished and 503s respectively for a single region alone). v2 never materialized any output."
+  }
+}

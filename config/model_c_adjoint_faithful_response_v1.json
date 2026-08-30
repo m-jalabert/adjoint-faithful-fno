@@ -1,0 +1,529 @@
+{
+  "architecture": {
+    "channel_mlp_dropout": 0.0,
+    "channel_mlp_expansion": 4.0,
+    "domain_padding": 0.1,
+    "factorization": null,
+    "fno_block_precision": "full",
+    "grid_shape": [
+      62,
+      62
+    ],
+    "hidden_channels": 128,
+    "in_channels": 51,
+    "input_states": 1,
+    "lifting_channel_ratio": 2,
+    "lifting_in_channels": 53,
+    "local_bias": false,
+    "local_kernel_size": 3,
+    "n_layers": 3,
+    "n_modes": [
+      32,
+      32
+    ],
+    "out_channels": 46,
+    "pointwise_layer_norm": true,
+    "positional_channels": 2,
+    "positional_embedding": null,
+    "projection_channel_ratio": 2,
+    "static_channels": [
+      "wind_stress_x",
+      "wet_mask",
+      "coriolis_parameter",
+      "zonal_grid_spacing",
+      "sst_relaxation_target"
+    ],
+    "use_channel_mlp": true
+  },
+  "checkpoint_selection": {
+    "fallback_pool": "short_feasible_only; the short-AUC guard stays a hard constraint and the growth ceiling is the second filter. In the v2 run step 5760 was the least unstable at 1.0036 but its short AUCs were 1.58x/1.55x/2.57x the best, so it was never eligible",
+    "growth_rate_calls": 200,
+    "growth_rate_ceiling": 1.0,
+    "growth_rate_epsilon_relative": 0.01,
+    "growth_rate_fit_from_call": 50,
+    "growth_rate_is_diagnostic_only": true,
+    "growth_rate_rationale": "every v1 checkpoint had a growth rate above one (1.0146-1.0227) and the RMSE-only rule still returned one of them; a criterion that cannot see the failure cannot avoid selecting it",
+    "growth_rate_regime": "S0",
+    "long_auc_window_days": [
+      90,
+      360
+    ],
+    "primary_fields": [
+      "surface_speed",
+      "sst",
+      "phihyd_surface"
+    ],
+    "rollout_days": 360,
+    "rule": "keep every checkpoint within 5 percent of the best short AUC in each primary field, then keep only those whose measured perturbation growth rate is at or below 1.0, then minimize the worst 90-360 day RMSE-AUC ratio to climatology; publish exactly one selected.pt",
+    "short_auc_tolerance": 1.05,
+    "short_auc_window_days": [
+      10,
+      90
+    ],
+    "starts": "validation days 6000-6198 stride 6, 34 per regime, 102 pooled",
+    "worst_long_ratio_ceiling": 0.85
+  },
+  "constrained_relative_to": {
+    "changed": [
+      "per_mode_spectral_normalization_of_the_three_fourier_convolutions",
+      "contraction_penalty_removed_from_the_objective"
+    ],
+    "measured_growth_rate_per_call": 1.0168,
+    "penalty_arm_growth_rates": {
+      "model_c_production_1in_1out_v2": 1.01126,
+      "model_c_production_1in_1out_v3": 1.01361
+    },
+    "rejected_alternatives": {
+      "reduce_modes_32_to_24": "the day-2000 high-k power fraction is already 0.0004 against truth 0.028, so truncation would stabilize by removing structure that is already missing",
+      "remove_the_local_3x3_branch": "the day-2000 boundary/interior anomaly ratio is 5.4 against truth 23.1, so the western boundary is under- not over-represented",
+      "tanh_stabilizer": "saturating regions drive tanh' toward zero, which would buy bounded rollouts by manufacturing artificially small sensitivities -- the wrong trade for an adjoint-faithful emulator"
+    },
+    "success_criterion": "lambda_hat at or below 1.0 with 0-360 day RMSE and ACC essentially unchanged, day-2000 anomaly amplitude order one, western-boundary structure retained and no excessive spectral damping",
+    "unchanged": [
+      "architecture",
+      "static_channels",
+      "modes",
+      "width",
+      "blocks",
+      "local_branch",
+      "dataset",
+      "split",
+      "normalization_procedure",
+      "rollout_steps",
+      "batch_size",
+      "maximum_steps",
+      "learning_rate",
+      "schedule",
+      "seed",
+      "the_eight_loss_terms",
+      "validation_protocol",
+      "inference_protocol"
+    ],
+    "version": "model_c_production_1in_1out_v1",
+    "weight_lineage": "none; this run is from scratch"
+  },
+  "contract_status": "frozen_scientific_contract_and_runner_hashes",
+  "data": {
+    "evaluation_truth_only": [
+      7200,
+      9000
+    ],
+    "horizon_days": 10,
+    "inference": [
+      6200,
+      7200
+    ],
+    "regimes": [
+      "S0",
+      "S1",
+      "S2"
+    ],
+    "start_note": "one time level, so day 0 is a valid start and the ten starts the two-input contract lost are recovered",
+    "train": [
+      0,
+      6000
+    ],
+    "training_sequences": 17820,
+    "training_starts_per_regime": 5940,
+    "validation": [
+      6000,
+      7200
+    ]
+  },
+  "expected_parameter_count": 27297960,
+  "initialization": {
+    "fno_weights": "neuraloperator_default_random_initialization",
+    "from_scratch": true,
+    "layer_norm_bias": 0.0,
+    "layer_norm_scale": 1.0,
+    "lifting_projection_and_channel_mlp": "random_initialization",
+    "lineage": "none; this arm has no parent, no migration, no function-preserving load and no fine-tuning stage",
+    "load_model_state": false,
+    "load_optimizer_state": false,
+    "local_branch_bias": false,
+    "local_branch_initialization": "zeros",
+    "normalization_reused": false,
+    "parent_checkpoint": null,
+    "spectral_weights": "random_initialization"
+  },
+  "loss": {
+    "all_terms_active_from_step_1": true,
+    "barotropic_transport_weight": 0.05,
+    "boundary_weight": 0.065,
+    "continuity_weight": 0.05,
+    "contract_sha256": "6a233883b3c9a6347f0d343f295bee2aa841b143b547acc9f71fea05e8e8d2e1",
+    "contraction_penalty": false,
+    "increment_weight": 0.001,
+    "physics_terms_add_no_output_channels": true,
+    "pressure_gradient_weight": 0.05,
+    "rollout_weight": 0.5,
+    "spectral_bins": 12,
+    "spectral_weight": 1e-05,
+    "staged_fine_tuning": false,
+    "total": "L_state + 0.001 L_inc + 0.50 L_rollout + 1e-5 L_spectral + 0.065 L_boundary + 0.05 L_pressure + 0.05 L_continuity + 0.05 L_barotropic_transport",
+    "western_boundary_width": 4
+  },
+  "normalization": {
+    "absolute_scale_floor": 1e-06,
+    "channel_scale_floor_quantile": 0.05,
+    "definition": "x_hat_c(y,x) = (x_c(y,x) - mu_c(y,x)) / sigma_c(y,x), land set to zero",
+    "increment_scale": "per_channel_rms_of_the_normalized_ten_day_increment_over_training_pairs",
+    "pointwise_shape": [
+      46,
+      62,
+      62
+    ],
+    "recomputed_from_training_days_only": true,
+    "regimes": [
+      "S0",
+      "S1",
+      "S2"
+    ],
+    "reused_from_a_previous_run": false,
+    "static_channel_normalization": "wet_mask stays a raw 0/1 indicator; the four physical coefficient fields are standardized over wet cells",
+    "train_days": [
+      0,
+      6000
+    ]
+  },
+  "output": {
+    "artifacts": [
+      "report.json",
+      "arrays.npz",
+      "selection.png",
+      "README.md",
+      "manifest.json"
+    ],
+    "project_root_template": "/home/mjalabert314/bire_james25_repro/outputs/af_fno/C/model_c_adjoint_faithful_response_v1/seed_{seed}",
+    "scratch_root_template": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/model_c_adjoint_faithful_response_v1/seed_{seed}"
+  },
+  "prediction": {
+    "map": "x_hat_t_plus_10 = F_theta(x_t, S)",
+    "rollout": "x_t -> x_t+10 -> x_t+20 -> ... every input after the first is self-generated",
+    "target": "direct_state_not_residual"
+  },
+  "purpose": "constrain the operator instead of the trajectory. Architecture, data, split, schedule, optimizer and the eight loss terms are exactly the unconstrained arm's; the single change is a per-mode spectral normalization of the three Fourier convolutions, which hold 97.95 percent of the parameters and were previously unconstrained. The contraction penalty of the two preceding arms is removed so the run isolates the operator constraint",
+  "read_contract": {
+    "adjoint_state": false,
+    "inference_state": false,
+    "intermediate_wind_state": false,
+    "response_state": true,
+    "training_state": true,
+    "validation_state": true
+  },
+  "response": {
+    "adjoint_state": false,
+    "blind_response_state": false,
+    "branch_order": [
+      "nominal",
+      "minus",
+      "plus"
+    ],
+    "concatenate_triplet_per_lead_in_one_model_invocation": true,
+    "dataset": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/forward_response_v1.zarr",
+    "dataset_role": "train",
+    "deterministic_region_and_level_inventory": true,
+    "enabled": true,
+    "expected_response_lead_weights": {
+      "10": 0.7916666666666666,
+      "20": 0.041666666666666664,
+      "30": 0.041666666666666664,
+      "40": 0.041666666666666664,
+      "50": 0.041666666666666664,
+      "60": 0.041666666666666664
+    },
+    "input_family_block_balance": true,
+    "isolated_counter_hash_stream": true,
+    "joint_optimizer_steps": 1920,
+    "joint_update_every": 4,
+    "lambda_contract": "config/forward_response_lambda_screen_v2.json",
+    "lambda_resp": 0.001,
+    "lambda_selection_status": "selected_2026-08-28",
+    "long_complete_passes": 5,
+    "long_updates": 480,
+    "maximum_gradient_target_lead_days": 60,
+    "may_not_consume_parent_python_numpy_or_torch_rng": true,
+    "no_replacement_within_pass": true,
+    "optimizer_step_direction_schedule_hash_required_before_training": true,
+    "ordinary_perturbed_state_loss": false,
+    "regime_block_balance": true,
+    "response_loss": {
+      "input_output_group_balanced": true,
+      "long_lead_days": [
+        10,
+        20,
+        30,
+        40,
+        50,
+        60
+      ],
+      "long_lead_reduction": "unweighted_mean",
+      "numerical_floor_multiplier": 10.0,
+      "response_scales_source": "training_only",
+      "short_lead_days": [
+        10
+      ],
+      "signed_oriented": true,
+      "signs_balanced": true
+    },
+    "schedule_pattern": [
+      "short",
+      "short",
+      "short",
+      "long"
+    ],
+    "sequential_sign_forwards_forbidden": true,
+    "short_balanced_half_pass_count": 288,
+    "short_complete_passes": 2,
+    "short_half_pass_per_family_regime": 24,
+    "short_half_pass_per_input_family": 72,
+    "short_updates": 1440,
+    "spectral_power_vectors": {
+      "equal_buffer_mutation_count_schedule_vs_B": true,
+      "restore_bit_for_bit_before_optimizer_step": true,
+      "restore_in_finally": true,
+      "retain_weight_gradients": true,
+      "snapshot_before_auxiliary_chain": true
+    },
+    "validation_role_for_reporting_only": "validation"
+  },
+  "source_hashes": {
+    "src/oceanfno/barotropic_transport.py": "2588dd31567b84dc62a4784849cba57d96d19116c73de87f6d91b7ff9fdc2ed1",
+    "src/oceanfno/continuity.py": "5f1fdce39fe6157c8ed08b7ea8e2ccc5b3033107f49d4f926a969d2f11456df7",
+    "src/oceanfno/dataset.py": "9abbabb73b9f7fd0093314061305ca52ec65d4439e22f764ce142d7afa90e820",
+    "src/oceanfno/model.py": "21504077fce004bf89fee5e57d96ca5bfb9c77f5331d41835544cdd2b6c03908",
+    "src/oceanfno/objective.py": "ec474e5bc146c0382fd33d550f3df8d3b2e53dc7fac6b214f09b8ed9efcc8a4f",
+    "src/oceanfno/perturbation_growth.py": "0943adf80ac18bf162ac65ca53bf6c67415654c6e233763768bdcfcd46c334c2",
+    "src/oceanfno/pressure_gradient.py": "2d8116984ad015aa573cac852800e0fdc6956f300470b8a265bb2468316e17dc",
+    "src/oceanfno/runtime.py": "d099a7b878fc4c32e88d073c02fc3ec4a1a3e9c152a59d4acff878dfe2f13c06",
+    "src/oceanfno/spectral_norm.py": "5c0fc223e3562f748b2c423a7e50d8caeba1621032625f37be025779cf222188",
+    "src/oceanfno/train.py": "71c7c025a2dfea931c47a43b584fd626867a7ca2f33ff0e4d7d95885ddf79098",
+    "src/oceanfno/validation.py": "a489854d72727c8ee8e8dd3a2adb55cf171a3734a8c7e3be35a9f3730a628684"
+  },
+  "sources": {
+    "dataset": {
+      "metadata_sha256": "766cae89359311775c79103f44dc74630630ba6b7a0a8c6e9d26f73487512136",
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/trajectories_v3.zarr"
+    },
+    "mitgcm_declaration": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/mitgcm/S0/spinup/years_000_010/data",
+      "sha256": "766d27ac0ae257f4a8817921667b1d25a44add03966817a8561d9153ba627a58"
+    },
+    "mitgcm_sst_relaxation": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/mitgcm/S0/spinup/years_000_010/SST_relax.bin",
+      "sha256": "952f66ed928ad8c42584e5cf43d584ebb2f64c8f3876b871d3ced4ea689dc6dc"
+    },
+    "mitgcm_zonal_spacing": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/mitgcm/S0/spinup/years_000_010/DXF.data",
+      "sha256": "19ff882c63021105620145889630ee457af5187d669d3c5978e0d0d70b4294e6"
+    }
+  },
+  "spectral_normalization": {
+    "adds_parameters": 0,
+    "applied": true,
+    "applies_to": "spectral_convolutions_only",
+    "blocks": 3,
+    "checkpoints_materialized": true,
+    "does_not_impose": "a global bound on the emulator Jacobian",
+    "estimator": "persistent alternating power iteration on J",
+    "form": "R_k <- R_k * min(1, 1 / sigma_max(R_k))",
+    "materialization_note": "the normalized weights are baked into the tensor before a checkpoint is written, so a published checkpoint loads into an unmodified model and the inference layer is y_hat(k) = R_k_tilde x_hat(k) with adjoint R_k_tilde^H",
+    "matrices_total": 1632,
+    "modes_per_block": 544,
+    "one_sided": true,
+    "one_sided_note": "a mode already at or below one is left exactly alone and its scale is then a constant, so no gradient flows through it",
+    "operator": "the dense complex 128x128 channel mixing at each Fourier mode",
+    "power_iterations_per_forward": 2,
+    "reference": "McCabe et al., Towards Stability of Autoregressive Neural Operators, arXiv:2306.10619",
+    "warmup_iterations": 400
+  },
+  "study_contract": {
+    "approval_record": {
+      "plan_header_not_yet_approved_text_is_superseded_by_this_external_approval": true,
+      "received_date": "2026-08-24",
+      "source": "user_message_in_execution_thread",
+      "statement": "Adjoint_faithful_response_training_plan.md has been reviewed and is valid. You can proceed, follow exactly the plan."
+    },
+    "approved_plan": {
+      "path": "docs/Adjoint_faithful_response_training_plan.md",
+      "repository_commit": "fcee16878adeed5d93c339c3fda2769387095056",
+      "sha256": "3674047c166e571c13f507b55d55c95fd3ef092447a16311b3fa96dda1e91534"
+    },
+    "arm": "C",
+    "equality_artifact_hashes": {
+      "inference_starts_(15,)_<i8": "7a6271c2a29834c7675cd925e7065db9fc0548fd5ae3e7cca6bef8a2cd1349f1",
+      "nominal_schedule_(7680,2,4,2)_<i4": {
+        "20260724": "474f161777491a69b4b11996c0215460b0a0cba8f55dafd4e089577b6ac9b7cb",
+        "20260911": "895acaa0fd9d01636cd57eb5ff28cd4321300ea1fc24d9284588ababea808d85",
+        "20260912": "594e05d6ff69fc5b5bd7a3c0548026eae3ccca3bfb44e336d067a99a1f0b5c18"
+      },
+      "normalization_components_c_order": {
+        "channel_scale_floor_(46,)_<f4": "416c3f1ba6d2801fd4702c90c90d6548cee188ef27fe8fdea94396a9fa63f57d",
+        "increment_scale_(46,)_<f4": "4f051a65551411e5418ed41fe8151b67739814a475986e4c92e933c392574d23",
+        "pointwise_mean_(46,62,62)_<f4": "3fda76919fbaee00a2fe0bec13d964512ef1651c102ab1c08c9aff25e4d15b51",
+        "pointwise_raw_scale_(46,62,62)_<f4": "b0a41bc679389b04b941f6a9adb02ed6edbbf3774792d53709d345e1c0198a46",
+        "pointwise_scale_(46,62,62)_<f4": "b4538dda27322e82388a54beb4a849f137da5185e77b346e23df5c494b16f122"
+      },
+      "normalization_npz": "fe424b37d74f5b9d901728c8d585245e12ab67e4230a2eb86f6edc43108d96bf",
+      "pair_codes_(9000,)_|u1": "21975058b5d763967eda845eed74557b2915b5180ab61d5b52d01a90a286721d",
+      "parent_arrays": {
+        "path": "outputs/af_fno/C/model_c_production_1in_1out_spectralnorm_v1/model_c_production_1in_1out_spectralnorm_v1_arrays.npz",
+        "sha256": "a84bf08e11a22d49cc14b46b86b5e431c204eded06b47989aec83feaafa7b4ae"
+      },
+      "parent_figure_contract": {
+        "path": "config/model_c_production_1in_1out_spectralnorm_v1_s0_figures_v1.json",
+        "sha256": "5aa52951f50622f3fdbcb8ce9621a5cdf3a7ad1239f33dfc57cc0e8b1410c900"
+      },
+      "parent_report": {
+        "path": "outputs/af_fno/C/model_c_production_1in_1out_spectralnorm_v1/model_c_production_1in_1out_spectralnorm_v1_report.json",
+        "sha256": "ffbba0a0b2122b9fadca9ff2e723bc90130881f854a10ad6f71f8c1b0d240ff1"
+      },
+      "parent_selected_checkpoint_comparator_only": {
+        "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/model_c_production_1in_1out_spectralnorm_v1/selected.pt",
+        "sha256": "e75951681b1abbecb44ff35ac8319b38504fad9995e8e08fbc33c86bb8c2798a"
+      },
+      "snapshot_codes_(9000,)_|u1": "69191c59cb1128c5d4bbcf44e5c23e808325e71d73fd415851f64b19738fb782",
+      "static_block_(3,5,62,62)_<f4": "b2f0ef10810952d344f50f6f6e17eaeee30c432184ffa91bdb93974021f72506",
+      "train_only_climatology_c_order_<f4": {
+        "phihyd": "9b5a74dfb3abf61c33814c3a0e437326aa5f15534b8f728e0ed3968e2967aa7c",
+        "sst": "cb55404d91ac3db84724785cee059c26f96b9ca7b7064d7cf3344ca606ff66cc",
+        "state_(3,46,62,62)": "59883e7d12213956dde35955f5da5336b031d0ce2b59916cf1e2488330b8d17b",
+        "streamfunction": "08a7b130c27d1dfe8f1218b2ace8502ee409531d01814d60d0ef121fff85b092",
+        "surface_speed": "f95cc8e9eb1de7cc3a382d10c88533cdaead4d308eb3e81e7a97189586cc8b6c"
+      },
+      "training_records_(17820,2)_<i8": "e187333d65d5b1f779c31acaf77b2a5624e0fe3d27f71981110873e643b209c3",
+      "validation_records_(102,2)_<i4": "30001a157b71cc989ba909d3a25e9d1d50ab9279871a18ee79f2261101ebce88"
+    },
+    "equality_harness_required_before_run": true,
+    "equality_reference_source": "src/oceanfno/train.py",
+    "equality_whitelist_amendment_2026_08_28": "$.read_contract.response_state added. It is the one C-versus-parent delta the frozen equality whitelist omitted: it was already declared in paired_causal_whitelist_json_paths as an intended B/C difference, and it is exactly what makes C the response arm, but load_contract compares the study contract against the *parent*, where the field is false. The omission blocked every C preflight. Nothing is loosened: adjoint_state, blind_response_state, inference_state and intermediate_wind_state remain outside the whitelist and are still pinned to the parent's false.",
+    "equality_whitelist_json_paths": [
+      "$.version",
+      "$.contract_status",
+      "$.study_contract",
+      "$.output",
+      "$.training.seed",
+      "$.read_contract.response_state",
+      "$.response"
+    ],
+    "full_primary_seed_gate_m0_required": true,
+    "new_runner_source_hashes": {
+      "src/oceanfno/response_dataset.py": "987d5618bfc5abf122b13cdfb884537798d8f2b926d85cf6542b7cf05664c1b7",
+      "src/oceanfno/response_objective.py": "f982a83a230aa6317de7490a1b1870a2649bd59ea05d5c169743f71bbe67b908",
+      "src/oceanfno/response_spectral_context.py": "68859a0c58c263c09708eaf77f55bee3d974a9e68a0bea1ff898e1edffd5f762",
+      "src/oceanfno/response_validation.py": "0f7dccae5ade59b2c98426fb8db930ff8632beb66d8b675ba1e54b0030e79fd2",
+      "src/oceanfno/train_response.py": "7d58392041cc9788950a80310afda2132a0c4a3dfd5d4411473ae8c925991d92"
+    },
+    "new_runner_source_hashes_refrozen_2026_08_28": {
+      "reason": "src/oceanfno/train_response.py gained the section-15.2 auxiliary response stream in run(), the preflight schedule check, and smoke-only step/output overrides (execution step 13). The change is inert when response.enabled is false: response_state stays None, no schedule is built, no response artifact is opened, and the artifact list is unchanged -- so arm B's three published runs are unaffected and are not re-run.",
+      "superseded": {
+        "src/oceanfno/train_response.py": "9138606e35b17b91f4d4233e49d1bd53c05378365c67adc54a4fb6e89bfd6b5a"
+      }
+    },
+    "no_best_seed_selection": true,
+    "paired_causal_whitelist_json_paths": [
+      "$.version",
+      "$.study_contract.arm",
+      "$.study_contract.role",
+      "$.study_contract.paired_control",
+      "$.study_contract.paired_causal_whitelist_json_paths",
+      "$.output.project_root_template",
+      "$.output.scratch_root_template",
+      "$.read_contract.response_state",
+      "$.response.enabled",
+      "$.response.lambda_resp",
+      "$.response.lambda_selection_status",
+      "$.response.lambda_contract",
+      "$.response.dataset",
+      "$.response.dataset_role",
+      "$.response.validation_role_for_reporting_only",
+      "$.response.blind_response_state",
+      "$.response.adjoint_state",
+      "$.response.maximum_gradient_target_lead_days",
+      "$.response.ordinary_perturbed_state_loss",
+      "$.response.joint_update_every",
+      "$.response.joint_optimizer_steps",
+      "$.response.schedule_pattern",
+      "$.response.short_updates",
+      "$.response.long_updates",
+      "$.response.input_family_block_balance",
+      "$.response.regime_block_balance",
+      "$.response.deterministic_region_and_level_inventory",
+      "$.response.isolated_counter_hash_stream",
+      "$.response.may_not_consume_parent_python_numpy_or_torch_rng",
+      "$.response.no_replacement_within_pass",
+      "$.response.long_complete_passes",
+      "$.response.short_complete_passes",
+      "$.response.short_balanced_half_pass_count",
+      "$.response.short_half_pass_per_input_family",
+      "$.response.short_half_pass_per_family_regime",
+      "$.response.optimizer_step_direction_schedule_hash_required_before_training",
+      "$.response.branch_order",
+      "$.response.concatenate_triplet_per_lead_in_one_model_invocation",
+      "$.response.sequential_sign_forwards_forbidden",
+      "$.response.spectral_power_vectors",
+      "$.response.response_loss",
+      "$.response.expected_response_lead_weights",
+      "$.response.sampler",
+      "$.response.schedule",
+      "$.response.no_dummy_response_forward"
+    ],
+    "paired_control": "config/model_c_adjoint_faithful_nominal_control_v1.json",
+    "paired_seeds": [
+      20260724,
+      20260911,
+      20260912
+    ],
+    "parent_checkpoint_is_comparator_only": true,
+    "parent_checkpoint_load_forbidden": true,
+    "parent_config": "config/model_c_production_1in_1out_spectralnorm_v1.json",
+    "parent_config_sha256": "d443e1cfd5d58e6f28fd09ded40667e1dd1aba54b7d22d1e6ec918391f0ddcb2",
+    "parent_normalization_reference": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/model_c_production_1in_1out_spectralnorm_v1/model_c_production_1in_1out_spectralnorm_v1_train_only_normalization.npz",
+      "recompute_and_hash_match": true,
+      "sha256": "fe424b37d74f5b9d901728c8d585245e12ab67e4230a2eb86f6edc43108d96bf"
+    },
+    "primary_seed": 20260724,
+    "resolved_executable_semantics": {
+      "checkpoint_growth_filter": "src/oceanfno/validation.py::select_by_validation is normative even though the inherited parent prose field growth_rate_is_diagnostic_only is stale",
+      "spectral_power_iterations_per_training_forward": 2,
+      "transitive_validation_source_hashes": {
+        "src/oceanfno/diagnostics.py": "149cca17b714b535a1d60e83c3548adaaaa338f483434f28cdd476103644c844"
+      }
+    },
+    "role": "response_aware_single_delta"
+  },
+  "training": {
+    "adam_betas": [
+      0.9,
+      0.95
+    ],
+    "batch_size": 8,
+    "budget_note": "7680 x 8 x 6 = 368,640 autoregressive state transitions, the same exposure as the earlier 15,360 x 8 x 3 full-training budget at twice the unroll depth",
+    "checkpoint_steps": [
+      1920,
+      3840,
+      5760,
+      7680
+    ],
+    "decay_factor": 0.2,
+    "decay_fraction": 0.75,
+    "dropout": 0.0,
+    "from_scratch": true,
+    "gradient_accumulation_steps": 2,
+    "gradient_clipping": false,
+    "initial_learning_rate": 0.0005,
+    "load_optimizer_state": false,
+    "maximum_steps": 7680,
+    "microbatch_note": "the effective batch is 8; it is realized as two microbatches of 4 so the six-step recurrent activation load fits a single GPU. Every loss term is a per-sample quantity averaged over the batch and the two microbatches are exactly equal in size, so this is arithmetically identical to a single batch of 8",
+    "microbatch_size": 4,
+    "optimizer": "adam",
+    "rollout_steps": 6,
+    "schedule_note": "steps 1-5760 at 0.0005, steps 5761-7680 at 0.0001",
+    "seed": 20260724,
+    "state_transitions": 368640,
+    "teacher_forcing_after_the_initial_state": false,
+    "weight_decay": 0.0
+  },
+  "version": "model_c_adjoint_faithful_response_v1"
+}

@@ -1,0 +1,124 @@
+{
+  "version": "forward_response_lambda_screen_v1",
+  "contract_status": "frozen_before_response_data_or_model_training",
+  "approved_plan": {
+    "path": "docs/Adjoint_faithful_response_training_plan.md",
+    "sha256": "3674047c166e571c13f507b55d55c95fd3ef092447a16311b3fa96dda1e91534"
+  },
+  "model_version": "model_c_adjoint_faithful_response_v1",
+  "matched_control_version": "model_c_adjoint_faithful_nominal_control_v1",
+  "primary_seed": 20260724,
+  "candidate_lambda_resp": [
+    0.03,
+    0.1,
+    0.3,
+    1.0
+  ],
+  "screen": {
+    "optimizer_steps": 1920,
+    "restart_each_candidate_from_identical_random_initialization": true,
+    "identical_nominal_batch_order": true,
+    "identical_response_direction_order": true,
+    "response_schedule_is_prefix_of_full_run_schedule": true,
+    "nominal_rollout_steps": 6,
+    "maximum_response_lead_days": 60,
+    "joint_update_every": 4,
+    "response_updates": 480,
+    "response_pattern": [
+      "short",
+      "short",
+      "short",
+      "long"
+    ],
+    "short_response_updates": 360,
+    "long_response_updates": 120,
+    "response_sampler_stream": "same_isolated_counter_hash_stream_and_same_480_update_prefix_for_every_candidate",
+    "response_sampler_may_not_consume_parent_rng_state": true,
+    "response_schedule_hash_required_before_first_candidate": true,
+    "matched_lambda_zero_control": {
+      "model": "model_c_adjoint_faithful_nominal_control_v1",
+      "seed": 20260724,
+      "optimizer_step": 1920,
+      "same_common_runner_initialization_nominal_batches_and_optimizer_schedule_required": true
+    },
+    "checkpoint_and_optimizer_state_disposition": "discard_after_lambda_freeze",
+    "full_run_restarts_at_step_zero": true
+  },
+  "response_validation": {
+    "metric_contract": {
+      "path": "config/adjoint_faithful_forward_evaluation_v1.json",
+      "json_pointer": "/response_validation",
+      "composite_name": "S_resp_10:60",
+      "must_hash_match_the_pretraining_study_freeze": true
+    },
+    "anchor_days": [
+      6010,
+      6050,
+      6080
+    ],
+    "directions_per_regime": 72,
+    "directions_total": 216,
+    "all_day_10": true,
+    "long_directions_total": 36,
+    "long_lead_days": [
+      10,
+      20,
+      30,
+      40,
+      50,
+      60
+    ],
+    "composite_cell_axes": [
+      "input_family",
+      "output_group",
+      "input_centre_region",
+      "lead"
+    ],
+    "within_cell_pooling_axes": [
+      "sign",
+      "case",
+      "regime"
+    ],
+    "lead_weights": {
+      "10": 0.7916666666666666,
+      "20": 0.041666666666666664,
+      "30": 0.041666666666666664,
+      "40": 0.041666666666666664,
+      "50": 0.041666666666666664,
+      "60": 0.041666666666666664
+    },
+    "all_composite_cells_must_be_populated": true,
+    "relative_l2_denominator_floor": "training_only_differentiated_combined_numerical_floor",
+    "external_normalizer": "exact_parent",
+    "blind_response_forbidden": true,
+    "adjoint_forbidden": true
+  },
+  "forward_feasibility": {
+    "primary_fields": [
+      "surface_speed",
+      "sst",
+      "phihyd_surface"
+    ],
+    "candidate_to_lambda_zero_short_auc_max_ratio": 1.05,
+    "growth_max_additive_worsening_per_call": 0.005,
+    "nonfinite_rejects": true
+  },
+  "selection": {
+    "primary_metric": "S_resp_10:60",
+    "primary_metric_definition_must_equal_metric_contract": true,
+    "direction": "minimize",
+    "within_fraction_of_minimum_for_tie": 0.02,
+    "tie_break": "smaller_lambda_resp",
+    "no_forward_feasible_candidate_action": "stop_v1"
+  },
+  "forbidden_decision_inputs": [
+    "mitgcm_adjoint",
+    "taf_output",
+    "fno_adjoint_map",
+    "blind_response_case",
+    "blind_response_metric",
+    "nested_final_inference"
+  ],
+  "selected_lambda_resp": null,
+  "selection_status": "pending_forward_only_screen"
+}

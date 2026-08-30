@@ -1,0 +1,298 @@
+{
+  "version": "forward_response_amplitude_pilot_v1",
+  "contract_status": "frozen_before_inventory_or_forward_compute",
+  "approved_plan": {
+    "path": "docs/Adjoint_faithful_response_training_plan.md",
+    "sha256": "3674047c166e571c13f507b55d55c95fd3ef092447a16311b3fa96dda1e91534"
+  },
+  "regimes": [
+    "S0",
+    "S1",
+    "S2"
+  ],
+  "anchors": {
+    "days": [
+      720,
+      3600
+    ],
+    "ordered_cases": [
+      [
+        "S0",
+        720
+      ],
+      [
+        "S0",
+        3600
+      ],
+      [
+        "S1",
+        720
+      ],
+      [
+        "S1",
+        3600
+      ],
+      [
+        "S2",
+        720
+      ],
+      [
+        "S2",
+        3600
+      ]
+    ],
+    "region_sequence": [
+      "WBC",
+      "interior",
+      "eastern",
+      "northern",
+      "southern",
+      "WBC"
+    ],
+    "one_based_levels": {
+      "U": [
+        1,
+        4,
+        7,
+        10,
+        13,
+        15
+      ],
+      "V": [
+        7,
+        10,
+        13,
+        15,
+        1,
+        4
+      ],
+      "Theta": [
+        13,
+        15,
+        1,
+        4,
+        7,
+        10
+      ]
+    },
+    "ssh_kernel_by_day": {
+      "720": "point",
+      "3600": "gaussian_5x5_sigma1"
+    },
+    "centres_disjoint_from_production_roles": true
+  },
+  "directions": {
+    "input_families": [
+      "U",
+      "V",
+      "Theta",
+      "SSH"
+    ],
+    "base_per_anchor": 4,
+    "base_total": 24,
+    "per_family": 6,
+    "candidate_alphas": [
+      0.025,
+      0.05,
+      0.1
+    ],
+    "sign_axis": [
+      -1,
+      1
+    ],
+    "perturbed_runs": 144
+  },
+  "kernel": {
+    "horizontal": "isotropic_gaussian",
+    "radius_cells": 2,
+    "sigma_cells": 1.0,
+    "shape": [
+      5,
+      5
+    ],
+    "weights": "exp(-(a^2+b^2)/2), a,b in [-2,2], normalized to discrete unit_l2",
+    "full_native_support_required": true,
+    "clipping_forbidden": true,
+    "land_renormalization_forbidden": true,
+    "direction_scale": "unit RMS over nonzero support in parent pointwise-normalized FNO input"
+  },
+  "long_assignment": {
+    "horizon_days": 90,
+    "lead_days": [
+      10,
+      20,
+      30,
+      40,
+      50,
+      60,
+      70,
+      80,
+      90
+    ],
+    "base_directions_total": 12,
+    "by_regime_and_day": {
+      "S0": {
+        "720": [
+          "U",
+          "Theta"
+        ],
+        "3600": [
+          "V",
+          "SSH"
+        ]
+      },
+      "S1": {
+        "720": [
+          "V",
+          "SSH"
+        ],
+        "3600": [
+          "U",
+          "Theta"
+        ]
+      },
+      "S2": {
+        "720": [
+          "U",
+          "SSH"
+        ],
+        "3600": [
+          "V",
+          "Theta"
+        ]
+      }
+    }
+  },
+  "nominal_controls": {
+    "anchors": 6,
+    "horizon_days": 90,
+    "duplicate_each_once": true,
+    "production_cg2d_target_residual": 1e-07
+  },
+  "selected_alpha_controls": {
+    "controlled_long_directions": 12,
+    "duplicate_signed_production_runs": 24,
+    "tight_cg_signed_runs": 24,
+    "tight_cg_nominal_runs": 6,
+    "horizon_days": 90,
+    "tight_cg2d_target_residual": 1e-10,
+    "repeat_relative_threshold": 0.01,
+    "cg_relative_threshold": 0.01,
+    "run_only_at_provisional_family_alpha": true,
+    "each_condition_uses_its_own_matched_nominal_endpoint": true,
+    "repeat_and_cg_checks_apply_to_every_family_regime_sign_and_lead": true,
+    "failure_action": "stop_v1_without_fallback_to_a_smaller_candidate"
+  },
+  "precision": {
+    "pickup": "big_endian_float64",
+    "response_extraction": "float64_native_then_face_to_centre",
+    "fno_initial_projection": "cast_native_to_float32_then_face_to_centre",
+    "p32_realized_magnitude_relative_tolerance": 0.01,
+    "p32_antisymmetry_relative_tolerance": 0.01
+  },
+  "response_quantities": {
+    "external_normalization": "exact_parent_pointwise_state_normalizer",
+    "oriented_raw_response": "R_q_k_s=(N(M_k(x+s*alpha*v))-N(M_k(x)))/s",
+    "differentiated_response": "r_q_k_s=R_q_k_s/alpha",
+    "group_balanced_norm_squared": "norm_GB(z)^2=(1/4)*sum_{g in U,V,Theta,SSH} mean_{c in g,wet}(z_c^2)",
+    "q_lin": "norm_GB(R_plus-R_minus)/(0.5*(norm_GB(R_plus)+norm_GB(R_minus)))",
+    "q_snr": "0.5*(norm_GB(R_plus)+norm_GB(R_minus))/n_raw_family_GB_lead",
+    "centred_jvp": "Jhat_alpha=(N(M(x+alpha*v))-N(M(x-alpha*v)))/(2*alpha)",
+    "adjacent_alpha_score": "norm_GB(Jhat_alpha-Jhat_smaller)/max(norm_GB(Jhat_smaller),n_diff_family_GB_lead(smaller_alpha))",
+    "q_repeat": "norm_GB(R_production-R_duplicate)/max(0.5*(norm_GB(R_production)+norm_GB(R_duplicate)),n_raw_nominal_GB_lead)",
+    "q_cg": "norm_GB(R_production-R_tight)/max(0.5*(norm_GB(R_production)+norm_GB(R_tight)),n_raw_nominal_GB_lead)",
+    "raw_and_differentiated_units_must_not_be_pooled": true
+  },
+  "selection": {
+    "per_input_family": true,
+    "candidate_order": "largest_to_smallest",
+    "rule": "select_the_provisional_largest_candidate_then_retain_it_only_if_all_final_controls_pass",
+    "day_10_q_lin_max": 0.05,
+    "long_every_lead_q_lin_max": 0.05,
+    "q_snr_min": 20.0,
+    "adjacent_alpha_centred_jvp_relative_max": 0.05,
+    "ssh_peak_m_max": 0.01,
+    "repeat_relative_max": 0.01,
+    "tight_cg_relative_max": 0.01,
+    "all_planned_ssh_directions_must_pass_cap": true,
+    "both_signed_p32_magnitudes_and_antisymmetry_must_pass": true,
+    "nonzero_centre_weight_required": true,
+    "universal_quantification": {
+      "day_10": "every_direction_in_the_input_family",
+      "long_leads": "every_preassigned_long_direction_at_every_10_day_lead_through_day_90",
+      "snr": "every_scored_direction_and_lead",
+      "p32": "both_signs_for_every_direction"
+    },
+    "provisional_stage": {
+      "floor": "preliminary_raw_nominal_repeat_plus_float64_rounding_floor",
+      "apply_gates": [
+        "day_10_q_lin",
+        "long_every_lead_q_lin",
+        "q_snr",
+        "p32_realization_and_antisymmetry",
+        "nonzero_centre_weight",
+        "ssh_cap",
+        "adjacent_alpha_centred_jvp"
+      ],
+      "adjacent_alpha_reference": "next_smaller_candidate_passing_all_non_adjacent_provisional_gates_if_one_exists",
+      "result": "largest_provisionally_passing_alpha_per_input_family"
+    },
+    "final_stage": {
+      "controls_run_only_for": "the_provisional_alpha_of_each_input_family",
+      "recompute_with_combined_floor": [
+        "q_snr",
+        "adjacent_alpha_centred_jvp"
+      ],
+      "also_require": [
+        "every_q_repeat_at_most_0.01",
+        "every_q_cg_at_most_0.01"
+      ],
+      "selected_alpha": "the_unchanged_provisional_alpha_if_every_final_gate_passes",
+      "fallback_to_smaller_untested_alpha_forbidden": true
+    },
+    "no_passing_candidate_action": "stop_v1_and_require_separately_versioned_pilot",
+    "final_control_failure_action": "stop_v1_and_require_separately_versioned_pilot"
+  },
+  "normalization": {
+    "parent_artifact": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/C/model_c_production_1in_1out_spectralnorm_v1/model_c_production_1in_1out_spectralnorm_v1_train_only_normalization.npz",
+    "sha256": "fe424b37d74f5b9d901728c8d585245e12ab67e4230a2eb86f6edc43108d96bf",
+    "group_balanced_output_norm": true,
+    "preliminary_raw_floor": "max_over_pilot_anchors(duplicate_nominal_disagreement,8*epsilon64*max(1,norm_nominal_1,norm_nominal_2))",
+    "combined_raw_floor": "max(preliminary_raw_floor,selected_alpha_perturbed_repeat_disagreement,selected_alpha_tight_cg_disagreement)",
+    "combined_floor_indices": [
+      "input_family",
+      "output_slice",
+      "lead"
+    ],
+    "combined_floor_reduction_axes": [
+      "controlled_direction",
+      "regime",
+      "sign"
+    ],
+    "combined_floor_reduction": "maximum",
+    "differentiated_floor": "n_diff_family_slice_lead(alpha_family)=n_raw_family_slice_lead/alpha_family",
+    "nominal_raw_floor_already_includes_float64_rounding_bound": true,
+    "combined_floor_sources": [
+      "duplicate_nominal",
+      "selected_alpha_perturbed_repeat",
+      "selected_alpha_tight_cg_disagreement"
+    ],
+    "response_loss_and_validation_use_differentiated_floor": true,
+    "q_lin_uses_raw_responses": true,
+    "q_snr_uses_raw_responses_and_raw_floor": true
+  },
+  "forbidden_inputs": [
+    "mitgcm_adjoint",
+    "taf_output",
+    "existing_adjoint_metric",
+    "fno_adjoint",
+    "blind_response"
+  ],
+  "selected_amplitudes": {
+    "U": null,
+    "V": null,
+    "Theta": null,
+    "SSH": null
+  },
+  "selection_status": "pending_forward_only_pilot"
+}
