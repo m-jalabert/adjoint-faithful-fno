@@ -1,0 +1,218 @@
+{
+  "artifacts": {
+    "dataset_metadata": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/trajectories_turb_v1.zarr/.zmetadata",
+      "sha256": "9055fbff11c27422e924766728f26a7c6ee1bec03194fa3ebc14570566284ddb"
+    },
+    "mitgcm_declaration": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/mitgcm_turb_v1/S0_turb/spinup/years_000_010/data",
+      "sha256": "ec3ffc279055c3c124b53d80bee3d358cbd573b9cddba5cabeaefef208ae7d65"
+    },
+    "mitgcm_sst_relaxation": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/mitgcm_turb_v1/S0_turb/spinup/years_000_010/SST_relax.bin",
+      "sha256": "b3fd906fd4474b9566a8bfe560992bfc9894524d47f6d13a3d1a281947de98df"
+    },
+    "mitgcm_zonal_spacing": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/mitgcm_turb_v1/S0_turb/spinup/years_000_010/DXF.data",
+      "sha256": "462d53665f31a91ce63b7070c6d05bbf63ed9c3d88b0801d10889c434feef6b7"
+    },
+    "selected_checkpoint": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/turb/turb_forward_control_v1/selected.pt",
+      "sha256": "8047601d0df71ca489de287a68776e45bb89860fe301a80db37903a98c742296"
+    },
+    "selected_normalization": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/turb/turb_forward_control_v1/turb_forward_control_v1_train_only_normalization.npz",
+      "sha256": "4d84347b18d50417efb0370fb8fc30b7dcaed2b88b0316490b238bcf71bf48c8"
+    },
+    "selected_report": {
+      "path": "/home/mjalabert314/bire_james25_repro/turbulent_double_gyre/outputs/turb_forward_control_v1/turb_forward_control_v1_report.json",
+      "sha256": "61f33a6f78796b8e95350bb66142bcc35745099f17771c8201653c7db953459c"
+    }
+  },
+  "baselines": {
+    "climatology": "pointwise_S0_turb_mean_over_the_training_block_0_5999_only",
+    "ensemble_summary": "mean_and_10th_90th_percentiles_across_15_member_metrics",
+    "persistence": "each_members_initial_physical_field_held_fixed_at_every_lead",
+    "rmse": "square_root_of_mean_squared_error_over_wet_cells_for_each_member"
+  },
+  "contract_status": "frozen_after_the_production_training_and_validation_and_before_any_inference_metric",
+  "dataset": {
+    "inference": [
+      6200,
+      7200
+    ],
+    "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/trajectories_turb_v1.zarr",
+    "tau0_n_m2": {
+      "S0_turb": 0.1
+    },
+    "train": [
+      0,
+      6000
+    ],
+    "validation": [
+      6000,
+      7200
+    ],
+    "version": "trajectories_turb_v1"
+  },
+  "output": {
+    "one_folder_per_regime": true,
+    "overwrite": false,
+    "project_root": "/home/mjalabert314/bire_james25_repro/turbulent_double_gyre/outputs/turb_forward_control_v1_s0_turb_figures_v1",
+    "required": [
+      "turb_figure3_streamfunction_025deg_s0turb_dt10.png",
+      "turb_figure4_dt10_rmse_0_200_days_s0turb.png",
+      "turb_figure5_dt10_single_member_rmse_s0turb.png",
+      "turb_figure6_dt10_acc_0_200_days_s0turb.png",
+      "turb_figure7_dt10_streamfunction_day060_day2000_s0turb.png",
+      "turb_figure8_dt10_rmse_0_2000_days_s0turb.png",
+      "turb_s0turb_figures_report.json",
+      "turb_s0turb_figures_arrays.npz",
+      "turb_s0turb_figures_summary.json",
+      "turb_s0turb_ensemble_curves.csv",
+      "manifest.json",
+      "README.md"
+    ],
+    "scratch_root": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/turb/turb_forward_control_v1_s0_turb_figures_v1"
+  },
+  "protocol": {
+    "acc_fields": [
+      "surface_u",
+      "surface_v",
+      "phihyd_surface",
+      "sst"
+    ],
+    "comparator_model": null,
+    "figure3_lead_days": [
+      0,
+      10,
+      20,
+      30,
+      40
+    ],
+    "figure7_lead_days": [
+      60,
+      2000
+    ],
+    "figure_names": [
+      "turb_figure3_streamfunction_025deg_s0turb_dt10.png",
+      "turb_figure4_dt10_rmse_0_200_days_s0turb.png",
+      "turb_figure5_dt10_single_member_rmse_s0turb.png",
+      "turb_figure6_dt10_acc_0_200_days_s0turb.png",
+      "turb_figure7_dt10_streamfunction_day060_day2000_s0turb.png",
+      "turb_figure8_dt10_rmse_0_2000_days_s0turb.png"
+    ],
+    "inference_set": [
+      6200,
+      7200
+    ],
+    "long_lead_days": "0_to_2000_inclusive_by_10",
+    "maximum_lead_days": 2000,
+    "member_count": 15,
+    "nesting": "nested_validation_inference_protocol_no_independent_third_test_split",
+    "prediction_interval_days": 10,
+    "primary_regime": "S0_turb",
+    "regimes": [
+      "S0_turb"
+    ],
+    "rmse_fields": [
+      "surface_speed",
+      "phihyd_surface",
+      "sst"
+    ],
+    "short_lead_days": "0_to_200_inclusive_by_10",
+    "start_draw_order": [
+      6263,
+      6293,
+      6331,
+      6389,
+      6579,
+      6593,
+      6598,
+      6601,
+      6651,
+      6661,
+      6694,
+      6707,
+      6711,
+      6968,
+      6979
+    ],
+    "start_seed": 20260802,
+    "start_window": [
+      6200,
+      7000
+    ],
+    "static_channels": [
+      "wind_stress_x",
+      "wet_mask",
+      "coriolis_parameter",
+      "zonal_grid_spacing",
+      "sst_relaxation_target"
+    ]
+  },
+  "purpose": "the frozen S0_turb evaluation suite for turb_forward_control_v1, on the identical 15-start protocol, leads, fields and baselines the 1-degree package used, so the two resolutions are directly comparable",
+  "selected_model": {
+    "architecture": {
+      "channel_mlp_dropout": 0.0,
+      "channel_mlp_expansion": 4.0,
+      "domain_padding": 0.1,
+      "factorization": null,
+      "fno_block_precision": "full",
+      "grid_shape": [
+        248,
+        248
+      ],
+      "hidden_channels": 128,
+      "in_channels": 51,
+      "input_states": 1,
+      "lifting_channel_ratio": 2,
+      "lifting_in_channels": 53,
+      "local_bias": false,
+      "local_kernel_size": 3,
+      "n_layers": 3,
+      "n_modes": [
+        64,
+        64
+      ],
+      "out_channels": 46,
+      "pointwise_layer_norm": true,
+      "positional_channels": 2,
+      "positional_embedding": null,
+      "projection_channel_ratio": 2,
+      "static_channels": [
+        "wind_stress_x",
+        "wet_mask",
+        "coriolis_parameter",
+        "zonal_grid_spacing",
+        "sst_relaxation_target"
+      ],
+      "use_channel_mlp": true
+    },
+    "from_scratch": true,
+    "loss_contract_sha256": "1bb71b6f43372b41088ef9196311a3b07e1bf775e5d26d193192aed7d891404b",
+    "optimizer_step": 5760,
+    "rollout_steps": 6,
+    "seed": 20260911,
+    "training_contract": "/home/mjalabert314/bire_james25_repro/turbulent_double_gyre/config/turb_forward_control_v1.json",
+    "version": "turb_forward_control_v1"
+  },
+  "source_hashes": {
+    "src/turbfno/dataset.py": "7e7e22acd397ad7ba5877f7fae517b269284620fe68fe8cff08f3a764df58dde",
+    "src/turbfno/diagnostics.py": "e68bd963a43a616136eb1b6c84508f03105f2756c1276c4ca2b6ce5399b3f344",
+    "src/turbfno/figures.py": "c339fba813f30e20468cef99ea482c69b4efb2ac4b37fdc54e4501cb4d07e58e",
+    "src/turbfno/model.py": "ce2f5937f66e699e79de75d75b4732bff3dfd7442153af949e67a6fb8facb437",
+    "src/turbfno/perturbation_growth.py": "0943adf80ac18bf162ac65ca53bf6c67415654c6e233763768bdcfcd46c334c2",
+    "src/turbfno/plots.py": "b7e36b1aa878af1f1cc8d24423bb14e9bb7bfcbd862ad981196759297eec523e",
+    "src/turbfno/runtime.py": "d099a7b878fc4c32e88d073c02fc3ec4a1a3e9c152a59d4acff878dfe2f13c06",
+    "src/turbfno/spectral_norm.py": "b3645f884b1e47eb36ab42e2eb6adaabfc7ac4353c1e6b604172e11a510cf9f8",
+    "src/turbfno/train.py": "0d44f4cacb38db5a84ee793488b82b6dd222259eba726308facf4c899d899d49",
+    "src/turbfno/validation.py": "3f9d9a997ed2467eeb34bb23e6a7b4a1f0bec54d03d6721421158190f1e164a3"
+  },
+  "truth": {
+    "continuation_required": false,
+    "lead_matched_to_day": 2000,
+    "source": "trajectories_turb_v1_store"
+  },
+  "version": "turb_forward_control_v1_s0_turb_figures_v1"
+}

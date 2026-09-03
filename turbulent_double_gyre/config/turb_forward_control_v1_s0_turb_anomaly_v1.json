@@ -1,0 +1,101 @@
+{
+  "adds_only": true,
+  "artifacts": {
+    "dataset_metadata": {
+      "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/trajectories_turb_v1.zarr/.zmetadata",
+      "sha256": "9055fbff11c27422e924766728f26a7c6ee1bec03194fa3ebc14570566284ddb"
+    },
+    "figure_package_arrays": {
+      "path": "/home/mjalabert314/bire_james25_repro/turbulent_double_gyre/outputs/turb_forward_control_v1_s0_turb_figures_v1/S0_turb/turb_s0turb_figures_arrays.npz",
+      "sha256": "33a956f4af21cd350df70078dbf89243b59f271c9d0f503e25c8c36024b212a1"
+    },
+    "figure_package_contract": {
+      "path": "/home/mjalabert314/bire_james25_repro/turbulent_double_gyre/config/turb_forward_control_v1_s0_turb_figures_v1.json",
+      "sha256": "c7144ef82e6d04171baf6f133d35cdbfa1993c24977412a4682cfbdb4e80aa3b"
+    },
+    "figure_package_manifest": {
+      "path": "/home/mjalabert314/bire_james25_repro/turbulent_double_gyre/outputs/turb_forward_control_v1_s0_turb_figures_v1/S0_turb/manifest.json",
+      "sha256": "d976610174130e1e248300381f1672dcc18d45070c68c546199d35c8c4865dab"
+    },
+    "figure_package_report": {
+      "path": "/home/mjalabert314/bire_james25_repro/turbulent_double_gyre/outputs/turb_forward_control_v1_s0_turb_figures_v1/S0_turb/turb_s0turb_figures_report.json",
+      "sha256": "5b5e5d797be6fd6a981c422e8f66e9b7ae178e036a8886d912e1f4c49d14c303"
+    }
+  },
+  "contract_status": "frozen_after_the_production_figure_package_and_before_any_anomaly_metric",
+  "dataset": {
+    "tau0_n_m2": {
+      "S0_turb": 0.1
+    },
+    "train": [
+      0,
+      6000
+    ],
+    "version": "trajectories_turb_v1"
+  },
+  "modifies_published_figures": false,
+  "output": {
+    "one_folder_per_regime": true,
+    "overwrite": false,
+    "project_root": "/home/mjalabert314/bire_james25_repro/turbulent_double_gyre/outputs/turb_forward_control_v1_s0_turb_anomaly_v1",
+    "required": [
+      "turb_figure3a_streamfunction_anomaly_025deg_s0turb_dt10.png",
+      "turb_figure7a_streamfunction_anomaly_day060_day2000_s0turb.png",
+      "turb_reference_time_mean_streamfunction_s0turb.png",
+      "turb_s0turb_anomaly_report.json",
+      "turb_s0turb_anomaly_arrays.npz",
+      "README.md",
+      "manifest.json"
+    ],
+    "scratch_root": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/turb/turb_forward_control_v1_s0_turb_anomaly_v1"
+  },
+  "protocol": {
+    "day2000_structure_diagnostics": [
+      "anomaly_rms_ratio",
+      "amplitude_normalized_meridional_and_zonal_first_difference_rms",
+      "hann_directional_power_fraction_above_0p2_cycles_per_cell",
+      "western_first_16_wet_cells_rms_and_boundary_to_interior_ratio"
+    ],
+    "figure3_lead_days": [
+      0,
+      10,
+      20,
+      30,
+      40
+    ],
+    "figure7_lead_days": [
+      60,
+      2000
+    ],
+    "figure_names": [
+      "turb_figure3a_streamfunction_anomaly_025deg_s0turb_dt10.png",
+      "turb_figure7a_streamfunction_anomaly_day060_day2000_s0turb.png"
+    ],
+    "member": 0,
+    "primary_regime": "S0_turb",
+    "reads_model_weights": false,
+    "rolls_nothing_out": true
+  },
+  "purpose": "streamfunction-anomaly companions to figures 3 and 7 for turb_forward_control_v1, about the same MITgcm S0_turb training-mean field the parent package used",
+  "reference": {
+    "days": [
+      0,
+      6000
+    ],
+    "is_two_dimensional_field": true,
+    "model_own_mean_used": false,
+    "not_a_scalar_spatial_mean": true,
+    "regime": "S0_turb",
+    "source": "mitgcm",
+    "subtracted_from": "both_truth_and_prediction"
+  },
+  "source_hashes": {
+    "src/turbfno/anomaly.py": "8e48f1eab67648c06bff544eb289370c7d8fb96c96910787c54d59f6897eac75",
+    "src/turbfno/dataset.py": "7e7e22acd397ad7ba5877f7fae517b269284620fe68fe8cff08f3a764df58dde",
+    "src/turbfno/diagnostics.py": "e68bd963a43a616136eb1b6c84508f03105f2756c1276c4ca2b6ce5399b3f344",
+    "src/turbfno/figures.py": "c339fba813f30e20468cef99ea482c69b4efb2ac4b37fdc54e4501cb4d07e58e",
+    "src/turbfno/plots.py": "b7e36b1aa878af1f1cc8d24423bb14e9bb7bfcbd862ad981196759297eec523e",
+    "src/turbfno/runtime.py": "d099a7b878fc4c32e88d073c02fc3ec4a1a3e9c152a59d4acff878dfe2f13c06"
+  },
+  "version": "turb_forward_control_v1_s0_turb_anomaly_v1"
+}
