@@ -1224,14 +1224,22 @@ from the substantial seed-to-seed variation documented here.
 \section*{Data Availability}
 \label{sec:data-availability}
 
-The code, configuration and trained checkpoints for both models discussed in
+The code, configurations and selected figures for both models discussed in
 this report are available at
 \url{https://github.com/m-jalabert/adjoint-faithful-fno}. Both the control
 model (arm B, \texttt{model\_c\_adjoint\_faithful\_nominal\_control\_v1}) and
 the response model (arm C, \texttt{model\_c\_adjoint\_faithful\_response\_v1})
-are present on the \texttt{adjoint-faithful-response-training-v1} branch;
-readers reproducing the results in this report should check out that branch,
-since it is the one branch on which both models presented here coexist.
+are available on the \texttt{main} branch. The former
+\texttt{adjoint-faithful-response-training-v1} branch has been incorporated
+into \texttt{main} and removed. Commit
+\texttt{94137c39fa8aca62a7345f816f0a0b33f12e84cd} records the code and
+configurations used by this report and provides a fixed reference for
+reproduction. Raw \MITgcm{} trajectories, restart pickups, processed datasets
+and trained checkpoints are stored separately on HPC scratch and are not
+included in Git. Readers must regenerate the trajectories and train the
+models, or obtain those artifacts separately. The repository's
+\texttt{docs/ADJOINT\_HANDOVER.md} describes the required environment,
+data regeneration, training and evaluation steps.
 
 \bibliographystyle{elsarticle-num}
 \bibliography{references}
