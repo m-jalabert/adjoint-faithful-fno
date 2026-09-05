@@ -21,5 +21,9 @@ export PYTHONPATH="${STUDY}/src:${PYTHONPATH:-}"
 export OMP_NUM_THREADS="${SLURM_CPUS_PER_TASK:-8}"
 export MPLBACKEND=Agg
 cd "$R"
+# The figure contract and package are sealed only after the dependent GPU job
+# publishes. Rebuild this existing contract in place from those exact bytes so
+# the anomaly package cannot retain hashes from an earlier production run.
+"${PY}" "${STUDY}/scripts/make_turb_figure_contracts.py" --which anomaly
 "${PY}" -m turbfno.anomaly preflight --contract "${CONTRACT}"
 "${PY}" -m turbfno.anomaly run --contract "${CONTRACT}"

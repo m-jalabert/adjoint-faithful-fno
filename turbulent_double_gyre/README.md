@@ -24,6 +24,7 @@ sequences and every evaluation lead carry over untouched. What changed:
 | spectral share | 97.95 % | 99.46 % |
 | microbatch | 4 | 1 |
 | accumulation | 2 | 8 |
+| domain padding | 10 % constant zero | 10 % raised-cosine tapered replicate |
 | `spectral_bins` | 12 | 48 |
 | `western_boundary_width` | 4 cells (4 deg) | 16 cells (4 deg) |
 
@@ -36,6 +37,14 @@ branch and the pointwise channel MLP, never through a Fourier convolution. 64
 modes halves that cutoff to 1.94 degrees. 128 modes, which would preserve the
 *fraction* of the spectrum, is 409 M parameters and does not fit a 32 GB V100 at
 microbatch 1.
+
+The first turbulent rollout exposed narrowband zonal stripes next to the domain
+edge. An inference-time ablation showed that disabling the 3 x 3 branch left the
+stripe power unchanged while degrading SST and pressure error. Replacing the
+hard hidden-to-zero padding edge with a replicated halo brought smoothly to zero
+reduced the stripe-band power fraction from 0.478 to 0.261 without removing the
+useful local path. This production run therefore changes the padding only and
+re-trains from scratch with the same optimizer and schedule.
 
 Three quantities were implicitly one degree in the 1-degree tree because
 metres-per-degree and metres-per-cell coincided there. They are cell metrics,

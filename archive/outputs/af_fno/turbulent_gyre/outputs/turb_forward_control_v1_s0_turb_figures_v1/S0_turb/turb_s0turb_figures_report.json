@@ -1,0 +1,241 @@
+{
+  "arrays": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/turb/turb_forward_control_v1_s0_turb_figures_v1/S0_turb/turb_s0turb_figures_arrays.npz",
+  "arrays_sha256": "33a956f4af21cd350df70078dbf89243b59f271c9d0f503e25c8c36024b212a1",
+  "comparator_model": null,
+  "contract": "/home/mjalabert314/bire_james25_repro/turbulent_double_gyre/config/turb_forward_control_v1_s0_turb_figures_v1.json",
+  "contract_sha256": "c7144ef82e6d04171baf6f133d35cdbfa1993c24977412a4682cfbdb4e80aa3b",
+  "dataset": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/datasets/trajectories_turb_v1.zarr",
+  "dataset_version": "trajectories_turb_v1",
+  "elapsed_seconds": 1696.0366278849542,
+  "figures": [
+    "turb_figure3_streamfunction_025deg_s0turb_dt10.png",
+    "turb_figure4_dt10_rmse_0_200_days_s0turb.png",
+    "turb_figure5_dt10_single_member_rmse_s0turb.png",
+    "turb_figure6_dt10_acc_0_200_days_s0turb.png",
+    "turb_figure7_dt10_streamfunction_day060_day2000_s0turb.png",
+    "turb_figure8_dt10_rmse_0_2000_days_s0turb.png"
+  ],
+  "inference_start_range": [
+    6200,
+    7000
+  ],
+  "regime": "S0_turb",
+  "report_content_sha256": "7f86f0a6e1c0802b1d224d1a5d5f9589c0c3820a69b40a10cd8ed214abe22db5",
+  "role": "primary",
+  "selected_optimizer_step": 5760,
+  "slurm_job_id": "454145",
+  "start_draw_order": [
+    6263,
+    6293,
+    6331,
+    6389,
+    6579,
+    6593,
+    6598,
+    6601,
+    6651,
+    6661,
+    6694,
+    6707,
+    6711,
+    6968,
+    6979
+  ],
+  "static_channel_provenance": {
+    "asserted_absent": [
+      "rotationPeriod",
+      "f0",
+      "beta",
+      "fPrime"
+    ],
+    "asserted_settings": [
+      "usingSphericalPolarGrid=.TRUE.",
+      "thetaClimFile='SST_relax.bin'",
+      "tauThetaClimRelax=2592000."
+    ],
+    "channels": [
+      "wind_stress_x",
+      "wet_mask",
+      "coriolis_parameter",
+      "zonal_grid_spacing",
+      "sst_relaxation_target"
+    ],
+    "collinearity_note": {
+      "consequence": "both are declared because both appear in the governing equations, but a gain cannot be attributed to one of them without a further ablation",
+      "measured_pearson_correlation_f_and_zonal_spacing": -0.9635473313498406,
+      "reason": "the basin spans 14.5N to 75.5N, symmetric about 45N, so cos(phi) traverses the same value set as sin(phi) reversed and the two coefficients are near mirror images"
+    },
+    "coriolis_definition": "2*omega*sin(latitude), MITgcm spherical-polar default",
+    "data_file": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/mitgcm_turb_v1/S0_turb/spinup/years_000_010/data",
+    "normalization": {
+      "coriolis_parameter": {
+        "mean": 9.847834474688474e-05,
+        "method": "wet_cell_standardization",
+        "scale": 3.0610924000510565e-05
+      },
+      "sst_relaxation_target": {
+        "compared_state_channel": "Theta_01",
+        "mean": 15.0,
+        "method": "wet_cell_standardization",
+        "rejected_alternative": "pointwise_surface_temperature_coordinates_would_make_the_relaxation_difference_exactly_representable_but_the_pointwise_scale_falls_to_0p011_degC_where_SST_is_pinned",
+        "rejected_alternative_channel_range": [
+          -20.00840397501639,
+          10.60395409605204
+        ],
+        "rejected_alternative_channel_std": 3.564156789324205,
+        "scale": 8.6601788617018
+      },
+      "wet_mask": {
+        "method": "raw_zero_one_indicator"
+      },
+      "wind_stress_x": {
+        "mean": 0.0,
+        "method": "pooled_wet_cell_standardization",
+        "scale": 0.07216878235340118
+      },
+      "zonal_grid_spacing": {
+        "mean": 18767.807360839844,
+        "method": "wet_cell_standardization",
+        "scale": 5833.7691482431255
+      }
+    },
+    "omega_rad_per_second": 7.292123516990375e-05,
+    "physical_ranges": {
+      "coriolis_parameter_per_second": [
+        3.805405503953807e-05,
+        0.00014079031825531274
+      ],
+      "sst_relaxation_target_degc": [
+        0.0625,
+        29.9375
+      ],
+      "zonal_grid_spacing_metres": [
+        7252.2666015625,
+        26831.541015625
+      ]
+    },
+    "rotation_period_seconds": 86164.0,
+    "sha256": {
+      "mitgcm_declaration": "ec3ffc279055c3c124b53d80bee3d358cbd573b9cddba5cabeaefef208ae7d65",
+      "sst_relaxation_target": "b3fd906fd4474b9566a8bfe560992bfc9894524d47f6d13a3d1a281947de98df",
+      "zonal_grid_spacing": "462d53665f31a91ce63b7070c6d05bbf63ed9c3d88b0801d10889c434feef6b7"
+    },
+    "sources": {
+      "coriolis_parameter": "derived_from_trajectory_v3_latitude_deg",
+      "sst_relaxation_target": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/mitgcm_turb_v1/S0_turb/spinup/years_000_010/SST_relax.bin",
+      "wet_mask": "trajectory_v3_static_features_index_3",
+      "wind_stress_x": "trajectory_v3_static_features_index_0",
+      "zonal_grid_spacing": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/mitgcm_turb_v1/S0_turb/spinup/years_000_010/DXF.data"
+    },
+    "theta_relax_seconds": 2592000.0
+  },
+  "static_channels": [
+    "wind_stress_x",
+    "wet_mask",
+    "coriolis_parameter",
+    "zonal_grid_spacing",
+    "sst_relaxation_target"
+  ],
+  "status": "complete",
+  "summary": {
+    "acc": {
+      "phihyd_surface": {
+        "day200_mean": 0.5004899462064107,
+        "day200_p10": 0.32118284702301025,
+        "day200_p90": 0.6171018719673157,
+        "minimum_mean_0_200": 0.5004899462064107
+      },
+      "sst": {
+        "day200_mean": 0.3264022876818975,
+        "day200_p10": 0.2582877516746521,
+        "day200_p90": 0.4231517553329468,
+        "minimum_mean_0_200": 0.3264022876818975
+      },
+      "surface_u": {
+        "day200_mean": 0.14465994983232425,
+        "day200_p10": -0.09136336296796797,
+        "day200_p90": 0.42794306874275206,
+        "minimum_mean_0_200": 0.1270504876971245
+      },
+      "surface_v": {
+        "day200_mean": 0.1806499312321345,
+        "day200_p10": 0.054369379580020916,
+        "day200_p90": 0.30655260682106017,
+        "minimum_mean_0_200": 0.1806499312321345
+      }
+    },
+    "all_selected_states_finite": true,
+    "lead_days": {
+      "interval": 10,
+      "long": 2000,
+      "short": 200
+    },
+    "maximum_selected_normalized_abs": 9.058915138244629,
+    "member_count": 15,
+    "rmse": {
+      "phihyd_surface": {
+        "climatology": {
+          "day2000_mean": 0.4553247888882955,
+          "day2000_p10": 0.4142898738384247,
+          "day2000_p90": 0.5089051723480225,
+          "day200_mean": 0.4871764441331228
+        },
+        "model": {
+          "day2000_mean": 0.7302512129147848,
+          "day2000_p10": 0.6138959646224975,
+          "day2000_p90": 0.8508458375930786,
+          "day200_mean": 0.46762818892796837
+        },
+        "persistence": {
+          "day2000_mean": 0.6652285496393839,
+          "day2000_p10": 0.6169444680213928,
+          "day2000_p90": 0.7013808012008667,
+          "day200_mean": 0.7143655697504679
+        }
+      },
+      "sst": {
+        "climatology": {
+          "day2000_mean": 0.1814227283000946,
+          "day2000_p10": 0.17355093061923982,
+          "day2000_p90": 0.1909354507923126,
+          "day200_mean": 0.1860489586989085
+        },
+        "model": {
+          "day2000_mean": 0.27954886555671693,
+          "day2000_p10": 0.2679067075252533,
+          "day2000_p90": 0.2849545180797577,
+          "day200_mean": 0.20628209710121154
+        },
+        "persistence": {
+          "day2000_mean": 0.24166940848032634,
+          "day2000_p10": 0.22028829157352448,
+          "day2000_p90": 0.26413735151290896,
+          "day200_mean": 0.2569126983483632
+        }
+      },
+      "surface_speed": {
+        "climatology": {
+          "day2000_mean": 0.04606996054450671,
+          "day2000_p10": 0.04391302019357681,
+          "day2000_p90": 0.047640369087457654,
+          "day200_mean": 0.045435742537180586
+        },
+        "model": {
+          "day2000_mean": 0.06444144695997238,
+          "day2000_p10": 0.057304232567548755,
+          "day2000_p90": 0.07093831449747086,
+          "day200_mean": 0.0554642915725708
+        },
+        "persistence": {
+          "day2000_mean": 0.06542959362268448,
+          "day2000_p10": 0.06008996739983559,
+          "day2000_p90": 0.0715013712644577,
+          "day200_mean": 0.06429056202371915
+        }
+      }
+    },
+    "status": "complete"
+  },
+  "tau0_n_m2": 0.1,
+  "version": "turb_forward_control_v1_s0_turb_figures_v1"
+}

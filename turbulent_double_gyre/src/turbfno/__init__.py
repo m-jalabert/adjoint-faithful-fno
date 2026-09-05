@@ -8,10 +8,10 @@ One model, defined once::
 at a single time level, and ``S`` the five-channel physical static block
 ``[tau_x, wet mask, f(phi), dx(phi), theta_clim(x, y)]``. Two deterministic
 sine/cosine position channels are appended inside the model, so 51 external
-channels enter as 53 at lifting and 46 leave. The operator is a 32x32-mode,
+channels enter as 53 at lifting and 46 leave. The operator is a 64x64-mode,
 width-128, three-block FNO with six pointwise LayerNorms, a 4C Channel MLP, 10 %
-domain padding and a parallel bias-free 3x3 local correction: 104,368,296
-parameters on the 248 x 248 grid.
+raised-cosine tapered replicate padding and a parallel bias-free 3x3 local
+correction: 104,368,296 parameters on the 248 x 248 grid.
 
 The **production** operator is trained once, from random initialization, with
 six-step autoregression and the complete physics-aware objective active from

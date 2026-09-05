@@ -8,16 +8,23 @@ initialized, the pointwise normalizers and the increment RMS scales are
 recomputed over training days 0--5999 of S0/S1/S2, and Adam starts cold. There is
 no parent checkpoint, no migration, no staged fine-tuning.
 
-**This arm constrains the operator, not the trajectory.** Architecture, data,
-split, schedule, optimizer, batch, seed and the eight loss terms are exactly
-v1's. The single change is a reparameterization of the three Fourier
-convolutions: the largest singular value of the ``128 x 128`` complex
+**This arm constrains the operator, not the trajectory.** The per-mode spectral
+cap remains active: the largest singular value of the ``128 x 128`` complex
 channel-mixing matrix at *every* Fourier mode is capped at one,
 
     R_k <- R_k * min(1, 1 / sigma_max(R_k)),
 
-following McCabe et al., arXiv:2306.10619. Those matrices hold 97.95 % of the
-model's parameters and were previously unconstrained.
+following McCabe et al., arXiv:2306.10619. Those matrices hold 99.46 % of the
+turbulent model's parameters.
+
+The production update is confined to the 10 % latent FFT halo. NeuralOperator's
+constant-zero halo produced a sharp hidden-to-zero edge; the first trained
+turbulent rollout then developed narrowband zonal stripes next to the boundary.
+A zero-shot ablation left the stripe fraction unchanged when the useful local
+3x3 branch was disabled (0.478 to 0.479), but reduced it to 0.261 when the
+lifted field was replicated into the halo and brought smoothly to zero with a
+raised-cosine taper. Architecture size, data, split, objective, schedule,
+optimizer, batch and seed stay fixed, and the model is retrained from scratch.
 
 The contraction *penalty* of the two preceding arms is removed entirely, so this
 run answers one question: does controlling the spectral operator itself fix the
@@ -29,7 +36,7 @@ Preceding measurements of ``lambda_hat`` at the selected checkpoint: v1 1.0168
 
 Schedule::
 
-    Adam, batch 8 (microbatch 4 x accumulation 2), betas (0.9, 0.95)
+    Adam, batch 8 (microbatch 1 x accumulation 8), betas (0.9, 0.95)
     lr 5e-4 for steps 1--5760, 1e-4 for steps 5761--7680
     checkpoints at 1,920 / 3,840 / 5,760 / 7,680
 
@@ -45,6 +52,7 @@ Entry points::
 from __future__ import annotations
 
 import argparse
+import gc
 import json
 import os
 import shutil
@@ -70,7 +78,6 @@ from .runtime import (
 )
 from .distributed import (
     ShardedBatchSampler,
-    Topology,
     initialize as initialize_distributed,
     require_divisible,
 )
@@ -158,7 +165,13 @@ PENALTY_ARM_GROWTH_RATES = {
     "model_c_production_1in_1out_v3": 1.01361,
 }
 
-CONTRACT_STATUS = "frozen_before_any_turbulent_metric"
+CONTRACT_STATUS = "frozen_for_the_production_padding_revision"
+
+PREVIOUS_PADDING_MODE = "constant_zero"
+
+PREVIOUS_STRIPE_POWER_FRACTION = 0.47765
+
+TAPERED_PADDING_STRIPE_POWER_FRACTION = 0.26071
 
 ROLLOUT_STEPS = 6
 
@@ -712,9 +725,32 @@ def preflight(contract_path: str | Path) -> dict[str, Any]:
         if any(value != 0.0 for value in identity.values()):
             raise TrainingContractError(f"a physics identity loss is non-zero: {identity}")
         result["physics_identity_losses"] = identity
-        # The one change this arm makes must demonstrably do what it claims,
-        # verified against an exact SVD rather than the power-iteration estimate
-        # that installs it.
+        padding = model.fno.domain_padding
+        probe = torch.ones((1, 1, *GRID_SHAPE), dtype=torch.float32)
+        padded = padding.pad(probe)
+        restored = padding.unpad(padded)
+        if (
+            tuple(padded.shape[-2:]) != (298, 298)
+            or not bool(torch.equal(restored, probe))
+            or float(padded[..., 0, :].abs().max()) != 0.0
+            or float(padded[..., -1, :].abs().max()) != 0.0
+            or float(padded[..., :, 0].abs().max()) != 0.0
+            or float(padded[..., :, -1].abs().max()) != 0.0
+        ):
+            raise TrainingContractError(
+                "raised-cosine padding did not preserve the physical field and "
+                "close the outer FFT boundary"
+            )
+        result["domain_padding"] = {
+            "mode": architecture.domain_padding_mode,
+            "fraction": architecture.domain_padding,
+            "halo_cells_per_side": [padding.pad_y, padding.pad_x],
+            "padded_shape": list(padded.shape[-2:]),
+            "physical_field_preserved_exactly": True,
+            "outer_fft_boundary_exactly_zero": True,
+        }
+        # The retained spectral cap is verified against an exact SVD rather
+        # than the power-iteration estimate that installs it.
         spectral = apply_mode_spectral_norm(model)
         conv = model.fno.fno_blocks.convs[0]
         with torch.no_grad():
@@ -786,23 +822,37 @@ def _readme(report: Mapping[str, Any]) -> str:
     spectral = report["spectral_normalization"]
     initial = spectral["sigma_at_initialization"]["per_block"][0]
     final = report["training_history"][-1]["spectral_norm"]["per_block"][0]
-    return f"""# Production emulator, per-mode spectral normalization
+    return f"""# Production emulator, smooth FFT-boundary padding
 
     F_theta: [x_t, S] -> x_(t+10)
 
 `x_t` is the 46-channel prognostic state at one time only; `S` is the five
 physical static channels. 51 external channels, plus two deterministic
 sine/cosine position channels inside the model, so lifting sees 53 and the
-output is 46. A 32 x 32-mode, width-128, three-block FNO with six pointwise
-LayerNorms, a 4C Channel MLP, 10 % domain padding and a parallel bias-free 3 x 3
-local correction. Parameter count: {int(report['parameter_count']):,}.
+output is 46. A 64 x 64-mode, width-128, three-block FNO with six pointwise
+LayerNorms, a 4C Channel MLP, 10 % raised-cosine tapered replicate padding and a
+parallel bias-free 3 x 3 local correction. Parameter count:
+{int(report['parameter_count']):,}.
 
-## The one change
+## Production update
+
+The first turbulent rollout developed narrowband zonal stripes next to the
+domain edge. Disabling the local 3 x 3 path did not suppress them and degraded
+SST and pressure skill. Replacing the constant-zero latent FFT halo with a
+replicated halo brought smoothly to zero reduced the diagnostic stripe-band
+power fraction from {PREVIOUS_STRIPE_POWER_FRACTION:.3f} to
+{TAPERED_PADDING_STRIPE_POWER_FRACTION:.3f}. The outer FFT boundary is exactly
+zero and periodically continuous, while the original lifted field is untouched.
+
+This is the only production revision. The local branch, Fourier modes, width,
+blocks, loss, data, optimizer, learning-rate schedule and seed are unchanged;
+the weights and training-only normalizers are recomputed from scratch.
+
+## Retained spectral normalization
 
 The channel mixing at Fourier mode `k` is a dense complex matrix
 `R_k` in `C^(128 x 128)`; there are {spectral['matrices_total']:,} of them across
-the three blocks, holding 97.95 % of the parameters, and nothing previously
-constrained their gain. Each is now capped:
+the three blocks, holding 99.46 % of the parameters. Each remains capped:
 
     R_k <- R_k * min(1, 1 / sigma_max(R_k))
 
@@ -1019,8 +1069,8 @@ def run(
     )
     architecture = ProductionArchitecture(**contract["architecture"])
     model = build_model(architecture).to(device)
-    # The one change this arm makes. Installed before the optimizer sees the
-    # parameters; it replaces the weight holder and adds no parameters.
+    # The retained spectral constraint is installed before the optimizer sees
+    # the parameters; it replaces the weight holder and adds no parameters.
     spectral_provenance = apply_mode_spectral_norm(model)
     spectral_provenance["sigma_at_initialization"] = mode_sigma_summary(model)
     count = parameter_count(model)
@@ -1089,6 +1139,7 @@ def run(
     samples = 0
     history: list[dict[str, Any]] = []
     checkpoints: list[dict[str, Any]] = []
+    learning_rate_for_divergence = float(training["initial_learning_rate"])
 
     def _diverged(step: int, reason: str) -> None:
         # A rank can only detect divergence in its own microbatches, and it does
@@ -1106,7 +1157,7 @@ def run(
                     "version": VERSION,
                     "reason": reason,
                     "optimizer_step": int(step),
-                    "learning_rate": float(optimizer.param_groups[0]["lr"]),
+                    "learning_rate": learning_rate_for_divergence,
                 },
                 indent=2,
                 sort_keys=True,
@@ -1121,6 +1172,7 @@ def run(
         if step == decay_step + 1:
             for parameter_group in optimizer.param_groups:
                 parameter_group["lr"] *= float(training["decay_factor"])
+            learning_rate_for_divergence = float(optimizer.param_groups[0]["lr"])
         optimizer.zero_grad(set_to_none=True)
         model.train()
         step_samples = 0
@@ -1276,11 +1328,23 @@ def run(
     if len(checkpoints) != len(CHECKPOINT_STEPS):
         raise TrainingContractError("not every declared checkpoint was written")
 
-    # The trained model and its Adam state are ~3.3 GiB of GPU memory that the
-    # validation stage has no use for: it loads each checkpoint into a fresh
-    # probe. Released before the first probe is built.
+    # The trained model, Adam state and final six-call autograd graph have no use
+    # in validation, which loads each materialized checkpoint into a fresh probe.
+    # Releasing the graph and loader explicitly is essential: deleting only the
+    # model left ~31 GiB live on a V100 and the first validation FFT then OOMed.
+    if not resume_validation:
+        del predictions
+        del terms
+        del growth
+        del features
+        del futures
+    del direction
+    del iterator
+    del loader
+    del training_dataset
     del optimizer
     del model
+    gc.collect()
     if device.type == "cuda":
         torch.cuda.empty_cache()
 
@@ -1461,6 +1525,24 @@ def run(
         "loss": contract["loss"],
         "loss_contract": loss_contract(loss_config),
         "loss_contract_sha256": LOSS_CONTRACT_SHA256,
+        "production_padding_update": {
+            "previous_mode": PREVIOUS_PADDING_MODE,
+            "mode": architecture.domain_padding_mode,
+            "fraction": architecture.domain_padding,
+            "weight_lineage": "none; this run is retrained from scratch",
+            "diagnostic_ablation": {
+                "previous_stripe_power_fraction": PREVIOUS_STRIPE_POWER_FRACTION,
+                "tapered_padding_stripe_power_fraction": (
+                    TAPERED_PADDING_STRIPE_POWER_FRACTION
+                ),
+                "local_branch_removal_suppressed_stripes": False,
+            },
+            "unchanged": [
+                "parameter_count", "Fourier_modes", "hidden_width", "blocks",
+                "local_branch", "dataset", "split", "objective", "optimizer",
+                "batch", "learning_rate_schedule", "seed", "validation_protocol",
+            ],
+        },
         "constrained_relative_to": {
             "version": REFERENCE_VERSION,
             "measured_growth_rate_per_call": REFERENCE_GROWTH_RATE,
@@ -1469,6 +1551,7 @@ def run(
             "changed": [
                 "per_mode_spectral_normalization_of_the_three_fourier_convolutions",
                 "contraction_penalty_removed_from_the_objective",
+                "constant_zero_padding_replaced_by_raised_cosine_tapered_replicate_padding",
             ],
             "unchanged": [
                 "architecture", "static_channels", "modes", "width", "blocks",

@@ -71,6 +71,16 @@ def build() -> dict:
             "n_modes": {"from": [32, 32], "to": [64, 64]},
             "parameter_count": {"from": 27_297_960, "to": EXPECTED_PARAMETER_COUNT},
             "spectral_share_of_parameters": {"from": 0.9795, "to": 0.9946},
+            "domain_padding": {
+                "from": "10% constant-zero latent padding",
+                "to": "10% raised-cosine tapered replicate latent padding",
+                "reason": (
+                    "the first turbulent rollout developed narrowband zonal "
+                    "stripes adjacent to the domain edge; continuing the lifted "
+                    "field into the halo removes the hidden-to-zero jump while "
+                    "retaining an exactly zero, periodically continuous FFT edge"
+                ),
+            },
             "microbatch_size": {
                 "from": 4,
                 "to": T.MICROBATCH_SIZE,
@@ -123,7 +133,7 @@ def build() -> dict:
                 "learning rate and schedule",
                 "the split, 17,820 training sequences and every evaluation lead",
                 "the spectral cap and its estimator",
-                "hidden_channels, n_layers, the local 3x3 branch, domain padding",
+                "hidden_channels, n_layers and the local 3x3 branch",
             ],
         },
         "initialization": {

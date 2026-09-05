@@ -3,6 +3,7 @@
     "channel_mlp_dropout": 0.0,
     "channel_mlp_expansion": 4.0,
     "domain_padding": 0.1,
+    "domain_padding_mode": "raised_cosine_tapered_replicate",
     "factorization": null,
     "fno_block_precision": "full",
     "grid_shape": [
@@ -36,6 +37,11 @@
     "use_channel_mlp": true
   },
   "changed_relative_to_the_one_degree_arm": {
+    "domain_padding": {
+      "from": "10% constant-zero latent padding",
+      "reason": "the first turbulent rollout developed narrowband zonal stripes adjacent to the domain edge; continuing the lifted field into the halo removes the hidden-to-zero jump while retaining an exactly zero, periodically continuous FFT edge",
+      "to": "10% raised-cosine tapered replicate latent padding"
+    },
     "gradient_accumulation_steps": {
       "from": 2,
       "reason": "holds the effective batch at 8",
@@ -97,7 +103,7 @@
       "learning rate and schedule",
       "the split, 17,820 training sequences and every evaluation lead",
       "the spectral cap and its estimator",
-      "hidden_channels, n_layers, the local 3x3 branch, domain padding"
+      "hidden_channels, n_layers and the local 3x3 branch"
     ],
     "western_boundary_width": {
       "from": 4,
@@ -128,7 +134,7 @@
     ],
     "worst_long_ratio_ceiling": 0.85
   },
-  "contract_status": "frozen_before_any_turbulent_metric",
+  "contract_status": "frozen_for_the_production_padding_revision",
   "data": {
     "evaluation_truth_only": [
       7200,
@@ -230,13 +236,13 @@
     "src/turbfno/continuity.py": "9af83023dfd7557672f2c80af97e577196000bc75309410d33b0e59bb8057f84",
     "src/turbfno/dataset.py": "7e7e22acd397ad7ba5877f7fae517b269284620fe68fe8cff08f3a764df58dde",
     "src/turbfno/distributed.py": "7f7258547d2bf4d3ffc65533ba43e14d45aea075cd15a8838f96f5dd6e5f75c0",
-    "src/turbfno/model.py": "ce2f5937f66e699e79de75d75b4732bff3dfd7442153af949e67a6fb8facb437",
+    "src/turbfno/model.py": "02bc7575b853ea641f5245f4e73d3b26373b5304741b4212726321f5d11cdb6d",
     "src/turbfno/objective.py": "aefb7287938155a9d0ddda8c950d420bb2571b4d7921287f194d1cfc72c8682e",
     "src/turbfno/perturbation_growth.py": "0943adf80ac18bf162ac65ca53bf6c67415654c6e233763768bdcfcd46c334c2",
     "src/turbfno/pressure_gradient.py": "9217e0b87df58b4b2f389265825fc857c4b896d4cfa9674504e675431ae20f19",
     "src/turbfno/runtime.py": "d099a7b878fc4c32e88d073c02fc3ec4a1a3e9c152a59d4acff878dfe2f13c06",
     "src/turbfno/spectral_norm.py": "b3645f884b1e47eb36ab42e2eb6adaabfc7ac4353c1e6b604172e11a510cf9f8",
-    "src/turbfno/train.py": "0d44f4cacb38db5a84ee793488b82b6dd222259eba726308facf4c899d899d49",
+    "src/turbfno/train.py": "4316897662a3dfd61b96ef9655996fb18e9324446577abe24b2ea607b054d607",
     "src/turbfno/validation.py": "3f9d9a997ed2467eeb34bb23e6a7b4a1f0bec54d03d6721421158190f1e164a3"
   },
   "sources": {

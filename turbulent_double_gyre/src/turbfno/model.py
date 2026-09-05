@@ -12,11 +12,13 @@ One architecture, one builder, one unroll, one evaluation adapter. The map is
     output x_{t+10}                                    46 channels
 
 A 64x64-mode, width-128, three-block FNO with six pointwise LayerNorms and a
-4C Channel MLP carries the global path; a bias-free 3x3 convolution from the raw
-51-channel input carries a local correction and is initialized to exact zeros,
-so at construction the FNO alone defines the map and the correction is learned
-from nothing. Prediction is of the **state**, not of a residual, and rollout
-feeds the model its own output from the second call onward.
+4C Channel MLP carries the global path. Its lifted field is continued into a
+10 % replicated halo and smoothly brought to zero with a raised-cosine taper
+before the FFT. A bias-free 3x3 convolution from the raw 51-channel input
+carries a local correction and is initialized to exact zeros, so at construction
+the FNO alone defines the map and the correction is learned from nothing.
+Prediction is of the **state**, not of a residual, and rollout feeds the model
+its own output from the second call onward.
 
 There is no checkpoint inheritance anywhere in this module: no migration, no
 parent architecture, no function-preserving load. The model is built randomly
@@ -42,6 +44,8 @@ from .runtime import (
 from .dataset import STATIC_CHANNEL_COUNT, STATIC_FEATURES
 
 POSITIONAL_CHANNELS = 2
+
+DOMAIN_PADDING_MODE = "raised_cosine_tapered_replicate"
 
 EXTERNAL_INPUT_CHANNELS = STATE_CHANNEL_COUNT + STATIC_CHANNEL_COUNT
 
@@ -96,6 +100,7 @@ class ProductionArchitecture:
     channel_mlp_expansion: float = 4.0
     channel_mlp_dropout: float = 0.0
     domain_padding: float = 0.1
+    domain_padding_mode: str = DOMAIN_PADDING_MODE
     positional_embedding: str | None = None
     use_channel_mlp: bool = True
     pointwise_layer_norm: bool = True
@@ -141,9 +146,14 @@ class ProductionArchitecture:
             raise ArchitectureError(
                 "the production arm keeps lifting and projection width 256"
             )
-        if self.domain_padding != 0.1 or not self.use_channel_mlp:
+        if (
+            self.domain_padding != 0.1
+            or self.domain_padding_mode != DOMAIN_PADDING_MODE
+            or not self.use_channel_mlp
+        ):
             raise ArchitectureError(
-                "the production arm keeps 10% padding and the Channel MLP"
+                "the production arm uses 10% raised-cosine tapered replicate "
+                "padding and keeps the Channel MLP"
             )
         if self.channel_mlp_dropout != 0.0:
             raise ArchitectureError("the production arm runs without dropout")
@@ -257,6 +267,76 @@ if nn is not None:
                 dim=1,
             )
 
+    class RaisedCosineTaperedPadding(nn.Module):
+        """Smoothly continue the lifted field into the FFT halo.
+
+        NeuralOperator's scalar ``domain_padding`` uses constant-zero padding.
+        That inserts a sharp edge between the learned boundary value and zero,
+        which excites a narrow band of zonal Fourier modes. Here the nearest
+        hidden value is continued into the halo and multiplied by a separable
+        raised-cosine window. The window is one on the physical domain, exactly
+        zero at the padded array's outer boundary, and has zero slope at both
+        ends of the transition.
+
+        The taper is deterministic and non-persistent: it adds neither learned
+        parameters nor checkpoint state.
+        """
+
+        def __init__(self, height: int, width: int, fraction: float) -> None:
+            super().__init__()
+            self.height = int(height)
+            self.width = int(width)
+            self.pad_y = int(round(float(fraction) * self.height))
+            self.pad_x = int(round(float(fraction) * self.width))
+            if self.pad_y <= 0 or self.pad_x <= 0:
+                raise ArchitectureError("the production FFT halo must be non-empty")
+
+            taper_y = self._axis(self.height, self.pad_y)
+            taper_x = self._axis(self.width, self.pad_x)
+            self.register_buffer(
+                "taper",
+                (taper_y[:, None] * taper_x[None, :])[None, None],
+                persistent=False,
+            )
+
+        @staticmethod
+        def _axis(size: int, padding: int) -> Any:
+            axis = torch.ones(size + 2 * padding, dtype=torch.float32)
+            phase = torch.linspace(0.0, math.pi / 2.0, padding + 1)[:-1]
+            ramp = torch.sin(phase).square()
+            axis[:padding] = ramp
+            axis[-padding:] = ramp.flip(0)
+            return axis
+
+        def pad(self, value: Any) -> Any:
+            if value.ndim != 4 or value.shape[-2:] != (self.height, self.width):
+                raise ValueError(
+                    "the production padding expects "
+                    f"N,C,{self.height},{self.width}"
+                )
+            padded = functional.pad(
+                value,
+                (self.pad_x, self.pad_x, self.pad_y, self.pad_y),
+                mode="replicate",
+            )
+            return padded * self.taper.to(dtype=value.dtype)
+
+        def unpad(self, value: Any) -> Any:
+            padded_shape = (
+                self.height + 2 * self.pad_y,
+                self.width + 2 * self.pad_x,
+            )
+            if value.ndim != 4 or value.shape[-2:] != padded_shape:
+                raise ValueError(
+                    "the production padding expects padded shape "
+                    f"N,C,{padded_shape[0]},{padded_shape[1]}"
+                )
+            return value[
+                ...,
+                self.pad_y : self.pad_y + self.height,
+                self.pad_x : self.pad_x + self.width,
+            ]
+
     class ProductionFNO(nn.Module):
         """The 64x64 three-block FNO with its zero-initialized local correction.
 
@@ -291,6 +371,10 @@ if nn is not None:
                 fno_block_precision=architecture.fno_block_precision,
                 factorization=architecture.factorization,
             )
+            self.fno.domain_padding = RaisedCosineTaperedPadding(
+                *architecture.grid_shape,
+                architecture.domain_padding,
+            )
             self.fno.fno_blocks.norm = nn.ModuleList(
                 [
                     PointwiseChannelLayerNorm(architecture.hidden_channels)
@@ -317,6 +401,7 @@ if nn is not None:
 else:  # pragma: no cover - environment dependent
     PointwiseChannelLayerNorm = None  # type: ignore[assignment,misc]
     BirePositionalEncoding = None  # type: ignore[assignment,misc]
+    RaisedCosineTaperedPadding = None  # type: ignore[assignment,misc]
     ProductionFNO = None  # type: ignore[assignment,misc]
 
 

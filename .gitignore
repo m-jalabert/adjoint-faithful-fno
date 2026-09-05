@@ -45,6 +45,7 @@ external/*
 *.nav
 *.snm
 *.synctex.gz
+*.spl
 *.toc
 docs/*.pdf
 !docs/AF_FNO_Project_Plan.pdf

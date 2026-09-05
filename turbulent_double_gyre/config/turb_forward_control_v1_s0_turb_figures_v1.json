@@ -18,7 +18,7 @@
     },
     "selected_checkpoint": {
       "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/turb/turb_forward_control_v1/selected.pt",
-      "sha256": "8047601d0df71ca489de287a68776e45bb89860fe301a80db37903a98c742296"
+      "sha256": "f985e9162bc23957401947365094c02a171a58c8961e9311a74b7f4c738cc744"
     },
     "selected_normalization": {
       "path": "/bigscratch/mjalabert314/bire_james25_repro/af_fno/models/turb/turb_forward_control_v1/turb_forward_control_v1_train_only_normalization.npz",
@@ -26,7 +26,7 @@
     },
     "selected_report": {
       "path": "/home/mjalabert314/bire_james25_repro/turbulent_double_gyre/outputs/turb_forward_control_v1/turb_forward_control_v1_report.json",
-      "sha256": "61f33a6f78796b8e95350bb66142bcc35745099f17771c8201653c7db953459c"
+      "sha256": "0392de1581e0fe4b97967b7eacdd6f28cecce1eb0b7785c959d9d0ab8232381f"
     }
   },
   "baselines": {
@@ -157,6 +157,7 @@
       "channel_mlp_dropout": 0.0,
       "channel_mlp_expansion": 4.0,
       "domain_padding": 0.1,
+      "domain_padding_mode": "raised_cosine_tapered_replicate",
       "factorization": null,
       "fno_block_precision": "full",
       "grid_shape": [
@@ -191,7 +192,7 @@
     },
     "from_scratch": true,
     "loss_contract_sha256": "1bb71b6f43372b41088ef9196311a3b07e1bf775e5d26d193192aed7d891404b",
-    "optimizer_step": 5760,
+    "optimizer_step": 7680,
     "rollout_steps": 6,
     "seed": 20260911,
     "training_contract": "/home/mjalabert314/bire_james25_repro/turbulent_double_gyre/config/turb_forward_control_v1.json",
@@ -201,12 +202,12 @@
     "src/turbfno/dataset.py": "7e7e22acd397ad7ba5877f7fae517b269284620fe68fe8cff08f3a764df58dde",
     "src/turbfno/diagnostics.py": "e68bd963a43a616136eb1b6c84508f03105f2756c1276c4ca2b6ce5399b3f344",
     "src/turbfno/figures.py": "c339fba813f30e20468cef99ea482c69b4efb2ac4b37fdc54e4501cb4d07e58e",
-    "src/turbfno/model.py": "ce2f5937f66e699e79de75d75b4732bff3dfd7442153af949e67a6fb8facb437",
+    "src/turbfno/model.py": "02bc7575b853ea641f5245f4e73d3b26373b5304741b4212726321f5d11cdb6d",
     "src/turbfno/perturbation_growth.py": "0943adf80ac18bf162ac65ca53bf6c67415654c6e233763768bdcfcd46c334c2",
     "src/turbfno/plots.py": "b7e36b1aa878af1f1cc8d24423bb14e9bb7bfcbd862ad981196759297eec523e",
     "src/turbfno/runtime.py": "d099a7b878fc4c32e88d073c02fc3ec4a1a3e9c152a59d4acff878dfe2f13c06",
     "src/turbfno/spectral_norm.py": "b3645f884b1e47eb36ab42e2eb6adaabfc7ac4353c1e6b604172e11a510cf9f8",
-    "src/turbfno/train.py": "0d44f4cacb38db5a84ee793488b82b6dd222259eba726308facf4c899d899d49",
+    "src/turbfno/train.py": "4316897662a3dfd61b96ef9655996fb18e9324446577abe24b2ea607b054d607",
     "src/turbfno/validation.py": "3f9d9a997ed2467eeb34bb23e6a7b4a1f0bec54d03d6721421158190f1e164a3"
   },
   "truth": {

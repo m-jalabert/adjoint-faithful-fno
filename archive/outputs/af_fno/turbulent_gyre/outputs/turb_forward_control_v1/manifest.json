@@ -1,0 +1,13 @@
+{
+  "artifacts": {
+    "README.md": "ca3956320bd3dbd8ac6e46dcb65631d9aaae26ceb8dc9c39bb42291a1b9ef512",
+    "turb_forward_control_v1_arrays.npz": "c729054be211c8ca8bc012a60f11264efd88ba61da5e86b249536f2c1aa9e3bc",
+    "turb_forward_control_v1_report.json": "0392de1581e0fe4b97967b7eacdd6f28cecce1eb0b7785c959d9d0ab8232381f",
+    "turb_forward_control_v1_selection.png": "d6a670effdfa378ef3acaf108492ce6507b4d8e168d98e0742387b4d1c1de5e4"
+  },
+  "content_sha256": "1cdf654c0ec4252bcf7b15b1c2e69e0a5322db8818814280b4be7d5556ec1d38",
+  "contract_sha256": "4808561ee2c7544be2eef76acf842c2812979666066925af97fb6106df881ce8",
+  "inference_state_opened": false,
+  "status": "complete",
+  "version": "turb_forward_control_v1"
+}

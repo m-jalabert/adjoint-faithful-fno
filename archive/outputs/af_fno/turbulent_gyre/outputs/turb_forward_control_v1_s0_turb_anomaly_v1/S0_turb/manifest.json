@@ -1,0 +1,33 @@
+{
+  "artifacts": {
+    "README.md": {
+      "bytes": 1292,
+      "sha256": "d1859f2ac208d129bad5393fa79571db378ad8a17626f00eba68280d22d94815"
+    },
+    "turb_figure3a_streamfunction_anomaly_025deg_s0turb_dt10.png": {
+      "bytes": 810146,
+      "sha256": "06105de854868d95a66a7b6dbb330517b1c56a39a423be0f09956940985f25e0"
+    },
+    "turb_figure7a_streamfunction_anomaly_day060_day2000_s0turb.png": {
+      "bytes": 481595,
+      "sha256": "ded5ac27240b8ef5a2bfd9eba66bc970f643535b27d3cf13959e3ad8e75ade07"
+    },
+    "turb_reference_time_mean_streamfunction_s0turb.png": {
+      "bytes": 67729,
+      "sha256": "c990cb5c3ce3bb5bb9dc838186ac973d194cf4e0a6b680dbb140834117bd0ad4"
+    },
+    "turb_s0turb_anomaly_arrays.npz": {
+      "bytes": 3194257,
+      "sha256": "6a5bd099403659e7eabc99935ffd2c0a8ab0f24006687978fe07c427e4bf114e"
+    },
+    "turb_s0turb_anomaly_report.json": {
+      "bytes": 5693,
+      "sha256": "974c748598fe60ac8e303acff3546f75b22f17ce809c5d9b15e2c5b0ee4a9074"
+    }
+  },
+  "contract_sha256": "d9920ebbad47cae287bca2a3a76d058f9fa731bc0a1286d5491d96243364ee19",
+  "manifest_content_sha256": "bbacb976d641c299541fd7a3cb38a0bcac48514661a7a90fc4ad937603238c7c",
+  "regime": "S0_turb",
+  "report_content_sha256": "2e0b67196fff05eb4a395b2bd5d24e71c259778d5c05cac405459aee040bead2",
+  "version": "turb_forward_control_v1_s0_turb_anomaly_v1"
+}
